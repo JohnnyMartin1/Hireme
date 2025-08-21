@@ -1,0 +1,45 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* App “surface” */
+:root {
+  --page-bg: #f7f9fc;
+}
+
+html, body {
+  height: 100%;
+}
+
+body {
+  @apply bg-[var(--page-bg)] text-gray-800 antialiased;
+}
+
+/* Card & button helpers */
+.card {
+  @apply bg-white rounded-2xl shadow-card;
+}
+
+.btn {
+  @apply inline-flex items-center justify-center rounded-lg px-4 py-2 font-medium transition;
+}
+.btn-primary {
+  @apply btn bg-brand-400 text-white hover:bg-brand-300;
+}
+.btn-outline {
+  @apply btn border border-gray-300 hover:bg-gray-50;
+}
+
+/* Form polish via @tailwindcss/forms */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+select,
+textarea {
+  @apply rounded-lg border-gray-300 focus:border-brand-400 focus:ring-brand-300;
+}
+
+/* Simple container */
+.container {
+  @apply mx-auto w-full max-w-7xl px-6;
+}
