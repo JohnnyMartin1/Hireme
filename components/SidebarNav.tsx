@@ -16,23 +16,25 @@ interface SidebarNavProps {
  * saved jobs.
  */
 export default function SidebarNav({ role }: SidebarNavProps) {
-  const common: NavItem[] = [
+  const items: NavItem[] = [
     { label: 'Home', href: role === 'EMPLOYER' ? '/home/employer' : '/home/seeker' },
-    { label: 'Search', href: role === 'EMPLOYER' ? '/search/candidates' : '/search/jobs' },
     { label: 'Messages', href: '/messages' },
     { label: 'Account', href: '/account/profile' },
   ];
-  const extra: NavItem[] = [];
+
   if (role === 'EMPLOYER') {
-    extra.push({ label: 'Post Job', href: '/employer/job/new' });
-    extra.push({ label: 'Saved Candidates', href: '/saved/candidates' });
+    items.splice(1, 0, { label: 'Search Candidates', href: '/search/candidates' });
+    items.push({ label: 'Post Job', href: '/employer/job/new' });
+    items.push({ label: 'Saved Candidates', href: '/saved/candidates' });
   } else if (role === 'JOB_SEEKER') {
-    extra.push({ label: 'Saved Jobs', href: '/saved/jobs' });
+    items.push({ label: 'Profile', href: '/account/profile' });
+    items.push({ label: 'Uploads', href: '/account/uploads' });
+    items.push({ label: 'Security', href: '/account/security' });
   }
+  
   if (role === 'ADMIN') {
-    extra.push({ label: 'Admin', href: '/admin' });
+    items.push({ label: 'Admin', href: '/admin' });
   }
-  const items = [...common, ...extra];
   return (
     <aside className="hidden md:block w-64 bg-gray-100 h-full p-4 border-r">
       <nav className="space-y-2">

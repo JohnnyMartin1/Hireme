@@ -1,6 +1,7 @@
 import { ReactNode } from 'react';
 import { redirect } from 'next/navigation';
-import { auth } from '@/lib/auth';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 import SidebarNav from '@/components/SidebarNav';
 import TopBar from '@/components/TopBar';
 
@@ -12,7 +13,7 @@ import TopBar from '@/components/TopBar';
  * login page.
  */
 export default async function DashboardLayout({ children }: { children: ReactNode }) {
-  const session = await auth();
+  const session = await getServerSession(authOptions);
   if (!session || !session.user) {
     redirect('/auth/login');
   }
