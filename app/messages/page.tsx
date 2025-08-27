@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
-import { auth } from '@/lib/auth';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 import Link from 'next/link';
 
 /**
@@ -9,11 +10,11 @@ import Link from 'next/link';
  * message and a badge if there are unread messages.
  */
 export default async function MessagesPage() {
-  const session = await auth();
+  const session = await getServerSession(authOptions);
   if (!session || !session.user) {
     return <p>You must be signed in to view messages.</p>;
   }
-  const userId = session.user.id;
+  const userId = (session.user as any).id;
   // Fetch last 50 messages of the user to derive threads
   const messages = await prisma.message.findMany({
     where: {

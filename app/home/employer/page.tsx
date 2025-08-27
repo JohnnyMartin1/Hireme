@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
-import { auth } from '@/lib/auth';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 import Link from 'next/link';
 
 /**
@@ -8,8 +9,8 @@ import Link from 'next/link';
  * posting a job and searching candidates.
  */
 export default async function EmployerHomePage() {
-  const session = await auth();
-  const userId = session?.user?.id;
+  const session = await getServerSession(authOptions);
+  const userId = (session?.user as any)?.id;
   let candidates: any[] = [];
   if (userId) {
     // Get employer record

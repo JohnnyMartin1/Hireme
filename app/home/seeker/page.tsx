@@ -1,14 +1,15 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 export default async function SeekerHomePage() {
-  const session = await auth();
+  const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     redirect("/auth/login");
   }
-  const userId = session.user.id;
+  const userId = (session.user as any).id;
 
   const messages = await prisma.message.findMany({
     where: { OR: [{ senderId: userId }, { receiverId: userId }] },

@@ -19,7 +19,8 @@ export default function LoginPage() {
       redirect: false,
     });
     if (res?.ok) {
-      router.replace("/home/seeker");
+      // Redirect will be handled by middleware based on user role
+      router.replace("/");
     } else {
       setErr("Invalid email or password.");
     }
