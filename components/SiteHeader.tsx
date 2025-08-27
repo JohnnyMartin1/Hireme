@@ -1,16 +1,14 @@
 import Link from "next/link";
 import Image from "next/image";
-import { auth } from "@/lib/auth";
 import SignOutButton from "./SignOutButton";
+import { auth } from "@/lib/auth";
 
 type UserRole = "JOB_SEEKER" | "EMPLOYER" | "ADMIN" | undefined;
 
 export default async function SiteHeader() {
   const session = await auth();
-  const user = session?.user as { id?: string; role?: UserRole } | undefined;
-  const role: UserRole = user?.role ?? "JOB_SEEKER";
-  const isAuthed = Boolean(user?.id);
-
+  const role: UserRole = (session?.user as any)?.role ?? undefined;
+  const isAuthed = Boolean((session?.user as any)?.id);
   const dashboardHref = role === "EMPLOYER" ? "/home/employer" : "/home/seeker";
 
   return (
@@ -18,7 +16,7 @@ export default async function SiteHeader() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2 shrink-0">
           <Image
-            src="/hireme-logo.png"   // put your correct logo at public/hireme-logo.png (or change to .svg)
+            src="/hireme-logo.png"
             alt="HireMe"
             width={28}
             height={28}

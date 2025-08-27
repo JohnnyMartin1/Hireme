@@ -2,44 +2,34 @@
 @tailwind components;
 @tailwind utilities;
 
-/* App “surface” */
+/* Light design tokens */
 :root {
-  --page-bg: #f7f9fc;
+  --bg: #f7f9fc;
+  --card: #ffffff;
+  --text: #0f172a; /* slate-900 */
+  --muted: #64748b; /* slate-500 */
+  --ring: 0 0 0 3px rgba(47,134,255,0.2);
 }
 
-html, body {
+html, body, #__next {
   height: 100%;
 }
 
 body {
-  @apply bg-[var(--page-bg)] text-gray-800 antialiased;
+  @apply bg-[var(--bg)] text-[var(--text)];
 }
 
-/* Card & button helpers */
+/* Basic card + button sugar (optional) */
 .card {
-  @apply bg-white rounded-2xl shadow-card;
+  @apply bg-white shadow-card rounded-2xl p-6;
 }
 
 .btn {
   @apply inline-flex items-center justify-center rounded-lg px-4 py-2 font-medium transition;
 }
 .btn-primary {
-  @apply btn bg-brand-400 text-white hover:bg-brand-300;
+  @apply bg-brand-600 text-white hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500;
 }
-.btn-outline {
-  @apply btn border border-gray-300 hover:bg-gray-50;
-}
-
-/* Form polish via @tailwindcss/forms */
-input[type="text"],
-input[type="email"],
-input[type="password"],
-select,
-textarea {
-  @apply rounded-lg border-gray-300 focus:border-brand-400 focus:ring-brand-300;
-}
-
-/* Simple container */
-.container {
-  @apply mx-auto w-full max-w-7xl px-6;
+.btn-ghost {
+  @apply text-slate-700 hover:bg-slate-100;
 }

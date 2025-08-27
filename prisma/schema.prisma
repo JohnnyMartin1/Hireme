@@ -1,7 +1,4 @@
-// This Prisma schema defines the core data model for the HireMe application.
-// It includes models for users, rich candidate profiles, employers, jobs,
-// messaging, notifications and email verification tokens.
-
+// Datasource & generator
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
@@ -11,7 +8,51 @@ generator client {
   provider = "prisma-client-js"
 }
 
-// ---------- Users & Auth ----------
+// ===== Enums =====
+
+enum Role {
+  JOB_SEEKER
+  EMPLOYER
+  ADMIN
+}
+
+enum EmploymentType {
+  INTERNSHIP
+  PART_TIME
+  FULL_TIME
+  CONTRACT
+}
+
+enum WorkMode {
+  ONSITE
+  HYBRID
+  REMOTE
+}
+
+enum WorkAuth {
+  US_CITIZEN
+  US_GREEN_CARD
+  US_WORK_VISA
+  US_NO_SPONSORSHIP
+  OTHER
+}
+
+enum InviteStatus {
+  SENT
+  ACCEPTED
+  DECLINED
+  EXPIRED
+}
+
+enum SubscriptionStatus {
+  INACTIVE
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  CANCELED
+}
+
+// ===== Core user & auth =====
 
 model User {
   id            String    @id @default(cuid())
@@ -22,82 +63,70 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  profile       Profile?
-  employer      Employer?
+  profile  Profile?
+  employer Employer?
+
   messagesSent  Message[]      @relation("messagesSent")
   messagesRecv  Message[]      @relation("messagesRecv")
   notifications Notification[]
+
+  endorsementsGiven Endorsement[]
+  events            Event[]
 }
 
-enum Role {
-  JOB_SEEKER
-  EMPLOYER
-  ADMIN
-}
-
-// ---------- Candidate Profile (rich) ----------
-// Keep most fields as simple strings/arrays for now so UI can evolve quickly.
+// ===== Candidate profile (rich) =====
 
 model Profile {
   id     String @id @default(cuid())
   userId String @unique
   user   User   @relation(fields: [userId], references: [id])
 
-  // Basics
   firstName String
   lastName  String
   headline  String?
   bio       String?
   avatarUrl String?
 
-  // Skills (legacy simple tags kept for quick cards)
   skills String[]
 
-  // Links & contact
-  website   String?
-  linkedin  String?
-  github    String?
-  portfolio String?
-  phone     String?
+  resumeUrl String?
+  videoUrl  String?
 
-  // Location
   locationCity    String?
   locationState   String?
   locationCountry String?
 
-  // Preferences
-  desiredTitles    String[] // e.g. ["Marketing Analyst","Growth Associate"]
-  desiredLocations String[] // e.g. ["NYC","Remote"]
-  workModes        String[] // e.g. ["ONSITE","HYBRID","REMOTE"]
-  workAuth         String?
-  openToRelocate   Boolean?  @default(false)
-  openToRemote     Boolean?  @default(true)
-  startDate        DateTime?
-  minSalary        Int?
-  salaryCurrency   String?   @default("USD")
-  yearsExperience  Int?
-
-  // Education snapshot
-  school         String?
-  degreeType     String? // e.g. "BACHELORS", "MASTERS"
-  major          String?
-  graduationYear Int?
-  gpa            Float?
-
-  // Achievements / languages
-  certifications String[]
-  languages      String[]
-
-  // Uploads
-  resumeUrl String?
-  videoUrl  String?
-
-  // Visibility / misc
-  seeking    String?
   visibility Boolean @default(true)
+
+  preferences     CandidatePreference?
+  invitesReceived TalentInvite[]
+  endorsements    Endorsement[]
+  views           View[]
+  links           ProfileLink[]
 }
 
-// ---------- Employers & Jobs ----------
+model CandidatePreference {
+  id        String  @id @default(cuid())
+  profileId String  @unique
+  profile   Profile @relation(fields: [profileId], references: [id])
+
+  desiredLocations    String[]
+  desiredRoles        String[]
+  workModes           WorkMode[]
+  workAuth            WorkAuth[]
+  minSalary           Int?
+  openToOpportunities Boolean    @default(true)
+}
+
+model ProfileLink {
+  id        String  @id @default(cuid())
+  profileId String
+  profile   Profile @relation(fields: [profileId], references: [id])
+  label     String
+  url       String
+}
+
+// ===== Employer & jobs =====
 
 model Employer {
   id            String  @id @default(cuid())
@@ -109,15 +138,22 @@ model Employer {
   about         String?
   locationCity  String?
   locationState String?
-  jobs          Job[]
+
+  jobs Job[]
+
+  searchPresets SearchPreset[]
+  invitesSent   TalentInvite[]
+  subscriptions Subscription[]
+  views         View[]
 
   @@index([industry], map: "employer_industry_idx")
 }
 
 model Job {
-  id            String         @id @default(cuid())
-  employerId    String
-  employer      Employer       @relation(fields: [employerId], references: [id])
+  id         String   @id @default(cuid())
+  employerId String
+  employer   Employer @relation(fields: [employerId], references: [id])
+
   title         String
   description   String
   locationCity  String?
@@ -132,14 +168,117 @@ model Job {
   @@index([title], map: "job_title_idx")
 }
 
-enum EmploymentType {
-  INTERNSHIP
-  PART_TIME
-  FULL_TIME
-  CONTRACT
+model SearchPreset {
+  id         String   @id @default(cuid())
+  employerId String
+  employer   Employer @relation(fields: [employerId], references: [id])
+
+  name      String
+  criteria  Json
+  createdAt DateTime @default(now())
 }
 
-// ---------- Messaging & Notifications ----------
+model TalentInvite {
+  id         String   @id @default(cuid())
+  employerId String
+  employer   Employer @relation(fields: [employerId], references: [id])
+
+  candidateId String
+  candidate   Profile @relation(fields: [candidateId], references: [id])
+
+  message     String?
+  status      InviteStatus @default(SENT)
+  expiresAt   DateTime?
+  createdAt   DateTime     @default(now())
+  respondedAt DateTime?
+
+  @@index([employerId, candidateId])
+}
+
+// ===== Trust, activity, analytics =====
+
+model Endorsement {
+  id      String @id @default(cuid())
+  giverId String
+  giver   User   @relation(fields: [giverId], references: [id])
+
+  profileId String
+  profile   Profile @relation(fields: [profileId], references: [id])
+
+  skill     String
+  note      String?
+  weight    Int?
+  createdAt DateTime @default(now())
+
+  @@index([profileId])
+}
+
+model Event {
+  id      String  @id @default(cuid())
+  actorId String?
+  actor   User?   @relation(fields: [actorId], references: [id])
+
+  type       String
+  targetType String?
+  targetId   String?
+  ctx        Json?
+
+  createdAt DateTime @default(now())
+
+  @@index([actorId])
+  @@index([type, createdAt])
+}
+
+model View {
+  id         String   @id @default(cuid())
+  employerId String
+  employer   Employer @relation(fields: [employerId], references: [id])
+
+  profileId String
+  profile   Profile @relation(fields: [profileId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([employerId, profileId, createdAt])
+}
+
+// ===== Billing =====
+
+model Plan {
+  id              String   @id @default(cuid())
+  code            String   @unique
+  name            String
+  priceCents      Int      @default(0)
+  invitesPerMonth Int      @default(20)
+  searchesPerDay  Int      @default(50)
+  seats           Int      @default(1)
+  createdAt       DateTime @default(now())
+
+  subscriptions Subscription[]
+}
+
+model Subscription {
+  id         String   @id @default(cuid())
+  employerId String
+  employer   Employer @relation(fields: [employerId], references: [id])
+
+  planId String
+  plan   Plan   @relation(fields: [planId], references: [id])
+
+  stripeCustomerId   String?
+  status             SubscriptionStatus @default(INACTIVE)
+  currentPeriodStart DateTime?
+  currentPeriodEnd   DateTime?
+  cancelAtPeriodEnd  Boolean?           @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([employerId])
+  @@index([planId])
+}
+
+// ===== Messaging & notifications =====
 
 model Message {
   id         String    @id @default(cuid())
@@ -163,7 +302,7 @@ model Notification {
   readAt    DateTime?
 }
 
-// ---------- Email Verification ----------
+// ===== Email verification =====
 
 model EmailToken {
   id        String    @id @default(cuid())

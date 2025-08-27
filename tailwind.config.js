@@ -3,34 +3,32 @@ module.exports = {
   content: [
     "./app/**/*.{js,ts,jsx,tsx,mdx}",
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
+    "./pages/**/*.{js,ts,jsx,tsx,mdx}",
   ],
   theme: {
     extend: {
       colors: {
-        // From the HireMe logo: navy + blue
         brand: {
-          900: "#0B1B2B", // deep navy
-          800: "#0E2236",
-          700: "#12304D",
-          600: "#173E66",
-          500: "#1E3A8A", // slate-ish
-          400: "#2563EB", // primary blue
-          300: "#3B82F6",
-          200: "#93C5FD",
+          50:  "#eef7ff",
+          100: "#d9edff",
+          200: "#b6dbff",
+          300: "#8cc4ff",
+          400: "#5aa6ff",
+          500: "#2f86ff",
+          600: "#226af2",
+          700: "#1d53c2",
+          800: "#1c489b",
+          900: "#1b3f7c",
         },
       },
       boxShadow: {
-        card: "0 6px 20px rgba(0,0,0,0.08)",
+        card: "0 6px 24px rgba(0,0,0,0.06)",
       },
-      fontFamily: {
-        // Uses system font stack (fast). If you want a Google font later, easy to swap.
-        sans: ["ui-sans-serif", "system-ui", "Inter", "Segoe UI", "Roboto", "Arial", "sans-serif"],
-      },
-      backgroundImage: {
-        "hero-radial":
-          "radial-gradient(1200px 600px at 50% -10%, rgba(37, 99, 235, 0.20), rgba(37, 99, 235, 0) 60%)",
+      borderRadius: {
+        xl: "1rem",
+        "2xl": "1.25rem",
       },
     },
   },
-  plugins: [require("@tailwindcss/forms")],
+  plugins: [],
 };
