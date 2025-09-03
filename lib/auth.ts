@@ -1,9 +1,9 @@
 // lib/auth.ts
 // Simple auth compatibility layer that uses centralized Firebase
-import { auth } from "@/lib/firebase";
+import { auth as firebaseAuth } from "@/lib/firebase";
 
 export const authFunction = async () => {
-  const user = auth.currentUser;
+  const user = firebaseAuth.currentUser;
   if (!user) {
     return null;
   }
@@ -25,4 +25,4 @@ export const authFunction = async () => {
 export const auth = authFunction;
 
 // Also export the Firebase auth object for direct use
-export { auth as authObject };
+export { firebaseAuth as authObject };
