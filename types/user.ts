@@ -8,6 +8,9 @@ export interface UserProfile {
   name?: string | null;
   email?: string | null;
 
+  role?: "EMPLOYER" | "JOB_SEEKER" | string | null;
+
+
   // Company profile fields used on /account/company
   companyWebsite?: string | null;
   companySize?: string | null;

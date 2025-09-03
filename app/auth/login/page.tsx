@@ -5,6 +5,8 @@ import Link from "next/link";
 import { Loader2 } from "lucide-react";
 import { signInWithFirebase } from "@/lib/firebase-auth";
 import { getDocument } from "@/lib/firebase-firestore";
+import type { UserProfile } from "@/types/user";
+
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -38,24 +40,29 @@ export default function LoginPage() {
             return;
           }
 
-          if (profile) {
-            console.log('User profile:', profile);
-            const userRole = profile.role;
-            
-            // Redirect based on user role
-            if (userRole === 'EMPLOYER') {
-              console.log('Redirecting employer to /home/employer...');
-              router.push("/home/employer");
-            } else if (userRole === 'JOB_SEEKER') {
-              console.log('Redirecting job seeker to /home/seeker...');
-              router.push("/home/seeker");
-            } else if (userRole === 'ADMIN') {
-              console.log('Redirecting admin to /admin...');
-              router.push("/admin");
-            } else {
-              console.error('Unknown user role:', userRole);
-              setErr("Invalid user role. Please contact support.");
-            }
+
+if (profile) {
+  console.log("User profile:", profile);
+
+  // Cast to our shared type
+  const p = profile as Partial<UserProfile>;
+  const userRole = p.role ?? null;
+
+  // Redirect based on user role
+  if (userRole === "EMPLOYER") {
+    console.log("Redirecting employer to /home/employer...");
+    router.push("/home/employer");
+  } else if (userRole === "JOB_SEEKER") {
+    console.log("Redirecting job seeker to /home/seeker...");
+    router.push("/home/seeker");
+  } else if (userRole === "ADMIN") {
+    console.log("Redirecting admin to /admin...");
+    router.push("/admin");
+  } else {
+    console.error("Unknown user role:", userRole);
+    setErr("Invalid user role. Please contact support.");
+  }
+
           } else {
             console.error('No profile found for user');
             setErr("User profile not found. Please contact support.");
