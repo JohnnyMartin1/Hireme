@@ -37,7 +37,7 @@ export default function ViewJobPage({ params }: { params: { id: string } }) {
         }
 
         // Check if the job belongs to the current user
-        if (jobData.employerId !== user.uid) {
+        if ((jobData as any).employerId !== user.uid) {
           setError('You can only view your own jobs');
           return;
         }
