@@ -1,5 +1,5 @@
 "use client";
-import { useFirebaseAuth } from './FirebaseAuthProvider';
+import { useFirebaseAuth } from '@/components/FirebaseAuthProvider';
 import Link from 'next/link';
 import { User, LogOut, Bell, Settings } from 'lucide-react';
 

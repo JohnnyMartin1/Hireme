@@ -1,5 +1,5 @@
 "use client";
-import { useFirebaseAuth } from "./FirebaseAuthProvider";
+import { useFirebaseAuth } from "@/components/FirebaseAuthProvider";
 
 export default function SignOutButton() {
   const { signOut } = useFirebaseAuth();
