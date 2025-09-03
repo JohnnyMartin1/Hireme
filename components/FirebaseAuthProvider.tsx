@@ -15,6 +15,11 @@ interface UserProfile {
   skills?: string[];
   openToOpp?: boolean;
   isActive?: boolean;
+  // Company fields
+  companyBio?: string;
+  companyLocation?: string;
+  companyWebsite?: string;
+  companySize?: string;
   // Education
   school?: string;
   major?: string;
