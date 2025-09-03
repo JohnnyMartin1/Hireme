@@ -2,7 +2,7 @@
 // This file is a compatibility layer for any code that expects NextAuth-style auth
 // We're using Firebase authentication, so this redirects to the appropriate Firebase functions
 
-// Import Firebase auth directly
+// Import Firebase directly to avoid circular dependencies
 import { getAuth } from 'firebase/auth';
 import { initializeApp } from 'firebase/app';
 
