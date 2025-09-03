@@ -1,130 +1,167 @@
-import { PrismaClient, Role, SubscriptionStatus } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
-async function upsertPlans() {
-  await prisma.plan.upsert({
-    where: { code: 'FREE' },
-    create: { code: 'FREE', name: 'Free', priceCents: 0, invitesPerMonth: 10, searchesPerDay: 25, seats: 1 },
-    update: {},
-  });
-  await prisma.plan.upsert({
-    where: { code: 'STARTER' },
-    create: { code: 'STARTER', name: 'Starter', priceCents: 9900, invitesPerMonth: 100, searchesPerDay: 200, seats: 3 },
-    update: {},
-  });
-  await prisma.plan.upsert({
-    where: { code: 'PRO' },
-    create: { code: 'PRO', name: 'Pro', priceCents: 24900, invitesPerMonth: 500, searchesPerDay: 1000, seats: 10 },
-    update: {},
-  });
-}
-
-async function ensureDemoUsers() {
-  const passwordHash = await bcrypt.hash('Password123!', 10);
-
-  // Employer
-  let employerUser = await prisma.user.findUnique({ where: { email: 'seed+employer@hireme.local' } });
-  if (!employerUser) {
-    employerUser = await prisma.user.create({
-      data: {
-        email: 'seed+employer@hireme.local',
-        passwordHash,
-        role: Role.EMPLOYER,
-        emailVerified: new Date(),
-      },
-    });
-  }
-  let employer = await prisma.employer.findUnique({ where: { userId: employerUser.id } });
-  if (!employer) {
-    employer = await prisma.employer.create({
-      data: {
-        userId: employerUser.id,
-        companyName: 'Acme Co.',
-        website: 'https://example.com',
-        industry: 'Software',
-        about: 'Demo employer for local dev.',
-        locationCity: 'Charlottesville',
-        locationState: 'VA',
-      },
-    });
-  }
-
-  // Candidate
-  let seekerUser = await prisma.user.findUnique({ where: { email: 'seed+seeker@hireme.local' } });
-  if (!seekerUser) {
-    seekerUser = await prisma.user.create({
-      data: {
-        email: 'seed+seeker@hireme.local',
-        passwordHash,
-        role: Role.JOB_SEEKER,
-        emailVerified: new Date(),
-      },
-    });
-  }
-  let profile = await prisma.profile.findUnique({ where: { userId: seekerUser.id } });
-  if (!profile) {
-    profile = await prisma.profile.create({
-      data: {
-        userId: seekerUser.id,
-        firstName: 'Sam',
-        lastName: 'Student',
-        headline: 'CS @ UVA — SWE Intern',
-        bio: 'Early-career engineer interested in backend and infra.',
-        skills: ['JavaScript', 'TypeScript', 'React', 'Node', 'SQL'],
-        locationCity: 'Charlottesville',
-        locationState: 'VA',
-        locationCountry: 'USA',
-      },
-    });
-  }
-
-  // Candidate preferences
-  await prisma.candidatePreference.upsert({
-    where: { profileId: profile.id },
-    create: {
-      profileId: profile.id,
-      desiredLocations: ['Washington DC', 'Richmond, VA'],
-      desiredRoles: ['Software Engineer', 'Backend Engineer'],
-      workModes: ['ONSITE', 'HYBRID'],
-      workAuth: ['US_CITIZEN'],
-      minSalary: 70000,
-      openToOpportunities: true,
-    },
-    update: {},
-  });
-
-  // Employer on FREE plan (subscription)
-  const freePlan = await prisma.plan.findUnique({ where: { code: 'FREE' } });
-  if (freePlan) {
-    const existingSub = await prisma.subscription.findFirst({
-      where: { employerId: employer.id, planId: freePlan.id },
-    });
-    if (!existingSub) {
-      await prisma.subscription.create({
-        data: {
-          employerId: employer.id,
-          planId: freePlan.id,
-          status: SubscriptionStatus.ACTIVE,
-          currentPeriodStart: new Date(),
-          currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-        },
-      });
-    }
-  }
-}
-
 async function main() {
-  console.log('Seeding: plans, demo users, profile, preferences…');
-  await upsertPlans();
-  await ensureDemoUsers();
-  console.log('✅ Seed complete');
+  console.log('🌱 Starting database seed...');
+
+  // Clean up existing data
+  await prisma.message.deleteMany();
+  await prisma.threadParticipant.deleteMany();
+  await prisma.thread.deleteMany();
+  await prisma.view.deleteMany();
+  await prisma.profile.deleteMany();
+  await prisma.employer.deleteMany();
+  await prisma.emailToken.deleteMany();
+  await prisma.user.deleteMany();
+
+  console.log('🧹 Cleaned existing data');
+
+  // Create demo employer
+  const employerPassword = await bcrypt.hash('employer123', 10);
+  const employer = await prisma.user.create({
+    data: {
+      email: 'hiring@acmecorp.com',
+      passwordHash: employerPassword,
+      role: 'EMPLOYER',
+      emailVerified: new Date(),
+      employer: {
+        create: {
+          companyName: 'Acme Corporation',
+          website: 'https://acmecorp.com',
+          description: 'Leading technology company focused on innovation and growth.',
+          hiringRoles: ['Software Engineer', 'Product Manager', 'Data Scientist'],
+        },
+      },
+    },
+    include: {
+      employer: true,
+    },
+  });
+
+  console.log('🏢 Created demo employer:', employer.email);
+
+  // Create demo job seekers
+  const seeker1Password = await bcrypt.hash('seeker123', 10);
+  const seeker1 = await prisma.user.create({
+    data: {
+      email: 'john.doe@email.com',
+      passwordHash: seeker1Password,
+      role: 'JOB_SEEKER',
+      emailVerified: new Date(),
+      profile: {
+        create: {
+          firstName: 'John',
+          lastName: 'Doe',
+          headline: 'Full Stack Developer',
+          bio: 'Passionate developer with experience in React, Node.js, and cloud technologies.',
+          school: 'Stanford University',
+          city: 'San Francisco',
+          state: 'CA',
+          country: 'USA',
+          interests: ['Web Development', 'Machine Learning', 'Open Source'],
+          skills: ['React', 'Node.js', 'Python', 'AWS', 'Docker'],
+          languages: ['English', 'Spanish'],
+          workModes: ['HYBRID', 'REMOTE'],
+          workAuth: ['US Citizen'],
+          openToOpp: true,
+        },
+      },
+    },
+    include: {
+      profile: true,
+    },
+  });
+
+  const seeker2Password = await bcrypt.hash('seeker123', 10);
+  const seeker2 = await prisma.user.create({
+    data: {
+      email: 'sarah.smith@email.com',
+      passwordHash: seeker2Password,
+      role: 'JOB_SEEKER',
+      emailVerified: new Date(),
+      profile: {
+        create: {
+          firstName: 'Sarah',
+          lastName: 'Smith',
+          headline: 'Product Manager',
+          bio: 'Experienced product manager with a track record of launching successful products.',
+          school: 'UC Berkeley',
+          city: 'Oakland',
+          state: 'CA',
+          country: 'USA',
+          interests: ['Product Strategy', 'User Research', 'Data Analytics'],
+          skills: ['Product Management', 'SQL', 'Figma', 'Agile', 'A/B Testing'],
+          languages: ['English', 'French'],
+          workModes: ['ONSITE', 'HYBRID'],
+          workAuth: ['US Citizen'],
+          openToOpp: true,
+        },
+      },
+    },
+    include: {
+      profile: true,
+    },
+  });
+
+  console.log('👥 Created demo job seekers:', seeker1.email, seeker2.email);
+
+  // Create a demo thread and message
+  const thread = await prisma.thread.create({
+    data: {
+      participants: {
+        create: [
+          { userId: employer.id },
+          { userId: seeker1.id },
+        ],
+      },
+      messages: {
+        create: [
+          {
+            senderId: employer.id,
+            body: 'Hi John! We were impressed by your profile and would love to discuss potential opportunities at Acme Corp.',
+          },
+          {
+            senderId: seeker1.id,
+            body: 'Thank you for reaching out! I would be very interested in learning more about the role and company.',
+          },
+        ],
+      },
+    },
+  });
+
+  console.log('💬 Created demo conversation thread');
+
+  // Create some profile views
+  if (employer.employer && seeker1.profile && seeker2.profile) {
+    await prisma.view.createMany({
+      data: [
+        {
+          employerId: employer.employer.id,
+          profileId: seeker1.profile.id,
+        },
+        {
+          employerId: employer.employer.id,
+          profileId: seeker2.profile.id,
+        },
+      ],
+    });
+
+    console.log('👀 Created demo profile views');
+  }
+
+  console.log('\n🎉 Database seeded successfully!');
+  console.log('\n📧 Demo Accounts:');
+  console.log('Employer: hiring@acmecorp.com / employer123');
+  console.log('Job Seeker 1: john.doe@email.com / seeker123');
+  console.log('Job Seeker 2: sarah.smith@email.com / seeker123');
+  console.log('\n🔗 You can now log in and test the application!');
 }
 
 main()
   .catch((e) => {
-    console.error(e);
+    console.error('❌ Error seeding database:', e);
     process.exit(1);
   })
   .finally(async () => {

@@ -13,8 +13,8 @@ const items = [
 export default function Sidebar() {
   const pathname = usePathname();
   return (
-    <aside className="card p-4 md:p-6 sticky top-24 h-max">
-      <h2 className="font-semibold text-gray-900 mb-4">Account Settings</h2>
+    <aside className="hireme-card p-4 md:p-6 sticky top-24 h-max">
+      <h2 className="font-semibold text-[var(--text)] mb-4">Account Settings</h2>
       <nav className="space-y-1">
         {items.map(({ href, label, icon: Icon }) => {
           const active = pathname.startsWith(href);
@@ -22,8 +22,11 @@ export default function Sidebar() {
             <Link
               key={href}
               href={href}
-              className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition
-                ${active ? "bg-brand-400 text-white" : "hover:bg-gray-50 text-gray-700"}
+              className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors
+                ${active 
+                  ? "bg-[var(--hireme-blue)] text-white shadow-sm" 
+                  : "hover:bg-[var(--hireme-light-blue)] text-[var(--muted)] hover:text-[var(--text)]"
+                }
               `}
             >
               <Icon className="h-4 w-4" />

@@ -16,298 +16,168 @@ enum Role {
   ADMIN
 }
 
-enum EmploymentType {
-  INTERNSHIP
-  PART_TIME
-  FULL_TIME
-  CONTRACT
-}
-
 enum WorkMode {
   ONSITE
   HYBRID
   REMOTE
 }
 
-enum WorkAuth {
-  US_CITIZEN
-  US_GREEN_CARD
-  US_WORK_VISA
-  US_NO_SPONSORSHIP
+enum DegreeType {
+  HIGH_SCHOOL
+  ASSOCIATE
+  BACHELORS
+  MASTERS
+  MBA
+  PHD
+  BOOTCAMP
   OTHER
 }
 
-enum InviteStatus {
-  SENT
-  ACCEPTED
-  DECLINED
-  EXPIRED
-}
-
-enum SubscriptionStatus {
-  INACTIVE
-  TRIALING
-  ACTIVE
-  PAST_DUE
-  CANCELED
+enum ExperienceLevel {
+  INTERN
+  ENTRY
+  JUNIOR
+  MID
+  SENIOR
+  LEAD
+  MANAGER
+  DIRECTOR
+  EXECUTIVE
 }
 
 // ===== Core user & auth =====
 
 model User {
-  id            String    @id @default(cuid())
-  email         String    @unique
-  emailVerified DateTime?
-  passwordHash  String
-  role          Role      @default(JOB_SEEKER)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id             String    @id @default(cuid())
+  email          String    @unique
+  passwordHash   String
+  role           Role      @default(JOB_SEEKER)
+  emailVerified  DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
-  profile  Profile?
-  employer Employer?
+  profile        Profile?
+  employer       Employer?
 
-  messagesSent  Message[]      @relation("messagesSent")
-  messagesRecv  Message[]      @relation("messagesRecv")
-  notifications Notification[]
+  // messaging
+  threads        ThreadParticipant[]
+  messages       Message[]
+}
 
-  endorsementsGiven Endorsement[]
-  events            Event[]
+model EmailToken {
+  id        String   @id @default(cuid())
+  email     String
+  token     String   @unique
+  purpose   String   // "verify"
+  expiresAt DateTime
+  createdAt DateTime @default(now())
 }
 
 // ===== Candidate profile (rich) =====
 
 model Profile {
-  id     String @id @default(cuid())
-  userId String @unique
-  user   User   @relation(fields: [userId], references: [id])
+  id               String   @id @default(cuid())
+  userId           String   @unique
+  user             User     @relation(fields: [userId], references: [id])
 
-  firstName String
-  lastName  String
-  headline  String?
-  bio       String?
-  avatarUrl String?
+  firstName        String
+  lastName         String
+  headline         String?
+  bio              String?
 
-  skills String[]
+  graduationYear   Int?
+  degreeType       DegreeType?
+  major            String?
+  gpa              Float?
+  school           String?
+  city             String?
+  state            String?
+  country          String?
 
-  resumeUrl String?
-  videoUrl  String?
+  interests        String[]  // tags
+  skills           String[]  // tags
+  languages        String[]  // tags
 
-  locationCity    String?
-  locationState   String?
-  locationCountry String?
+  resumeUrl        String?
+  videoUrl         String?
+  websiteUrl       String?
+  linkedinUrl      String?
+  githubUrl        String?
 
-  visibility Boolean @default(true)
+  workModes        WorkMode[]
+  workAuth         String[]  // e.g. ["US Citizen","H1B","CPT","OPT"]
+  openToOpp        Boolean   @default(true)
 
-  preferences     CandidatePreference?
-  invitesReceived TalentInvite[]
-  endorsements    Endorsement[]
-  views           View[]
-  links           ProfileLink[]
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  // messaging
+  views            View[]
 }
 
-model CandidatePreference {
-  id        String  @id @default(cuid())
-  profileId String  @unique
-  profile   Profile @relation(fields: [profileId], references: [id])
-
-  desiredLocations    String[]
-  desiredRoles        String[]
-  workModes           WorkMode[]
-  workAuth            WorkAuth[]
-  minSalary           Int?
-  openToOpportunities Boolean    @default(true)
-}
-
-model ProfileLink {
-  id        String  @id @default(cuid())
-  profileId String
-  profile   Profile @relation(fields: [profileId], references: [id])
-  label     String
-  url       String
-}
-
-// ===== Employer & jobs =====
+// ===== Employer & company =====
 
 model Employer {
-  id            String  @id @default(cuid())
-  userId        String  @unique
-  user          User    @relation(fields: [userId], references: [id])
-  companyName   String
-  website       String?
-  industry      String?
-  about         String?
-  locationCity  String?
-  locationState String?
+  id          String   @id @default(cuid())
+  ownerId     String   @unique
+  owner       User     @relation(fields: [ownerId], references: [id])
 
-  jobs Job[]
+  companyName String
+  website     String?
+  location    String?
+  description String?
+  hiringRoles String[] // tags: "Software Engineer","Sales",…
 
-  searchPresets SearchPreset[]
-  invitesSent   TalentInvite[]
-  subscriptions Subscription[]
-  views         View[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  @@index([industry], map: "employer_industry_idx")
+  // messaging
+  views       View[]
 }
 
-model Job {
+// ===== Messaging system =====
+
+model Thread {
+  id            String   @id @default(cuid())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  participants  ThreadParticipant[]
+  messages      Message[]
+}
+
+model ThreadParticipant {
+  id        String @id @default(cuid())
+  threadId  String
+  userId    String
+
+  thread    Thread @relation(fields: [threadId], references: [id])
+  user      User   @relation(fields: [userId], references: [id])
+
+  @@unique([threadId, userId])
+}
+
+model Message {
   id         String   @id @default(cuid())
-  employerId String
-  employer   Employer @relation(fields: [employerId], references: [id])
+  threadId   String
+  senderId   String
+  body       String
+  createdAt  DateTime @default(now())
 
-  title         String
-  description   String
-  locationCity  String?
-  locationState String?
-  employment    EmploymentType
-  salaryMin     Int?
-  salaryMax     Int?
-  createdAt     DateTime       @default(now())
-  isActive      Boolean        @default(true)
-  tags          String[]
-
-  @@index([title], map: "job_title_idx")
+  thread     Thread @relation(fields: [threadId], references: [id])
+  sender     User   @relation(fields: [senderId], references: [id])
 }
 
-model SearchPreset {
-  id         String   @id @default(cuid())
-  employerId String
-  employer   Employer @relation(fields: [employerId], references: [id])
-
-  name      String
-  criteria  Json
-  createdAt DateTime @default(now())
-}
-
-model TalentInvite {
-  id         String   @id @default(cuid())
-  employerId String
-  employer   Employer @relation(fields: [employerId], references: [id])
-
-  candidateId String
-  candidate   Profile @relation(fields: [candidateId], references: [id])
-
-  message     String?
-  status      InviteStatus @default(SENT)
-  expiresAt   DateTime?
-  createdAt   DateTime     @default(now())
-  respondedAt DateTime?
-
-  @@index([employerId, candidateId])
-}
-
-// ===== Trust, activity, analytics =====
-
-model Endorsement {
-  id      String @id @default(cuid())
-  giverId String
-  giver   User   @relation(fields: [giverId], references: [id])
-
-  profileId String
-  profile   Profile @relation(fields: [profileId], references: [id])
-
-  skill     String
-  note      String?
-  weight    Int?
-  createdAt DateTime @default(now())
-
-  @@index([profileId])
-}
-
-model Event {
-  id      String  @id @default(cuid())
-  actorId String?
-  actor   User?   @relation(fields: [actorId], references: [id])
-
-  type       String
-  targetType String?
-  targetId   String?
-  ctx        Json?
-
-  createdAt DateTime @default(now())
-
-  @@index([actorId])
-  @@index([type, createdAt])
-}
+// ===== Analytics & tracking =====
 
 model View {
   id         String   @id @default(cuid())
   employerId String
+  profileId  String
+  createdAt  DateTime @default(now())
+
   employer   Employer @relation(fields: [employerId], references: [id])
+  profile    Profile  @relation(fields: [profileId], references: [id])
 
-  profileId String
-  profile   Profile @relation(fields: [profileId], references: [id])
-
-  createdAt DateTime @default(now())
-
-  @@index([employerId, profileId, createdAt])
-}
-
-// ===== Billing =====
-
-model Plan {
-  id              String   @id @default(cuid())
-  code            String   @unique
-  name            String
-  priceCents      Int      @default(0)
-  invitesPerMonth Int      @default(20)
-  searchesPerDay  Int      @default(50)
-  seats           Int      @default(1)
-  createdAt       DateTime @default(now())
-
-  subscriptions Subscription[]
-}
-
-model Subscription {
-  id         String   @id @default(cuid())
-  employerId String
-  employer   Employer @relation(fields: [employerId], references: [id])
-
-  planId String
-  plan   Plan   @relation(fields: [planId], references: [id])
-
-  stripeCustomerId   String?
-  status             SubscriptionStatus @default(INACTIVE)
-  currentPeriodStart DateTime?
-  currentPeriodEnd   DateTime?
-  cancelAtPeriodEnd  Boolean?           @default(false)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([employerId])
-  @@index([planId])
-}
-
-// ===== Messaging & notifications =====
-
-model Message {
-  id         String    @id @default(cuid())
-  senderId   String
-  receiverId String
-  sender     User      @relation("messagesSent", fields: [senderId], references: [id])
-  receiver   User      @relation("messagesRecv", fields: [receiverId], references: [id])
-  body       String
-  createdAt  DateTime  @default(now())
-  readAt     DateTime?
-  threadId   String
-}
-
-model Notification {
-  id        String    @id @default(cuid())
-  userId    String
-  user      User      @relation(fields: [userId], references: [id])
-  type      String
-  payload   Json
-  createdAt DateTime  @default(now())
-  readAt    DateTime?
-}
-
-// ===== Email verification =====
-
-model EmailToken {
-  id        String    @id @default(cuid())
-  email     String
-  token     String    @unique
-  expiresAt DateTime
-  usedAt    DateTime?
+  @@index([employerId, profileId])
 }

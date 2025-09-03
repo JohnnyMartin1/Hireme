@@ -1,44 +1,33 @@
+"use client";
 import Link from "next/link";
-import Image from "next/image";
-import SignOutButton from "./SignOutButton";
-import { auth } from "@/lib/auth";
+import { useFirebaseAuth } from "./FirebaseAuthProvider";
+import Logo from "./Logo";
 
-type UserRole = "JOB_SEEKER" | "EMPLOYER" | "ADMIN" | undefined;
-
-export default async function SiteHeader() {
-  const session = await auth();
-  const role: UserRole = (session?.user as any)?.role ?? undefined;
-  const isAuthed = Boolean((session?.user as any)?.id);
-  const dashboardHref = role === "EMPLOYER" ? "/home/employer" : "/home/seeker";
+export default function SiteHeader() {
+  const { user, profile, signOut } = useFirebaseAuth();
 
   return (
-    <header className="border-b bg-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/60">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
+    <header className="border-b border-[var(--border)] bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/90 shadow-sm">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2 shrink-0">
-          <Image
-            src="/hireme-logo.png"
-            alt="HireMe"
-            width={28}
-            height={28}
-            className="h-7 w-7"
-            priority
-          />
-          <span className="font-semibold tracking-tight text-lg">HireMe</span>
+          <Logo size="md" className="hireme-logo" />
         </Link>
 
-        {!isAuthed ? (
+        {!user ? (
           <nav className="flex items-center gap-6">
-            <Link href="/" className="text-sm text-gray-600 hover:text-gray-900">Home</Link>
-            <div className="flex items-center gap-2">
+            <Link href="/" className="text-sm text-[var(--muted)] hover:text-[var(--text)] transition-colors">
+              Home
+            </Link>
+            <div className="flex items-center gap-3">
               <Link
                 href="/auth/signup"
-                className="inline-flex items-center rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700"
+                className="hireme-btn hireme-btn-primary text-sm"
               >
                 Sign up
               </Link>
               <Link
                 href="/auth/login"
-                className="inline-flex items-center rounded-md border px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                className="hireme-btn hireme-btn-ghost text-sm"
               >
                 Log in
               </Link>
@@ -46,10 +35,15 @@ export default async function SiteHeader() {
           </nav>
         ) : (
           <nav className="flex items-center gap-6">
-            <Link href="/" className="text-sm text-gray-600 hover:text-gray-900">Home</Link>
-            <Link href={dashboardHref} className="text-sm text-gray-600 hover:text-gray-900">Dashboard</Link>
-            <Link href="/account" className="text-sm text-gray-600 hover:text-gray-900">Account</Link>
-            <SignOutButton />
+            <Link href="/" className="text-sm text-[var(--muted)] hover:text-[var(--text)] transition-colors">
+              Home
+            </Link>
+            <button
+              onClick={signOut}
+              className="hireme-btn hireme-btn-ghost text-sm"
+            >
+              Sign out
+            </button>
           </nav>
         )}
       </div>

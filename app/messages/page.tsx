@@ -1,72 +1,197 @@
-import { prisma } from '@/lib/prisma';
-import { auth } from '@/lib/auth';
+"use client";
+import { useFirebaseAuth } from "@/components/FirebaseAuthProvider";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { User, MessageSquare, ArrowRight, Loader2 } from "lucide-react";
+import { getUserMessageThreads, getDocument } from '@/lib/firebase-firestore';
 import Link from 'next/link';
 
-/**
- * Messages page. Shows a list of conversation threads involving the current
- * user. Each thread links to the detailed conversation view. The list
- * displays the name of the other participant, a snippet of the last
- * message and a badge if there are unread messages.
- */
-export default async function MessagesPage() {
-  const session = await auth();
-  if (!session || !session.user) {
-    return <p>You must be signed in to view messages.</p>;
-  }
-  const userId = session.user.id;
-  // Fetch last 50 messages of the user to derive threads
-  const messages = await prisma.message.findMany({
-    where: {
-      OR: [
-        { senderId: userId },
-        { receiverId: userId },
-      ],
-    },
-    orderBy: { createdAt: 'desc' },
-    take: 50,
-  });
-  const threads: Record<string, typeof messages[0]> = {};
-  for (const msg of messages) {
-    if (!threads[msg.threadId]) {
-      threads[msg.threadId] = msg;
+interface MessageThread {
+  id: string;
+  participantIds: string[];
+  createdAt: any;
+  updatedAt: any;
+  lastMessageAt: any;
+}
+
+interface ThreadWithParticipants {
+  thread: MessageThread;
+  otherParticipant: any;
+  lastMessage?: any;
+}
+
+export default function MessagesPage() {
+  const { user, profile, loading } = useFirebaseAuth();
+  const router = useRouter();
+  const [threads, setThreads] = useState<ThreadWithParticipants[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push("/auth/login");
+      return;
     }
-  }
-  const threadEntries = Object.entries(threads);
-  // Prepare data for rendering: get counterpart user and unread count for each thread
-  const threadList = await Promise.all(threadEntries.map(async ([threadId, msg]) => {
-    const counterpartId = msg.senderId === userId ? msg.receiverId : msg.senderId;
-    const counterpart = await prisma.user.findUnique({ where: { id: counterpartId } });
-    const unreadCount = await prisma.message.count({
-      where: {
-        threadId,
-        receiverId: userId,
-        readAt: null,
-      },
-    });
-    return {
-      threadId,
-      counterpartName: counterpart?.email || 'Unknown',
-      lastMessage: msg.body,
-      unreadCount,
+    
+    // Redirect candidates to their specific messages page
+    if (profile && profile.role === 'JOB_SEEKER') {
+      router.push("/messages/candidate");
+      return;
+    }
+  }, [user, loading, profile, router]);
+
+  useEffect(() => {
+    const fetchThreads = async () => {
+      if (!user) return;
+      
+      setIsLoading(true);
+      try {
+        console.log('Fetching message threads for user:', user.uid);
+        const { data: threadsData, error: threadsError } = await getUserMessageThreads(user.uid);
+        
+        console.log('Threads response:', { data: threadsData, error: threadsError });
+        
+        if (threadsError) {
+          console.error('Error fetching threads:', threadsError);
+          setError(`Failed to load message threads: ${threadsError}`);
+          return;
+        }
+        
+        if (!threadsData || threadsData.length === 0) {
+          console.log('No threads found, setting empty array');
+          setThreads([]);
+          return;
+        }
+        
+        console.log('Found threads:', threadsData);
+        
+        // Fetch other participant info for each thread
+        const threadsWithParticipants = await Promise.all(
+          threadsData.map(async (thread) => {
+            const otherId = thread.participantIds.find(id => id !== user.uid);
+            let otherParticipant = null;
+            
+            if (otherId) {
+              console.log('Fetching participant:', otherId);
+              const { data: otherProfile, error: profileError } = await getDocument('users', otherId);
+              if (profileError) {
+                console.error('Error fetching participant profile:', profileError);
+              }
+              otherParticipant = otherProfile;
+            }
+            
+            return {
+              thread,
+              otherParticipant
+            };
+          })
+        );
+        
+        console.log('Threads with participants:', threadsWithParticipants);
+        setThreads(threadsWithParticipants);
+        
+      } catch (err) {
+        console.error('Error in fetchThreads:', err);
+        setError(`Failed to load message threads: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      } finally {
+        setIsLoading(false);
+      }
     };
-  }));
+
+    fetchThreads();
+  }, [user]);
+
+  if (loading || isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading messages...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user || !profile) {
+    return null; // Will redirect to login
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600 mb-4">{error}</p>
+          <button 
+            onClick={() => window.location.reload()}
+            className="text-blue-600 hover:text-blue-800 underline"
+          >
+            Try again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div>
-      <h2 className="text-2xl font-bold mb-4">Messages</h2>
-      <ul className="space-y-4">
-        {threadList.map((t) => (
-          <li key={t.threadId} className="border p-4 rounded bg-white flex justify-between items-center">
-            <Link href={`/messages/${t.threadId}`} className="flex-1">
-              <div className="font-semibold">{t.counterpartName}</div>
-              <div className="text-sm text-gray-600 truncate w-64">{t.lastMessage}</div>
-            </Link>
-            {t.unreadCount > 0 && (
-              <span className="ml-2 inline-block bg-blue-600 text-white text-xs font-medium px-2 py-1 rounded-full">{t.unreadCount}</span>
-            )}
-          </li>
-        ))}
-        {threadList.length === 0 && <p>No conversations yet.</p>}
-      </ul>
-    </div>
+    <main className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+      <div className="max-w-4xl mx-auto p-6">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Messages</h1>
+          <p className="text-gray-600">Your conversations with candidates and employers</p>
+        </div>
+
+        {/* Threads List */}
+        <div className="space-y-4">
+          {threads.length === 0 ? (
+            <div className="bg-white rounded-xl shadow-lg p-12 text-center">
+              <MessageSquare className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No messages yet</h3>
+              <p className="text-gray-500 mb-6">
+                Start connecting with candidates or employers to begin conversations
+              </p>
+              <Link
+                href="/search/candidates"
+                className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                <User className="h-4 w-4 mr-2" />
+                Find Candidates
+              </Link>
+            </div>
+          ) : (
+            threads.map(({ thread, otherParticipant }) => (
+              <Link
+                key={thread.id}
+                href={`/messages/${thread.id}`}
+                className="block bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                      <User className="h-6 w-6 text-blue-600" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900">
+                        {otherParticipant 
+                          ? `${otherParticipant.firstName || ''} ${otherParticipant.lastName || ''}`.trim() || 'Unknown User'
+                          : 'Unknown User'
+                        }
+                      </h3>
+                      <p className="text-sm text-gray-600">
+                        {otherParticipant?.headline || otherParticipant?.role || 'User'}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        Last activity: {thread.lastMessageAt ? new Date(thread.lastMessageAt.toDate ? thread.lastMessageAt.toDate() : thread.lastMessageAt).toLocaleDateString() : 'Recently'}
+                      </p>
+                    </div>
+                  </div>
+                  <ArrowRight className="h-5 w-5 text-gray-400" />
+                </div>
+              </Link>
+            ))
+          )}
+        </div>
+      </div>
+    </main>
   );
 }

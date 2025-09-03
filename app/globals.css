@@ -2,13 +2,24 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Light design tokens */
+/* HireMe Design System - Based on Logo Colors */
 :root {
-  --bg: #f7f9fc;
-  --card: #ffffff;
-  --text: #0f172a; /* slate-900 */
-  --muted: #64748b; /* slate-500 */
-  --ring: 0 0 0 3px rgba(47,134,255,0.2);
+  /* Primary Colors from Logo */
+  --hireme-navy: #1e3a8a;      /* Dark navy blue from logo */
+  --hireme-blue: #3b82f6;      /* Bright blue from logo */
+  --hireme-light-blue: #dbeafe; /* Light blue for backgrounds */
+  
+  /* Neutral Colors */
+  --bg: #f8fafc;               /* Very light gray background */
+  --card: #ffffff;              /* White cards */
+  --text: #0f172a;              /* Dark text */
+  --muted: #64748b;             /* Muted text */
+  --border: #e2e8f0;           /* Light borders */
+  
+  /* Interactive States */
+  --ring: 0 0 0 3px rgba(59, 130, 246, 0.2);
+  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
 html, body, #__next {
@@ -16,20 +27,76 @@ html, body, #__next {
 }
 
 body {
-  @apply bg-[var(--bg)] text-[var(--text)];
+  @apply bg-[var(--bg)] text-[var(--text)] font-sans;
 }
 
-/* Basic card + button sugar (optional) */
-.card {
-  @apply bg-white shadow-card rounded-2xl p-6;
+/* HireMe Design Components */
+.hireme-card {
+  @apply bg-white rounded-xl shadow-sm border border-[var(--border)] p-6;
 }
 
-.btn {
-  @apply inline-flex items-center justify-center rounded-lg px-4 py-2 font-medium transition;
+.hireme-card-elevated {
+  @apply bg-white rounded-xl shadow-lg border border-[var(--border)] p-6;
 }
-.btn-primary {
-  @apply bg-brand-600 text-white hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500;
+
+.hireme-btn {
+  @apply inline-flex items-center justify-center rounded-lg px-4 py-2 font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2;
 }
-.btn-ghost {
-  @apply text-slate-700 hover:bg-slate-100;
+
+.hireme-btn-primary {
+  @apply bg-[var(--hireme-blue)] text-white hover:bg-[#2563eb] focus:ring-[var(--hireme-blue)] shadow-sm;
+}
+
+.hireme-btn-secondary {
+  @apply bg-[var(--hireme-light-blue)] text-[var(--hireme-navy)] hover:bg-[#bfdbfe] focus:ring-[var(--hireme-blue)];
+}
+
+.hireme-btn-ghost {
+  @apply text-[var(--muted)] hover:bg-gray-50 hover:text-[var(--text)] focus:ring-[var(--hireme-blue)];
+}
+
+.hireme-btn-danger {
+  @apply bg-red-600 text-white hover:bg-red-700 focus:ring-red-500;
+}
+
+.hireme-input {
+  @apply w-full px-3 py-2 border border-[var(--border)] rounded-lg focus:ring-2 focus:ring-[var(--hireme-blue)] focus:border-[var(--hireme-blue)] transition-colors;
+}
+
+.hireme-badge {
+  @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+}
+
+.hireme-badge-primary {
+  @apply bg-[var(--hireme-light-blue)] text-[var(--hireme-navy)];
+}
+
+.hireme-badge-success {
+  @apply bg-green-100 text-green-800;
+}
+
+.hireme-badge-warning {
+  @apply bg-yellow-100 text-yellow-800;
+}
+
+.hireme-badge-danger {
+  @apply bg-red-100 text-red-800;
+}
+
+/* Logo Animation */
+.hireme-logo {
+  @apply transition-transform duration-200;
+}
+
+.hireme-logo:hover {
+  @apply transform scale-105;
+}
+
+/* Gradient Backgrounds */
+.hireme-gradient {
+  background: linear-gradient(135deg, var(--hireme-navy) 0%, var(--hireme-blue) 100%);
+}
+
+.hireme-gradient-light {
+  background: linear-gradient(135deg, var(--hireme-light-blue) 0%, #eff6ff 100%);
 }

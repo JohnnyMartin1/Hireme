@@ -1,6 +1,7 @@
 "use client";
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useFirebaseAuth } from '@/components/FirebaseAuthProvider';
 import BackButton from '@/components/BackButton';
 
 /**
@@ -10,6 +11,7 @@ import BackButton from '@/components/BackButton';
  */
 export default function NewJobPage() {
   const router = useRouter();
+  const { user, profile } = useFirebaseAuth();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [locationCity, setLocationCity] = useState('');
@@ -19,20 +21,47 @@ export default function NewJobPage() {
   const [salaryMax, setSalaryMax] = useState('');
   const [tags, setTags] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // Redirect if not logged in or not an employer
+  if (!user || !profile || profile.role !== 'EMPLOYER') {
+    router.push('/auth/login');
+    return null;
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const res = await fetch('/api/job/create', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title, description, locationCity, locationState, employment, salaryMin: Number(salaryMin) || null, salaryMax: Number(salaryMax) || null, tags: tags.split(',').map((t) => t.trim()) }),
-    });
-    setLoading(false);
-    if (res.ok) {
-      alert('Job created');
-      router.push('/home/employer');
-    } else {
-      alert('Failed to create job');
+    
+    try {
+      const res = await fetch('/api/job/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          title, 
+          description, 
+          locationCity, 
+          locationState, 
+          employment, 
+          salaryMin: Number(salaryMin) || null, 
+          salaryMax: Number(salaryMax) || null, 
+          tags: tags.split(',').map((t) => t.trim()).filter(t => t), 
+          employerId: user.uid 
+        }),
+      });
+
+      if (res.ok) {
+        const result = await res.json();
+        alert('Job created successfully!');
+        router.push('/home/employer');
+      } else {
+        const error = await res.json();
+        alert(`Failed to create job: ${error.error || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Error creating job:', error);
+      alert('Failed to create job. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
   return (
