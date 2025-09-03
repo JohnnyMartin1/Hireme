@@ -2,12 +2,28 @@
 // This file is a compatibility layer for any code that expects NextAuth-style auth
 // We're using Firebase authentication, so this redirects to the appropriate Firebase functions
 
-import { auth as firebaseAuth } from '@/lib/firebase';
-import { getCurrentFirebaseUser } from '@/lib/firebase-auth';
+// Import Firebase auth directly
+import { getAuth } from 'firebase/auth';
+import { initializeApp } from 'firebase/app';
+
+// Your Firebase configuration
+const firebaseConfig = {
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
 
 // Export a function that mimics NextAuth's auth() function
-export const auth = async () => {
-  const user = getCurrentFirebaseUser();
+export const authFunction = async () => {
+  const user = auth.currentUser;
   if (!user) {
     return null;
   }
@@ -25,5 +41,8 @@ export const auth = async () => {
   };
 };
 
+// Export the auth function as 'auth' for compatibility
+export const auth = authFunction;
+
 // Also export the Firebase auth object for direct use
-export { firebaseAuth as authObject };
+export { auth as authObject };
