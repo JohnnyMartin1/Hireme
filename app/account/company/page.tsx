@@ -80,34 +80,40 @@ export default function CompanyProfileEditPage() {
     }
   }, [user, profile, loading, router]);
 
-  const handleInputChange = (field: keyof CompanyProfileData, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
+const handleInputChange = (field: keyof CompanyProfileData, value: string | null) => {
+  setFormData(prev => ({
+    ...prev,
+    [field]: value ?? ""
+  }));
+};
 
   const handleFileUpload = async (field: 'bannerImageUrl' | 'logoImageUrl', file: File) => {
     if (!user) return;
 
     setIsLoading(true);
-    try {
-      const fileName = `${user.uid}_${field}_${Date.now()}`;
-      const { url, error } = await uploadFile(file, `company-${field}`, fileName);
-      
-      if (error) {
-        setMessage({ type: 'error', text: `Failed to upload ${field}: ${error}` });
-        return;
-      }
+try {
+  const fileName = `${user.uid}_${field}_${Date.now()}`;
+  const { url, error } = await uploadFile(file, `company-${field}`, fileName);
 
-      handleInputChange(field, url);
-      setMessage({ type: 'success', text: `${field === 'bannerImageUrl' ? 'Banner' : 'Logo'} uploaded successfully!` });
-    } catch (error) {
-      setMessage({ type: 'error', text: `Failed to upload ${field}` });
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  if (error) {
+    setMessage({ type: "error", text: `Failed to upload ${field}: ${error}` });
+    return;
+  }
+
+  if (!url) {
+    setMessage({ type: "error", text: `Upload failed: no URL returned` });
+    return;
+  }
+
+  handleInputChange(field, url);
+  setMessage({
+    type: "success",
+    text: `${field === "bannerImageUrl" ? "Banner" : "Logo"} uploaded successfully!`
+  });
+} finally {
+  setIsLoading(false);
+}
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
