@@ -19,11 +19,11 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
+const firebaseAuth = getAuth(app);
 
 // Export a function that mimics NextAuth's auth() function
-export const authFunction = async () => {
-  const user = auth.currentUser;
+export const auth = async () => {
+  const user = firebaseAuth.currentUser;
   if (!user) {
     return null;
   }
@@ -41,8 +41,5 @@ export const authFunction = async () => {
   };
 };
 
-// Export the auth function as 'auth' for compatibility
-export const auth = authFunction;
-
 // Also export the Firebase auth object for direct use
-export { auth as authObject };
+export { firebaseAuth as authObject };
