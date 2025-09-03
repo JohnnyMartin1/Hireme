@@ -2,8 +2,8 @@
 // This file is a compatibility layer for any code that expects NextAuth-style auth
 // We're using Firebase authentication, so this redirects to the appropriate Firebase functions
 
-import { auth as firebaseAuth } from './firebase';
-import { getCurrentFirebaseUser } from './firebase-auth';
+import { auth as firebaseAuth } from '@/lib/firebase';
+import { getCurrentFirebaseUser } from '@/lib/firebase-auth';
 
 // Export a function that mimics NextAuth's auth() function
 export const auth = async () => {
