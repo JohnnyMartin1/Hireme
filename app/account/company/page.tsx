@@ -6,6 +6,8 @@ import { updateDocument } from '@/lib/firebase-firestore';
 import { uploadFile } from '@/lib/firebase-storage';
 import { Building, Upload, Save, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
+import type { UserProfile } from "@/types/user";
+
 
 interface CompanyProfileData {
   companyName?: string;

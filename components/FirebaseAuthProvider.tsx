@@ -3,44 +3,8 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import { User as FirebaseUser } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
+import type { UserProfile } from "@/types/user";
 
-interface UserProfile {
-  id: string;
-  firstName?: string;
-  lastName?: string;
-  companyName?: string;
-  email: string;
-  role: 'JOB_SEEKER' | 'EMPLOYER' | 'ADMIN';
-  headline?: string;
-  skills?: string[];
-  openToOpp?: boolean;
-  isActive?: boolean;
-  // Company fields
-  companyBio?: string;
-  companyLocation?: string;
-  companyWebsite?: string;
-  companySize?: string;
-  // Education
-  school?: string;
-  major?: string;
-  minor?: string;
-  graduationYear?: string;
-  gpa?: string;
-  // Location & Preferences
-  location?: string;
-  workPreferences?: string[];
-  jobTypes?: string[];
-  // Experience & Activities
-  experience?: string;
-  extracurriculars?: string[];
-  certifications?: string[];
-  languages?: string[];
-  // Personal
-  bio?: string;
-  linkedinUrl?: string;
-  portfolioUrl?: string;
-  createdAt: Date;
-}
 
 interface AuthContextType {
   user: FirebaseUser | null;

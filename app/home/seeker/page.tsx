@@ -13,16 +13,7 @@ import {
 } from "lucide-react";
 import { getUserMessageThreads, getProfileViewCount, getDocument } from '@/lib/firebase-firestore';
 
-interface UserProfile {
-  firstName?: string;
-  lastName?: string;
-  headline?: string;
-  school?: string;
-  major?: string;
-  graduationYear?: string;
-  openToOpp?: boolean;
-  createdAt?: Date;
-}
+import type { UserProfile } from "@/types/user";
 
 export default function SeekerHomePage() {
   const { user, profile, loading } = useFirebaseAuth();
