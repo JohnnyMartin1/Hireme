@@ -15,6 +15,7 @@ export const authFunction = async () => {
       email: user.email,
       name: user.displayName,
       image: user.photoURL,
+      role: 'JOB_SEEKER', // Default role for now
       // Add any other properties your app expects
     },
     expires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24 hours from now
