@@ -87,32 +87,37 @@ const handleInputChange = (field: keyof CompanyProfileData, value: string | null
   }));
 };
 
-  const handleFileUpload = async (field: 'bannerImageUrl' | 'logoImageUrl', file: File) => {
-    if (!user) return;
+const handleFileUpload = async (
+  field: "bannerImageUrl" | "logoImageUrl",
+  file: File
+) => {
+  if (!user) return;
 
-    setIsLoading(true);
-try {
-  const fileName = `${user.uid}_${field}_${Date.now()}`;
-  const { url, error } = await uploadFile(file, `company-${field}`, fileName);
+  setIsLoading(true);
+  try {
+    const fileName = `${user.uid}_${field}_${Date.now()}`;
+    const { url, error } = await uploadFile(file, `company-${field}`, fileName);
 
-  if (error) {
-    setMessage({ type: "error", text: `Failed to upload ${field}: ${error}` });
-    return;
+    if (error) {
+      setMessage({ type: "error", text: `Failed to upload ${field}: ${error}` });
+      return;
+    }
+    if (!url) {
+      setMessage({ type: "error", text: `Upload failed: no URL returned` });
+      return;
+    }
+
+    handleInputChange(field, url);
+    setMessage({
+      type: "success",
+      text: `${field === "bannerImageUrl" ? "Banner" : "Logo"} uploaded successfully!`,
+    });
+  } catch (err) {
+    setMessage({ type: "error", text: `Failed to upload ${field}` });
+  } finally {
+    setIsLoading(false);
   }
-
-  if (!url) {
-    setMessage({ type: "error", text: `Upload failed: no URL returned` });
-    return;
-  }
-
-  handleInputChange(field, url);
-  setMessage({
-    type: "success",
-    text: `${field === "bannerImageUrl" ? "Banner" : "Logo"} uploaded successfully!`
-  });
-} finally {
-  setIsLoading(false);
-}
+};
 
 
   const handleSubmit = async (e: React.FormEvent) => {
