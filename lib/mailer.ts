@@ -12,9 +12,9 @@ export async function sendVerificationEmail(email: string, token: string) {
   const user = process.env.SMTP_USER;
   const pass = process.env.SMTP_PASS;
   const from = process.env.EMAIL_FROM;
-  const baseUrl = process.env.NEXTAUTH_URL;
-  if (!host || !user || !pass || !from || !baseUrl) {
-    throw new Error('SMTP or NEXTAUTH_URL environment variables not set');
+  const baseUrl = process.env.NEXTAUTH_URL || process.env.VERCEL_URL || 'http://localhost:3000';
+  if (!host || !user || !pass || !from) {
+    throw new Error('SMTP environment variables not set');
   }
   const transporter = nodemailer.createTransport({
     host,
