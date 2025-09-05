@@ -138,15 +138,16 @@ export const getSavedCandidates = async (employerId: string) => {
     if (error) return { data: [], error };
     
     // Get the actual candidate profiles
-    const candidateIds = savedData.map(save => save.candidateId);
+    const candidateIds = savedData.map((save: any) => save.candidateId);
     const candidates = [];
     
     for (const candidateId of candidateIds) {
       const { data: candidate } = await getDocument('users', candidateId);
       if (candidate) {
+        const savedItem = savedData.find((save: any) => save.candidateId === candidateId) as any;
         candidates.push({
           ...candidate,
-          savedAt: savedData.find(save => save.candidateId === candidateId)?.savedAt
+          savedAt: savedItem?.savedAt
         });
       }
     }
@@ -202,7 +203,7 @@ export const getUserMessageThreads = async (userId: string) => {
     }));
 
     // Sort by lastMessageAt on the client side to avoid needing an index
-    threads.sort((a, b) => {
+    threads.sort((a: any, b: any) => {
       const aTime = a.lastMessageAt?.toDate ? a.lastMessageAt.toDate() : a.lastMessageAt;
       const bTime = b.lastMessageAt?.toDate ? b.lastMessageAt.toDate() : b.lastMessageAt;
       
@@ -260,7 +261,7 @@ export const getThreadMessages = async (threadId: string) => {
     }));
     
     // Sort messages by createdAt on the client side to avoid needing an index
-    messages.sort((a, b) => {
+    messages.sort((a: any, b: any) => {
       const aTime = a.createdAt?.toDate ? a.createdAt.toDate() : a.createdAt;
       const bTime = b.createdAt?.toDate ? b.createdAt.toDate() : b.createdAt;
       
@@ -419,7 +420,7 @@ export const getCompanyAverageRating = async (employerId: string) => {
       return { average: 0, count: 0, error: null };
     }
     
-    const totalRating = ratings.reduce((sum, rating) => sum + rating.rating, 0);
+    const totalRating = ratings.reduce((sum, rating: any) => sum + rating.rating, 0);
     const average = totalRating / ratings.length;
     
     return { average: Math.round(average * 10) / 10, count: ratings.length, error: null };

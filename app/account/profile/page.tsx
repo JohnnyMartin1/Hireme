@@ -131,7 +131,9 @@ export default function EditProfilePage() {
       } else {
         alert('Profile updated successfully!');
         // Refresh the page to show updated data
-        window.location.reload();
+        if (typeof window !== 'undefined') {
+          window.location.reload();
+        }
       }
     } catch (error) {
       console.error('Error updating profile:', error);

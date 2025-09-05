@@ -4,6 +4,9 @@ import { useRouter } from 'next/navigation';
 import { useFirebaseAuth } from '@/components/FirebaseAuthProvider';
 import BackButton from '@/components/BackButton';
 
+// Force this page to be dynamically rendered to avoid SSR issues
+export const dynamic = 'force-dynamic';
+
 /**
  * Job posting wizard. Simplified to a single form for creating a job.
  * Includes fields for title, description, location, employment type,

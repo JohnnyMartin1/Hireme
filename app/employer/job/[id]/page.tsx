@@ -5,13 +5,14 @@ import { useFirebaseAuth } from '@/components/FirebaseAuthProvider';
 import { getDocument } from '@/lib/firebase-firestore';
 import BackButton from '@/components/BackButton';
 import { Loader2, MapPin, Building, DollarSign, Calendar, Tag } from 'lucide-react';
+import type { Job } from '@/types/job';
 
 export default function ViewJobPage({ params }: { params: { id: string } }) {
   const router = useRouter();
   const { user, profile } = useFirebaseAuth();
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
-  const [job, setJob] = useState<any>(null);
+  const [job, setJob] = useState<Job | null>(null);
 
   // Redirect if not logged in or not an employer
   if (!user || !profile || profile.role !== 'EMPLOYER') {
@@ -36,13 +37,16 @@ export default function ViewJobPage({ params }: { params: { id: string } }) {
           return;
         }
 
+        // Cast to Job type
+        const jobTyped = jobData as Job;
+        
         // Check if the job belongs to the current user
-        if ((jobData as any).employerId !== user.uid) {
+        if (jobTyped.employerId !== user.uid) {
           setError('You can only view your own jobs');
           return;
         }
 
-        setJob(jobData);
+        setJob(jobTyped);
       } catch (err) {
         console.error('Error fetching job:', err);
         setError('Failed to load job');
