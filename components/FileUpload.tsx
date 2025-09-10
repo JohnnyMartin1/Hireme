@@ -53,12 +53,10 @@ export default function FileUpload({
       if (type === 'resume') {
         const { url, error } = await uploadResume(file, userId);
         if (error) throw new Error(error);
-        if (!url) throw new Error('Upload failed: No URL returned');
         fileUrl = url;
       } else {
         const { url, error } = await uploadProfileImage(file, userId);
         if (error) throw new Error(error);
-        if (!url) throw new Error('Upload failed: No URL returned');
         fileUrl = url;
       }
 
