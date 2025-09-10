@@ -67,7 +67,8 @@ export default function MessagesPage() {
         
         // Fetch other participant info for each thread
         const threadsWithParticipants = await Promise.all(
-          threadsData.map(async (thread) => {
+          threadsData.map(async (threadData) => {
+            const thread = threadData as MessageThread;
             const otherId = thread.participantIds.find(id => id !== user.uid);
             let otherParticipant = null;
             

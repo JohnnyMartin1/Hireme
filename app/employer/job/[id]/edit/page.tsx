@@ -5,6 +5,7 @@ import { useFirebaseAuth } from '@/components/FirebaseAuthProvider';
 import { getDocument, updateDocument } from '@/lib/firebase-firestore';
 import BackButton from '@/components/BackButton';
 import { Loader2 } from 'lucide-react';
+import type { Job } from '@/types/job';
 
 export default function EditJobPage({ params }: { params: { id: string } }) {
   const router = useRouter();
@@ -46,21 +47,24 @@ export default function EditJobPage({ params }: { params: { id: string } }) {
           return;
         }
 
+        // Type the jobData as Job
+        const job = jobData as Job;
+
         // Check if the job belongs to the current user
-        if ((jobData as any).employerId !== user.uid) {
+        if (job.employerId !== user.uid) {
           setError('You can only edit your own jobs');
           return;
         }
 
         // Populate form with existing data
-        setTitle(jobData.title || '');
-        setDescription(jobData.description || '');
-        setLocationCity(jobData.locationCity || '');
-        setLocationState(jobData.locationState || '');
-        setEmployment(jobData.employment || 'FULL_TIME');
-        setSalaryMin(jobData.salaryMin ? jobData.salaryMin.toString() : '');
-        setSalaryMax(jobData.salaryMax ? jobData.salaryMax.toString() : '');
-        setTags(jobData.tags ? jobData.tags.join(', ') : '');
+        setTitle(job.title || '');
+        setDescription(job.description || '');
+        setLocationCity(job.locationCity || '');
+        setLocationState(job.locationState || '');
+        setEmployment(job.employment || 'FULL_TIME');
+        setSalaryMin(job.salaryMin ? job.salaryMin.toString() : '');
+        setSalaryMax(job.salaryMax ? job.salaryMax.toString() : '');
+        setTags(job.tags ? job.tags.join(', ') : '');
       } catch (err) {
         console.error('Error fetching job:', err);
         setError('Failed to load job');
