@@ -138,15 +138,16 @@ export const getSavedCandidates = async (employerId: string) => {
     if (error) return { data: [], error };
     
     // Get the actual candidate profiles
-    const candidateIds = savedData.map(save => save.candidateId);
+    const candidateIds = savedData.map(save => (save as any).candidateId);
     const candidates = [];
     
     for (const candidateId of candidateIds) {
       const { data: candidate } = await getDocument('users', candidateId);
       if (candidate) {
+        const saveRecord = savedData.find(save => (save as any).candidateId === candidateId);
         candidates.push({
           ...candidate,
-          savedAt: savedData.find(save => save.candidateId === candidateId)?.savedAt
+          savedAt: saveRecord ? (saveRecord as any).savedAt : null
         });
       }
     }
@@ -203,8 +204,10 @@ export const getUserMessageThreads = async (userId: string) => {
 
     // Sort by lastMessageAt on the client side to avoid needing an index
     threads.sort((a, b) => {
-      const aTime = a.lastMessageAt?.toDate ? a.lastMessageAt.toDate() : a.lastMessageAt;
-      const bTime = b.lastMessageAt?.toDate ? b.lastMessageAt.toDate() : b.lastMessageAt;
+      const aData = a as any;
+      const bData = b as any;
+      const aTime = aData.lastMessageAt?.toDate ? aData.lastMessageAt.toDate() : aData.lastMessageAt;
+      const bTime = bData.lastMessageAt?.toDate ? bData.lastMessageAt.toDate() : bData.lastMessageAt;
       
       if (!aTime && !bTime) return 0;
       if (!aTime) return 1;
@@ -261,8 +264,10 @@ export const getThreadMessages = async (threadId: string) => {
     
     // Sort messages by createdAt on the client side to avoid needing an index
     messages.sort((a, b) => {
-      const aTime = a.createdAt?.toDate ? a.createdAt.toDate() : a.createdAt;
-      const bTime = b.createdAt?.toDate ? b.createdAt.toDate() : b.createdAt;
+      const aData = a as any;
+      const bData = b as any;
+      const aTime = aData.createdAt?.toDate ? aData.createdAt.toDate() : aData.createdAt;
+      const bTime = bData.createdAt?.toDate ? bData.createdAt.toDate() : bData.createdAt;
       
       if (!aTime && !bTime) return 0;
       if (!aTime) return 1;
@@ -419,7 +424,7 @@ export const getCompanyAverageRating = async (employerId: string) => {
       return { average: 0, count: 0, error: null };
     }
     
-    const totalRating = ratings.reduce((sum, rating) => sum + rating.rating, 0);
+    const totalRating = ratings.reduce((sum, rating) => sum + (rating as any).rating, 0);
     const average = totalRating / ratings.length;
     
     return { average: Math.round(average * 10) / 10, count: ratings.length, error: null };
