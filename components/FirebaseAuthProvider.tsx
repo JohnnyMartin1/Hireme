@@ -3,6 +3,7 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import { User as FirebaseUser } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
+import { getDocument } from '@/lib/firebase-firestore';
 import type { UserProfile } from "@/types/user";
 
 
@@ -25,13 +26,51 @@ export function FirebaseAuthProvider({ children }: { children: React.ReactNode }
       setUser(firebaseUser);
 
       if (firebaseUser) {
-        // For now, create a basic profile from Firebase user
-        setProfile({
-          id: firebaseUser.uid,
-          email: firebaseUser.email || '',
-          role: 'JOB_SEEKER', // Default role
-          createdAt: new Date(),
-        });
+        try {
+          // Fetch user profile from Firestore to get the actual role
+          const { data: profileData, error: profileError } = await getDocument('users', firebaseUser.uid);
+          
+          if (profileError) {
+            console.error('Error fetching user profile:', profileError);
+            // Fallback to basic profile with default role
+            setProfile({
+              id: firebaseUser.uid,
+              email: firebaseUser.email || '',
+              role: 'JOB_SEEKER', // Default role as fallback
+              createdAt: new Date(),
+            });
+          } else if (profileData) {
+            // Use the actual profile data from Firestore
+            setProfile({
+              id: firebaseUser.uid,
+              email: firebaseUser.email || '',
+              role: profileData.role || 'JOB_SEEKER',
+              firstName: profileData.firstName,
+              lastName: profileData.lastName,
+              companyName: profileData.companyName,
+              headline: profileData.headline,
+              skills: profileData.skills,
+              createdAt: profileData.createdAt ? new Date(profileData.createdAt) : new Date(),
+            });
+          } else {
+            // No profile found, create basic profile
+            setProfile({
+              id: firebaseUser.uid,
+              email: firebaseUser.email || '',
+              role: 'JOB_SEEKER', // Default role
+              createdAt: new Date(),
+            });
+          }
+        } catch (error) {
+          console.error('Error fetching user profile:', error);
+          // Fallback to basic profile
+          setProfile({
+            id: firebaseUser.uid,
+            email: firebaseUser.email || '',
+            role: 'JOB_SEEKER', // Default role as fallback
+            createdAt: new Date(),
+          });
+        }
       } else {
         setProfile(null);
       }
