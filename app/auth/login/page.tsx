@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Loader2 } from "lucide-react";
 import { signInWithFirebase } from "@/lib/firebase-auth";
 import { getUserByFirebaseUid } from "@/lib/database";
+import { testFirebaseConnection } from "@/lib/firebase-debug";
 import type { UserProfile } from "@/types/user";
 
 
@@ -30,14 +31,31 @@ export default function LoginPage() {
       } else if (user) {
         console.log('Firebase login successful, user:', user);
         
+        // Test Firebase connection first
+        console.log('🔥 Testing Firebase connection...');
+        const firebaseConnected = await testFirebaseConnection();
+        
+        if (!firebaseConnected) {
+          setErr("Firebase connection failed. Please check configuration.");
+          return;
+        }
+
         // Fetch user profile to determine role
         try {
+          console.log('🔄 Starting profile fetch for user:', user.uid);
+          
           // Try to get user profile by Firebase UID (works with both Prisma and Firestore)
           let { data: userProfile, error: profileError } = await getUserByFirebaseUid(user.uid);
           
+          console.log('📊 Profile fetch result:', { 
+            hasProfile: !!userProfile, 
+            error: profileError, 
+            profile: userProfile 
+          });
+          
           if (profileError || !userProfile) {
-            console.error('Error fetching user profile:', profileError);
-            setErr("Error fetching user profile. Please try again.");
+            console.error('❌ Error fetching user profile:', profileError);
+            setErr(`Error fetching user profile: ${profileError || 'User not found'}. Please try again.`);
             return;
           }
 

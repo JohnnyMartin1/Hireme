@@ -55,44 +55,27 @@ export const getUserByEmail = async (email: string) => {
 };
 
 export const getUserByFirebaseUid = async (firebaseUid: string) => {
+  console.log('🔍 getUserByFirebaseUid called with UID:', firebaseUid);
+  
   try {
-    // First try Prisma database if available
-    try {
-      let user = await prisma.user.findUnique({
-        where: { id: firebaseUid },
-        include: {
-          profile: true,
-          employer: true,
-        },
-      });
-
-      if (user) {
-        // Transform to match expected UserProfile interface
-        const userProfile = {
-          id: user.id,
-          email: user.email,
-          role: user.role,
-          firstName: user.profile?.firstName,
-          lastName: user.profile?.lastName,
-          companyName: user.employer?.companyName,
-          headline: user.profile?.headline,
-          skills: user.profile?.skills,
-          createdAt: user.createdAt,
-          profile: user.profile,
-          employer: user.employer,
-        };
-
-        return { data: userProfile, error: null };
-      }
-    } catch (prismaError) {
-      console.log('Prisma not available, falling back to Firestore');
-    }
-
-    // Fallback to Firestore
+    // Skip Prisma for now and go directly to Firestore
+    console.log('📱 Attempting to fetch from Firestore...');
     const { data: firestoreUser, error: firestoreError } = await getDocument('users', firebaseUid);
     
-    if (firestoreError || !firestoreUser) {
-      return { data: null, error: 'User not found' };
+    console.log('📱 Firestore response:', { 
+      hasData: !!firestoreUser, 
+      error: firestoreError,
+      userData: firestoreUser 
+    });
+    
+    if (firestoreError) {
+      console.error('❌ Firestore error:', firestoreError);
+      return { data: null, error: `Firestore error: ${firestoreError}` };
+    }
+
+    if (!firestoreUser) {
+      console.error('❌ No user found in Firestore for UID:', firebaseUid);
+      return { data: null, error: 'User not found in Firestore' };
     }
 
     // Transform Firestore data to match expected interface
@@ -108,9 +91,10 @@ export const getUserByFirebaseUid = async (firebaseUid: string) => {
       createdAt: (firestoreUser as any).createdAt ? new Date((firestoreUser as any).createdAt) : new Date(),
     };
 
+    console.log('✅ Successfully transformed user profile:', userProfile);
     return { data: userProfile, error: null };
   } catch (error: any) {
-    console.error('Error fetching user by Firebase UID:', error);
+    console.error('💥 Unexpected error in getUserByFirebaseUid:', error);
     return { data: null, error: error.message };
   }
 };

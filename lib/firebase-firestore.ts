@@ -39,16 +39,27 @@ export const createDocument = async (collectionName: string, data: any, id?: str
 };
 
 export const getDocument = async (collectionName: string, id: string) => {
+  console.log(`📄 getDocument called: collection="${collectionName}", id="${id}"`);
+  
   try {
+    console.log('🔗 Creating document reference...');
     const docRef = doc(db, collectionName, id);
+    console.log('📄 Document reference created:', !!docRef);
+    
+    console.log('📥 Fetching document...');
     const docSnap = await getDoc(docRef);
+    console.log('📄 Document snapshot received:', !!docSnap);
     
     if (docSnap.exists()) {
-      return { data: { id: docSnap.id, ...docSnap.data() }, error: null };
+      const data = docSnap.data();
+      console.log('✅ Document exists with data:', data);
+      return { data: { id: docSnap.id, ...data }, error: null };
     } else {
+      console.log('❌ Document does not exist');
       return { data: null, error: 'Document not found' };
     }
   } catch (error: any) {
+    console.error('💥 Error in getDocument:', error);
     return { data: null, error: error.message };
   }
 };
