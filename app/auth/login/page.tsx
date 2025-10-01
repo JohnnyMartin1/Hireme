@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Loader2 } from "lucide-react";
 import { signInWithFirebase } from "@/lib/firebase-auth";
-import { getDocument } from "@/lib/firebase-firestore";
+import { getUserByFirebaseUid } from "@/lib/database";
 import type { UserProfile } from "@/types/user";
 
 
@@ -32,37 +32,34 @@ export default function LoginPage() {
         
         // Fetch user profile to determine role
         try {
-          const { data: profile, error: profileError } = await getDocument('users', user.uid);
+          // Try to get user profile by Firebase UID (works with both Prisma and Firestore)
+          let { data: userProfile, error: profileError } = await getUserByFirebaseUid(user.uid);
           
-          if (profileError) {
-            console.error('Error fetching profile:', profileError);
+          if (profileError || !userProfile) {
+            console.error('Error fetching user profile:', profileError);
             setErr("Error fetching user profile. Please try again.");
             return;
           }
 
+          if (userProfile) {
+            console.log("User profile:", userProfile);
 
-if (profile) {
-  console.log("User profile:", profile);
+            const userRole = userProfile.role;
 
-  // Cast to our shared type
-  const p = profile as Partial<UserProfile>;
-  const userRole = p.role ?? null;
-
-  // Redirect based on user role
-  if (userRole === "EMPLOYER") {
-    console.log("Redirecting employer to /home/employer...");
-    router.push("/home/employer");
-  } else if (userRole === "JOB_SEEKER") {
-    console.log("Redirecting job seeker to /home/seeker...");
-    router.push("/home/seeker");
-  } else if (userRole === "ADMIN") {
-    console.log("Redirecting admin to /admin...");
-    router.push("/admin");
-  } else {
-    console.error("Unknown user role:", userRole);
-    setErr("Invalid user role. Please contact support.");
-  }
-
+            // Redirect based on user role
+            if (userRole === "EMPLOYER") {
+              console.log("Redirecting employer to /home/employer...");
+              router.push("/home/employer");
+            } else if (userRole === "JOB_SEEKER") {
+              console.log("Redirecting job seeker to /home/seeker...");
+              router.push("/home/seeker");
+            } else if (userRole === "ADMIN") {
+              console.log("Redirecting admin to /admin...");
+              router.push("/admin");
+            } else {
+              console.error("Unknown user role:", userRole);
+              setErr("Invalid user role. Please contact support.");
+            }
           } else {
             console.error('No profile found for user');
             setErr("User profile not found. Please contact support.");

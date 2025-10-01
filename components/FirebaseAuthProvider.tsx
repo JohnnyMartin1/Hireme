@@ -3,7 +3,7 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import { User as FirebaseUser } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
-import { getDocument } from '@/lib/firebase-firestore';
+import { getUserByFirebaseUid } from '@/lib/database';
 import type { UserProfile } from "@/types/user";
 
 
@@ -27,37 +27,33 @@ export function FirebaseAuthProvider({ children }: { children: React.ReactNode }
 
       if (firebaseUser) {
         try {
-          // Fetch user profile from Firestore to get the actual role
-          const { data: profileData, error: profileError } = await getDocument('users', firebaseUser.uid);
+          // First try to fetch user by Firebase UID
+          let { data: userData, error: userError } = await getUserByFirebaseUid(firebaseUser.uid);
           
-          if (profileError) {
-            console.error('Error fetching user profile:', profileError);
-            // Fallback to basic profile with default role
+          if (userError || !userData) {
+            console.log('User not found by Firebase UID, this is normal for Firestore-based profiles');
+            // For Firestore users, the getUserByFirebaseUid will handle the fallback
+            // No need for additional logic here since the function already tries Firestore
+          }
+
+          if (userData) {
             setProfile({
-              id: firebaseUser.uid,
-              email: firebaseUser.email || '',
-              role: 'JOB_SEEKER', // Default role as fallback
-              createdAt: new Date(),
-            });
-          } else if (profileData) {
-            // Use the actual profile data from Firestore
-            setProfile({
-              id: firebaseUser.uid,
-              email: firebaseUser.email || '',
-              role: profileData.role || 'JOB_SEEKER',
-              firstName: profileData.firstName,
-              lastName: profileData.lastName,
-              companyName: profileData.companyName,
-              headline: profileData.headline,
-              skills: profileData.skills,
-              createdAt: profileData.createdAt ? new Date(profileData.createdAt) : new Date(),
+              id: userData.id,
+              email: userData.email,
+              role: userData.role || 'JOB_SEEKER',
+              firstName: userData.firstName,
+              lastName: userData.lastName,
+              companyName: userData.companyName,
+              headline: userData.headline,
+              skills: userData.skills,
+              createdAt: userData.createdAt || new Date(),
             });
           } else {
-            // No profile found, create basic profile
+            // Fallback to basic profile if all else fails
             setProfile({
               id: firebaseUser.uid,
               email: firebaseUser.email || '',
-              role: 'JOB_SEEKER', // Default role
+              role: 'JOB_SEEKER',
               createdAt: new Date(),
             });
           }
@@ -67,7 +63,7 @@ export function FirebaseAuthProvider({ children }: { children: React.ReactNode }
           setProfile({
             id: firebaseUser.uid,
             email: firebaseUser.email || '',
-            role: 'JOB_SEEKER', // Default role as fallback
+            role: 'JOB_SEEKER',
             createdAt: new Date(),
           });
         }
