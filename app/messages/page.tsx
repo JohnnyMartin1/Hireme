@@ -65,9 +65,12 @@ export default function MessagesPage() {
         
         console.log('Found threads:', threadsData);
         
+        // Type assertion for thread data
+        const typedThreadsData = threadsData as MessageThread[];
+        
         // Fetch other participant info for each thread
         const threadsWithParticipants = await Promise.all(
-          threadsData.map(async (thread) => {
+          typedThreadsData.map(async (thread) => {
             const otherId = thread.participantIds.find(id => id !== user.uid);
             let otherParticipant = null;
             

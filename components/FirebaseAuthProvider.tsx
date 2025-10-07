@@ -40,17 +40,20 @@ export function FirebaseAuthProvider({ children }: { children: React.ReactNode }
               createdAt: new Date(),
             });
           } else if (profileData) {
+            // Type assertion for profile data
+            const profile = profileData as any;
+            
             // Use the actual profile data from Firestore
             setProfile({
               id: firebaseUser.uid,
               email: firebaseUser.email || '',
-              role: profileData.role || 'JOB_SEEKER',
-              firstName: profileData.firstName,
-              lastName: profileData.lastName,
-              companyName: profileData.companyName,
-              headline: profileData.headline,
-              skills: profileData.skills,
-              createdAt: profileData.createdAt ? new Date(profileData.createdAt) : new Date(),
+              role: profile.role || 'JOB_SEEKER',
+              firstName: profile.firstName,
+              lastName: profile.lastName,
+              companyName: profile.companyName,
+              headline: profile.headline,
+              skills: profile.skills,
+              createdAt: profile.createdAt ? new Date(profile.createdAt) : new Date(),
             });
           } else {
             // No profile found, create basic profile
