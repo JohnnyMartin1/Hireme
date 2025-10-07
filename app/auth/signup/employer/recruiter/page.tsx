@@ -44,9 +44,9 @@ export default function RecruiterSignupPage() {
       }
 
       // Fetch company details
-      const { data: company } = await getCompany(data.companyId);
+      const { data: company } = await getCompany((data as any).companyId);
       if (company) {
-        setCompanyName(company.companyName);
+        setCompanyName((company as any).companyName);
       }
 
       setInvitation(data);

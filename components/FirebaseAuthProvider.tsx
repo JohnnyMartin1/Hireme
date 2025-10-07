@@ -41,15 +41,16 @@ export function FirebaseAuthProvider({ children }: { children: React.ReactNode }
             });
           } else if (profileData) {
             // Use the actual profile data from Firestore (include all fields)
-            const createdAt = profileData.createdAt?.toDate
-              ? profileData.createdAt.toDate()
-              : (profileData.createdAt ? new Date(profileData.createdAt) : new Date());
+            const profile = profileData as any;
+            const createdAt = profile.createdAt?.toDate
+              ? profile.createdAt.toDate()
+              : (profile.createdAt ? new Date(profile.createdAt) : new Date());
 
             setProfile({
               id: firebaseUser.uid,
               email: firebaseUser.email || '',
-              role: profileData.role || 'JOB_SEEKER',
-              ...profileData,
+              role: profile.role || 'JOB_SEEKER',
+              ...profile,
               createdAt,
             } as any);
           } else {

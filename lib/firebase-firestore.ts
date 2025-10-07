@@ -389,7 +389,7 @@ export const getProfileViewers = async (candidateId: string) => {
         viewerIds.add(data.viewerId);
         const { data: viewerProfile } = await getDocument('users', data.viewerId);
         if (viewerProfile) {
-          viewers.push({ id: data.viewerId, ...viewerProfile });
+          viewers.push({ ...viewerProfile, id: data.viewerId });
         }
       }
     }
