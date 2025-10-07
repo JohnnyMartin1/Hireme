@@ -38,7 +38,6 @@
     "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx",
-    "prisma/**/*",
     "scripts/**/*",
     ".next/types/**/*.ts"
   ],
