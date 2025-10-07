@@ -49,8 +49,8 @@ if (profile) {
   const userRole = p.role ?? null;
 
   // Redirect based on user role
-  if (userRole === "EMPLOYER") {
-    console.log("Redirecting employer to /home/employer...");
+  if (userRole === "EMPLOYER" || userRole === "RECRUITER") {
+    console.log(`Redirecting ${userRole.toLowerCase()} to /home/employer...`);
     router.push("/home/employer");
   } else if (userRole === "JOB_SEEKER") {
     console.log("Redirecting job seeker to /home/seeker...");

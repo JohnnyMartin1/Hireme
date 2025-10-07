@@ -5,6 +5,8 @@ import { useFirebaseAuth } from '@/components/FirebaseAuthProvider';
 import { getDocument, updateDocument } from '@/lib/firebase-firestore';
 import BackButton from '@/components/BackButton';
 import { Loader2 } from 'lucide-react';
+import SearchableDropdown from '@/components/SearchableDropdown';
+import { LOCATIONS } from '@/lib/profile-data';
 
 export default function EditJobPage({ params }: { params: { id: string } }) {
   const router = useRouter();
@@ -16,15 +18,15 @@ export default function EditJobPage({ params }: { params: { id: string } }) {
   // Form state
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [locationCity, setLocationCity] = useState('');
-  const [locationState, setLocationState] = useState('');
+  const [location, setLocation] = useState('');
   const [employment, setEmployment] = useState('FULL_TIME');
+  const [workMode, setWorkMode] = useState('IN_PERSON');
   const [salaryMin, setSalaryMin] = useState('');
   const [salaryMax, setSalaryMax] = useState('');
   const [tags, setTags] = useState('');
 
-  // Redirect if not logged in or not an employer
-  if (!user || !profile || profile.role !== 'EMPLOYER') {
+  // Redirect if not logged in or not an employer/recruiter
+  if (!user || !profile || (profile.role !== 'EMPLOYER' && profile.role !== 'RECRUITER')) {
     router.push('/auth/login');
     return null;
   }
@@ -55,9 +57,13 @@ export default function EditJobPage({ params }: { params: { id: string } }) {
         // Populate form with existing data
         setTitle(jobData.title || '');
         setDescription(jobData.description || '');
-        setLocationCity(jobData.locationCity || '');
-        setLocationState(jobData.locationState || '');
+        // Combine city and state into location string
+        const locationStr = [jobData.locationCity, jobData.locationState]
+          .filter(Boolean)
+          .join(', ');
+        setLocation(locationStr);
         setEmployment(jobData.employment || 'FULL_TIME');
+        setWorkMode(jobData.workMode || 'IN_PERSON');
         setSalaryMin(jobData.salaryMin ? jobData.salaryMin.toString() : '');
         setSalaryMax(jobData.salaryMax ? jobData.salaryMax.toString() : '');
         setTags(jobData.tags ? jobData.tags.join(', ') : '');
@@ -78,12 +84,18 @@ export default function EditJobPage({ params }: { params: { id: string } }) {
     setError('');
     
     try {
+      // Parse location (format: "City, State")
+      const locationParts = location.split(',').map(s => s.trim());
+      const locationCity = locationParts[0] || '';
+      const locationState = locationParts[1] || '';
+
       const jobData = {
         title: title.trim(),
         description: description.trim(),
-        locationCity: locationCity.trim(),
-        locationState: locationState.trim(),
+        locationCity: locationCity,
+        locationState: locationState,
         employment,
+        workMode,
         salaryMin: salaryMin ? Number(salaryMin) : null,
         salaryMax: salaryMax ? Number(salaryMax) : null,
         tags: tags.split(',').map(t => t.trim()).filter(t => t),
@@ -173,52 +185,52 @@ export default function EditJobPage({ params }: { params: { id: string } }) {
             </div>
 
             {/* Location */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="locationCity" className="block text-sm font-medium text-gray-700 mb-2">
-                  City
-                </label>
-                <input
-                  type="text"
-                  id="locationCity"
-                  value={locationCity}
-                  onChange={(e) => setLocationCity(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="e.g., San Francisco"
-                />
-              </div>
-              <div>
-                <label htmlFor="locationState" className="block text-sm font-medium text-gray-700 mb-2">
-                  State
-                </label>
-                <input
-                  type="text"
-                  id="locationState"
-                  value={locationState}
-                  onChange={(e) => setLocationState(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="e.g., CA"
-                />
-              </div>
+            <div>
+              <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-2">
+                Location
+              </label>
+              <SearchableDropdown
+                label=""
+                options={LOCATIONS}
+                value={location}
+                onChange={setLocation}
+                placeholder="Search for a city..."
+              />
             </div>
 
-            {/* Employment Type */}
-            <div>
-              <label htmlFor="employment" className="block text-sm font-medium text-gray-700 mb-2">
-                Employment Type
-              </label>
-              <select
-                id="employment"
-                value={employment}
-                onChange={(e) => setEmployment(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="FULL_TIME">Full Time</option>
-                <option value="PART_TIME">Part Time</option>
-                <option value="CONTRACT">Contract</option>
-                <option value="INTERNSHIP">Internship</option>
-                <option value="FREELANCE">Freelance</option>
-              </select>
+            {/* Job Type and Work Mode */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="employment" className="block text-sm font-medium text-gray-700 mb-2">
+                  Job Type
+                </label>
+                <select
+                  id="employment"
+                  value={employment}
+                  onChange={(e) => setEmployment(e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="FULL_TIME">Full-time</option>
+                  <option value="PART_TIME">Part-time</option>
+                  <option value="CONTRACT">Contract</option>
+                  <option value="INTERNSHIP">Internship</option>
+                </select>
+              </div>
+              <div>
+                <label htmlFor="workMode" className="block text-sm font-medium text-gray-700 mb-2">
+                  Work Mode
+                </label>
+                <select
+                  id="workMode"
+                  value={workMode}
+                  onChange={(e) => setWorkMode(e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="IN_PERSON">In-person</option>
+                  <option value="HYBRID">Hybrid</option>
+                  <option value="REMOTE">Remote</option>
+                </select>
+              </div>
             </div>
 
             {/* Salary Range */}

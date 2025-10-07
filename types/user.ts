@@ -9,7 +9,11 @@ export interface UserProfile {
   email?: string | null;
   firstName?: string | null;
   lastName?: string | null;
-  role?: "EMPLOYER" | "JOB_SEEKER" | "ADMIN" | string | null;
+  role?: "EMPLOYER" | "JOB_SEEKER" | "RECRUITER" | "ADMIN" | string | null;
+  
+  // Company relationship (for recruiters and employers)
+  companyId?: string | null; // Links user to a company
+  isCompanyOwner?: boolean | null; // True for company profile creators
 
   // Company profile fields used on /account/company
   companyName?: string | null;

@@ -32,7 +32,7 @@ export default function SavedCandidatesPage() {
       return;
     }
 
-    if (profile && profile.role !== 'EMPLOYER') {
+    if (profile && profile.role !== 'EMPLOYER' && profile.role !== 'RECRUITER') {
       router.push("/home/seeker");
       return;
     }
@@ -40,7 +40,7 @@ export default function SavedCandidatesPage() {
 
   useEffect(() => {
     const fetchSavedCandidates = async () => {
-      if (!user || profile?.role !== 'EMPLOYER') return;
+      if (!user || (profile?.role !== 'EMPLOYER' && profile?.role !== 'RECRUITER')) return;
 
       setIsLoading(true);
       try {
@@ -92,7 +92,7 @@ export default function SavedCandidatesPage() {
     );
   }
 
-  if (!user || !profile || profile.role !== 'EMPLOYER') {
+  if (!user || !profile || (profile.role !== 'EMPLOYER' && profile.role !== 'RECRUITER')) {
     return null;
   }
 

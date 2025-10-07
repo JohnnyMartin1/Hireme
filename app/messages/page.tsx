@@ -2,7 +2,7 @@
 import { useFirebaseAuth } from "@/components/FirebaseAuthProvider";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { User, MessageSquare, ArrowRight, Loader2 } from "lucide-react";
+import { User, MessageSquare, ArrowRight, Loader2, ArrowLeft } from "lucide-react";
 import { getUserMessageThreads, getDocument } from '@/lib/firebase-firestore';
 import Link from 'next/link';
 
@@ -67,8 +67,10 @@ export default function MessagesPage() {
         
         // Fetch other participant info for each thread
         const threadsWithParticipants = await Promise.all(
-          threadsData.map(async (thread) => {
-            const otherId = thread.participantIds.find(id => id !== user.uid);
+          (threadsData as any[]).map(async (thread: any) => {
+            const otherId = Array.isArray(thread.participantIds)
+              ? (thread.participantIds as string[]).find((id) => id !== user.uid)
+              : undefined;
             let otherParticipant = null;
             
             if (otherId) {
@@ -81,9 +83,9 @@ export default function MessagesPage() {
             }
             
             return {
-              thread,
+              thread: thread as any as MessageThread,
               otherParticipant
-            };
+            } as ThreadWithParticipants;
           })
         );
         
@@ -132,11 +134,23 @@ export default function MessagesPage() {
     );
   }
 
+  // Determine dashboard URL based on role
+  const dashboardUrl = profile.role === 'JOB_SEEKER' 
+    ? '/home/seeker' 
+    : '/home/employer';
+
   return (
     <main className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
       <div className="max-w-4xl mx-auto p-6">
         {/* Header */}
         <div className="mb-8">
+          <Link 
+            href={dashboardUrl}
+            className="text-blue-600 hover:underline flex items-center space-x-1 mb-4"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            <span>Back</span>
+          </Link>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Messages</h1>
           <p className="text-gray-600">Your conversations with candidates and employers</p>
         </div>

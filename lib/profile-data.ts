@@ -504,12 +504,125 @@ export const GRADUATION_YEARS = [
 ];
 
 export const GPA_RANGES = [
-  "3.8-4.0",
-  "3.5-3.79",
-  "3.2-3.49",
-  "3.0-3.19",
-  "2.8-2.99",
-  "2.5-2.79",
-  "Below 2.5",
+  "3.9-4.0",
+  "3.8-3.9",
+  "3.7-3.8",
+  "3.6-3.7",
+  "3.5-3.6",
+  "3.4-3.5",
+  "3.3-3.4",
+  "3.2-3.3",
+  "3.1-3.2",
+  "3.0-3.1",
+  "2.9-3.0",
+  "2.8-2.9",
+  "2.7-2.8",
+  "2.6-2.7",
+  "2.5-2.6",
+  "2.4-2.5",
+  "2.3-2.4",
+  "2.2-2.3",
+  "2.1-2.2",
+  "2.0-2.1",
+  "Below 2.0",
   "Prefer not to say"
 ];
+
+export const CERTIFICATIONS = {
+  "Technology & Data": [
+    "CompTIA A+",
+    "CompTIA Network+",
+    "CompTIA Security+",
+    "AWS Certified Solutions Architect",
+    "AWS Certified Cloud Practitioner",
+    "Microsoft Certified: Azure Fundamentals",
+    "Microsoft Certified: Azure Administrator Associate",
+    "Google Cloud Professional Cloud Architect",
+    "Cisco Certified Network Associate (CCNA)",
+    "Certified Information Systems Security Professional (CISSP)",
+    "Certified Ethical Hacker (CEH)",
+    "Certified Information Security Manager (CISM)",
+    "Python Institute PCEP / PCAP",
+    "Tableau Desktop Specialist",
+    "Power BI Data Analyst Associate",
+    "Oracle Certified Professional (OCP)",
+    "SQL Certification (Microsoft / Oracle / IBM)",
+    "Google Data Analytics Professional Certificate",
+    "IBM Data Science Professional Certificate"
+  ],
+
+  "Finance & Business": [
+    "Certified Public Accountant (CPA)",
+    "Chartered Financial Analyst (CFA)",
+    "Certified Management Accountant (CMA)",
+    "Financial Risk Manager (FRM)",
+    "Series 7 License",
+    "Series 63 License",
+    "Certified Financial Planner (CFP)",
+    "Bloomberg Market Concepts (BMC)",
+    "QuickBooks Certification",
+    "Excel Specialist / Microsoft Office Specialist (MOS)",
+    "Project Management Professional (PMP)",
+    "Certified ScrumMaster (CSM)",
+    "Lean Six Sigma Green Belt",
+    "Lean Six Sigma Black Belt"
+  ],
+
+  "Marketing & Communications": [
+    "Google Analytics Certification",
+    "Google Ads Certification",
+    "HubSpot Inbound Marketing Certification",
+    "HubSpot Content Marketing Certification",
+    "Meta (Facebook) Blueprint Certification",
+    "Hootsuite Social Media Marketing Certification",
+    "SEMrush SEO Toolkit Certification",
+    "Digital Marketing Institute (DMI) Professional Diploma",
+    "Adobe Certified Professional (Photoshop / Illustrator)",
+    "Canva Pro Design Certification"
+  ],
+
+  "Real Estate & Construction": [
+    "Real Estate License",
+    "Certified Commercial Investment Member (CCIM)",
+    "LEED Green Associate",
+    "LEED Accredited Professional (LEED AP)",
+    "OSHA 10 / OSHA 30 Safety Certification",
+    "Project Management Professional (PMP)",
+    "Construction Management Certification (CMAA)",
+    "Certified Property Manager (CPM)",
+    "Building Performance Institute (BPI) Certification"
+  ],
+
+  "Healthcare & Life Sciences": [
+    "Basic Life Support (BLS)",
+    "Advanced Cardiac Life Support (ACLS)",
+    "Registered Nurse (RN)",
+    "Certified Nursing Assistant (CNA)",
+    "Emergency Medical Technician (EMT)",
+    "Pharmacy Technician Certification (CPhT)",
+    "Certified Medical Assistant (CMA)",
+    "Clinical Research Professional (CCRP)",
+    "Health Information Management (RHIT / RHIA)"
+  ],
+
+  "Design & Creative": [
+    "Adobe Certified Professional (Photoshop / Illustrator / After Effects)",
+    "Autodesk Certified Professional (AutoCAD / Revit)",
+    "UX Design Professional Certificate (Google)",
+    "Figma Advanced Design Certification",
+    "Canva Pro Design Certification"
+  ],
+
+  "General & Soft Skills": [
+    "LinkedIn Learning Certificates (Various)",
+    "Coursera Professional Certificates (Various)",
+    "Udemy / edX Verified Certificates",
+    "First Aid & CPR",
+    "Customer Service Certification",
+    "Leadership & Management Certificate",
+    "Time Management Certification"
+  ]
+};
+
+// Flattened list for dropdown usage
+export const ALL_CERTIFICATIONS = Object.values(CERTIFICATIONS).flat();

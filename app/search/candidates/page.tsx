@@ -34,8 +34,8 @@ export default function SearchCandidatesPage() {
   // Filter states
   const [selectedUniversities, setSelectedUniversities] = useState<string[]>([]);
   const [isTop25Selected, setIsTop25Selected] = useState(false);
-  const [selectedMajor, setSelectedMajor] = useState('');
-  const [selectedLocation, setSelectedLocation] = useState('');
+  const [selectedMajors, setSelectedMajors] = useState<string[]>([]);
+  const [selectedLocations, setSelectedLocations] = useState<string[]>([]);
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
   const [hasVideo, setHasVideo] = useState(false);
   const [hasResume, setHasResume] = useState(false);
@@ -49,14 +49,14 @@ export default function SearchCandidatesPage() {
       return;
     }
 
-    if (profile && profile.role !== 'EMPLOYER') {
+    if (profile && profile.role !== 'EMPLOYER' && profile.role !== 'RECRUITER') {
       router.push("/home/seeker");
       return;
     }
   }, [user, profile, loading, router]);
 
   useEffect(() => {
-    if (user && profile && profile.role === 'EMPLOYER') {
+    if (user && profile && (profile.role === 'EMPLOYER' || profile.role === 'RECRUITER')) {
       loadAllCandidates();
     }
   }, [user, profile]);
@@ -94,7 +94,7 @@ export default function SearchCandidatesPage() {
   };
 
   const handleSearch = async () => {
-    if (!searchTerm.trim() && selectedUniversities.length === 0 && !isTop25Selected && !selectedMajor && !selectedLocation && selectedSkills.length === 0 && !hasVideo && !hasResume && !hasProfileImage && !hasBio) {
+    if (!searchTerm.trim() && selectedUniversities.length === 0 && !isTop25Selected && selectedMajors.length === 0 && selectedLocations.length === 0 && selectedSkills.length === 0 && !hasVideo && !hasResume && !hasProfileImage && !hasBio) {
       loadAllCandidates();
       return;
     }
@@ -148,17 +148,17 @@ export default function SearchCandidatesPage() {
           );
         }
 
-        // Major filter
-        if (selectedMajor) {
+        // Major filter (multi)
+        if (selectedMajors.length > 0) {
           filteredCandidates = filteredCandidates.filter((candidate: any) =>
-            candidate.major === selectedMajor
+            selectedMajors.includes(candidate.major)
           );
         }
 
-        // Location filter
-        if (selectedLocation) {
+        // Location filter (multi)
+        if (selectedLocations.length > 0) {
           filteredCandidates = filteredCandidates.filter((candidate: any) =>
-            candidate.location === selectedLocation
+            selectedLocations.includes(candidate.location)
           );
         }
 
@@ -215,8 +215,8 @@ export default function SearchCandidatesPage() {
   const clearFilters = () => {
     setSelectedUniversities([]);
     setIsTop25Selected(false);
-    setSelectedMajor('');
-    setSelectedLocation('');
+    setSelectedMajors([]);
+    setSelectedLocations([]);
     setSelectedSkills([]);
     setHasVideo(false);
     setHasResume(false);
@@ -226,14 +226,14 @@ export default function SearchCandidatesPage() {
     loadAllCandidates();
   };
 
-  const hasActiveFilters = selectedUniversities.length > 0 || isTop25Selected || selectedMajor || selectedLocation || selectedSkills.length > 0 || hasVideo || hasResume || hasProfileImage || hasBio || searchTerm.trim();
+  const hasActiveFilters = selectedUniversities.length > 0 || isTop25Selected || selectedMajors.length > 0 || selectedLocations.length > 0 || selectedSkills.length > 0 || hasVideo || hasResume || hasProfileImage || hasBio || searchTerm.trim();
 
   const handleTop25Schools = () => {
     setIsTop25Selected(true);
     setSelectedUniversities([]);
     setSearchTerm('');
-    setSelectedMajor('');
-    setSelectedLocation('');
+    setSelectedMajors([]);
+    setSelectedLocations([]);
     setSelectedSkills([]);
     setHasVideo(false);
     setHasResume(false);
@@ -258,7 +258,7 @@ export default function SearchCandidatesPage() {
     );
   }
 
-  if (!user || !profile || profile.role !== 'EMPLOYER') {
+  if (!user || !profile || (profile.role !== 'EMPLOYER' && profile.role !== 'RECRUITER')) {
     return null; // Will redirect
   }
 
@@ -300,7 +300,7 @@ export default function SearchCandidatesPage() {
                 Filters
                 {hasActiveFilters && (
                   <span className="ml-2 px-2 py-1 bg-green-500 text-white text-xs rounded-full">
-                    {[selectedUniversities.length > 0 ? 1 : 0, isTop25Selected ? 1 : 0, selectedMajor, selectedLocation, selectedSkills.length, hasVideo, hasResume, hasProfileImage, hasBio, searchTerm.trim() ? 1 : 0].filter(Boolean).length}
+                    {[selectedUniversities.length > 0 ? 1 : 0, isTop25Selected ? 1 : 0, selectedMajors.length, selectedLocations.length, selectedSkills.length, hasVideo, hasResume, hasProfileImage, hasBio, searchTerm.trim() ? 1 : 0].filter(Boolean).length}
                   </span>
                 )}
               </button>
@@ -351,19 +351,19 @@ export default function SearchCandidatesPage() {
                   </div>
                 </div>
                 
-                <SearchableDropdown
+                <MultiSelectDropdown
                   options={MAJORS}
-                  value={selectedMajor}
-                  onChange={setSelectedMajor}
+                  values={selectedMajors}
+                  onChange={setSelectedMajors}
                   placeholder="Any major"
                   label="Major"
                   allowCustom
                 />
                 
-                <SearchableDropdown
+                <MultiSelectDropdown
                   options={LOCATIONS}
-                  value={selectedLocation}
-                  onChange={setSelectedLocation}
+                  values={selectedLocations}
+                  onChange={setSelectedLocations}
                   placeholder="Any location"
                   label="Location"
                   allowCustom

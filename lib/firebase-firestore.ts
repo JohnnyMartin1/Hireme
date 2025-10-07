@@ -66,6 +66,20 @@ export const updateDocument = async (collectionName: string, id: string, data: a
   }
 };
 
+// Upsert (create if missing, update otherwise) with merge
+export const upsertDocument = async (collectionName: string, id: string, data: any) => {
+  try {
+    const docRef = doc(db, collectionName, id);
+    await setDoc(docRef, {
+      ...data,
+      updatedAt: serverTimestamp(),
+    }, { merge: true });
+    return { error: null };
+  } catch (error: any) {
+    return { error: error.message };
+  }
+};
+
 export const deleteDocument = async (collectionName: string, id: string) => {
   try {
     await deleteDoc(doc(db, collectionName, id));
@@ -223,6 +237,13 @@ export const sendMessage = async (threadId: string, messageData: {
   senderId: string;
   senderName: string;
   content: string;
+  jobDetails?: {
+    jobId: string;
+    jobTitle: string;
+    employmentType: string;
+    location: string;
+    jobDescription: string;
+  };
 }) => {
   try {
     const message = {
@@ -349,6 +370,32 @@ export const getProfileViewCount = async (candidateId: string) => {
   }
 };
 
+// Get unique viewer companies for a candidate profile
+export const getProfileViewers = async (candidateId: string) => {
+  try {
+    const q = query(
+      collection(db, 'profileViews'),
+      where('candidateId', '==', candidateId)
+    );
+    const querySnapshot = await getDocs(q);
+    const viewerIds = new Set<string>();
+    const viewers: any[] = [];
+    for (const docSnap of querySnapshot.docs) {
+      const data: any = docSnap.data();
+      if (data.viewerId && !viewerIds.has(data.viewerId)) {
+        viewerIds.add(data.viewerId);
+        const { data: viewerProfile } = await getDocument('users', data.viewerId);
+        if (viewerProfile) {
+          viewers.push({ id: data.viewerId, ...viewerProfile });
+        }
+      }
+    }
+    return { viewers, count: viewerIds.size, error: null };
+  } catch (error: any) {
+    return { viewers: [], count: 0, error: error.message };
+  }
+};
+
 export const getEmployerJobs = async (employerId: string) => {
   try {
     const q = query(
@@ -364,6 +411,59 @@ export const getEmployerJobs = async (employerId: string) => {
     }));
     
     return { data: jobs, error: null };
+  } catch (error: any) {
+    return { data: [], error: error.message };
+  }
+};
+
+// Get jobs for company (owner sees all, recruiters see theirs + owner's)
+export const getCompanyJobs = async (companyId: string, userId: string, isOwner: boolean) => {
+  try {
+    if (isOwner) {
+      // Owner sees ALL jobs for the company
+      const q = query(
+        collection(db, 'jobs'),
+        where('companyId', '==', companyId),
+        where('status', '==', 'ACTIVE')
+      );
+      
+      const querySnapshot = await getDocs(q);
+      const jobs = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      
+      return { data: jobs, error: null };
+    } else {
+      // Recruiter sees only their jobs + owner's jobs
+      // Get company owner's ID
+      const { data: users } = await queryDocuments('users', [
+        where('companyId', '==', companyId),
+        where('isCompanyOwner', '==', true)
+      ]);
+      
+      const ownerId = users && users.length > 0 ? users[0].id : null;
+      
+      // Query jobs where employerId is either the recruiter or the owner
+      const q = query(
+        collection(db, 'jobs'),
+        where('companyId', '==', companyId),
+        where('status', '==', 'ACTIVE')
+      );
+      
+      const querySnapshot = await getDocs(q);
+      const allJobs = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      
+      // Filter in code: only jobs created by recruiter or owner
+      const filteredJobs = allJobs.filter((job: any) => 
+        job.employerId === userId || job.employerId === ownerId
+      );
+      
+      return { data: filteredJobs, error: null };
+    }
   } catch (error: any) {
     return { data: [], error: error.message };
   }
@@ -430,3 +530,206 @@ export const getCompanyAverageRating = async (employerId: string) => {
 
 // Export common Firestore functions for convenience
 export { collection, doc, where, orderBy, limit, serverTimestamp };
+
+// ============================================
+// COMPANIES
+// ============================================
+
+export const createCompany = async (companyData: {
+  companyName: string;
+  companyBio?: string;
+  companyLocation?: string;
+  companyWebsite?: string;
+  companySize?: string;
+  companyIndustry?: string;
+  companyFounded?: string;
+  bannerImageUrl?: string;
+  logoImageUrl?: string;
+  createdBy: string;
+}) => {
+  try {
+    const { id, error } = await createDocument('companies', {
+      ...companyData,
+      createdAt: new Date().toISOString()
+    });
+    return { id, error };
+  } catch (error: any) {
+    return { id: null, error: error.message };
+  }
+};
+
+export const getCompany = async (companyId: string) => {
+  try {
+    const { data, error } = await getDocument('companies', companyId);
+    return { data, error };
+  } catch (error: any) {
+    return { data: null, error: error.message };
+  }
+};
+
+export const updateCompany = async (companyId: string, updates: {
+  companyName?: string;
+  companyBio?: string;
+  companyLocation?: string;
+  companyWebsite?: string;
+  companySize?: string;
+  companyIndustry?: string;
+  companyFounded?: string;
+  bannerImageUrl?: string;
+  logoImageUrl?: string;
+}) => {
+  try {
+    const { error } = await updateDocument('companies', companyId, updates);
+    return { error };
+  } catch (error: any) {
+    return { error: error.message };
+  }
+};
+
+export const getCompanyRecruiters = async (companyId: string) => {
+  try {
+    const { data, error } = await queryDocuments('users', [
+      where('companyId', '==', companyId),
+      where('role', '==', 'RECRUITER')
+    ]);
+    return { data, error };
+  } catch (error: any) {
+    return { data: [], error: error.message };
+  }
+};
+
+// ============================================
+// COMPANY INVITATIONS
+// ============================================
+
+export const inviteRecruiter = async (
+  companyId: string, 
+  invitedEmail: string, 
+  invitedBy: string
+) => {
+  try {
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 7); // 7 day expiration
+
+    const { id, error } = await createDocument('companyInvitations', {
+      companyId,
+      invitedEmail: invitedEmail.toLowerCase(),
+      invitedBy,
+      role: 'RECRUITER',
+      status: 'PENDING',
+      createdAt: new Date().toISOString(),
+      expiresAt: expiresAt.toISOString()
+    });
+    return { id, error };
+  } catch (error: any) {
+    return { id: null, error: error.message };
+  }
+};
+
+export const getInvitationByEmail = async (email: string) => {
+  try {
+    // Query only by email, then filter by status in code
+    const { data, error } = await queryDocuments('companyInvitations', [
+      where('invitedEmail', '==', email.toLowerCase())
+    ]);
+    
+    if (error) return { data: null, error };
+    
+    // Filter for pending and non-expired invitations
+    const validInvitations = (data || []).filter((inv: any) => {
+      if (inv.status !== 'PENDING') return false;
+      const expiresAt = new Date(inv.expiresAt);
+      return expiresAt > new Date();
+    });
+    
+    return { data: validInvitations.length > 0 ? validInvitations[0] : null, error: null };
+  } catch (error: any) {
+    return { data: null, error: error.message };
+  }
+};
+
+export const getCompanyInvitations = async (companyId: string) => {
+  try {
+    // Query by companyId only, then filter by status client-side
+    // This avoids needing a composite index
+    const { data, error } = await queryDocuments('companyInvitations', [
+      where('companyId', '==', companyId)
+    ]);
+    
+    if (error) {
+      return { data: [], error };
+    }
+    
+    // Filter to only pending invitations
+    const pendingInvitations = (data || []).filter(
+      (inv: any) => inv.status === 'PENDING'
+    );
+    
+    return { data: pendingInvitations, error: null };
+  } catch (error: any) {
+    return { data: [], error: error.message };
+  }
+};
+
+export const acceptInvitation = async (invitationId: string, userId: string) => {
+  try {
+    const { error } = await updateDocument('companyInvitations', invitationId, {
+      status: 'ACCEPTED',
+      acceptedAt: new Date().toISOString(),
+      acceptedBy: userId
+    });
+    return { error };
+  } catch (error: any) {
+    return { error: error.message };
+  }
+};
+
+export const declineInvitation = async (invitationId: string) => {
+  try {
+    const { error } = await updateDocument('companyInvitations', invitationId, {
+      status: 'DECLINED',
+      declinedAt: new Date().toISOString()
+    });
+    return { error };
+  } catch (error: any) {
+    return { error: error.message };
+  }
+};
+
+export const cancelInvitation = async (invitationId: string) => {
+  try {
+    const { error } = await deleteDocument('companyInvitations', invitationId);
+    return { error };
+  } catch (error: any) {
+    return { error: error.message };
+  }
+};
+
+// Endorsements
+export const createEndorsement = async (userId: string, endorsement: {
+  endorserName: string;
+  endorserEmail?: string;
+  skill: string;
+  message?: string;
+}) => {
+  try {
+    const { id, error } = await createDocument('endorsements', {
+      userId,
+      ...endorsement
+    });
+    return { id, error };
+  } catch (error: any) {
+    return { id: null, error: error.message };
+  }
+};
+
+export const getEndorsements = async (userId: string) => {
+  try {
+    const { data, error } = await queryDocuments('endorsements', [
+      where('userId', '==', userId)
+    ]);
+    return { data, error };
+  } catch (error: any) {
+    return { data: [], error: error.message };
+  }
+};

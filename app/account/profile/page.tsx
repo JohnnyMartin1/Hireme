@@ -3,7 +3,8 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useFirebaseAuth } from "@/components/FirebaseAuthProvider";
 import { updateDocument } from '@/lib/firebase-firestore';
-import { ArrowLeft, Save, GraduationCap, MapPin, Briefcase, Calendar, Globe, Award, BookOpen, User, Video } from 'lucide-react';
+import { ArrowLeft, Save, GraduationCap, MapPin, Briefcase, Calendar, Globe, Award, BookOpen, User, Video, Share2 } from 'lucide-react';
+import Link from 'next/link';
 import SearchableDropdown from '@/components/SearchableDropdown';
 import MultiSelectDropdown from '@/components/MultiSelectDropdown';
 import FileUpload from '@/components/FileUpload';
@@ -17,7 +18,8 @@ import {
   WORK_PREFERENCES,
   JOB_TYPES,
   GRADUATION_YEARS,
-  GPA_RANGES
+  GPA_RANGES,
+  ALL_CERTIFICATIONS
 } from '@/lib/profile-data';
 
 interface ProfileFormData {
@@ -26,13 +28,16 @@ interface ProfileFormData {
   headline: string;
   skills: string[];
   // Education
-  school: string;
-  major: string;
-  minor: string;
-  graduationYear: string;
-  gpa: string;
+  education: Array<{
+    school: string;
+    degree: string;
+    majors: string[];
+    minors: string[];
+    graduationYear: string;
+    gpa: string;
+  }>;
   // Location & Preferences
-  location: string;
+  locations: string[];
   workPreferences: string[];
   jobTypes: string[];
   // Experience & Activities
@@ -58,12 +63,8 @@ export default function EditProfilePage() {
     lastName: '',
     headline: '',
     skills: [],
-    school: '',
-    major: '',
-    minor: '',
-    graduationYear: '',
-    gpa: '',
-    location: '',
+    education: [],
+    locations: [],
     workPreferences: [],
     jobTypes: [],
     experience: '',
@@ -91,12 +92,15 @@ export default function EditProfilePage() {
         lastName: profile.lastName || '',
         headline: profile.headline || '',
         skills: profile.skills || [],
-        school: profile.school || '',
-        major: profile.major || '',
-        minor: profile.minor || '',
-        graduationYear: profile.graduationYear || '',
-        gpa: profile.gpa || '',
-        location: profile.location || '',
+        education: profile.education || (profile.school ? [{
+          school: profile.school || '',
+          degree: profile.degree || 'Bachelor\'s',
+          majors: profile.majors || (profile.major ? [profile.major] : []),
+          minors: profile.minors || (profile.minor ? [profile.minor] : []),
+          graduationYear: profile.graduationYear || '',
+          gpa: profile.gpa || ''
+        }] : []),
+        locations: profile.locations || (profile.location ? [profile.location] : []),
         workPreferences: profile.workPreferences || [],
         jobTypes: profile.jobTypes || [],
         experience: profile.experience || '',
@@ -113,7 +117,7 @@ export default function EditProfilePage() {
     }
   }, [profile, loading, user, router]);
 
-  const handleInputChange = (field: keyof ProfileFormData, value: string | string[]) => {
+  const handleInputChange = (field: keyof ProfileFormData, value: string | string[] | any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
@@ -227,60 +231,144 @@ export default function EditProfilePage() {
 
           {/* Education */}
           <div className="bg-white rounded-xl shadow-lg p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
-              <GraduationCap className="h-5 w-5 mr-2 text-green-600" />
-              Education
-            </h2>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-semibold text-gray-900 flex items-center">
+                <GraduationCap className="h-5 w-5 mr-2 text-green-600" />
+                Education
+              </h2>
+              <button
+                type="button"
+                onClick={() => {
+                  const newEducation = [...formData.education, {
+                    school: '',
+                    degree: 'Bachelor\'s',
+                    majors: [],
+                    minors: [],
+                    graduationYear: '',
+                    gpa: ''
+                  }];
+                  handleInputChange('education', newEducation);
+                }}
+                className="px-3 py-1 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors"
+              >
+                Add Education
+              </button>
+            </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <SearchableDropdown
-                options={UNIVERSITIES}
-                value={formData.school}
-                onChange={(value) => handleInputChange('school', value)}
-                placeholder="Select your university"
-                label="University"
-                required
-                allowCustom
-              />
-              
-              <SearchableDropdown
-                options={MAJORS}
-                value={formData.major}
-                onChange={(value) => handleInputChange('major', value)}
-                placeholder="Select your major"
-                label="Major"
-                required
-                allowCustom
-              />
-            </div>
+            {formData.education.map((edu, index) => (
+              <div key={index} className="border border-gray-200 rounded-lg p-4 mb-4">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-medium text-gray-900">Education {index + 1}</h3>
+                  {formData.education.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const newEducation = formData.education.filter((_, i) => i !== index);
+                        handleInputChange('education', newEducation);
+                      }}
+                      className="text-red-600 hover:text-red-800 text-sm"
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <SearchableDropdown
+                    options={UNIVERSITIES}
+                    value={edu.school}
+                    onChange={(value) => {
+                      const newEducation = [...formData.education];
+                      newEducation[index] = { ...edu, school: value };
+                      handleInputChange('education', newEducation);
+                    }}
+                    placeholder="Select university"
+                    label="University"
+                    required
+                    allowCustom
+                  />
+                  
+                  <SearchableDropdown
+                    options={['Bachelor\'s', 'Master\'s', 'PhD', 'Associate', 'Certificate', 'Other']}
+                    value={edu.degree}
+                    onChange={(value) => {
+                      const newEducation = [...formData.education];
+                      newEducation[index] = { ...edu, degree: value };
+                      handleInputChange('education', newEducation);
+                    }}
+                    placeholder="Select degree type"
+                    label="Degree Type"
+                    required
+                    allowCustom
+                  />
+                </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
-              <SearchableDropdown
-                options={MINORS}
-                value={formData.minor}
-                onChange={(value) => handleInputChange('minor', value)}
-                placeholder="Select your minor (optional)"
-                label="Minor"
-                allowCustom
-              />
-              
-              <SearchableDropdown
-                options={GRADUATION_YEARS}
-                value={formData.graduationYear}
-                onChange={(value) => handleInputChange('graduationYear', value)}
-                placeholder="Select graduation year"
-                label="Expected Graduation Year"
-                required
-              />
-              
-              <SearchableDropdown
-                options={GPA_RANGES}
-                value={formData.gpa}
-                onChange={(value) => handleInputChange('gpa', value)}
-                placeholder="Select GPA range"
-                label="GPA Range"
-              />
-            </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <MultiSelectDropdown
+                    options={MAJORS}
+                    values={edu.majors}
+                    onChange={(values) => {
+                      const newEducation = [...formData.education];
+                      newEducation[index] = { ...edu, majors: values };
+                      handleInputChange('education', newEducation);
+                    }}
+                    placeholder="Select majors"
+                    label="Majors"
+                    allowCustom
+                    maxSelections={3}
+                  />
+                  
+                  <MultiSelectDropdown
+                    options={MINORS}
+                    values={edu.minors}
+                    onChange={(values) => {
+                      const newEducation = [...formData.education];
+                      newEducation[index] = { ...edu, minors: values };
+                      handleInputChange('education', newEducation);
+                    }}
+                    placeholder="Select minors (optional)"
+                    label="Minors"
+                    allowCustom
+                    maxSelections={2}
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <SearchableDropdown
+                    options={GRADUATION_YEARS}
+                    value={edu.graduationYear}
+                    onChange={(value) => {
+                      const newEducation = [...formData.education];
+                      newEducation[index] = { ...edu, graduationYear: value };
+                      handleInputChange('education', newEducation);
+                    }}
+                    placeholder="Select graduation year"
+                    label="Graduation Year"
+                    required
+                  />
+                  
+                  <SearchableDropdown
+                    options={GPA_RANGES}
+                    value={edu.gpa}
+                    onChange={(value) => {
+                      const newEducation = [...formData.education];
+                      newEducation[index] = { ...edu, gpa: value };
+                      handleInputChange('education', newEducation);
+                    }}
+                    placeholder="Select GPA range"
+                    label="GPA Range"
+                  />
+                </div>
+              </div>
+            ))}
+            
+            {formData.education.length === 0 && (
+              <div className="text-center py-8 text-gray-500">
+                <GraduationCap className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                <p>No education added yet</p>
+                <p className="text-sm">Click "Add Education" to get started</p>
+              </div>
+            )}
           </div>
 
           {/* Location & Preferences */}
@@ -291,14 +379,14 @@ export default function EditProfilePage() {
             </h2>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <SearchableDropdown
+              <MultiSelectDropdown
                 options={LOCATIONS}
-                value={formData.location}
-                onChange={(value) => handleInputChange('location', value)}
-                placeholder="Select preferred work location"
-                label="Preferred Work Location"
-                required
+                values={formData.locations}
+                onChange={(values) => handleInputChange('locations', values)}
+                placeholder="Select preferred work locations"
+                label="Preferred Work Locations"
                 allowCustom
+                maxSelections={5}
               />
               
               <MultiSelectDropdown
@@ -372,7 +460,7 @@ export default function EditProfilePage() {
               />
               
               <MultiSelectDropdown
-                options={[]}
+                options={ALL_CERTIFICATIONS}
                 values={formData.certifications}
                 onChange={(values) => handleInputChange('certifications', values)}
                 placeholder="Add certifications"
@@ -496,6 +584,25 @@ export default function EditProfilePage() {
                 userId={user.uid}
               />
             </div>
+          </div>
+
+          {/* Endorsements */}
+          <div className="bg-white rounded-xl shadow-lg p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold text-gray-900 flex items-center">
+                <Award className="h-5 w-5 mr-2 text-yellow-600" />
+                Endorsements
+              </h2>
+              <div className="text-sm text-gray-700 flex items-center">
+                <Share2 className="h-4 w-4 mr-2" />
+                <span className="mr-2">Share link:</span>
+                <code className="bg-gray-100 px-2 py-1 rounded">
+                  {typeof window !== 'undefined' ? `${window.location.origin}/endorse/${user.uid}` : `/endorse/${user.uid}`}
+                </code>
+              </div>
+            </div>
+            <p className="text-gray-600 mb-2">Send this link to colleagues, managers or peers so they can vouch for your skills.</p>
+            <Link href={`/endorse/${user.uid}`} className="text-blue-600 hover:underline text-sm">Open endorsement form</Link>
           </div>
 
           {/* Submit Button */}

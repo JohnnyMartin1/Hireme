@@ -1,15 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createDocument } from '@/lib/firebase-firestore';
+import { adminAuth, adminDb } from '@/lib/firebase-admin';
 
 export async function POST(request: NextRequest) {
   try {
     // Get the request body
     const body = await request.json();
-    const { title, description, locationCity, locationState, employment, salaryMin, salaryMax, tags, employerId } = body;
+    const { title, description, locationCity, locationState, employment, salaryMin, salaryMax, tags, employerId, idToken } = body;
 
     // Validate required fields
     if (!title || !description || !employerId) {
       return NextResponse.json({ error: 'Title, description, and employer ID are required' }, { status: 400 });
+    }
+
+    // Verify Firebase ID token
+    if (!idToken) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const decoded = await adminAuth.verifyIdToken(idToken);
+    if (!decoded || decoded.uid !== employerId) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     // Create job data
@@ -27,17 +37,12 @@ export async function POST(request: NextRequest) {
       status: 'ACTIVE'
     };
 
-    // Save to Firebase
-    const { id, error } = await createDocument('jobs', jobData);
-    
-    if (error) {
-      console.error('Error creating job:', error);
-      return NextResponse.json({ error: 'Failed to create job' }, { status: 500 });
-    }
+    // Save to Firestore with Admin privileges
+    const docRef = await adminDb.collection('jobs').add(jobData as any);
 
     return NextResponse.json({ 
       success: true, 
-      jobId: id,
+      jobId: docRef.id,
       message: 'Job created successfully' 
     });
 

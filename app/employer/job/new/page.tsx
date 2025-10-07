@@ -3,6 +3,10 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useFirebaseAuth } from '@/components/FirebaseAuthProvider';
 import BackButton from '@/components/BackButton';
+import { createDocument } from '@/lib/firebase-firestore';
+import { auth } from '@/lib/firebase';
+import SearchableDropdown from '@/components/SearchableDropdown';
+import { LOCATIONS } from '@/lib/profile-data';
 
 /**
  * Job posting wizard. Simplified to a single form for creating a job.
@@ -14,16 +18,16 @@ export default function NewJobPage() {
   const { user, profile } = useFirebaseAuth();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [locationCity, setLocationCity] = useState('');
-  const [locationState, setLocationState] = useState('');
+  const [location, setLocation] = useState('');
   const [employment, setEmployment] = useState('FULL_TIME');
+  const [workMode, setWorkMode] = useState('IN_PERSON');
   const [salaryMin, setSalaryMin] = useState('');
   const [salaryMax, setSalaryMax] = useState('');
   const [tags, setTags] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Redirect if not logged in or not an employer
-  if (!user || !profile || profile.role !== 'EMPLOYER') {
+  // Redirect if not logged in or not an employer/recruiter
+  if (!user || !profile || (profile.role !== 'EMPLOYER' && profile.role !== 'RECRUITER')) {
     router.push('/auth/login');
     return null;
   }
@@ -33,30 +37,53 @@ export default function NewJobPage() {
     setLoading(true);
     
     try {
+      // Parse location (format: "City, State")
+      const locationParts = location.split(',').map(s => s.trim());
+      const locationCity = locationParts[0] || '';
+      const locationState = locationParts[1] || '';
+
+      // Prefer secure server-side creation with token verification
+      const idToken = await auth.currentUser?.getIdToken();
+      const jobData = {
+        title,
+        description,
+        locationCity,
+        locationState,
+        employment,
+        workMode,
+        salaryMin: Number(salaryMin) || null,
+        salaryMax: Number(salaryMax) || null,
+        tags: tags.split(',').map((t) => t.trim()).filter(t => t),
+        employerId: user.uid,
+        companyId: profile?.companyId || null,
+        companyName: profile?.companyName || null,
+        status: 'ACTIVE'
+      };
+
       const res = await fetch('/api/job/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          title, 
-          description, 
-          locationCity, 
-          locationState, 
-          employment, 
-          salaryMin: Number(salaryMin) || null, 
-          salaryMax: Number(salaryMax) || null, 
-          tags: tags.split(',').map((t) => t.trim()).filter(t => t), 
-          employerId: user.uid 
-        }),
+        body: JSON.stringify({
+          ...jobData,
+          idToken
+        })
       });
 
-      if (res.ok) {
-        const result = await res.json();
-        alert('Job created successfully!');
-        router.push('/home/employer');
-      } else {
-        const error = await res.json();
-        alert(`Failed to create job: ${error.error || 'Unknown error'}`);
+      if (!res.ok) {
+        // Fallback to client-side write (requires Firestore rules permitting employer writes)
+        const { error } = await res.json().catch(() => ({ error: 'Unknown error' }));
+        console.warn('Server create failed, attempting client fallback:', error);
+
+        const { error: clientError } = await createDocument('jobs', jobData);
+
+        if (clientError) {
+          alert(`Failed to create job: ${clientError}`);
+          return;
+        }
       }
+
+      // Redirect to employer dashboard
+      router.push('/home/employer');
     } catch (error) {
       console.error('Error creating job:', error);
       alert('Failed to create job. Please try again.');
@@ -77,24 +104,34 @@ export default function NewJobPage() {
           <label className="block text-sm font-medium mb-1" htmlFor="description">Description</label>
           <textarea id="description" value={description} onChange={(e) => setDescription(e.target.value)} className="w-full px-3 py-2 border rounded h-32" required />
         </div>
+        <div>
+          <label className="block text-sm font-medium mb-1" htmlFor="location">Location</label>
+          <SearchableDropdown
+            label=""
+            options={LOCATIONS}
+            value={location}
+            onChange={setLocation}
+            placeholder="Search for a city..."
+          />
+        </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium mb-1" htmlFor="city">City</label>
-            <input id="city" type="text" value={locationCity} onChange={(e) => setLocationCity(e.target.value)} className="w-full px-3 py-2 border rounded" />
+            <label className="block text-sm font-medium mb-1" htmlFor="employment">Job Type</label>
+            <select id="employment" value={employment} onChange={(e) => setEmployment(e.target.value)} className="w-full px-3 py-2 border rounded">
+              <option value="FULL_TIME">Full-time</option>
+              <option value="PART_TIME">Part-time</option>
+              <option value="CONTRACT">Contract</option>
+              <option value="INTERNSHIP">Internship</option>
+            </select>
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1" htmlFor="state">State</label>
-            <input id="state" type="text" value={locationState} onChange={(e) => setLocationState(e.target.value)} className="w-full px-3 py-2 border rounded" />
+            <label className="block text-sm font-medium mb-1" htmlFor="workMode">Work Mode</label>
+            <select id="workMode" value={workMode} onChange={(e) => setWorkMode(e.target.value)} className="w-full px-3 py-2 border rounded">
+              <option value="IN_PERSON">In-person</option>
+              <option value="HYBRID">Hybrid</option>
+              <option value="REMOTE">Remote</option>
+            </select>
           </div>
-        </div>
-        <div>
-          <label className="block text-sm font-medium mb-1" htmlFor="employment">Employment type</label>
-          <select id="employment" value={employment} onChange={(e) => setEmployment(e.target.value)} className="w-full px-3 py-2 border rounded">
-            <option value="INTERNSHIP">Internship</option>
-            <option value="PART_TIME">Part-time</option>
-            <option value="FULL_TIME">Full-time</option>
-            <option value="CONTRACT">Contract</option>
-          </select>
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>

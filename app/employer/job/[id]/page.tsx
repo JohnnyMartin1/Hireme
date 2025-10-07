@@ -13,8 +13,8 @@ export default function ViewJobPage({ params }: { params: { id: string } }) {
   const [error, setError] = useState('');
   const [job, setJob] = useState<any>(null);
 
-  // Redirect if not logged in or not an employer
-  if (!user || !profile || profile.role !== 'EMPLOYER') {
+  // Redirect if not logged in or not an employer/recruiter
+  if (!user || !profile || (profile.role !== 'EMPLOYER' && profile.role !== 'RECRUITER')) {
     router.push('/auth/login');
     return null;
   }

@@ -35,8 +35,17 @@ export default function SiteHeader() {
           </nav>
         ) : (
           <nav className="flex items-center gap-6">
-            <Link href="/" className="text-sm text-[var(--muted)] hover:text-[var(--text)] transition-colors">
-              Home
+            <Link 
+              href={
+                profile?.role === 'JOB_SEEKER' 
+                  ? '/home/seeker' 
+                  : profile?.role === 'EMPLOYER' || profile?.role === 'RECRUITER'
+                  ? '/home/employer'
+                  : '/'
+              } 
+              className="text-sm text-[var(--muted)] hover:text-[var(--text)] transition-colors"
+            >
+              Dashboard
             </Link>
             <button
               onClick={signOut}

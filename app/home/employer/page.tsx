@@ -13,7 +13,7 @@ import {
   Heart
 } from "lucide-react";
 import EmployerJobsList from "@/components/EmployerJobsList";
-import { getEmployerJobs, getUserMessageThreads, getProfilesByRole } from '@/lib/firebase-firestore';
+import { getEmployerJobs, getCompanyJobs, getUserMessageThreads, getProfilesByRole } from '@/lib/firebase-firestore';
 import CompanyRatingDisplay from '@/components/CompanyRatingDisplay';
 
 export default function EmployerHomePage() {
@@ -32,8 +32,8 @@ export default function EmployerHomePage() {
       return;
     }
 
-    // Check if user has the correct role
-    if (profile && profile.role !== 'EMPLOYER') {
+    // Check if user has the correct role (EMPLOYER or RECRUITER)
+    if (profile && profile.role !== 'EMPLOYER' && profile.role !== 'RECRUITER') {
       if (profile.role === 'JOB_SEEKER') {
         router.push("/home/seeker");
       } else {
@@ -46,21 +46,32 @@ export default function EmployerHomePage() {
   // Fetch stats data
   useEffect(() => {
     const fetchStats = async () => {
-      if (!user || !profile || profile.role !== 'EMPLOYER') return;
+      if (!user || !profile || (profile.role !== 'EMPLOYER' && profile.role !== 'RECRUITER')) return;
 
       setIsLoadingStats(true);
       try {
-        // Fetch active jobs count
-        const { data: jobs, error: jobsError } = await getEmployerJobs(user.uid);
+        // Fetch active jobs count (use company jobs if user has companyId)
+        const { data: jobs, error: jobsError } = profile.companyId 
+          ? await getCompanyJobs(profile.companyId, user.uid, profile.isCompanyOwner || false)
+          : await getEmployerJobs(user.uid);
         const activeJobsCount = jobsError ? 0 : (jobs?.length || 0);
 
         // Fetch message threads count
         const { data: threads, error: threadsError } = await getUserMessageThreads(user.uid);
         const messagesCount = threadsError ? 0 : (threads?.length || 0);
 
-        // Fetch candidates count (all job seekers)
-        const { data: candidates, error: candidatesError } = await getProfilesByRole('JOB_SEEKER');
-        const candidatesCount = candidatesError ? 0 : (candidates?.length || 0);
+        // Candidates reached out to: count unique other participant IDs across threads
+        const otherParticipants = new Set<string>();
+        if (!threadsError && threads) {
+          for (const t of threads as any[]) {
+            if (Array.isArray(t.participantIds)) {
+              for (const pid of t.participantIds as string[]) {
+                if (pid && pid !== user.uid) otherParticipants.add(pid);
+              }
+            }
+          }
+        }
+        const candidatesCount = otherParticipants.size;
 
         setStats({
           candidates: candidatesCount,
@@ -93,7 +104,7 @@ export default function EmployerHomePage() {
   }
 
   // Double-check role before rendering
-  if (profile.role !== 'EMPLOYER') {
+  if (profile.role !== 'EMPLOYER' && profile.role !== 'RECRUITER') {
     return null; // Will redirect to appropriate dashboard
   }
 
@@ -103,7 +114,9 @@ export default function EmployerHomePage() {
       <div className="bg-gradient-to-r from-green-600 to-emerald-700 text-white py-8 px-6">
         <div className="max-w-6xl mx-auto">
           <h1 className="text-3xl font-bold mb-2">
-            Welcome back, {profile?.companyName || 'Employer'}! 👋
+            Welcome back, {profile?.isCompanyOwner 
+              ? (profile?.companyName || 'Employer') 
+              : (profile?.firstName || 'there')}! 👋
           </h1>
           <p className="text-green-100 text-lg">
             Ready to find your next talented candidate?
@@ -114,7 +127,8 @@ export default function EmployerHomePage() {
       <div className="max-w-6xl mx-auto p-6">
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-green-500">
+          <Link href="/employer/candidates-by-job" className="block">
+          <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-green-500 hover:shadow-xl transition-shadow">
             <div className="flex items-center">
               <div className="p-2 bg-green-100 rounded-lg">
                 <Users className="h-6 w-6 text-green-600" />
@@ -127,8 +141,10 @@ export default function EmployerHomePage() {
               </div>
             </div>
           </div>
+          </Link>
 
-          <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-blue-500">
+          <Link href="/messages" className="block">
+          <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-blue-500 hover:shadow-xl transition-shadow">
             <div className="flex items-center">
               <div className="p-2 bg-blue-100 rounded-lg">
                 <MessageSquare className="h-6 w-6 text-blue-600" />
@@ -141,8 +157,10 @@ export default function EmployerHomePage() {
               </div>
             </div>
           </div>
+          </Link>
 
-          <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-purple-500">
+          <Link href="/employer/jobs" className="block">
+          <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-purple-500 hover:shadow-xl transition-shadow">
             <div className="flex items-center">
               <div className="p-2 bg-purple-100 rounded-lg">
                 <TrendingUp className="h-6 w-6 text-purple-600" />
@@ -155,6 +173,7 @@ export default function EmployerHomePage() {
               </div>
             </div>
           </div>
+          </Link>
         </div>
 
         {/* Quick Actions */}
@@ -177,13 +196,6 @@ export default function EmployerHomePage() {
                 <span className="text-orange-800">Saved Candidates</span>
               </Link>
               <Link
-                href="/employer/job/new"
-                className="flex items-center p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
-              >
-                <Building className="h-5 w-5 text-blue-600 mr-3" />
-                <span className="text-blue-800">Post New Job</span>
-              </Link>
-              <Link
                 href="/messages"
                 className="flex items-center p-3 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors"
               >
@@ -202,28 +214,41 @@ export default function EmployerHomePage() {
                   {profile?.companyName || 'Not set'}
                 </span>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-gray-600">Member Since</span>
-                <span className="text-sm font-medium text-gray-900">
-                  {profile?.createdAt ? 
-                    new Date(profile.createdAt).toLocaleDateString() : 'N/A'}
-                </span>
-              </div>
-              <div className="pt-3 border-t">
-                <Link
-                  href="/account/company"
-                  className="flex items-center p-3 bg-green-50 rounded-lg hover:bg-green-100 transition-colors"
-                >
-                  <Building className="h-5 w-5 text-green-600 mr-3" />
-                  <span className="text-green-800">Edit Company Profile</span>
-                </Link>
+              <div className="pt-3 border-t space-y-2">
+                {profile?.isCompanyOwner ? (
+                  <Link
+                    href="/account/company"
+                    className="flex items-center p-3 bg-green-50 rounded-lg hover:bg-green-100 transition-colors"
+                  >
+                    <Building className="h-5 w-5 text-green-600 mr-3" />
+                    <span className="text-green-800">Edit Company Profile</span>
+                  </Link>
+                ) : (
+                  <Link
+                    href="/company/view"
+                    className="flex items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                  >
+                    <Building className="h-5 w-5 text-gray-600 mr-3" />
+                    <span className="text-gray-800">View Company Profile</span>
+                  </Link>
+                )}
+                
+                {profile?.isCompanyOwner && (
+                  <Link
+                    href="/company/manage/recruiters"
+                    className="flex items-center p-3 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors"
+                  >
+                    <Users className="h-5 w-5 text-purple-600 mr-3" />
+                    <span className="text-purple-800">Manage Recruiters</span>
+                  </Link>
+                )}
               </div>
             </div>
           </div>
         </div>
 
         {/* Manage Jobs */}
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
+        <div id="manage-jobs" className="bg-white rounded-xl shadow-lg p-6 mb-8">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-lg font-semibold text-gray-900">Manage Jobs</h3>
             <Link
@@ -243,15 +268,7 @@ export default function EmployerHomePage() {
           <CompanyRatingDisplay employerId={user.uid} showDetails={true} />
         </div>
 
-        {/* Recent Activity */}
-        <div className="bg-white rounded-xl shadow-lg p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Activity</h3>
-          <div className="text-center py-8">
-            <Users className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-500">No recent activity</p>
-            <p className="text-sm text-gray-400">Start searching for candidates to see activity here</p>
-          </div>
-        </div>
+        
       </div>
     </main>
   );

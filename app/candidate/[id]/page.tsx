@@ -3,11 +3,11 @@ import { useParams } from 'next/navigation';
 import { useFirebaseAuth } from "@/components/FirebaseAuthProvider";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { User, MapPin, GraduationCap, Star, MessageSquare, Heart, Loader2, ArrowLeft, Send, Video } from "lucide-react";
+import { User, MapPin, GraduationCap, Star, MessageSquare, Heart, Loader2, ArrowLeft, Send, Video, FileText, Download, X } from "lucide-react";
 import { getDocument, getOrCreateThread, sendMessage, saveCandidate, isCandidateSaved } from '@/lib/firebase-firestore';
 import Link from 'next/link';
 import { trackProfileView } from '@/lib/firebase-firestore';
-import { getEmployerJobs } from '@/lib/firebase-firestore';
+import { getEmployerJobs, getCompanyJobs } from '@/lib/firebase-firestore';
 
 interface CandidateProfile {
   id: string;
@@ -47,6 +47,7 @@ export default function CandidateProfilePage() {
   const [employerJobs, setEmployerJobs] = useState<any[]>([]);
   const [isSaved, setIsSaved] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [showResumeModal, setShowResumeModal] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -86,8 +87,8 @@ export default function CandidateProfilePage() {
           await trackProfileView(params.id as string, user.uid);
         }
 
-        // Check if candidate is saved (for employers only)
-        if (user && profile?.role === 'EMPLOYER') {
+        // Check if candidate is saved (for employers and recruiters)
+        if (user && (profile?.role === 'EMPLOYER' || profile?.role === 'RECRUITER')) {
           const { saved } = await isCandidateSaved(user.uid, params.id as string);
           setIsSaved(saved);
         }
@@ -106,8 +107,8 @@ export default function CandidateProfilePage() {
   const handleSendMessage = async () => {
     if (!user || !profile || !candidate || !messageContent.trim()) return;
 
-    // For employers, require job selection
-    if (profile.role === 'EMPLOYER' && !selectedJobId) {
+    // For employers and recruiters, require job selection
+    if ((profile.role === 'EMPLOYER' || profile.role === 'RECRUITER') && !selectedJobId) {
       setError('Please select a job position to attach to your message');
       return;
     }
@@ -123,9 +124,9 @@ export default function CandidateProfilePage() {
         return;
       }
 
-      // Get job details if employer
+      // Get job details if employer or recruiter
       let jobDetails = null;
-      if (profile.role === 'EMPLOYER' && selectedJobId) {
+      if ((profile.role === 'EMPLOYER' || profile.role === 'RECRUITER') && selectedJobId) {
         const selectedJob = employerJobs.find(job => job.id === selectedJobId);
         if (selectedJob) {
           jobDetails = {
@@ -138,12 +139,16 @@ export default function CandidateProfilePage() {
         }
       }
 
-      const messageData = {
+      const messageData: any = {
         senderId: user.uid,
         senderName: `${profile.firstName || ''} ${profile.lastName || ''}`.trim() || 'Employer',
-        content: messageContent.trim(),
-        jobDetails: jobDetails
+        content: messageContent.trim()
       };
+      
+      // Only add jobDetails if it exists
+      if (jobDetails) {
+        messageData.jobDetails = jobDetails;
+      }
 
       const { error: messageError } = await sendMessage(threadId, messageData);
 
@@ -168,29 +173,42 @@ export default function CandidateProfilePage() {
   };
 
   const handleOpenMessageDialog = async () => {
-    if (!user || profile?.role !== 'EMPLOYER') {
+    if (!user || (profile?.role !== 'EMPLOYER' && profile?.role !== 'RECRUITER')) {
       setShowMessageDialog(true);
       return;
     }
     
-    // Fetch employer jobs
+    // Fetch employer/recruiter jobs
     try {
-      const { data: jobs, error } = await getEmployerJobs(user.uid);
-      if (!error && jobs) {
-        setEmployerJobs(jobs);
-        if (jobs.length > 0) {
-          setSelectedJobId(jobs[0].id); // Select first job by default
+      let jobs: any[] = [];
+      
+      if (profile.role === 'RECRUITER' && profile.companyId) {
+        // Fetch company jobs for recruiters (their jobs + owner's jobs)
+        const { data, error } = await getCompanyJobs(profile.companyId, user.uid, profile.isCompanyOwner || false);
+        if (!error && data) {
+          jobs = data;
+        }
+      } else {
+        // Fetch employer's own jobs
+        const { data, error } = await getEmployerJobs(user.uid);
+        if (!error && data) {
+          jobs = data;
         }
       }
+      
+      setEmployerJobs(jobs);
+      if (jobs.length > 0) {
+        setSelectedJobId(jobs[0].id); // Select first job by default
+      }
     } catch (err) {
-      console.error('Error fetching employer jobs:', err);
+      console.error('Error fetching jobs:', err);
     }
     
     setShowMessageDialog(true);
   };
 
   const handleSaveCandidate = async () => {
-    if (!user || profile?.role !== 'EMPLOYER' || !candidate) return;
+    if (!user || (profile?.role !== 'EMPLOYER' && profile?.role !== 'RECRUITER') || !candidate) return;
 
     setIsSaving(true);
     try {
@@ -287,31 +305,7 @@ export default function CandidateProfilePage() {
               </div>
             </div>
             
-            <div className="flex gap-3">
-              <button 
-                onClick={handleSaveCandidate}
-                disabled={isSaving}
-                className={`px-4 py-2 border rounded-lg transition-colors flex items-center ${
-                  isSaved 
-                    ? 'border-red-600 text-red-600 hover:bg-red-50' 
-                    : 'border-blue-600 text-blue-600 hover:bg-blue-50'
-                } ${isSaving ? 'opacity-50 cursor-not-allowed' : ''}`}
-              >
-                {isSaving ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                ) : (
-                  <Heart className={`h-4 w-4 mr-2 ${isSaved ? 'fill-current' : ''}`} />
-                )}
-                {isSaved ? 'Saved' : 'Save'}
-              </button>
-              <button
-                onClick={handleOpenMessageDialog}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center"
-              >
-                <MessageSquare className="h-4 w-4 mr-2" />
-                Send Message
-              </button>
-            </div>
+            {/* Removed small header actions to avoid duplication with Get in Touch */}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -336,25 +330,103 @@ export default function CandidateProfilePage() {
               <span>{candidate.skills?.length || 0} skills</span>
             </div>
           </div>
-
-          {/* Additional Education Info */}
-          {(candidate.graduationYear || candidate.gpa) && (
-            <div className="mt-4 pt-4 border-t border-gray-200">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {candidate.graduationYear && (
-                  <div className="text-sm text-gray-600">
-                    <span className="font-medium">Graduation Year:</span> {candidate.graduationYear}
-                  </div>
-                )}
-                {candidate.gpa && (
-                  <div className="text-sm text-gray-600">
-                    <span className="font-medium">GPA:</span> {candidate.gpa}
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
         </div>
+
+        {/* About */}
+        {candidate.bio && (
+          <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">About</h2>
+            <p className="text-gray-700 leading-relaxed">{candidate.bio}</p>
+          </div>
+        )}
+
+        {/* Education */}
+        {candidate.education && candidate.education.length > 0 && (
+          <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">Education</h2>
+            <div className="space-y-3">
+              {candidate.education.map((edu: any, index: number) => (
+                <div key={index} className="bg-gray-50 rounded-lg p-4">
+                  <div className="flex justify-between items-start mb-2">
+                    <h4 className="font-medium text-gray-900">
+                      {edu.degree} {edu.majors && edu.majors.length > 0 && `in ${edu.majors.join(', ')}`}
+                    </h4>
+                    {edu.graduationYear && (
+                      <span className="text-sm text-gray-600">{edu.graduationYear}</span>
+                    )}
+                  </div>
+                  <div className="text-sm text-gray-600">
+                    <div className="font-medium">{edu.school}</div>
+                    {edu.minors && edu.minors.length > 0 && (
+                      <div>Minor: {edu.minors.join(', ')}</div>
+                    )}
+                    {edu.gpa && (
+                      <div>GPA: {edu.gpa}</div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        
+        {/* Legacy Education Info (for backward compatibility) */}
+        {(!candidate.education || candidate.education.length === 0) && (candidate.graduationYear || candidate.gpa) && (
+          <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">Education</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {candidate.graduationYear && (
+                <div className="text-sm text-gray-600">
+                  <span className="font-medium">Graduation Year:</span> {candidate.graduationYear}
+                </div>
+              )}
+              {candidate.gpa && (
+                <div className="text-sm text-gray-600">
+                  <span className="font-medium">GPA:</span> {candidate.gpa}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Profile Video */}
+        {candidate.videoUrl && (
+          <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+              <Video className="h-5 w-5 mr-2 text-orange-600" />
+              Profile Video
+            </h2>
+            <div className="aspect-video rounded-lg overflow-hidden">
+              <video 
+                src={candidate.videoUrl} 
+                controls 
+                className="w-full h-full object-cover"
+                preload="metadata"
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Resume */}
+        {candidate.resumeUrl && (
+          <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">Resume</h2>
+            <button
+              onClick={() => setShowResumeModal(true)}
+              className="w-full border-2 border-dashed border-gray-300 rounded-lg overflow-hidden bg-gray-50 hover:bg-gray-100 hover:border-blue-400 transition-all cursor-pointer group"
+            >
+              <div className="p-8 flex flex-col items-center justify-center">
+                <FileText className="h-16 w-16 text-gray-400 group-hover:text-blue-500 mb-4" />
+                <p className="text-lg font-medium text-gray-700 group-hover:text-blue-600 mb-2">
+                  Click to View Resume
+                </p>
+                <p className="text-sm text-gray-500">
+                  Preview and download options available
+                </p>
+              </div>
+            </button>
+          </div>
+        )}
 
         {/* Skills */}
         {candidate.skills && candidate.skills.length > 0 && (
@@ -424,89 +496,6 @@ export default function CandidateProfilePage() {
           </div>
         )}
 
-        {/* Bio */}
-        {candidate.bio && (
-          <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">About</h2>
-            <p className="text-gray-700 leading-relaxed">{candidate.bio}</p>
-          </div>
-        )}
-
-        {/* Resume */}
-        {candidate.resumeUrl && (
-          <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Resume</h2>
-            <div className="border border-gray-200 rounded-lg overflow-hidden bg-gray-50">
-              <div className="p-4">
-                <iframe
-                  src={`https://docs.google.com/viewer?url=${encodeURIComponent(candidate.resumeUrl)}&embedded=true`}
-                  className="w-full h-96 border-0"
-                  title="Resume Preview"
-                  frameBorder="0"
-                  allowFullScreen
-                  sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
-                  style={{ pointerEvents: 'auto' }}
-                />
-              </div>
-            </div>
-            <div className="mt-3 flex justify-between items-center">
-              <p className="text-sm text-gray-500">
-                Use scroll to navigate the resume
-              </p>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => {
-                    const iframe = document.querySelector('iframe[title="Resume Preview"]') as HTMLIFrameElement;
-                    if (iframe && iframe.contentWindow) {
-                      iframe.contentWindow.print();
-                    }
-                  }}
-                  className="text-sm text-gray-600 hover:text-gray-800 underline flex items-center"
-                >
-                  <svg className="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-                  </svg>
-                  Print
-                </button>
-                <a 
-                  href={candidate.resumeUrl} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-sm text-blue-600 hover:text-blue-800 underline flex items-center"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    window.open(candidate.resumeUrl, '_blank', 'noopener,noreferrer');
-                  }}
-                >
-                  <svg className="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                  </svg>
-                  Open in new tab
-                </a>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Profile Video */}
-        {candidate.videoUrl && (
-          <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-              <Video className="h-5 w-5 mr-2 text-orange-600" />
-              Profile Video
-            </h2>
-            <div className="aspect-video rounded-lg overflow-hidden">
-              <video 
-                src={candidate.videoUrl} 
-                controls 
-                className="w-full h-full object-cover"
-                preload="metadata"
-              >
-                Your browser does not support the video tag.
-              </video>
-            </div>
-          </div>
-        )}
 
         {/* Contact Actions */}
         <div className="bg-white rounded-xl shadow-lg p-6">
@@ -519,9 +508,17 @@ export default function CandidateProfilePage() {
               <MessageSquare className="h-5 w-5 mr-2" />
               Send Message
             </button>
-            <button className="flex-1 px-6 py-3 border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 transition-colors flex items-center justify-center">
-              <Heart className="h-5 w-5 mr-2" />
-              Save Candidate
+            <button 
+              onClick={handleSaveCandidate}
+              disabled={isSaving}
+              className={`flex-1 px-6 py-3 border rounded-lg transition-colors flex items-center justify-center ${
+                isSaved 
+                  ? 'border-green-600 text-green-600 bg-green-50' 
+                  : 'border-blue-600 text-blue-600 hover:bg-blue-50'
+              } ${isSaving ? 'opacity-50 cursor-not-allowed' : ''}`}
+            >
+              <Heart className={`h-5 w-5 mr-2 ${isSaved ? 'fill-current' : ''}`} />
+              {isSaving ? 'Saving...' : isSaved ? 'Saved!' : 'Save Candidate'}
             </button>
           </div>
         </div>
@@ -540,7 +537,7 @@ export default function CandidateProfilePage() {
                 disabled={isSendingMessage}
               />
               
-              {profile.role === 'EMPLOYER' && (
+              {(profile.role === 'EMPLOYER' || profile.role === 'RECRUITER') && (
                 <div className="mb-4">
                   <label htmlFor="jobSelect" className="block text-sm font-medium text-gray-700 mb-1">
                     Select Job Position:
@@ -586,6 +583,70 @@ export default function CandidateProfilePage() {
                   )}
                   Send Message
                 </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Resume Modal */}
+        {showResumeModal && candidate.resumeUrl && (
+          <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-xl w-full max-w-5xl h-[90vh] flex flex-col">
+              {/* Modal Header */}
+              <div className="flex items-center justify-between p-4 border-b">
+                <h3 className="text-xl font-semibold text-gray-900">
+                  {candidate.firstName}'s Resume
+                </h3>
+                <div className="flex items-center gap-2">
+                  <a
+                    href={candidate.resumeUrl}
+                    download
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center text-sm"
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Download PDF
+                  </a>
+                  <a
+                    href={candidate.resumeUrl}
+                    download
+                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center text-sm"
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Download DOC
+                  </a>
+                  <button
+                    onClick={() => setShowResumeModal(false)}
+                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  >
+                    <X className="h-6 w-6 text-gray-600" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Modal Body - Resume Preview */}
+              <div className="flex-1 overflow-hidden p-4 bg-gray-100">
+                <iframe
+                  src={`https://docs.google.com/viewer?url=${encodeURIComponent(candidate.resumeUrl)}&embedded=true`}
+                  className="w-full h-full border-0 rounded-lg bg-white"
+                  title="Resume Preview"
+                  frameBorder="0"
+                  allowFullScreen
+                />
+              </div>
+
+              {/* Modal Footer */}
+              <div className="p-4 border-t bg-gray-50">
+                <div className="flex justify-between items-center">
+                  <p className="text-sm text-gray-600">
+                    💡 Tip: Use scroll to navigate through the resume
+                  </p>
+                  <button
+                    onClick={() => setShowResumeModal(false)}
+                    className="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+                  >
+                    Close
+                  </button>
+                </div>
               </div>
             </div>
           </div>

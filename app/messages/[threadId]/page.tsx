@@ -2,7 +2,7 @@
 import { useParams } from 'next/navigation';
 import { useFirebaseAuth } from "@/components/FirebaseAuthProvider";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { User, MessageSquare, Send, ArrowLeft, Loader2, Star } from "lucide-react";
 import { getMessageThread, getThreadMessages, sendMessage, getDocument, createCompanyRating } from '@/lib/firebase-firestore';
 import Link from 'next/link';
@@ -47,6 +47,7 @@ export default function MessageThreadPage() {
   const [showRatingModal, setShowRatingModal] = useState(false);
   const [isSubmittingRating, setIsSubmittingRating] = useState(false);
   const [jobToRate, setJobToRate] = useState<any>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -131,6 +132,11 @@ export default function MessageThreadPage() {
 
     fetchThreadData();
   }, [params.threadId, user]);
+
+  // Scroll to bottom when messages change
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
 
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !thread || !user || !profile) return;
@@ -275,10 +281,10 @@ export default function MessageThreadPage() {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
-      <div className="max-w-6xl mx-auto p-6">
+    <main className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 py-6">
+      <div className="max-w-7xl mx-auto px-4">
         {/* Header */}
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
+        <div className="bg-white rounded-t-xl shadow-sm p-4 border-b">
           <div className="flex items-center gap-4">
             <Link 
               href="/messages"
@@ -286,30 +292,33 @@ export default function MessageThreadPage() {
             >
               <ArrowLeft className="h-5 w-5" />
             </Link>
-            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-              <User className="h-6 w-6 text-blue-600" />
+            <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+              <User className="h-5 w-5 text-blue-600" />
             </div>
             <div>
-              <h1 className="text-xl font-semibold text-gray-900">
+              <h1 className="text-lg font-semibold text-gray-900">
                 {otherParticipant ? `${otherParticipant.firstName || ''} ${otherParticipant.lastName || ''}`.trim() : 'Unknown User'}
               </h1>
-              <p className="text-gray-600">Message thread</p>
+              <p className="text-sm text-gray-600">Message thread</p>
             </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Messages */}
-          <div className="lg:col-span-2">
-            <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
-              <div className="space-y-4 mb-6 max-h-96 overflow-y-auto">
-                {messages.length === 0 ? (
-                  <div className="text-center py-8 text-gray-500">
-                    <MessageSquare className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                    <p>No messages yet. Start the conversation!</p>
-                  </div>
-                ) : (
-                  messages.map((message) => (
+        {/* Main Content */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-0 lg:gap-6">
+          {/* Messages Section */}
+          <div className="lg:col-span-2 bg-white rounded-b-xl shadow-lg flex flex-col" style={{ height: '70vh' }}>
+            {/* Messages Container */}
+            <div className="flex-1 overflow-y-auto p-6">
+              <div className="flex flex-col justify-end min-h-full">
+                <div className="space-y-4">
+                  {messages.length === 0 ? (
+                    <div className="text-center py-8 text-gray-500">
+                      <MessageSquare className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                      <p>No messages yet. Start the conversation!</p>
+                    </div>
+                  ) : (
+                    messages.map((message) => (
                     <div
                       key={message.id}
                       className={`flex ${message.senderId === user.uid ? 'justify-end' : 'justify-start'}`}
@@ -367,33 +376,40 @@ export default function MessageThreadPage() {
                       </div>
                     </div>
                   ))
-                )}
+                  )}
+                  <div ref={messagesEndRef} />
+                </div>
               </div>
             </div>
 
-            {/* Message Input */}
-            <div className="bg-white rounded-xl shadow-lg p-6">
-              <div className="flex gap-4">
+            {/* Message Input - Fixed at bottom */}
+            <div className="border-t bg-gray-50 p-4">
+              <div className="flex gap-3">
                 <input
                   type="text"
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
                   onKeyPress={handleKeyPress}
                   placeholder="Type your message..."
-                  className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
                   disabled={isSending}
                 />
                 <button
                   onClick={handleSendMessage}
                   disabled={!newMessage.trim() || isSending}
-                  className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center"
+                  className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
                 >
                   {isSending ? (
-                    <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                    <>
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                      Sending...
+                    </>
                   ) : (
-                    <Send className="h-5 w-5 mr-2" />
+                    <>
+                      <Send className="h-5 w-5" />
+                      Send
+                    </>
                   )}
-                  Send
                 </button>
               </div>
             </div>
@@ -401,8 +417,10 @@ export default function MessageThreadPage() {
 
           {/* Company Profile Sidebar - Only show for candidates */}
           {profile.role === 'JOB_SEEKER' && otherParticipant && (
-            <div className="lg:col-span-1">
-              <CompanyProfile employerId={otherParticipant.id || otherParticipant.uid} showDetails={true} clickable={true} />
+            <div className="lg:col-span-1 hidden lg:block">
+              <div className="bg-white rounded-xl shadow-lg overflow-y-auto" style={{ height: '70vh' }}>
+                <CompanyProfile employerId={otherParticipant.id || otherParticipant.uid} showDetails={true} clickable={true} />
+              </div>
             </div>
           )}
         </div>

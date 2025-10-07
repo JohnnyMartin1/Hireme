@@ -1,6 +1,6 @@
 "use client";
 import { useState, useRef, useEffect } from 'react';
-import { Upload, X, Video, Camera, Loader2, Play, Pause, Square } from 'lucide-react';
+import { Upload, X, Video, Loader2 } from 'lucide-react';
 import { uploadVideo, deleteFile } from '@/lib/firebase-storage';
 
 interface VideoUploadProps {
@@ -18,32 +18,15 @@ export default function VideoUpload({
 }: VideoUploadProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [dragActive, setDragActive] = useState(false);
-  const [isRecording, setIsRecording] = useState(false);
-  const [recordedBlob, setRecordedBlob] = useState<Blob | null>(null);
-  const [recordedUrl, setRecordedUrl] = useState<string>('');
-  const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
-  const [stream, setStream] = useState<MediaStream | null>(null);
-  const [recordingTime, setRecordingTime] = useState(0);
-  const [showRecording, setShowRecording] = useState(false);
+  // Recording functionality removed
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Cleanup on unmount
   useEffect(() => {
-    return () => {
-      if (stream) {
-        stream.getTracks().forEach(track => track.stop());
-      }
-      if (recordingTimerRef.current) {
-        clearInterval(recordingTimerRef.current);
-      }
-      if (recordedUrl) {
-        URL.revokeObjectURL(recordedUrl);
-      }
-    };
-  }, [stream, recordedUrl]);
+    // no-op cleanup since recording is removed
+  }, []);
 
   const handleFileSelect = async (file: File) => {
     if (!file) return;
@@ -54,9 +37,9 @@ export default function VideoUpload({
       return;
     }
     
-    // Check file size (1 minute video ~ 10MB)
-    if (file.size > 10 * 1024 * 1024) {
-      alert('Video file size must be less than 10MB.');
+    // Check file size (1 minute video ~ 50MB)
+    if (file.size > 50 * 1024 * 1024) {
+      alert('Video file size must be less than 50MB.');
       return;
     }
 
@@ -315,57 +298,6 @@ export default function VideoUpload({
             />
           </div>
         </div>
-      ) : recordedUrl ? (
-        <div className="space-y-3">
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center">
-                <Video className="h-5 w-5 text-blue-600 mr-3" />
-                <div>
-                  <p className="font-medium text-blue-800">Recording complete</p>
-                  <p className="text-sm text-blue-600">Review your video</p>
-                </div>
-              </div>
-            </div>
-            <video 
-              src={recordedUrl} 
-              controls 
-              className="w-full rounded-lg max-h-48"
-            />
-            <div className="flex gap-2 mt-3">
-              <button
-                type="button"
-                onClick={saveRecording}
-                disabled={isUploading}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors text-sm"
-              >
-                {isUploading ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    Saving...
-                  </>
-                ) : (
-                  'Save Recording'
-                )}
-              </button>
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setRecordedBlob(null);
-                  if (recordedUrl) {
-                    URL.revokeObjectURL(recordedUrl);
-                  }
-                  setRecordedUrl('');
-                }}
-                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm"
-              >
-                Discard
-              </button>
-            </div>
-          </div>
-        </div>
       ) : (
         <div className="space-y-4">
           {/* Upload Section */}
@@ -398,7 +330,7 @@ export default function VideoUpload({
                 <Upload className="h-8 w-8 text-gray-400 mx-auto mb-3" />
                 <p className="text-sm font-medium text-gray-700 mb-1">Upload Video</p>
                 <p className="text-xs text-gray-500 mb-3">
-                  Drag and drop a video file here, or click to browse (max 1 minute)
+                  Drag and drop a video file here, or click to browse (max 50MB)
                 </p>
                 <button
                   type="button"
@@ -411,57 +343,7 @@ export default function VideoUpload({
             )}
           </div>
 
-          {/* Recording Section */}
-          <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-            <Camera className="h-8 w-8 text-gray-400 mx-auto mb-3" />
-            <p className="text-sm font-medium text-gray-700 mb-1">Record Video</p>
-            <p className="text-xs text-gray-500 mb-3">
-              Record a 1-minute video directly on this website
-            </p>
-            <button
-              type="button"
-              onClick={startRecording}
-              disabled={isRecording}
-              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors text-sm"
-            >
-              Start Recording
-            </button>
-          </div>
-
-          {/* Recording Interface */}
-          {showRecording && (
-            <div className="border-2 border-red-300 rounded-lg p-4 bg-red-50">
-              <div className="text-center mb-3">
-                <div className="text-lg font-bold text-red-600 mb-2">
-                  {isRecording ? `Recording... ${formatTime(recordingTime)}` : 'Starting camera...'}
-                </div>
-                <video
-                  ref={videoRef}
-                  autoPlay
-                  muted
-                  playsInline
-                  className="w-full rounded-lg max-h-48 bg-black"
-                />
-              </div>
-              <div className="flex justify-center">
-                {isRecording ? (
-                  <button
-                    type="button"
-                    onClick={stopRecording}
-                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm flex items-center"
-                  >
-                    <Square className="h-4 w-4 mr-2" />
-                    Stop Recording
-                  </button>
-                ) : (
-                  <div className="flex items-center text-gray-600">
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    Initializing camera...
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
+          {/* Recording option removed */}
         </div>
       )}
     </div>

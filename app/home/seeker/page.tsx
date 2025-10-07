@@ -11,7 +11,7 @@ import {
   MapPin,
   Star
 } from "lucide-react";
-import { getUserMessageThreads, getProfileViewCount, getDocument } from '@/lib/firebase-firestore';
+import { getUserMessageThreads, getProfileViewCount, getDocument, getProfileViewers } from '@/lib/firebase-firestore';
 
 import type { UserProfile } from "@/types/user";
 
@@ -21,8 +21,12 @@ export default function SeekerHomePage() {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [threads, setThreads] = useState<any[]>([]);
   const [profileViews, setProfileViews] = useState(0);
+  const routerToViews = () => {
+    window.location.href = '/home/seeker/profile-views';
+  };
   const [isLoadingStats, setIsLoadingStats] = useState(true);
   const [threadDetails, setThreadDetails] = useState<any[]>([]);
+  const [completion, setCompletion] = useState<number>(0);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -42,6 +46,25 @@ export default function SeekerHomePage() {
 
     if (profile) {
       setUserProfile(profile);
+      // compute simple completion metric
+      const total = 14;
+      let score = 0;
+      const p: any = profile;
+      if (p.firstName) score++;
+      if (p.lastName) score++;
+      if (p.headline) score++;
+      if (p.school) score++;
+      if (p.major) score++;
+      if (p.graduationYear) score++;
+      if (p.gpa) score++;
+      if (p.location) score++;
+      if (p.workPreferences && p.workPreferences.length) score++;
+      if (p.jobTypes && p.jobTypes.length) score++;
+      if (p.skills && p.skills.length) score++;
+      if (p.bio) score++;
+      if ((p as any).profileImageUrl) score++;
+      if ((p as any).resumeUrl) score++;
+      setCompletion(Math.round((score / total) * 100));
     }
   }, [user, profile, loading, router]);
 
@@ -75,8 +98,8 @@ export default function SeekerHomePage() {
           setThreadDetails(threadDetailsData);
         }
 
-        // Fetch profile view count
-        const { count, error: viewsError } = await getProfileViewCount(user.uid);
+        // Fetch unique viewer count
+        const { count, error: viewsError } = await getProfileViewers(user.uid);
         
         if (!viewsError) {
           setProfileViews(count);
@@ -147,6 +170,22 @@ export default function SeekerHomePage() {
       </div>
 
       <div className="max-w-6xl mx-auto p-6">
+        {/* Completion Bar */}
+        <div className="bg-white rounded-xl shadow-lg p-4 mb-6">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-sm font-medium text-gray-700">Profile Completion</p>
+            <p className="text-sm text-gray-600">{completion}%</p>
+          </div>
+          <div className="w-full h-3 bg-gray-200 rounded-full overflow-hidden">
+            <div className="h-3 bg-blue-600" style={{ width: `${completion}%` }} />
+          </div>
+          {completion < 100 && (
+            <div className="mt-3 text-sm text-gray-600">
+              Complete your profile to get noticed faster.{' '}
+              <a href="/account/profile" className="text-blue-600 hover:underline">Finish profile</a>
+            </div>
+          )}
+        </div>
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-blue-500">
@@ -163,33 +202,21 @@ export default function SeekerHomePage() {
             </div>
           </div>
 
-          <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-green-500">
+          <button onClick={routerToViews} className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-green-500 text-left w-full">
             <div className="flex items-center">
               <div className="p-2 bg-green-100 rounded-lg">
                 <Eye className="h-6 w-6 text-green-600" />
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Profile Views</p>
+                <p className="text-sm font-medium text-gray-600">Companies Viewed You</p>
                 <p className="text-2xl font-bold text-gray-900">
                   {isLoadingStats ? '...' : profileViews}
                 </p>
               </div>
             </div>
-          </div>
+          </button>
 
-          <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-orange-500">
-            <div className="flex items-center">
-              <div className="p-2 bg-orange-100 rounded-lg">
-                <Star className="h-6 w-6 text-orange-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Skills</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {isLoadingStats ? '...' : (profile?.skills?.length || 0)}
-                </p>
-              </div>
-            </div>
-          </div>
+          {/* Removed Skills card per request */}
         </div>
 
         {/* Quick Actions */}

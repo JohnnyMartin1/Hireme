@@ -92,11 +92,11 @@ export default function CompanyProfilePage() {
         {/* Header */}
         <div className="mb-6">
           <Link 
-            href="/messages"
+            href="/home/seeker/profile-views"
             className="inline-flex items-center text-blue-600 hover:text-blue-800 transition-colors mb-4"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Messages
+            Back to Profile Views
           </Link>
         </div>
 
@@ -201,23 +201,6 @@ export default function CompanyProfilePage() {
           </div>
         </div>
 
-        {/* Action Buttons */}
-        {profile?.role === 'JOB_SEEKER' && (
-          <div className="mt-6 flex gap-4">
-            <Link
-              href={`/messages?employer=${companyData.id}`}
-              className="flex-1 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors text-center font-medium"
-            >
-              Message Company
-            </Link>
-            <Link
-              href="/search/candidates"
-              className="flex-1 bg-gray-100 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-200 transition-colors text-center font-medium"
-            >
-              View Other Companies
-            </Link>
-          </div>
-        )}
       </div>
     </main>
   );

@@ -1,0 +1,329 @@
+"use client";
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useFirebaseAuth } from '@/components/FirebaseAuthProvider';
+import { 
+  inviteRecruiter, 
+  getCompanyInvitations, 
+  getCompanyRecruiters, 
+  cancelInvitation,
+  deleteDocument 
+} from '@/lib/firebase-firestore';
+import { ArrowLeft, UserPlus, Mail, Trash2, Clock } from 'lucide-react';
+import Link from 'next/link';
+
+export default function ManageRecruitersPage() {
+  const { user, profile, loading } = useFirebaseAuth();
+  const router = useRouter();
+  const [email, setEmail] = useState('');
+  const [inviting, setInviting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const [recruiters, setRecruiters] = useState<any[]>([]);
+  const [invitations, setInvitations] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push('/auth/login');
+      return;
+    }
+
+    if (profile && !profile.isCompanyOwner) {
+      router.push('/home/employer');
+      return;
+    }
+  }, [user, profile, loading, router]);
+
+  useEffect(() => {
+    const loadData = async () => {
+      if (!user || !profile?.companyId) return;
+
+      setIsLoading(true);
+      try {
+        // Fetch recruiters
+        const { data: recruitersData } = await getCompanyRecruiters(profile.companyId);
+        // Filter out deleted accounts (those missing email or firstName)
+        const validRecruiters = (recruitersData || []).filter(
+          (r: any) => r.email && r.firstName
+        );
+        setRecruiters(validRecruiters);
+
+        // Fetch invitations (only pending ones)
+        const { data: invitationsData } = await getCompanyInvitations(profile.companyId);
+        setInvitations(invitationsData || []);
+      } catch (err) {
+        console.error('Error loading data:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadData();
+  }, [user, profile]);
+
+  const handleInvite = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user || !profile?.companyId) return;
+
+    setError(null);
+    setSuccess(null);
+    setInviting(true);
+
+    try {
+      const { id, error: inviteError } = await inviteRecruiter(
+        profile.companyId,
+        email,
+        user.uid
+      );
+
+      if (inviteError) {
+        setError(inviteError);
+        return;
+      }
+
+      setSuccess(`Invitation sent to ${email}`);
+      setEmail('');
+
+      // Reload invitations (only pending ones)
+      const { data: invitationsData } = await getCompanyInvitations(profile.companyId);
+      setInvitations(invitationsData || []);
+      
+      // Also reload recruiters in case invitation was accepted during this time
+      const { data: recruitersData } = await getCompanyRecruiters(profile.companyId);
+      const validRecruiters = (recruitersData || []).filter(
+        (r: any) => r.email && r.firstName
+      );
+      setRecruiters(validRecruiters);
+    } catch (err: any) {
+      setError('Failed to send invitation');
+      console.error('Invitation error:', err);
+    } finally {
+      setInviting(false);
+    }
+  };
+
+  const handleCancelInvitation = async (invitationId: string) => {
+    if (!profile?.companyId) return;
+
+    try {
+      await cancelInvitation(invitationId);
+      
+      // Reload invitations (only pending ones)
+      const { data: invitationsData } = await getCompanyInvitations(profile.companyId);
+      setInvitations(invitationsData || []);
+      
+      // Also reload recruiters to ensure list is current
+      const { data: recruitersData } = await getCompanyRecruiters(profile.companyId);
+      const validRecruiters = (recruitersData || []).filter(
+        (r: any) => r.email && r.firstName
+      );
+      setRecruiters(validRecruiters);
+      
+      setSuccess('Invitation cancelled');
+    } catch (err) {
+      setError('Failed to cancel invitation');
+      console.error('Cancel error:', err);
+    }
+  };
+
+  const handleRemoveRecruiter = async (recruiterId: string, recruiterName: string) => {
+    if (!profile?.companyId) return;
+    
+    if (!confirm(`Are you sure you want to remove ${recruiterName}? This will delete their account from the system.`)) {
+      return;
+    }
+
+    try {
+      const { error: deleteError } = await deleteDocument('users', recruiterId);
+      
+      if (deleteError) {
+        setError('Failed to remove recruiter');
+        return;
+      }
+      
+      // Reload recruiters list
+      const { data: recruitersData } = await getCompanyRecruiters(profile.companyId);
+      const validRecruiters = (recruitersData || []).filter(
+        (r: any) => r.email && r.firstName
+      );
+      setRecruiters(validRecruiters);
+      
+      setSuccess(`${recruiterName} has been removed`);
+    } catch (err) {
+      setError('Failed to remove recruiter');
+      console.error('Remove error:', err);
+    }
+  };
+
+  if (loading || isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-indigo-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user || !profile?.isCompanyOwner) {
+    return null;
+  }
+
+  return (
+    <main className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-indigo-50">
+      <div className="max-w-5xl mx-auto p-6">
+        {/* Header */}
+        <div className="mb-6">
+          <Link 
+            href="/home/employer"
+            className="inline-flex items-center text-purple-600 hover:text-purple-800 transition-colors mb-4"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Dashboard
+          </Link>
+          <h1 className="text-3xl font-bold text-gray-900">Manage Recruiters</h1>
+          <p className="text-gray-600 mt-2">Invite and manage recruiters for your company</p>
+        </div>
+
+        {/* Invite Section */}
+        <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+            <UserPlus className="h-5 w-5 mr-2 text-purple-600" />
+            Invite Recruiter
+          </h2>
+          
+          <form onSubmit={handleInvite} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Email Address
+              </label>
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                placeholder="recruiter@company.com"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                They'll receive an email with instructions to join your company
+              </p>
+            </div>
+
+            {error && (
+              <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-sm text-red-600">{error}</p>
+              </div>
+            )}
+
+            {success && (
+              <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                <p className="text-sm text-green-600">{success}</p>
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={inviting}
+              className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center"
+            >
+              <Mail className="h-4 w-4 mr-2" />
+              {inviting ? 'Sending Invitation...' : 'Send Invitation'}
+            </button>
+          </form>
+        </div>
+
+        {/* Active Recruiters */}
+        <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">Active Recruiters</h2>
+          
+          {recruiters.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              <UserPlus className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+              <p>No recruiters yet</p>
+              <p className="text-sm">Invite recruiters to help manage your hiring</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {recruiters.map((recruiter) => (
+                <Link
+                  href={`/company/recruiter/${recruiter.id}`}
+                  key={recruiter.id}
+                  className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors group"
+                >
+                  <div className="flex items-center flex-1">
+                    <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center mr-3">
+                      <span className="text-purple-600 font-medium">
+                        {recruiter.firstName?.[0]}{recruiter.lastName?.[0]}
+                      </span>
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-medium text-gray-900 group-hover:text-purple-600 transition-colors">
+                        {recruiter.firstName} {recruiter.lastName}
+                      </p>
+                      <p className="text-sm text-gray-600">{recruiter.email}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="px-3 py-1 bg-green-100 text-green-800 text-sm rounded-full">
+                      Active
+                    </span>
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleRemoveRecruiter(recruiter.id, `${recruiter.firstName} ${recruiter.lastName}`);
+                      }}
+                      className="text-red-600 hover:text-red-800 transition-colors"
+                      title="Remove recruiter"
+                    >
+                      <Trash2 className="h-5 w-5" />
+                    </button>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Pending Invitations */}
+        {invitations.length > 0 && (
+          <div className="bg-white rounded-xl shadow-lg p-6">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">Pending Invitations</h2>
+            
+            <div className="space-y-3">
+              {invitations.map((invitation) => (
+                <div
+                  key={invitation.id}
+                  className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
+                >
+                  <div className="flex items-center">
+                    <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center mr-3">
+                      <Mail className="h-5 w-5 text-gray-500" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-gray-900">{invitation.invitedEmail}</p>
+                      <p className="text-sm text-gray-600 flex items-center">
+                        <Clock className="h-3 w-3 mr-1" />
+                        Pending
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <button
+                    onClick={() => handleCancelInvitation(invitation.id)}
+                    className="text-red-600 hover:text-red-800 transition-colors"
+                  >
+                    <Trash2 className="h-5 w-5" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </main>
+  );
+}

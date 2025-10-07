@@ -2,9 +2,10 @@
 import { useState, useEffect } from 'react';
 import { useFirebaseAuth } from "@/components/FirebaseAuthProvider";
 import { useRouter } from "next/navigation";
-import { updateDocument } from '@/lib/firebase-firestore';
+import { updateDocument, upsertDocument } from '@/lib/firebase-firestore';
 import { uploadFile } from '@/lib/firebase-storage';
 import { Building, Upload, Save, ArrowLeft } from 'lucide-react';
+import SearchableDropdown from '@/components/SearchableDropdown';
 import Link from 'next/link';
 import type { UserProfile } from "@/types/user";
 
@@ -43,6 +44,56 @@ const INDUSTRIES = [
   "Real Estate",
   "Non-profit",
   "Other"
+];
+
+// Subset of major US cities for dropdown; extend as needed
+const US_CITIES = [
+  "New York, NY",
+  "Los Angeles, CA",
+  "Chicago, IL",
+  "Houston, TX",
+  "Phoenix, AZ",
+  "Philadelphia, PA",
+  "San Antonio, TX",
+  "San Diego, CA",
+  "Dallas, TX",
+  "San Jose, CA",
+  "Austin, TX",
+  "Jacksonville, FL",
+  "Fort Worth, TX",
+  "Columbus, OH",
+  "San Francisco, CA",
+  "Charlotte, NC",
+  "Seattle, WA",
+  "Denver, CO",
+  "Nashville, TN",
+  "Washington, DC",
+  "Boston, MA",
+  "El Paso, TX",
+  "Detroit, MI",
+  "Portland, OR",
+  "Las Vegas, NV",
+  "Baltimore, MD",
+  "Milwaukee, WI",
+  "Albuquerque, NM",
+  "Tucson, AZ",
+  "Fresno, CA",
+  "Sacramento, CA",
+  "Mesa, AZ",
+  "Kansas City, MO",
+  "Atlanta, GA",
+  "Omaha, NE",
+  "Raleigh, NC",
+  "Miami, FL",
+  "Long Beach, CA",
+  "Virginia Beach, VA",
+  "Oakland, CA",
+  "Minneapolis, MN",
+  "Tampa, FL",
+  "New Orleans, LA",
+  "Cleveland, OH",
+  "Pittsburgh, PA",
+  "Orlando, FL",
 ];
 
 export default function CompanyProfileEditPage() {
@@ -126,7 +177,7 @@ const handleFileUpload = async (
 
     setIsSaving(true);
     try {
-      const { error } = await updateDocument('users', user.uid, formData);
+      const { error } = await upsertDocument('users', user.uid, formData);
       
       if (error) {
         setMessage({ type: 'error', text: `Failed to save: ${error}` });
@@ -278,18 +329,14 @@ const handleFileUpload = async (
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Location
-                </label>
-                <input
-                  type="text"
-                  value={formData.companyLocation || ''}
-                  onChange={(e) => handleInputChange('companyLocation', e.target.value)}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                  placeholder="e.g., San Francisco, CA"
-                />
-              </div>
+              <SearchableDropdown
+                options={US_CITIES}
+                value={formData.companyLocation || ''}
+                onChange={(v) => handleInputChange('companyLocation', v)}
+                placeholder="e.g., San Francisco, CA"
+                label="Location"
+                className=""
+              />
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
