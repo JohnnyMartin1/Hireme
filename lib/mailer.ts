@@ -12,7 +12,7 @@ export async function sendVerificationEmail(email: string, token: string) {
   const user = process.env.SMTP_USER;
   const pass = process.env.SMTP_PASS;
   const from = process.env.EMAIL_FROM;
-  const baseUrl = process.env.NEXTAUTH_URL || process.env.VERCEL_URL || 'http://localhost:3000';
+  const baseUrl = process.env.NEXTAUTH_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
   if (!host || !user || !pass || !from) {
     throw new Error('SMTP environment variables not set');
   }

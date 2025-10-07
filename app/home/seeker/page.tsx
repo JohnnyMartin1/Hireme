@@ -22,7 +22,7 @@ export default function SeekerHomePage() {
   const [threads, setThreads] = useState<any[]>([]);
   const [profileViews, setProfileViews] = useState(0);
   const routerToViews = () => {
-    window.location.href = '/home/seeker/profile-views';
+    router.push('/home/seeker/profile-views');
   };
   const [isLoadingStats, setIsLoadingStats] = useState(true);
   const [threadDetails, setThreadDetails] = useState<any[]>([]);

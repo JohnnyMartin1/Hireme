@@ -141,7 +141,7 @@ async function sendViaSMTP(options: EmailOptions): Promise<void> {
  * Send email verification email
  */
 export async function sendVerificationEmail(email: string, token: string): Promise<void> {
-  const baseUrl = process.env.NEXTAUTH_URL || process.env.VERCEL_URL || 'http://localhost:3000';
+  const baseUrl = process.env.NEXTAUTH_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
   const verifyUrl = `${baseUrl}/verify?token=${token}`;
   
   await sendMail({
