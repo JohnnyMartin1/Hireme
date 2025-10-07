@@ -47,6 +47,7 @@ export default function VideoUpload({
     try {
       const { url, error } = await uploadVideo(file, userId);
       if (error) throw new Error(error);
+      if (!url) throw new Error('Upload failed - no URL returned');
       onUploadComplete(url);
     } catch (error) {
       console.error('Upload error:', error);
@@ -239,6 +240,7 @@ export default function VideoUpload({
 
       const { url, error } = await uploadVideo(file, userId);
       if (error) throw new Error(error);
+      if (!url) throw new Error('Upload failed - no URL returned');
       
       onUploadComplete(url);
       setRecordedBlob(null);

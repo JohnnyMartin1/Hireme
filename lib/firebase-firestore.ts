@@ -151,8 +151,11 @@ export const getSavedCandidates = async (employerId: string) => {
     
     if (error) return { data: [], error };
     
+    // Type assertion for saved data
+    const typedSavedData = savedData as any[];
+    
     // Get the actual candidate profiles
-    const candidateIds = savedData.map(save => save.candidateId);
+    const candidateIds = typedSavedData.map(save => save.candidateId);
     const candidates = [];
     
     for (const candidateId of candidateIds) {
@@ -160,7 +163,7 @@ export const getSavedCandidates = async (employerId: string) => {
       if (candidate) {
         candidates.push({
           ...candidate,
-          savedAt: savedData.find(save => save.candidateId === candidateId)?.savedAt
+          savedAt: typedSavedData.find(save => save.candidateId === candidateId)?.savedAt
         });
       }
     }
@@ -213,7 +216,7 @@ export const getUserMessageThreads = async (userId: string) => {
     const threads = querySnapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
-    }));
+    })) as any[];
 
     // Sort by lastMessageAt on the client side to avoid needing an index
     threads.sort((a, b) => {
@@ -278,7 +281,7 @@ export const getThreadMessages = async (threadId: string) => {
     const messages = querySnapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
-    }));
+    })) as any[];
     
     // Sort messages by createdAt on the client side to avoid needing an index
     messages.sort((a, b) => {
@@ -519,10 +522,12 @@ export const getCompanyAverageRating = async (employerId: string) => {
       return { average: 0, count: 0, error: null };
     }
     
-    const totalRating = ratings.reduce((sum, rating) => sum + rating.rating, 0);
-    const average = totalRating / ratings.length;
+    // Type assertion for ratings data
+    const typedRatings = ratings as any[];
+    const totalRating = typedRatings.reduce((sum, rating) => sum + rating.rating, 0);
+    const average = totalRating / typedRatings.length;
     
-    return { average: Math.round(average * 10) / 10, count: ratings.length, error: null };
+    return { average: Math.round(average * 10) / 10, count: typedRatings.length, error: null };
   } catch (error: any) {
     return { average: 0, count: 0, error: error.message };
   }
