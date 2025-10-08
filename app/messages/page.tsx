@@ -46,26 +46,19 @@ export default function MessagesPage() {
       
       setIsLoading(true);
       try {
-        console.log('Fetching message threads for user:', user.uid);
         const { data: threadsData, error: threadsError } = await getUserMessageThreads(user.uid);
         
-        console.log('Threads response:', { data: threadsData, error: threadsError });
-        
         if (threadsError) {
-          console.error('Error fetching threads:', threadsError);
           setError(`Failed to load message threads: ${threadsError}`);
           return;
         }
         
         if (!threadsData || threadsData.length === 0) {
-          console.log('No threads found, setting empty array');
           setThreads([]);
           return;
         }
         
-        console.log('Found threads:', threadsData);
-        
-        // Fetch other participant info for each thread
+        // Fetch other participant info for each thread in parallel
         const threadsWithParticipants = await Promise.all(
           (threadsData as any[]).map(async (thread: any) => {
             const otherId = Array.isArray(thread.participantIds)
@@ -74,11 +67,7 @@ export default function MessagesPage() {
             let otherParticipant = null;
             
             if (otherId) {
-              console.log('Fetching participant:', otherId);
-              const { data: otherProfile, error: profileError } = await getDocument('users', otherId);
-              if (profileError) {
-                console.error('Error fetching participant profile:', profileError);
-              }
+              const { data: otherProfile } = await getDocument('users', otherId);
               otherParticipant = otherProfile;
             }
             
@@ -89,11 +78,9 @@ export default function MessagesPage() {
           })
         );
         
-        console.log('Threads with participants:', threadsWithParticipants);
         setThreads(threadsWithParticipants);
         
       } catch (err) {
-        console.error('Error in fetchThreads:', err);
         setError(`Failed to load message threads: ${err instanceof Error ? err.message : 'Unknown error'}`);
       } finally {
         setIsLoading(false);

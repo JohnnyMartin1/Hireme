@@ -32,6 +32,12 @@ export default function EmployerHomePage() {
       return;
     }
 
+    // Check if email is verified (using profile data from Firestore)
+    if (profile && !profile.emailVerified) {
+      router.push("/auth/verify-email");
+      return;
+    }
+
     // Check if user has the correct role (EMPLOYER or RECRUITER)
     if (profile && profile.role !== 'EMPLOYER' && profile.role !== 'RECRUITER') {
       if (profile.role === 'JOB_SEEKER') {

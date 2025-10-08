@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useFirebaseAuth } from "@/components/FirebaseAuthProvider";
 import { useRouter } from "next/navigation";
-import { Search, User, MapPin, GraduationCap, Star, Loader2, Filter, X, MessageSquare } from "lucide-react";
+import { Search, User, MapPin, GraduationCap, Star, Loader2, Filter, X, MessageSquare, ArrowLeft } from "lucide-react";
 import { getProfilesByRole } from '@/lib/firebase-firestore';
 import SearchableDropdown from '@/components/SearchableDropdown';
 import MultiSelectDropdown from '@/components/MultiSelectDropdown';
@@ -64,28 +64,20 @@ export default function SearchCandidatesPage() {
   const loadAllCandidates = async () => {
     setIsLoading(true);
     try {
-      console.log('Loading all candidates...');
       const { data: candidateProfiles, error } = await getProfilesByRole('JOB_SEEKER');
       
-      if (error) {
-        console.error('Error fetching candidates:', error);
+      if (error || !candidateProfiles) {
         setCandidates([]);
-      } else if (candidateProfiles) {
-        console.log('Raw candidate profiles:', candidateProfiles);
+      } else {
         // Filter out profiles without basic information
         const validCandidates = candidateProfiles.filter((candidate: any) => 
           candidate.firstName && 
           candidate.lastName && 
           candidate.email
         ) as Candidate[];
-        console.log('Valid candidates after filtering:', validCandidates);
         setCandidates(validCandidates);
-      } else {
-        console.log('No candidate profiles returned');
-        setCandidates([]);
       }
     } catch (error) {
-      console.error('Error loading candidates:', error);
       setCandidates([]);
     } finally {
       setIsLoading(false);
@@ -267,6 +259,13 @@ export default function SearchCandidatesPage() {
       <div className="max-w-7xl mx-auto p-6">
         {/* Header */}
         <div className="mb-8">
+          <Link 
+            href="/home/employer"
+            className="text-blue-600 hover:underline flex items-center space-x-1 mb-4"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            <span>Back to Dashboard</span>
+          </Link>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Find Your Perfect Candidate</h1>
           <p className="text-gray-600">Search through talented job seekers to find the right fit for your company</p>
         </div>

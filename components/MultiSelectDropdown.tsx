@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, memo } from 'react';
 import { ChevronDown, Search, X, Plus } from 'lucide-react';
 
 interface MultiSelectDropdownProps {
@@ -14,7 +14,7 @@ interface MultiSelectDropdownProps {
   maxSelections?: number;
 }
 
-export default function MultiSelectDropdown({
+const MultiSelectDropdown = memo(function MultiSelectDropdown({
   options,
   values,
   onChange,
@@ -161,7 +161,7 @@ export default function MultiSelectDropdown({
               </div>
             </div>
             
-            <div className="max-h-48 overflow-y-auto">
+            <div className="max-h-48 overflow-y-auto pb-2">
               {filteredOptions.length > 0 ? (
                 filteredOptions.map((option, index) => (
                   <div
@@ -199,4 +199,6 @@ export default function MultiSelectDropdown({
       </div>
     </div>
   );
-}
+});
+
+export default MultiSelectDropdown;

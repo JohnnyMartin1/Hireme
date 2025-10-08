@@ -1,0 +1,38 @@
+
+> hireme@1.0.0 dev
+> next dev
+
+  ▲ Next.js 14.2.31
+  - Local:        http://localhost:3000
+  - Environments: .env.local, .env
+
+ ✓ Starting...
+ ✓ Ready in 1061ms
+ ✓ Compiled /middleware in 116ms (117 modules)
+ ○ Compiling / ...
+ ✓ Compiled / in 1238ms (745 modules)
+ GET / 200 in 1857ms
+ ✓ Compiled in 549ms (294 modules)
+ ○ Compiling /home/employer ...
+ ✓ Compiled /home/employer in 984ms (773 modules)
+ ✓ Compiled /auth/verify-email in 317ms (785 modules)
+ ✓ Compiled /api/auth/send-verification in 224ms (515 modules)
+ POST /api/auth/send-verification 200 in 1329ms
+ GET /auth/verify-email?token=wgvsrcz5n5qmgih6faf 200 in 147ms
+ ✓ Compiled /api/auth/verify-email in 269ms (517 modules)
+ POST /api/auth/verify-email 200 in 649ms
+ GET /auth/verify-email?token=wgvsrcz5n5qmgih6faf 200 in 104ms
+ POST /api/auth/verify-email 400 in 94ms
+ ✓ Compiled /company/manage/recruiters in 352ms (795 modules)
+ ✓ Compiled /company/recruiter/[id] in 370ms (811 modules)
+ ✓ Compiled /account/company in 327ms (829 modules)
+ ✓ Compiled /settings in 288ms (837 modules)
+ ✓ Compiled /saved/candidates in 477ms (842 modules)
+ ✓ Compiled /search/candidates in 445ms (860 modules)
+ ✓ Compiled /candidate/[id] in 221ms (876 modules)
+ ✓ Compiled in 517ms (866 modules)
+ ✓ Compiled in 215ms (362 modules)
+ ✓ Compiled in 572ms (983 modules)
+ ✓ Compiled in 319ms (866 modules)
+ ○ Compiling /info/employer ...
+ ✓ Compiled /info/employer in 709ms (881 modules)

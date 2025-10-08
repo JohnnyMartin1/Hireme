@@ -1,8 +1,9 @@
 "use client";
 import Link from "next/link";
+import Image from "next/image";
 import { useFirebaseAuth } from "@/components/FirebaseAuthProvider";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { 
   User, 
   MessageSquare, 
@@ -31,6 +32,12 @@ export default function SeekerHomePage() {
   useEffect(() => {
     if (!loading && !user) {
       router.push("/auth/login");
+      return;
+    }
+
+    // Check if email is verified (using profile data from Firestore)
+    if (profile && !profile.emailVerified) {
+      router.push("/auth/verify-email");
       return;
     }
 
@@ -68,45 +75,63 @@ export default function SeekerHomePage() {
     }
   }, [user, profile, loading, router]);
 
-  // Fetch real-time data
+  // Fetch real-time data (optimized with parallel requests)
   useEffect(() => {
     const fetchDashboardData = async () => {
       if (!user) return;
 
       setIsLoadingStats(true);
       try {
-        // Fetch message threads
-        const { data: threadsData, error: threadsError } = await getUserMessageThreads(user.uid);
+        // Fetch threads and views in parallel for better performance
+        const [threadsResult, viewsResult] = await Promise.all([
+          getUserMessageThreads(user.uid),
+          getProfileViewers(user.uid)
+        ]);
         
-        if (!threadsError && threadsData) {
-          setThreads(threadsData);
+        // Process threads data
+        if (!threadsResult.error && threadsResult.data) {
+          setThreads(threadsResult.data);
           
-          // Fetch details for each thread (other participant info)
-          const threadDetailsPromises = threadsData.map(async (thread: any) => {
-            const otherParticipantId = thread.participantIds.find((id: string) => id !== user.uid);
-            if (otherParticipantId) {
-              const { data: otherProfile, error: profileError } = await getDocument('users', otherParticipantId);
-              return {
-                ...thread,
-                otherParticipant: profileError ? null : otherProfile
-              };
-            }
-            return thread;
+          // Fetch all participant profiles in parallel (batch request)
+          const uniqueParticipantIds = new Set<string>();
+          threadsResult.data.forEach((thread: any) => {
+            const otherId = thread.participantIds.find((id: string) => id !== user.uid);
+            if (otherId) uniqueParticipantIds.add(otherId);
           });
           
-          const threadDetailsData = await Promise.all(threadDetailsPromises);
-          setThreadDetails(threadDetailsData);
+          // Batch fetch all unique profiles
+          const profilePromises = Array.from(uniqueParticipantIds).map(id => 
+            getDocument('users', id)
+          );
+          const profileResults = await Promise.all(profilePromises);
+          
+          // Create a map for quick lookup
+          const profileMap = new Map();
+          Array.from(uniqueParticipantIds).forEach((id, index) => {
+            if (!profileResults[index].error && profileResults[index].data) {
+              profileMap.set(id, profileResults[index].data);
+            }
+          });
+          
+          // Attach profiles to threads
+          const threadsWithDetails = threadsResult.data.map((thread: any) => {
+            const otherId = thread.participantIds.find((id: string) => id !== user.uid);
+            return {
+              ...thread,
+              otherParticipant: otherId ? profileMap.get(otherId) : null
+            };
+          });
+          
+          setThreadDetails(threadsWithDetails);
         }
 
-        // Fetch unique viewer count
-        const { count, error: viewsError } = await getProfileViewers(user.uid);
-        
-        if (!viewsError) {
-          setProfileViews(count);
+        // Process views data
+        if (!viewsResult.error) {
+          setProfileViews(viewsResult.count);
         }
 
       } catch (error) {
-        console.error('Error fetching dashboard data:', error);
+        // Silent fail - already handled by loading state
       } finally {
         setIsLoadingStats(false);
       }
@@ -115,8 +140,8 @@ export default function SeekerHomePage() {
     fetchDashboardData();
   }, [user]);
 
-  // Helper function to format time difference
-  const formatTimeAgo = (timestamp: any) => {
+  // Memoized helper function to format time difference
+  const formatTimeAgo = useCallback((timestamp: any) => {
     if (!timestamp) return 'Recently';
     
     const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
@@ -133,7 +158,7 @@ export default function SeekerHomePage() {
     if (diffInWeeks < 4) return `${diffInWeeks} week${diffInWeeks === 1 ? '' : 's'} ago`;
     
     return date.toLocaleDateString();
-  };
+  }, []);
 
   if (loading) {
     return (
@@ -160,12 +185,35 @@ export default function SeekerHomePage() {
       {/* Hero Section */}
       <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white py-8 px-6">
         <div className="max-w-6xl mx-auto">
-          <h1 className="text-3xl font-bold mb-2">
-            Welcome back, {profile?.firstName || 'Job Seeker'}! 👋
-          </h1>
-          <p className="text-blue-100 text-lg">
-            {profile?.headline || 'Ready to find your next opportunity?'}
-          </p>
+          <div className="flex items-center gap-4">
+            {/* Profile Picture */}
+            <div className="flex-shrink-0">
+              {(userProfile as any)?.profileImageUrl ? (
+                <div className="relative w-20 h-20 rounded-full overflow-hidden border-4 border-white shadow-lg">
+                  <Image
+                    src={(userProfile as any).profileImageUrl}
+                    alt={`${profile?.firstName || 'User'}'s profile`}
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+              ) : (
+                <div className="w-20 h-20 rounded-full bg-white/20 border-4 border-white shadow-lg flex items-center justify-center">
+                  <User className="h-10 w-10 text-white" />
+                </div>
+              )}
+            </div>
+            
+            {/* Welcome Text */}
+            <div className="flex-1">
+              <h1 className="text-3xl font-bold mb-2">
+                Welcome back, {profile?.firstName || 'Job Seeker'}! 👋
+              </h1>
+              <p className="text-blue-100 text-lg">
+                {profile?.headline || 'Ready to find your next opportunity?'}
+              </p>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -188,7 +236,7 @@ export default function SeekerHomePage() {
         </div>
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-blue-500">
+          <Link href="/messages/candidate" className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-blue-500 hover:shadow-xl transition-shadow cursor-pointer">
             <div className="flex items-center">
               <div className="p-2 bg-blue-100 rounded-lg">
                 <MessageSquare className="h-6 w-6 text-blue-600" />
@@ -200,7 +248,7 @@ export default function SeekerHomePage() {
                 </p>
               </div>
             </div>
-          </div>
+          </Link>
 
           <button onClick={routerToViews} className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-green-500 text-left w-full">
             <div className="flex items-center">

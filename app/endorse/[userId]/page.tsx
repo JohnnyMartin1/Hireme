@@ -2,6 +2,7 @@
 import { useParams, useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { createEndorsement } from '@/lib/firebase-firestore';
+import { ArrowLeft } from 'lucide-react';
 
 export default function EndorseFormPage() {
   const params = useParams();
@@ -45,6 +46,13 @@ export default function EndorseFormPage() {
   return (
     <main className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
       <div className="max-w-xl mx-auto p-6">
+        <button
+          onClick={() => router.back()}
+          className="text-blue-600 hover:underline flex items-center space-x-1 mb-4"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          <span>Back</span>
+        </button>
         <h1 className="text-2xl font-bold text-gray-900 mb-4">Endorse a Skill</h1>
         <p className="text-gray-600 mb-6">Use this form to vouch for this candidate's skills.</p>
 

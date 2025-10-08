@@ -49,7 +49,6 @@ export default function ContactedCandidatesPage() {
       
       setIsLoading(true);
       try {
-        console.log('Fetching contacted candidates for employer:', user.uid);
         
         // Get all message threads for this user
         const { data: threads, error: threadsError } = await getUserMessageThreads(user.uid);

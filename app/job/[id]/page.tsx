@@ -3,7 +3,7 @@ import { useParams } from 'next/navigation';
 import { useFirebaseAuth } from "@/components/FirebaseAuthProvider";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Building, MapPin, DollarSign, Calendar, Clock, User, MessageSquare } from "lucide-react";
+import { Building, MapPin, DollarSign, Calendar, Clock, User, MessageSquare, ArrowLeft } from "lucide-react";
 import { getDocument } from '@/lib/firebase-firestore';
 
 interface JobDetail {
@@ -41,7 +41,6 @@ export default function JobDetailPage() {
       
       setIsLoading(true);
       try {
-        console.log('Fetching job details for ID:', params.id);
         const { data, error: fetchError } = await getDocument('jobs', params.id as string);
         
         if (fetchError) {
@@ -55,7 +54,6 @@ export default function JobDetailPage() {
           return;
         }
         
-        console.log('Fetched job data:', data);
         setJob(data as JobDetail);
       } catch (err) {
         console.error('Error in fetchJobDetails:', err);
@@ -112,6 +110,14 @@ export default function JobDetailPage() {
   return (
     <main className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
       <div className="max-w-4xl mx-auto p-6">
+        <button
+          onClick={() => router.back()}
+          className="text-blue-600 hover:underline flex items-center space-x-1 mb-4"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          <span>Back</span>
+        </button>
+        
         {/* Header */}
         <div className="bg-white rounded-xl shadow-lg p-8 mb-8">
           <div className="flex items-start justify-between mb-6">

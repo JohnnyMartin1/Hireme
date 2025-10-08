@@ -291,31 +291,15 @@ export const LOCATIONS = [
   "Portland, OR",
   
   // Financial Centers
-  "New York, NY",
-  "Chicago, IL",
   "Charlotte, NC",
-  "San Francisco, CA",
-  "Boston, MA",
-  "Los Angeles, CA",
-  "Dallas, TX",
-  "Houston, TX",
-  "Atlanta, GA",
   "Minneapolis, MN",
   
   // Healthcare Centers
-  "Boston, MA",
   "Baltimore, MD",
-  "Houston, TX",
   "Cleveland, OH",
   "Rochester, MN",
-  "Philadelphia, PA",
-  "New York, NY",
-  "Los Angeles, CA",
-  "Chicago, IL",
-  "San Francisco, CA",
   
   // Government & Policy
-  "Washington, DC",
   "Arlington, VA",
   "Alexandria, VA",
   "Bethesda, MD",
@@ -324,17 +308,7 @@ export const LOCATIONS = [
   "Annapolis, MD",
   "Richmond, VA",
   "Harrisburg, PA",
-  "Albany, NY",
-  
-  // Remote Work Friendly
-  "Remote",
-  "Work from Home",
-  "Virtual",
-  "Anywhere",
-  "Flexible Location",
-  "Hybrid",
-  "On-site",
-  "Travel Required"
+  "Albany, NY"
 ];
 
 export const SKILLS = [
@@ -491,17 +465,17 @@ export const JOB_TYPES = [
   "Seasonal"
 ];
 
-export const GRADUATION_YEARS = [
-  "2024",
-  "2025", 
-  "2026",
-  "2027",
-  "2028",
-  "2029",
-  "2030",
-  "Graduated",
-  "Other"
-];
+export const GRADUATION_YEARS = (() => {
+  const currentYear = new Date().getFullYear();
+  const years = [];
+  
+  // Generate years from 1980 to 6 years in the future
+  for (let year = currentYear + 6; year >= 1980; year--) {
+    years.push(year.toString());
+  }
+  
+  return years;
+})();
 
 export const GPA_RANGES = [
   "3.9-4.0",

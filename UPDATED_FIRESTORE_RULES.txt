@@ -1,0 +1,136 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper function to check if user is company owner
+    function isCompanyOwner(companyId) {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.companyId == companyId
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isCompanyOwner == true;
+    }
+    
+    // Helper function to check if user belongs to company
+    function belongsToCompany(companyId) {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.companyId == companyId;
+    }
+    
+    // Users collection
+    match /users/{userId} {
+      allow read: if request.auth != null;
+      allow create, update: if request.auth.uid == userId;
+      
+      // Allow company owners to delete recruiters from their company
+      allow delete: if request.auth.uid == userId
+        || (request.auth != null 
+            && resource.data.role == 'RECRUITER' 
+            && isCompanyOwner(resource.data.companyId));
+    }
+    
+    // Email Verification Tokens - NEW!
+    match /emailVerificationTokens/{tokenId} {
+      // Allow anyone authenticated to create tokens (for their own email verification)
+      allow create: if request.auth != null;
+      
+      // Allow anyone to read tokens (needed to verify email with token)
+      allow read: if true;
+      
+      // Allow system to update tokens (mark as used)
+      allow update: if true;
+      
+      // Allow deleting old tokens
+      allow delete: if true;
+    }
+    
+    // Companies collection
+    match /companies/{companyId} {
+      // Anyone can read company profiles
+      allow read: if true;
+      
+      // Only company owners can create/update their company
+      allow create: if request.auth != null 
+        && request.resource.data.createdBy == request.auth.uid;
+      
+      allow update: if request.auth != null 
+        && resource.data.createdBy == request.auth.uid;
+      
+      allow delete: if request.auth != null 
+        && resource.data.createdBy == request.auth.uid;
+    }
+    
+    // Company Invitations
+    match /companyInvitations/{invitationId} {
+      // Anyone authenticated can read (to check their invitations)
+      allow read: if request.auth != null;
+      
+      // Only company owners can create invitations for their company
+      allow create: if request.auth != null 
+        && isCompanyOwner(request.resource.data.companyId);
+      
+      // Invited user can update their invitation (accept/decline)
+      // Company owner can update/cancel their invitations
+      allow update: if request.auth != null && (
+        request.auth.token.email.lower() == resource.data.invitedEmail
+        || isCompanyOwner(resource.data.companyId)
+      );
+      
+      // Only company owners can delete invitations
+      allow delete: if request.auth != null 
+        && isCompanyOwner(resource.data.companyId);
+    }
+    
+    // Jobs collection
+    match /jobs/{jobId} {
+      allow read: if true;
+      allow create: if request.auth != null 
+        && (request.auth.uid == request.resource.data.employerId 
+            || belongsToCompany(get(/databases/$(database)/documents/users/$(request.resource.data.employerId)).data.companyId));
+      allow update, delete: if request.auth != null 
+        && (request.auth.uid == resource.data.employerId
+            || belongsToCompany(get(/databases/$(database)/documents/users/$(resource.data.employerId)).data.companyId));
+    }
+    
+    // Message threads
+    match /messageThreads/{threadId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null;
+      allow update: if request.auth != null;
+    }
+    
+    // Messages
+    match /messages/{messageId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null;
+      allow update: if request.auth != null;
+    }
+    
+    // Saved candidates
+    match /savedCandidates/{saveId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null;
+      allow delete: if request.auth != null;
+    }
+    
+    // Profile views
+    match /profileViews/{viewId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null;
+    }
+    
+    // Company ratings
+    match /companyRatings/{ratingId} {
+      allow read: if true;
+      allow create: if request.auth != null 
+        && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if request.auth != null 
+        && resource.data.userId == request.auth.uid;
+    }
+    
+    // Endorsements
+    match /endorsements/{endorsementId} {
+      allow read: if true;
+      allow create: if true; // Public endorsement form
+      allow update, delete: if request.auth != null 
+        && resource.data.userId == request.auth.uid;
+    }
+  }
+}
+

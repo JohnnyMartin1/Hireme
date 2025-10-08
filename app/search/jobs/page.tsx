@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useFirebaseAuth } from "@/components/FirebaseAuthProvider";
 import { useRouter } from "next/navigation";
-import { Search, Building, MapPin, DollarSign, Calendar } from "lucide-react";
+import { Search, Building, MapPin, DollarSign, Calendar, ArrowLeft } from "lucide-react";
 
 interface Job {
   id: string;
@@ -66,6 +66,13 @@ export default function SearchJobsPage() {
     <main className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
       <div className="max-w-6xl mx-auto p-6">
         <div className="mb-8">
+          <Link 
+            href="/home/seeker"
+            className="text-blue-600 hover:underline flex items-center space-x-1 mb-4"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            <span>Back to Dashboard</span>
+          </Link>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Search Jobs</h1>
           <p className="text-gray-600">Find your next opportunity</p>
         </div>

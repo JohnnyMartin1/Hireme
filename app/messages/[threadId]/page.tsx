@@ -62,68 +62,43 @@ export default function MessageThreadPage() {
 
       setIsLoading(true);
       try {
-        console.log('=== FETCHING THREAD DATA ===');
-        console.log('Thread ID:', params.threadId);
-        console.log('User ID:', user.uid);
+        // Fetch thread, participant, and messages in parallel
+        const [threadResult, messagesResult] = await Promise.all([
+          getMessageThread(params.threadId as string),
+          getThreadMessages(params.threadId as string)
+        ]);
         
-        // First, let's check if the thread exists
-        const { data: threadData, error: threadError } = await getMessageThread(params.threadId as string);
-        
-        console.log('Thread query result:', { data: threadData, error: threadError });
-        
-        if (threadError) {
-          console.error('Error fetching thread:', threadError);
-          setError(`Thread not found: ${threadError}`);
+        if (threadResult.error) {
+          setError(`Thread not found: ${threadResult.error}`);
           return;
         }
         
-        if (!threadData) {
-          console.error('No thread data returned');
+        if (!threadResult.data) {
           setError('Thread not found - no data returned');
           return;
         }
-
-        console.log('Thread data structure:', threadData);
-        console.log('Thread participant IDs:', (threadData as Thread).participantIds);
         
-        setThread(threadData as Thread);
+        setThread(threadResult.data as Thread);
 
-        // Get the other participant's ID
-        const otherId = (threadData as Thread).participantIds.find((id: string) => id !== user.uid);
-        console.log('Other participant ID:', otherId);
+        // Get the other participant's profile
+        const otherId = (threadResult.data as Thread).participantIds.find((id: string) => id !== user.uid);
         
         if (otherId) {
-          console.log('Fetching other participant profile...');
-          const { data: otherProfile, error: profileError } = await getDocument('users', otherId);
-          console.log('Other participant result:', { data: otherProfile, error: profileError });
-          
-          if (profileError) {
-            console.error('Error fetching participant profile:', profileError);
-          } else {
+          const { data: otherProfile } = await getDocument('users', otherId);
+          if (otherProfile) {
             setOtherParticipant(otherProfile);
           }
         }
 
-        // Fetch messages for this thread
-        console.log('Fetching messages for thread...');
-        const { data: messagesData, error: messagesError } = await getThreadMessages(params.threadId as string);
-        
-        console.log('Messages query result:', { data: messagesData, error: messagesError });
-
-        if (messagesError) {
-          console.error('Error fetching messages:', messagesError);
-          setError(`Failed to load messages: ${messagesError}`);
+        // Set messages
+        if (messagesResult.error) {
+          setError(`Failed to load messages: ${messagesResult.error}`);
           return;
         }
 
-        console.log('Messages data structure:', messagesData);
-        setMessages((messagesData as Message[]) || []);
+        setMessages((messagesResult.data as Message[]) || []);
 
       } catch (err) {
-        console.error('=== ERROR IN FETCHTHREADDATA ===');
-        console.error('Error type:', typeof err);
-        console.error('Error message:', err instanceof Error ? err.message : err);
-        console.error('Full error:', err);
         setError(`Failed to load thread: ${err instanceof Error ? err.message : 'Unknown error'}`);
       } finally {
         setIsLoading(false);

@@ -123,7 +123,7 @@ export default function EditProfilePage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) return;
+    if (!user || !profile) return;
 
     setIsSubmitting(true);
     try {
@@ -133,9 +133,14 @@ export default function EditProfilePage() {
         console.error('Error updating profile:', error);
         alert('Failed to update profile. Please try again.');
       } else {
-        alert('Profile updated successfully!');
-        // Refresh the page to show updated data
-        window.location.reload();
+        // Redirect to appropriate dashboard based on role
+        if (profile.role === 'JOB_SEEKER') {
+          router.push('/home/seeker');
+        } else if (profile.role === 'EMPLOYER' || profile.role === 'RECRUITER') {
+          router.push('/home/employer');
+        } else {
+          router.push('/home');
+        }
       }
     } catch (error) {
       console.error('Error updating profile:', error);

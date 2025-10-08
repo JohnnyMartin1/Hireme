@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Loader2 } from "lucide-react";
+import { Loader2, ArrowLeft } from "lucide-react";
 import { signUpWithFirebase } from "@/lib/firebase-auth";
 import { createDocument } from "@/lib/firebase-firestore";
 import SearchableDropdown from '@/components/SearchableDropdown';
@@ -96,8 +96,24 @@ export default function SeekerSignupPage() {
           // User account was created but profile failed - we can handle this later
         }
 
-        // Success! Redirect to verification or dashboard
-        router.push("/home/seeker");
+        // Send verification email via Resend (better deliverability)
+        try {
+          await fetch('/api/auth/send-verification', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              userId: user.uid,
+              email: formData.email,
+              userName: `${formData.firstName} ${formData.lastName}`
+            })
+          });
+        } catch (verifyError) {
+          console.error('Failed to send verification email:', verifyError);
+          // Don't block signup if email fails to send
+        }
+
+        // Success! Redirect to verification page
+        router.push("/auth/verify-email");
       }
     } catch (error: any) {
       setErr("An error occurred during signup. Please try again.");
@@ -110,6 +126,14 @@ export default function SeekerSignupPage() {
   return (
     <main className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center py-8">
       <div className="w-full max-w-2xl p-8 bg-white rounded-xl shadow-lg">
+        <button
+          onClick={() => router.back()}
+          className="text-blue-600 hover:underline flex items-center space-x-1 mb-6"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          <span>Back</span>
+        </button>
+
         <div className="text-center mb-8">
           <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <span className="text-2xl">👤</span>

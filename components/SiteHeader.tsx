@@ -47,6 +47,28 @@ export default function SiteHeader() {
             >
               Dashboard
             </Link>
+            {profile?.role === 'JOB_SEEKER' && (
+              <Link 
+                href="/info" 
+                className="text-sm text-[var(--muted)] hover:text-[var(--text)] transition-colors"
+              >
+                Information
+              </Link>
+            )}
+            {profile?.role === 'EMPLOYER' && (
+              <Link 
+                href="/info/employer" 
+                className="text-sm text-[var(--muted)] hover:text-[var(--text)] transition-colors"
+              >
+                Information
+              </Link>
+            )}
+            <Link 
+              href="/settings" 
+              className="text-sm text-[var(--muted)] hover:text-[var(--text)] transition-colors"
+            >
+              Settings
+            </Link>
             <button
               onClick={signOut}
               className="hireme-btn hireme-btn-ghost text-sm"

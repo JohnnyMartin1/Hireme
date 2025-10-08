@@ -21,59 +21,43 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      console.log('Attempting Firebase login...');
       const { user, error } = await signInWithFirebase(email, password);
 
       if (error) {
-        console.log('Firebase login error:', error);
         setErr(error);
       } else if (user) {
-        console.log('Firebase login successful, user:', user);
-        
         // Fetch user profile to determine role
         try {
           const { data: profile, error: profileError } = await getDocument('users', user.uid);
           
           if (profileError) {
-            console.error('Error fetching profile:', profileError);
             setErr("Error fetching user profile. Please try again.");
             return;
           }
 
+          if (profile) {
+            // Cast to our shared type
+            const p = profile as Partial<UserProfile>;
+            const userRole = p.role ?? null;
 
-if (profile) {
-  console.log("User profile:", profile);
-
-  // Cast to our shared type
-  const p = profile as Partial<UserProfile>;
-  const userRole = p.role ?? null;
-
-  // Redirect based on user role
-  if (userRole === "EMPLOYER" || userRole === "RECRUITER") {
-    console.log(`Redirecting ${userRole.toLowerCase()} to /home/employer...`);
-    router.push("/home/employer");
-  } else if (userRole === "JOB_SEEKER") {
-    console.log("Redirecting job seeker to /home/seeker...");
-    router.push("/home/seeker");
-  } else if (userRole === "ADMIN") {
-    console.log("Redirecting admin to /admin...");
-    router.push("/admin");
-  } else {
-    console.error("Unknown user role:", userRole);
-    setErr("Invalid user role. Please contact support.");
-  }
-
+            // Redirect based on user role
+            if (userRole === "EMPLOYER" || userRole === "RECRUITER") {
+              router.push("/home/employer");
+            } else if (userRole === "JOB_SEEKER") {
+              router.push("/home/seeker");
+            } else if (userRole === "ADMIN") {
+              router.push("/admin");
+            } else {
+              setErr("Invalid user role. Please contact support.");
+            }
           } else {
-            console.error('No profile found for user');
             setErr("User profile not found. Please contact support.");
           }
         } catch (profileError) {
-          console.error('Error fetching profile:', profileError);
           setErr("Error fetching user profile. Please try again.");
         }
       }
     } catch (error: any) {
-      console.error('Login error:', error);
       setErr("An error occurred. Please try again.");
     } finally {
       setIsLoading(false);

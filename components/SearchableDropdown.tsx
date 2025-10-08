@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, memo, useMemo } from 'react';
 import { ChevronDown, Search, X } from 'lucide-react';
 
 interface SearchableDropdownProps {
@@ -13,7 +13,7 @@ interface SearchableDropdownProps {
   allowCustom?: boolean;
 }
 
-export default function SearchableDropdown({
+const SearchableDropdown = memo(function SearchableDropdown({
   options,
   value,
   onChange,
@@ -135,7 +135,7 @@ export default function SearchableDropdown({
               </div>
             </div>
             
-            <div className="max-h-48 overflow-y-auto">
+            <div className="max-h-48 overflow-y-auto pb-2">
               {filteredOptions.length > 0 ? (
                 filteredOptions.map((option, index) => (
                   <div
@@ -172,4 +172,6 @@ export default function SearchableDropdown({
       </div>
     </div>
   );
-}
+});
+
+export default SearchableDropdown;

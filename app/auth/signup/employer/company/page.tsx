@@ -112,11 +112,26 @@ export default function CompanySignupPage() {
           return;
         }
 
+        // Send verification email via Resend (better deliverability)
+        try {
+          await fetch('/api/auth/send-verification', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              userId: user.uid,
+              email: formData.email,
+              userName: `${formData.firstName} ${formData.lastName}`
+            })
+          });
+        } catch (verifyError) {
+          console.error('Failed to send verification email:', verifyError);
+        }
+
         // Wait a moment for Firestore to propagate, then redirect
         await new Promise(resolve => setTimeout(resolve, 1000));
         
-        // Success! Redirect to employer dashboard
-        router.push("/home/employer");
+        // Success! Redirect to verification page
+        router.push("/auth/verify-email");
       }
     } catch (error: any) {
       setErr("An error occurred during signup. Please try again.");

@@ -2,7 +2,7 @@
 import { useFirebaseAuth } from "@/components/FirebaseAuthProvider";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { User, MessageSquare, ArrowRight, Loader2, Bell, CheckCircle } from "lucide-react";
+import { User, MessageSquare, ArrowRight, Loader2, Bell, CheckCircle, ArrowLeft } from "lucide-react";
 import { getUserMessageThreads, getDocument } from '@/lib/firebase-firestore';
 import Link from 'next/link';
 
@@ -57,17 +57,14 @@ export default function CandidateMessagesPage() {
         // Type assertion for thread data
         const typedThreadsData = threadsData as MessageThread[];
         
-        // Fetch other participant info for each thread
+        // Fetch other participant info for each thread in parallel
         const threadsWithParticipants = await Promise.all(
           typedThreadsData.map(async (thread) => {
             const otherId = thread.participantIds.find(id => id !== user.uid);
             let otherParticipant = null;
             
             if (otherId) {
-              const { data: otherProfile, error: profileError } = await getDocument('users', otherId);
-              if (profileError) {
-                console.error('Error fetching participant profile:', profileError);
-              }
+              const { data: otherProfile } = await getDocument('users', otherId);
               otherParticipant = otherProfile;
             }
             
@@ -81,7 +78,6 @@ export default function CandidateMessagesPage() {
         setThreads(threadsWithParticipants);
         
       } catch (err) {
-        console.error('Error in fetchThreads:', err);
         setError(`Failed to load message threads: ${err instanceof Error ? err.message : 'Unknown error'}`);
       } finally {
         setIsLoading(false);
@@ -127,6 +123,13 @@ export default function CandidateMessagesPage() {
       <div className="max-w-4xl mx-auto p-6">
         {/* Header */}
         <div className="mb-8">
+          <Link 
+            href="/home/seeker"
+            className="text-blue-600 hover:underline flex items-center space-x-1 mb-4"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            <span>Back to Dashboard</span>
+          </Link>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Messages</h1>
           <p className="text-gray-600">Your conversations with employers</p>
         </div>
@@ -226,24 +229,6 @@ export default function CandidateMessagesPage() {
             )}
           </div>
         </div>
-
-        {/* Empty State */}
-        {threads.length === 0 && (
-          <div className="bg-white rounded-xl shadow-lg p-12 text-center">
-            <MessageSquare className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No messages yet</h3>
-            <p className="text-gray-500 mb-6">
-              Employers will reach out when they find your profile
-            </p>
-            <Link
-              href="/account/profile"
-              className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              <User className="h-4 w-4 mr-2" />
-              Complete Your Profile
-            </Link>
-          </div>
-        )}
       </div>
     </main>
   );
