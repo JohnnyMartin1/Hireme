@@ -11,12 +11,16 @@ function generateVerificationToken(): string {
 // Create verification token in database
 export async function createVerificationToken(userId: string, email: string) {
   try {
+    console.log('Creating verification token for:', { userId, email });
+    
     const token = generateVerificationToken();
     const expiresAt = new Date();
     expiresAt.setHours(expiresAt.getHours() + 24); // 24 hour expiration
 
+    console.log('Generated token:', token.substring(0, 10) + '...');
+
     // Use Admin SDK to bypass security rules
-    await adminDb.collection('emailVerificationTokens').add({
+    const docRef = await adminDb.collection('emailVerificationTokens').add({
       userId,
       email,
       token,
@@ -25,9 +29,15 @@ export async function createVerificationToken(userId: string, email: string) {
       used: false
     });
 
+    console.log('Token created successfully with ID:', docRef.id);
     return token;
   } catch (error: any) {
     console.error('Firestore error creating verification token:', error);
+    console.error('Error details:', {
+      message: error.message,
+      code: error.code,
+      stack: error.stack
+    });
     throw new Error(`Failed to create verification token: ${error.message}`);
   }
 }
