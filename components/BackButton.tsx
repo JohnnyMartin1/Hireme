@@ -11,7 +11,7 @@ export default function BackButton({ fallback = '/home/seeker' }: { fallback?: s
   return (
     <button
       onClick={() => {
-        if (window.history.length > 1) {
+        if (typeof window !== 'undefined' && window.history.length > 1) {
           router.back();
         } else {
           router.push(fallback);
