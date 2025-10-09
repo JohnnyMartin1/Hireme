@@ -36,3 +36,35 @@
  ✓ Compiled in 319ms (866 modules)
  ○ Compiling /info/employer ...
  ✓ Compiled /info/employer in 709ms (881 modules)
+   Reload env: .env.local
+ ✓ Compiled in 313ms (993 modules)
+ ✓ Compiled in 110ms (979 modules)
+ ✓ Compiled in 111ms (979 modules)
+ ✓ Compiled in 105ms (979 modules)
+ ✓ Compiled in 128ms (979 modules)
+ ✓ Compiled / in 367ms (512 modules)
+ GET / 200 in 574ms
+ ✓ Compiled /auth/signup in 231ms (872 modules)
+ ✓ Compiled /auth/signup/employer in 159ms (878 modules)
+ ✓ Compiled /auth/signup/employer/type in 386ms (888 modules)
+ ✓ Compiled /auth/signup/employer/company in 346ms (900 modules)
+ ✓ Compiled /api/auth/send-verification in 198ms (560 modules)
+ POST /api/auth/send-verification 200 in 683ms
+ GET /auth/verify-email 200 in 155ms
+ POST /api/auth/send-verification 200 in 439ms
+ GET /auth/verify-email?token=q5orywurfmmgikfqj7 200 in 37ms
+ ✓ Compiled /api/auth/verify-email in 167ms (544 modules)
+ POST /api/auth/verify-email 200 in 543ms
+ GET /auth/verify-email?token=q5orywurfmmgikfqj7 200 in 99ms
+ POST /api/auth/verify-email 400 in 69ms
+ ✓ Compiled /account/company in 268ms (552 modules)
+ ✓ Compiled /auth/login in 436ms (926 modules)
+ ✓ Compiled /home/seeker in 357ms (953 modules)
+ ✓ Compiled /info in 236ms (962 modules)
+ ✓ Compiled /account/profile in 330ms (991 modules)
+ ✓ Compiled /settings in 190ms (555 modules)
+ ✓ Compiled / in 143ms (552 modules)
+   Reload env: .env.local
+ ✓ Compiled in 813ms (1048 modules)
+ ✓ Compiled in 286ms (1034 modules)
+ ✓ Compiled in 124ms (1034 modules)

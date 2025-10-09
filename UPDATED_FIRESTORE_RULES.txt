@@ -58,8 +58,9 @@ service cloud.firestore {
     
     // Company Invitations
     match /companyInvitations/{invitationId} {
-      // Anyone authenticated can read (to check their invitations)
-      allow read: if request.auth != null;
+      // Allow anyone to read invitations (needed for recruiter signup flow)
+      // Invitations are filtered by email in app code and don't contain sensitive data
+      allow read: if true;
       
       // Only company owners can create invitations for their company
       allow create: if request.auth != null 
