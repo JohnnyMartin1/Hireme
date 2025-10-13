@@ -4,7 +4,7 @@ import { useFirebaseAuth } from "@/components/FirebaseAuthProvider";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { User, MapPin, GraduationCap, Star, MessageSquare, Heart, Loader2, ArrowLeft, Send, Video, FileText, Download, X } from "lucide-react";
-import { getDocument, getOrCreateThread, sendMessage, saveCandidate, isCandidateSaved } from '@/lib/firebase-firestore';
+import { getDocument, getOrCreateThread, sendMessage, saveCandidate, isCandidateSaved, getEndorsements } from '@/lib/firebase-firestore';
 import Link from 'next/link';
 import { trackProfileView } from '@/lib/firebase-firestore';
 import { getEmployerJobs, getCompanyJobs } from '@/lib/firebase-firestore';
@@ -25,6 +25,13 @@ interface CandidateProfile {
   workPreferences?: string[];
   jobTypes?: string[];
   extracurriculars?: string[];
+  experience?: string;
+  certifications?: string[];
+  languages?: string[];
+  careerInterests?: string[];
+  linkedinUrl?: string;
+  portfolioUrl?: string;
+  locations?: string[];
   email: string;
   createdAt?: any;
   profileImageUrl?: string;
@@ -48,6 +55,7 @@ export default function CandidateProfilePage() {
   const [isSaved, setIsSaved] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [showResumeModal, setShowResumeModal] = useState(false);
+  const [endorsements, setEndorsements] = useState<any[]>([]);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -91,6 +99,12 @@ export default function CandidateProfilePage() {
         if (user && (profile?.role === 'EMPLOYER' || profile?.role === 'RECRUITER')) {
           const { saved } = await isCandidateSaved(user.uid, params.id as string);
           setIsSaved(saved);
+        }
+
+        // Fetch endorsements
+        const { data: endorsementsData } = await getEndorsements(params.id as string);
+        if (endorsementsData) {
+          setEndorsements(endorsementsData);
         }
 
       } catch (err) {
@@ -274,11 +288,11 @@ export default function CandidateProfilePage() {
         {/* Back Button */}
         <div className="mb-6">
           <Link 
-            href="/search/candidates"
+            href={user?.uid === candidate.id ? "/home/seeker" : "/search/candidates"}
             className="inline-flex items-center text-blue-600 hover:text-blue-800 transition-colors"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to candidate search
+            {user?.uid === candidate.id ? "Back to Dashboard" : "Back to candidate search"}
           </Link>
         </div>
 
@@ -479,6 +493,14 @@ export default function CandidateProfilePage() {
           </div>
         )}
 
+        {/* Experience */}
+        {candidate.experience && (
+          <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">Relevant Experience</h2>
+            <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">{candidate.experience}</p>
+          </div>
+        )}
+
         {/* Extracurricular Activities */}
         {candidate.extracurriculars && candidate.extracurriculars.length > 0 && (
           <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
@@ -496,6 +518,159 @@ export default function CandidateProfilePage() {
           </div>
         )}
 
+        {/* Certifications */}
+        {candidate.certifications && candidate.certifications.length > 0 && (
+          <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">Certifications</h2>
+            <div className="flex flex-wrap gap-3">
+              {candidate.certifications.map((cert: string, index: number) => (
+                <span
+                  key={index}
+                  className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm"
+                >
+                  {cert}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Languages */}
+        {candidate.languages && candidate.languages.length > 0 && (
+          <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">Languages</h2>
+            <div className="flex flex-wrap gap-3">
+              {candidate.languages.map((language: string, index: number) => (
+                <span
+                  key={index}
+                  className="px-3 py-1 bg-indigo-100 text-indigo-800 rounded-full text-sm"
+                >
+                  {language}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Career Interests */}
+        {candidate.careerInterests && candidate.careerInterests.length > 0 && (
+          <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">Career Interests</h2>
+            <div className="flex flex-wrap gap-3">
+              {candidate.careerInterests.map((interest: string, index: number) => (
+                <span
+                  key={index}
+                  className="px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-sm"
+                >
+                  {interest}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Links */}
+        {(candidate.linkedinUrl || candidate.portfolioUrl) && (
+          <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">Links</h2>
+            <div className="space-y-3">
+              {candidate.linkedinUrl && (
+                <div className="flex items-center">
+                  <span className="text-sm font-medium text-gray-700 mr-3">LinkedIn:</span>
+                  <a
+                    href={candidate.linkedinUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:text-blue-800 underline text-sm"
+                  >
+                    {candidate.linkedinUrl}
+                  </a>
+                </div>
+              )}
+              {candidate.portfolioUrl && (
+                <div className="flex items-center">
+                  <span className="text-sm font-medium text-gray-700 mr-3">Portfolio:</span>
+                  <a
+                    href={candidate.portfolioUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:text-blue-800 underline text-sm"
+                  >
+                    {candidate.portfolioUrl}
+                  </a>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Preferred Locations */}
+        {candidate.locations && candidate.locations.length > 0 && (
+          <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">Preferred Work Locations</h2>
+            <div className="flex flex-wrap gap-3">
+              {candidate.locations.map((location: string, index: number) => (
+                <span
+                  key={index}
+                  className="px-3 py-1 bg-teal-100 text-teal-800 rounded-full text-sm"
+                >
+                  {location}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Endorsements */}
+        {endorsements && endorsements.length > 0 && (
+          <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">Endorsements</h2>
+            <div className="space-y-4">
+              {endorsements.map((endorsement: any, index: number) => (
+                <div key={index} className="border border-gray-200 rounded-lg p-4">
+                  <div className="flex items-start justify-between mb-2">
+                    <div>
+                      <h4 className="font-medium text-gray-900">{endorsement.skill}</h4>
+                      <div className="flex items-center">
+                        <p className="text-sm text-gray-600">
+                          Endorsed by {endorsement.endorserName}
+                          {endorsement.endorserTitle && endorsement.endorserCompany && (
+                            <span className="text-gray-500"> • {endorsement.endorserTitle} at {endorsement.endorserCompany}</span>
+                          )}
+                          {endorsement.endorserTitle && !endorsement.endorserCompany && (
+                            <span className="text-gray-500"> • {endorsement.endorserTitle}</span>
+                          )}
+                          {!endorsement.endorserTitle && endorsement.endorserCompany && (
+                            <span className="text-gray-500"> • {endorsement.endorserCompany}</span>
+                          )}
+                        </p>
+                        {endorsement.endorserLinkedIn && (
+                          <a
+                            href={endorsement.endorserLinkedIn}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="ml-2 text-blue-600 hover:text-blue-800"
+                            title="View LinkedIn Profile"
+                          >
+                            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
+                              <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+                            </svg>
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center">
+                      <Star className="h-4 w-4 text-yellow-500 fill-current" />
+                    </div>
+                  </div>
+                  {endorsement.message && (
+                    <p className="text-sm text-gray-700 italic">"{endorsement.message}"</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Contact Actions */}
         <div className="bg-white rounded-xl shadow-lg p-6">

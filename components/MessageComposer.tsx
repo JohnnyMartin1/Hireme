@@ -1,5 +1,6 @@
 "use client";
 import { useState } from 'react';
+import { useToast } from '@/components/NotificationSystem';
 import { useRouter } from 'next/navigation';
 
 interface MessageComposerProps {
@@ -16,6 +17,7 @@ export default function MessageComposer({ threadId, receiverId }: MessageCompose
   const [body, setBody] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const toast = useToast();
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!body.trim()) return;
@@ -31,7 +33,7 @@ export default function MessageComposer({ threadId, receiverId }: MessageCompose
       // refresh to load new messages
       router.refresh();
     } else {
-      alert('Failed to send message');
+      toast.error('Error', 'Failed to send message');
     }
   };
   return (

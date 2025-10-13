@@ -2,9 +2,10 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useFirebaseAuth } from "@/components/FirebaseAuthProvider";
-import { updateDocument } from '@/lib/firebase-firestore';
-import { ArrowLeft, Save, GraduationCap, MapPin, Briefcase, Calendar, Globe, Award, BookOpen, User, Video, Share2 } from 'lucide-react';
+import { updateDocument, getDocument } from '@/lib/firebase-firestore';
+import { ArrowLeft, Save, GraduationCap, MapPin, Briefcase, Calendar, Globe, Award, BookOpen, User, Video, Share2, HelpCircle } from 'lucide-react';
 import Link from 'next/link';
+import { useToast } from '@/components/NotificationSystem';
 import SearchableDropdown from '@/components/SearchableDropdown';
 import MultiSelectDropdown from '@/components/MultiSelectDropdown';
 import FileUpload from '@/components/FileUpload';
@@ -19,7 +20,8 @@ import {
   JOB_TYPES,
   GRADUATION_YEARS,
   GPA_RANGES,
-  ALL_CERTIFICATIONS
+  ALL_CERTIFICATIONS,
+  CAREER_INTERESTS
 } from '@/lib/profile-data';
 
 interface ProfileFormData {
@@ -45,6 +47,13 @@ interface ProfileFormData {
   extracurriculars: string[];
   certifications: string[];
   languages: string[];
+  // Career
+  careerInterests: string[];
+  // Work Authorization
+  workAuthorization: {
+    authorizedToWork: boolean | null;
+    requiresVisaSponsorship: boolean | null;
+  };
   // Personal
   bio: string;
   linkedinUrl: string;
@@ -58,6 +67,7 @@ interface ProfileFormData {
 export default function EditProfilePage() {
   const { user, profile, loading } = useFirebaseAuth();
   const router = useRouter();
+  const toast = useToast();
   const [formData, setFormData] = useState<ProfileFormData>({
     firstName: '',
     lastName: '',
@@ -71,6 +81,11 @@ export default function EditProfilePage() {
     extracurriculars: [],
     certifications: [],
     languages: [],
+    careerInterests: [],
+    workAuthorization: {
+      authorizedToWork: null,
+      requiresVisaSponsorship: null
+    },
     bio: '',
     linkedinUrl: '',
     portfolioUrl: '',
@@ -86,36 +101,60 @@ export default function EditProfilePage() {
       return;
     }
 
-    if (profile) {
-      setFormData({
-        firstName: profile.firstName || '',
-        lastName: profile.lastName || '',
-        headline: profile.headline || '',
-        skills: profile.skills || [],
-        education: profile.education || (profile.school ? [{
-          school: profile.school || '',
-          degree: profile.degree || 'Bachelor\'s',
-          majors: profile.majors || (profile.major ? [profile.major] : []),
-          minors: profile.minors || (profile.minor ? [profile.minor] : []),
-          graduationYear: profile.graduationYear || '',
-          gpa: profile.gpa || ''
-        }] : []),
-        locations: profile.locations || (profile.location ? [profile.location] : []),
-        workPreferences: profile.workPreferences || [],
-        jobTypes: profile.jobTypes || [],
+    // Fetch the latest profile data directly from Firestore to ensure we have the most up-to-date information
+    const fetchLatestProfile = async () => {
+      if (user) {
+        try {
+          const { data: latestProfile, error } = await getDocument('users', user.uid);
+          if (error) {
+            console.error('Error fetching latest profile:', error);
+            return;
+          }
+          
+          if (latestProfile) {
+            console.log('Loading profile data into form:', latestProfile);
+            const profile = latestProfile as any;
+            setFormData({
+              firstName: profile.firstName || '',
+              lastName: profile.lastName || '',
+              headline: profile.headline || '',
+              skills: profile.skills || [],
+              education: profile.education || (profile.school ? [{
+                school: profile.school || '',
+                degree: profile.degree || 'Bachelor\'s',
+                majors: profile.majors || (profile.major ? [profile.major] : []),
+                minors: profile.minors || (profile.minor ? [profile.minor] : []),
+                graduationYear: profile.graduationYear || '',
+                gpa: profile.gpa || ''
+              }] : []),
+              locations: profile.locations || (profile.location ? [profile.location] : []),
+              workPreferences: profile.workPreferences || [],
+              jobTypes: profile.jobTypes || [],
         experience: profile.experience || '',
         extracurriculars: profile.extracurriculars || [],
         certifications: profile.certifications || [],
         languages: profile.languages || [],
+        careerInterests: profile.careerInterests || [],
+        workAuthorization: profile.workAuthorization || {
+          authorizedToWork: null,
+          requiresVisaSponsorship: null
+        },
         bio: profile.bio || '',
-        linkedinUrl: profile.linkedinUrl || '',
-        portfolioUrl: profile.portfolioUrl || '',
-        resumeUrl: (profile as any).resumeUrl || '',
-        profileImageUrl: (profile as any).profileImageUrl || '',
-        videoUrl: (profile as any).videoUrl || ''
-      });
-    }
-  }, [profile, loading, user, router]);
+              linkedinUrl: profile.linkedinUrl || '',
+              portfolioUrl: profile.portfolioUrl || '',
+              resumeUrl: profile.resumeUrl || '',
+              profileImageUrl: profile.profileImageUrl || '',
+              videoUrl: profile.videoUrl || ''
+            });
+          }
+        } catch (err) {
+          console.error('Error fetching latest profile:', err);
+        }
+      }
+    };
+
+    fetchLatestProfile();
+  }, [user, loading]);
 
   const handleInputChange = (field: keyof ProfileFormData, value: string | string[] | any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -131,7 +170,7 @@ export default function EditProfilePage() {
       
       if (error) {
         console.error('Error updating profile:', error);
-        alert('Failed to update profile. Please try again.');
+        toast.error('Update Failed', 'Failed to update profile. Please try again.');
       } else {
         // Redirect to appropriate dashboard based on role
         if (profile.role === 'JOB_SEEKER') {
@@ -142,9 +181,9 @@ export default function EditProfilePage() {
           router.push('/home');
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating profile:', error);
-      alert('Failed to update profile. Please try again.');
+      toast.error('Update Failed', 'Failed to update profile. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -481,6 +520,111 @@ export default function EditProfilePage() {
                 label="Languages"
                 allowCustom
               />
+            </div>
+          </div>
+
+          {/* Career Interests */}
+          <div className="bg-white rounded-xl shadow-lg p-6">
+            <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
+              <Briefcase className="h-5 w-5 mr-2 text-indigo-600" />
+              Career Interests
+            </h2>
+            
+            <div>
+              <MultiSelectDropdown
+                options={CAREER_INTERESTS}
+                values={formData.careerInterests}
+                onChange={(values) => handleInputChange('careerInterests', values)}
+                placeholder="Select career industries you're interested in"
+                label="Career Industries"
+                allowCustom
+                maxSelections={5}
+              />
+              <p className="text-sm text-gray-500 mt-2">
+                Select up to 5 industries you're most interested in pursuing for your career.
+              </p>
+            </div>
+          </div>
+
+          {/* Work Authorization */}
+          <div className="bg-white rounded-xl shadow-lg p-6">
+            <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
+              <HelpCircle className="h-5 w-5 mr-2 text-purple-600" />
+              Work Authorization
+            </h2>
+            
+            <div className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-3">
+                  Are you legally authorized to work in the United States?
+                </label>
+                <div className="flex space-x-6">
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      name="authorizedToWork"
+                      value="yes"
+                      checked={formData.workAuthorization.authorizedToWork === true}
+                      onChange={(e) => handleInputChange('workAuthorization', {
+                        ...formData.workAuthorization,
+                        authorizedToWork: e.target.value === 'yes'
+                      })}
+                      className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300"
+                    />
+                    <span className="ml-2 text-sm text-gray-700">Yes</span>
+                  </label>
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      name="authorizedToWork"
+                      value="no"
+                      checked={formData.workAuthorization.authorizedToWork === false}
+                      onChange={(e) => handleInputChange('workAuthorization', {
+                        ...formData.workAuthorization,
+                        authorizedToWork: false
+                      })}
+                      className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300"
+                    />
+                    <span className="ml-2 text-sm text-gray-700">No</span>
+                  </label>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-3">
+                  Will you now or in the future require visa sponsorship?
+                </label>
+                <div className="flex space-x-6">
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      name="requiresVisaSponsorship"
+                      value="yes"
+                      checked={formData.workAuthorization.requiresVisaSponsorship === true}
+                      onChange={(e) => handleInputChange('workAuthorization', {
+                        ...formData.workAuthorization,
+                        requiresVisaSponsorship: e.target.value === 'yes'
+                      })}
+                      className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300"
+                    />
+                    <span className="ml-2 text-sm text-gray-700">Yes</span>
+                  </label>
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      name="requiresVisaSponsorship"
+                      value="no"
+                      checked={formData.workAuthorization.requiresVisaSponsorship === false}
+                      onChange={(e) => handleInputChange('workAuthorization', {
+                        ...formData.workAuthorization,
+                        requiresVisaSponsorship: false
+                      })}
+                      className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300"
+                    />
+                    <span className="ml-2 text-sm text-gray-700">No</span>
+                  </label>
+                </div>
+              </div>
             </div>
           </div>
 

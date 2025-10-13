@@ -17,6 +17,10 @@ export default function CompanySignupPage() {
     confirmPassword: "",
     firstName: "",
     lastName: "",
+    companySize: "",
+    industry: "",
+    website: "",
+    phone: ""
   });
   const [err, setErr] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -101,7 +105,13 @@ export default function CompanySignupPage() {
           companyId: companyId,
           isCompanyOwner: true,
           createdAt: new Date(),
-          isActive: true
+          isActive: true,
+          status: 'pending_verification', // Require admin approval
+          companySize: formData.companySize,
+          industry: formData.industry,
+          website: formData.website,
+          phone: formData.phone,
+          address: formData.companyLocation
         };
 
         const { error: profileError } = await createDocument('users', profileData, user.uid);
@@ -127,11 +137,31 @@ export default function CompanySignupPage() {
           console.error('Failed to send verification email:', verifyError);
         }
 
+        // Send admin notification about new company registration
+        try {
+          await fetch('/api/admin/notify-new-company', {
+            method: 'POST',
+            headers: { 
+              'Content-Type': 'application/json',
+              'x-user-id': user.uid
+            },
+            body: JSON.stringify({
+              companyName: formData.companyName,
+              contactName: `${formData.firstName} ${formData.lastName}`,
+              contactEmail: formData.email,
+              companySize: formData.companySize,
+              industry: formData.industry
+            })
+          });
+        } catch (notifyError) {
+          console.error('Failed to send admin notification:', notifyError);
+        }
+
         // Wait a moment for Firestore to propagate, then redirect
         await new Promise(resolve => setTimeout(resolve, 1000));
         
-        // Success! Redirect to verification page
-        router.push("/auth/verify-email");
+        // Success! Redirect to verification pending page (not dashboard)
+        router.push("/auth/verification-pending");
       }
     } catch (error: any) {
       setErr("An error occurred during signup. Please try again.");
@@ -191,6 +221,66 @@ export default function CompanySignupPage() {
                 required
                 allowCustom
               />
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Company Size
+                  </label>
+                  <SearchableDropdown
+                    options={['1-10 employees', '11-50 employees', '51-200 employees', '201-500 employees', '500+ employees']}
+                    value={formData.companySize}
+                    onChange={(value) => handleDropdownChange('companySize', value)}
+                    placeholder="Select company size"
+                    label="Company Size"
+                    allowCustom
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Industry
+                  </label>
+                  <SearchableDropdown
+                    options={['Technology', 'Finance', 'Healthcare', 'Education', 'Retail', 'Manufacturing', 'Consulting', 'Real Estate', 'Other']}
+                    value={formData.industry}
+                    onChange={(value) => handleDropdownChange('industry', value)}
+                    placeholder="Select industry"
+                    label="Industry"
+                    allowCustom
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Website
+                  </label>
+                  <input
+                    name="website"
+                    type="url"
+                    value={formData.website}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="https://yourcompany.com"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Phone Number
+                  </label>
+                  <input
+                    name="phone"
+                    type="tel"
+                    value={formData.phone}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="(555) 123-4567"
+                  />
+                </div>
+              </div>
             </div>
           </div>
 

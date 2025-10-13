@@ -1,10 +1,44 @@
 "use client";
 import Link from "next/link";
+import { useFirebaseAuth } from "@/components/FirebaseAuthProvider";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 import Logo from "@/components/Logo";
 
+function LoadingSpinner() {
+  return (
+    <div className="min-h-screen hireme-gradient-light flex items-center justify-center">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--hireme-blue)] mx-auto mb-4"></div>
+        <p className="text-[var(--muted)]">Loading...</p>
+      </div>
+    </div>
+  );
+}
+
 function HomeContent() {
-  // Temporarily bypass Firebase auth to test if the page loads
-  console.log('Home page rendering...');
+  const { user, profile, loading } = useFirebaseAuth();
+  const router = useRouter();
+  
+  // If user is authenticated, redirect to appropriate dashboard
+  useEffect(() => {
+    if (user && profile && !loading) {
+      if (profile.role === 'EMPLOYER') {
+        router.push('/home/employer');
+      } else {
+        router.push('/home/seeker');
+      }
+    }
+  }, [user, profile, loading, router]);
+
+  if (loading) {
+    return <LoadingSpinner />;
+  }
+
+  // If user is authenticated, show loading while redirecting
+  if (user && profile) {
+    return <LoadingSpinner />;
+  }
 
   return (
     <main className="min-h-screen hireme-gradient-light flex items-center justify-center">

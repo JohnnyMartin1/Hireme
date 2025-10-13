@@ -12,7 +12,8 @@ import {
   MapPin,
   Star
 } from "lucide-react";
-import { getUserMessageThreads, getProfileViewCount, getDocument, getProfileViewers } from '@/lib/firebase-firestore';
+import { getUserMessageThreads, getProfileViewCount, getDocument, getProfileViewers, updateDocument, getEndorsements } from '@/lib/firebase-firestore';
+import WelcomePopup from "@/components/WelcomePopup";
 
 import type { UserProfile } from "@/types/user";
 
@@ -28,6 +29,29 @@ export default function SeekerHomePage() {
   const [isLoadingStats, setIsLoadingStats] = useState(true);
   const [threadDetails, setThreadDetails] = useState<any[]>([]);
   const [completion, setCompletion] = useState<number>(0);
+  const [showWelcomePopup, setShowWelcomePopup] = useState(false);
+  const [endorsements, setEndorsements] = useState<any[]>([]);
+
+  const handleCloseWelcomePopup = async () => {
+    setShowWelcomePopup(false);
+    
+    // Mark that the user has seen the welcome popup
+    if (user && profile) {
+      try {
+        await updateDocument('users', user.uid, {
+          hasSeenWelcomePopup: true
+        });
+        
+        // Immediately update local profile state to prevent popup from showing again
+        setUserProfile(prevProfile => ({
+          ...prevProfile,
+          hasSeenWelcomePopup: true
+        }));
+      } catch (error) {
+        console.error('Failed to update welcome popup status:', error);
+      }
+    }
+  };
 
   useEffect(() => {
     if (!loading && !user) {
@@ -53,6 +77,13 @@ export default function SeekerHomePage() {
 
     if (profile) {
       setUserProfile(profile);
+      
+      // Check if this is the user's first login after email verification
+      // Show welcome popup if they just verified their email and haven't seen the welcome popup yet
+      if (profile.emailVerified && !profile.hasSeenWelcomePopup && !userProfile?.hasSeenWelcomePopup) {
+        setShowWelcomePopup(true);
+      }
+      
       // compute simple completion metric
       const total = 14;
       let score = 0;
@@ -75,6 +106,23 @@ export default function SeekerHomePage() {
     }
   }, [user, profile, loading, router]);
 
+  // Track navigation to profile page and auto-close popup
+  useEffect(() => {
+    // Check if user has navigated to profile and completed it
+    if (showWelcomePopup && profile) {
+      const profileComplete = profile.firstName && profile.lastName && profile.headline;
+      
+      // If profile is complete, auto-close the popup and mark as seen
+      if (profileComplete) {
+        const timer = setTimeout(() => {
+          handleCloseWelcomePopup();
+        }, 500);
+        
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [showWelcomePopup, profile]);
+
   // Fetch real-time data (optimized with parallel requests)
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -83,9 +131,10 @@ export default function SeekerHomePage() {
       setIsLoadingStats(true);
       try {
         // Fetch threads and views in parallel for better performance
-        const [threadsResult, viewsResult] = await Promise.all([
+        const [threadsResult, viewsResult, endorsementsResult] = await Promise.all([
           getUserMessageThreads(user.uid),
-          getProfileViewers(user.uid)
+          getProfileViewers(user.uid),
+          getEndorsements(user.uid)
         ]);
         
         // Process threads data
@@ -128,6 +177,11 @@ export default function SeekerHomePage() {
         // Process views data
         if (!viewsResult.error) {
           setProfileViews(viewsResult.count);
+        }
+        
+        // Process endorsements data
+        if (!endorsementsResult.error && endorsementsResult.data) {
+          setEndorsements(endorsementsResult.data);
         }
 
       } catch (error) {
@@ -264,7 +318,19 @@ export default function SeekerHomePage() {
             </div>
           </button>
 
-          {/* Removed Skills card per request */}
+          <Link href="/endorsements" className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-yellow-500 hover:shadow-xl transition-shadow cursor-pointer">
+            <div className="flex items-center">
+              <div className="p-2 bg-yellow-100 rounded-lg">
+                <Star className="h-6 w-6 text-yellow-600" />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">Endorsements</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {isLoadingStats ? '...' : endorsements.length}
+                </p>
+              </div>
+            </div>
+          </Link>
         </div>
 
         {/* Quick Actions */}
@@ -278,6 +344,13 @@ export default function SeekerHomePage() {
               >
                 <User className="h-5 w-5 text-blue-600 mr-3" />
                 <span className="text-blue-800">Edit Profile</span>
+              </Link>
+              <Link
+                href={`/candidate/${user?.uid}`}
+                className="flex items-center p-3 bg-green-50 rounded-lg hover:bg-green-100 transition-colors"
+              >
+                <Eye className="h-5 w-5 text-green-600 mr-3" />
+                <span className="text-green-800">Preview Profile</span>
               </Link>
               <Link
                 href="/messages/candidate"
@@ -327,6 +400,12 @@ export default function SeekerHomePage() {
           )}
         </div>
       </div>
+      
+      {/* Welcome Popup for first-time users */}
+      <WelcomePopup 
+        isVisible={showWelcomePopup} 
+        onClose={handleCloseWelcomePopup} 
+      />
     </main>
   );
 }

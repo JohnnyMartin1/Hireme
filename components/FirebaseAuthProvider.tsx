@@ -22,8 +22,19 @@ export function FirebaseAuthProvider({ children }: { children: React.ReactNode }
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      setUser(firebaseUser);
+    // Set a timeout to prevent infinite loading
+    const loadingTimeout = setTimeout(() => {
+      console.log('Firebase auth loading timeout - setting loading to false');
+      setLoading(false);
+    }, 2000); // 2 second timeout
+
+    // Try to initialize Firebase auth with error handling
+    try {
+      console.log('Initializing Firebase auth...');
+      const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+        clearTimeout(loadingTimeout); // Clear timeout when auth state changes
+        console.log('Firebase auth state changed:', firebaseUser ? 'User logged in' : 'No user');
+        setUser(firebaseUser);
 
       if (firebaseUser) {
         try {
@@ -79,7 +90,15 @@ export function FirebaseAuthProvider({ children }: { children: React.ReactNode }
       setLoading(false);
     });
 
-    return () => unsubscribe();
+      return () => {
+        clearTimeout(loadingTimeout);
+        unsubscribe();
+      };
+    } catch (error) {
+      console.error('Firebase auth initialization error:', error);
+      clearTimeout(loadingTimeout);
+      setLoading(false);
+    }
   }, []);
 
   const signOut = async () => {

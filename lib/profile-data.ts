@@ -623,3 +623,160 @@ export const CERTIFICATIONS = {
 
 // Flattened list for dropdown usage
 export const ALL_CERTIFICATIONS = Object.values(CERTIFICATIONS).flat();
+
+export const CAREER_INTERESTS = [
+  // Technology & Software
+  "Software Engineering",
+  "Data Science & Analytics",
+  "Artificial Intelligence & Machine Learning",
+  "Cybersecurity",
+  "Cloud Computing",
+  "DevOps & Infrastructure",
+  "Product Management",
+  "UX/UI Design",
+  "Mobile App Development",
+  "Game Development",
+  "Blockchain & Cryptocurrency",
+  
+  // Finance & Banking
+  "Investment Banking",
+  "Commercial Banking",
+  "Private Equity",
+  "Venture Capital",
+  "Asset Management",
+  "Financial Planning",
+  "Insurance",
+  "Real Estate Finance",
+  "Corporate Finance",
+  "Risk Management",
+  "Trading & Markets",
+  "Fintech",
+  
+  // Consulting & Professional Services
+  "Management Consulting",
+  "Strategy Consulting",
+  "Technology Consulting",
+  "Financial Consulting",
+  "HR Consulting",
+  "Marketing Consulting",
+  "Operations Consulting",
+  "Legal Services",
+  "Accounting & Auditing",
+  "Tax Services",
+  
+  // Healthcare & Life Sciences
+  "Healthcare Administration",
+  "Medical Research",
+  "Pharmaceuticals",
+  "Biotechnology",
+  "Public Health",
+  "Healthcare Technology",
+  "Medical Devices",
+  "Clinical Research",
+  "Healthcare Policy",
+  "Mental Health Services",
+  
+  // Media & Entertainment
+  "Digital Marketing",
+  "Content Creation",
+  "Social Media Marketing",
+  "Brand Management",
+  "Public Relations",
+  "Advertising",
+  "Journalism",
+  "Broadcasting",
+  "Film & Television",
+  "Music & Audio",
+  "Publishing",
+  "Sports & Entertainment",
+  
+  // Education & Non-Profit
+  "Education Administration",
+  "Educational Technology",
+  "Curriculum Development",
+  "Non-Profit Management",
+  "Social Work",
+  "Community Development",
+  "International Development",
+  "Environmental Conservation",
+  "Public Policy",
+  "Government Relations",
+  
+  // Real Estate & Construction
+  "Commercial Real Estate",
+  "Residential Real Estate",
+  "Real Estate Development",
+  "Construction Management",
+  "Architecture",
+  "Urban Planning",
+  "Property Management",
+  "Real Estate Investment",
+  
+  // Retail & Consumer Goods
+  "Retail Management",
+  "E-commerce",
+  "Supply Chain Management",
+  "Operations Management",
+  "Merchandising",
+  "Consumer Goods",
+  "Fashion & Apparel",
+  "Luxury Goods",
+  "Food & Beverage",
+  
+  // Manufacturing & Industrial
+  "Manufacturing",
+  "Industrial Engineering",
+  "Quality Assurance",
+  "Procurement",
+  "Logistics",
+  "Automotive",
+  "Aerospace",
+  "Energy & Utilities",
+  "Oil & Gas",
+  "Renewable Energy",
+  
+  // Hospitality & Travel
+  "Hotel Management",
+  "Restaurant Management",
+  "Event Planning",
+  "Travel & Tourism",
+  "Airlines",
+  "Cruise Lines",
+  "Casino Operations",
+  
+  // Politics & Public Service
+  "Politics",
+  "Public Administration",
+  "Government Relations",
+  "Policy Analysis",
+  "Political Campaigning",
+  "International Relations",
+  "Diplomacy",
+  "Law Enforcement",
+  "Military",
+  "Intelligence",
+  
+  // Sales & Business Development
+  "Sales Management",
+  "Business Development",
+  "Account Management",
+  "Partnership Development",
+  "Channel Sales",
+  "Inside Sales",
+  "Field Sales",
+  "Sales Operations",
+  
+  // Other Industries
+  "Agriculture",
+  "Transportation",
+  "Telecommunications",
+  "Mining",
+  "Forestry",
+  "Fishing",
+  "Arts & Culture",
+  "Museums",
+  "Libraries",
+  "Research & Development",
+  "Entrepreneurship",
+  "Startups"
+];

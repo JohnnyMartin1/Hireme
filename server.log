@@ -68,3 +68,955 @@
  ✓ Compiled in 813ms (1048 modules)
  ✓ Compiled in 286ms (1034 modules)
  ✓ Compiled in 124ms (1034 modules)
+   Reload env: .env.local
+ ✓ Compiled in 182ms (1034 modules)
+ ✓ Compiled in 160ms (1034 modules)
+ GET / 200 in 248ms
+ ✓ Compiled /auth/signup in 217ms (520 modules)
+ ✓ Compiled /auth/signup/employer in 160ms (524 modules)
+ ✓ Compiled /auth/signup/employer/type in 138ms (532 modules)
+ ✓ Compiled /auth/signup/employer/company in 123ms (537 modules)
+ ✓ Compiled /home/employer in 182ms (530 modules)
+ ✓ Compiled /auth/verify-email in 75ms (537 modules)
+ ✓ Compiled /api/auth/send-verification in 110ms (572 modules)
+ POST /api/auth/send-verification 200 in 676ms
+ ✓ Compiled in 373ms (415 modules)
+ ✓ Compiled in 80ms (415 modules)
+ ✓ Compiled in 57ms (415 modules)
+ ✓ Compiled in 121ms (415 modules)
+ ✓ Compiled in 270ms (499 modules)
+ GET / 200 in 183ms
+ GET / 200 in 41ms
+ ✓ Compiled /auth/signup in 115ms (503 modules)
+ ✓ Compiled /auth/signup/seeker in 312ms (924 modules)
+ ✓ Compiled in 602ms (901 modules)
+ ✓ Compiled in 344ms (901 modules)
+ ✓ Compiled in 323ms (901 modules)
+ ✓ Compiled /api/auth/send-verification in 123ms (533 modules)
+Creating verification token for: {
+  userId: 'IR3bk4Mq83OB60KS23GSAK5Qoku2',
+  email: 'johnrothwellmartin3@gmail.com'
+}
+Generated token: wy2laxyfyl...
+Token created successfully with ID: BMoJBAe1iODLHHfA7ZfI
+ POST /api/auth/send-verification 200 in 554ms
+ GET /auth/verify-email?token=wy2laxyfyl9mgjpia3t 200 in 137ms
+ ✓ Compiled /api/auth/verify-email in 109ms (535 modules)
+ POST /api/auth/verify-email 200 in 472ms
+ GET /auth/verify-email?token=wy2laxyfyl9mgjpia3t 200 in 91ms
+ POST /api/auth/verify-email 400 in 85ms
+ ✓ Compiled in 474ms (915 modules)
+ ✓ Compiled in 221ms (915 modules)
+ ✓ Compiled in 77ms (417 modules)
+ ✓ Compiled in 239ms (417 modules)
+ ✓ Compiled in 164ms (417 modules)
+ ⨯ ./app/info/page.tsx
+Error: 
+  [31mx[0m Unexpected token `div`. Expected jsx identifier
+    ,-[[36;1;4m/Users/catherinefratila/Desktop/hireme/app/info/page.tsx[0m:62:1]
+ [2m62[0m |   }
+ [2m63[0m | 
+ [2m64[0m |   const content = (
+ [2m65[0m |     <div className="max-w-4xl mx-auto p-6 py-12">
+    : [31;1m     ^^^[0m
+ [2m66[0m |       {!fromSignup && (
+ [2m67[0m |         <Link 
+ [2m68[0m |           href="/home/seeker"
+    `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./app/info/page.tsx
+ ⨯ ./app/info/page.tsx
+Error: 
+  [31mx[0m Unexpected token `div`. Expected jsx identifier
+    ,-[[36;1;4m/Users/catherinefratila/Desktop/hireme/app/info/page.tsx[0m:62:1]
+ [2m62[0m |   }
+ [2m63[0m | 
+ [2m64[0m |   const content = (
+ [2m65[0m |     <div className="max-w-4xl mx-auto p-6 py-12">
+    : [31;1m     ^^^[0m
+ [2m66[0m |       {!fromSignup && (
+ [2m67[0m |         <Link 
+ [2m68[0m |           href="/home/seeker"
+    `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./app/info/page.tsx
+ ⨯ ./app/info/page.tsx
+Error: 
+  [31mx[0m Unexpected token `div`. Expected jsx identifier
+    ,-[[36;1;4m/Users/catherinefratila/Desktop/hireme/app/info/page.tsx[0m:62:1]
+ [2m62[0m |   }
+ [2m63[0m | 
+ [2m64[0m |   const content = (
+ [2m65[0m |     <div className="max-w-4xl mx-auto p-6 py-12">
+    : [31;1m     ^^^[0m
+ [2m66[0m |       {!fromSignup && (
+ [2m67[0m |         <Link 
+ [2m68[0m |           href="/home/seeker"
+    `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./app/info/page.tsx
+ ⨯ ./app/info/page.tsx
+Error: 
+  [31mx[0m Unexpected token `div`. Expected jsx identifier
+    ,-[[36;1;4m/Users/catherinefratila/Desktop/hireme/app/info/page.tsx[0m:62:1]
+ [2m62[0m |   }
+ [2m63[0m | 
+ [2m64[0m |   const content = (
+ [2m65[0m |     <div className="max-w-4xl mx-auto p-6 py-12">
+    : [31;1m     ^^^[0m
+ [2m66[0m |       {!fromSignup && (
+ [2m67[0m |         <Link 
+ [2m68[0m |           href="/home/seeker"
+    `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./app/info/page.tsx
+ ⨯ ./app/info/employer/page.tsx
+Error: 
+  [31mx[0m Unexpected token `div`. Expected jsx identifier
+    ,-[[36;1;4m/Users/catherinefratila/Desktop/hireme/app/info/employer/page.tsx[0m:57:1]
+ [2m57[0m |   }
+ [2m58[0m | 
+ [2m59[0m |   const content = (
+ [2m60[0m |     <div className="max-w-5xl mx-auto px-6 py-12">
+    : [31;1m     ^^^[0m
+ [2m61[0m |       {!fromSignup && (
+ [2m62[0m |         <Link 
+ [2m63[0m |           href="/home/employer"
+    `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./app/info/employer/page.tsx
+ ⨯ ./app/info/employer/page.tsx
+Error: 
+  [31mx[0m Unexpected token `div`. Expected jsx identifier
+    ,-[[36;1;4m/Users/catherinefratila/Desktop/hireme/app/info/employer/page.tsx[0m:57:1]
+ [2m57[0m |   }
+ [2m58[0m | 
+ [2m59[0m |   const content = (
+ [2m60[0m |     <div className="max-w-5xl mx-auto px-6 py-12">
+    : [31;1m     ^^^[0m
+ [2m61[0m |       {!fromSignup && (
+ [2m62[0m |         <Link 
+ [2m63[0m |           href="/home/employer"
+    `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./app/info/employer/page.tsx
+ ⨯ ./app/info/employer/page.tsx
+Error: 
+  [31mx[0m Unexpected token `div`. Expected jsx identifier
+    ,-[[36;1;4m/Users/catherinefratila/Desktop/hireme/app/info/employer/page.tsx[0m:57:1]
+ [2m57[0m |   }
+ [2m58[0m | 
+ [2m59[0m |   const content = (
+ [2m60[0m |     <div className="max-w-5xl mx-auto px-6 py-12">
+    : [31;1m     ^^^[0m
+ [2m61[0m |       {!fromSignup && (
+ [2m62[0m |         <Link 
+ [2m63[0m |           href="/home/employer"
+    `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./app/info/employer/page.tsx
+ ⨯ ./app/info/employer/page.tsx
+Error: 
+  [31mx[0m Unexpected token `div`. Expected jsx identifier
+    ,-[[36;1;4m/Users/catherinefratila/Desktop/hireme/app/info/employer/page.tsx[0m:57:1]
+ [2m57[0m |   }
+ [2m58[0m | 
+ [2m59[0m |   const content = (
+ [2m60[0m |     <div className="max-w-5xl mx-auto px-6 py-12">
+    : [31;1m     ^^^[0m
+ [2m61[0m |       {!fromSignup && (
+ [2m62[0m |         <Link 
+ [2m63[0m |           href="/home/employer"
+    `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./app/info/employer/page.tsx
+ ⨯ ./app/info/employer/page.tsx
+Error: 
+  [31mx[0m Unexpected token `div`. Expected jsx identifier
+    ,-[[36;1;4m/Users/catherinefratila/Desktop/hireme/app/info/employer/page.tsx[0m:57:1]
+ [2m57[0m |   }
+ [2m58[0m | 
+ [2m59[0m |   const content = (
+ [2m60[0m |     <div className="max-w-5xl mx-auto px-6 py-12">
+    : [31;1m     ^^^[0m
+ [2m61[0m |       {!fromSignup && (
+ [2m62[0m |         <Link 
+ [2m63[0m |           href="/home/employer"
+    `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./app/info/employer/page.tsx
+ ⨯ ./app/info/employer/page.tsx
+Error: 
+  [31mx[0m Unexpected token `div`. Expected jsx identifier
+    ,-[[36;1;4m/Users/catherinefratila/Desktop/hireme/app/info/employer/page.tsx[0m:57:1]
+ [2m57[0m |   }
+ [2m58[0m | 
+ [2m59[0m |   const content = (
+ [2m60[0m |     <div className="max-w-5xl mx-auto px-6 py-12">
+    : [31;1m     ^^^[0m
+ [2m61[0m |       {!fromSignup && (
+ [2m62[0m |         <Link 
+ [2m63[0m |           href="/home/employer"
+    `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./app/info/employer/page.tsx
+ ⨯ ./app/info/employer/page.tsx
+Error: 
+  [31mx[0m Unexpected token `div`. Expected jsx identifier
+    ,-[[36;1;4m/Users/catherinefratila/Desktop/hireme/app/info/employer/page.tsx[0m:57:1]
+ [2m57[0m |   }
+ [2m58[0m | 
+ [2m59[0m |   const content = (
+ [2m60[0m |     <div className="max-w-5xl mx-auto px-6 py-12">
+    : [31;1m     ^^^[0m
+ [2m61[0m |       {!fromSignup && (
+ [2m62[0m |         <Link 
+ [2m63[0m |           href="/home/employer"
+    `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./app/info/employer/page.tsx
+ ✓ Compiled / in 146ms (502 modules)
+ ⨯ ./app/info/employer/page.tsx
+Error: 
+  [31mx[0m Unexpected token `div`. Expected jsx identifier
+    ,-[[36;1;4m/Users/catherinefratila/Desktop/hireme/app/info/employer/page.tsx[0m:57:1]
+ [2m57[0m |   }
+ [2m58[0m | 
+ [2m59[0m |   const content = (
+ [2m60[0m |     <div className="max-w-5xl mx-auto px-6 py-12">
+    : [31;1m     ^^^[0m
+ [2m61[0m |       {!fromSignup && (
+ [2m62[0m |         <Link 
+ [2m63[0m |           href="/home/employer"
+    `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./app/info/employer/page.tsx
+ ○ Compiling /_error ...
+ GET / 500 in 1016ms
+ GET / 500 in 3ms
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, lstat '/Users/catherinefratila/Desktop/hireme/.next/server/app/api'
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving '../../../../.next/server/app/api/auth/verify-email/route' in /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server for build dependencies doesn't lead to expected result '/Users/catherinefratila/Desktop/hireme/.next/server/app/api/auth/verify-email/route.js', but to 'Error: Can't resolve '../../../../.next/server/app/api/auth/verify-email/route' in '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server'' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ../../../../.next/server/app/api/auth/verify-email/route (expected /Users/catherinefratila/Desktop/hireme/.next/server/app/api/auth/verify-email/route.js)
+<w>  at file dependencies /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/require.js
+<w>  at file /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/require.js
+<w>  at file dependencies /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/load-components.js
+<w>  at file /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/load-components.js
+<w>  at file dependencies /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/build/utils.js
+<w>  at file /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/build/utils.js
+<w>  at file dependencies /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/build/handle-externals.js
+<w>  at file /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/build/handle-externals.js
+<w>  at file dependencies /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/build/webpack/loaders/next-swc-loader.js
+<w>  at file /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/build/webpack/loaders/next-swc-loader.js
+<w>  at resolve commonjs /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/build/webpack/loaders/next-swc-loader.js
+ GET / 500 in 18ms
+ GET / 500 in 7ms
+ ⨯ ./app/info/employer/page.tsx
+Error: 
+  [31mx[0m Unexpected token `div`. Expected jsx identifier
+    ,-[[36;1;4m/Users/catherinefratila/Desktop/hireme/app/info/employer/page.tsx[0m:57:1]
+ [2m57[0m |   }
+ [2m58[0m | 
+ [2m59[0m |   const content = (
+ [2m60[0m |     <div className="max-w-5xl mx-auto px-6 py-12">
+    : [31;1m     ^^^[0m
+ [2m61[0m |       {!fromSignup && (
+ [2m62[0m |         <Link 
+ [2m63[0m |           href="/home/employer"
+    `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./app/info/employer/page.tsx
+ GET /_next/static/chunks/fallback/webpack.js 500 in 269ms
+ GET /_next/static/chunks/fallback/main.js 500 in 264ms
+ GET /_next/static/chunks/fallback/react-refresh.js 500 in 264ms
+ GET /_next/static/chunks/fallback/pages/_app.js 500 in 4ms
+ GET /_next/static/chunks/fallback/pages/_error.js 500 in 4ms
+ GET / 500 in 10ms
+ GET /_next/static/chunks/fallback/webpack.js 500 in 5ms
+ GET /_next/static/chunks/fallback/main.js 500 in 5ms
+ GET /_next/static/chunks/fallback/react-refresh.js 500 in 5ms
+ GET /_next/static/chunks/fallback/pages/_app.js 500 in 6ms
+ GET /_next/static/chunks/fallback/pages/_error.js 500 in 5ms
+ GET / 500 in 6ms
+ GET / 500 in 7ms
+ GET /_next/static/chunks/fallback/webpack.js 500 in 11ms
+ GET /_next/static/chunks/fallback/main.js 500 in 8ms
+ GET /_next/static/chunks/fallback/react-refresh.js 500 in 7ms
+ GET /_next/static/chunks/fallback/pages/_app.js 500 in 10ms
+ GET /_next/static/chunks/fallback/pages/_error.js 500 in 11ms
+ ✓ Compiled /_not-found in 625ms (1148 modules)
+ ⨯ Error: Cannot find module '/Users/catherinefratila/Desktop/hireme/.next/server/pages/_document.js'
+Require stack:
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/require.js
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/load-components.js
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/build/utils.js
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/dev/hot-middleware.js
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/dev/hot-reloader-webpack.js
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/lib/router-server.js
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/lib/start-server.js
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1410:15)
+    at /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1051:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1056:22)
+    at Module._load (node:internal/modules/cjs/loader:1219:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:238:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1493:12)
+    at mod.require (/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:152:16)
+    at requirePage (/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/require.js:109:84)
+    at /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/load-components.js:72:65
+    at async Promise.all (index 0)
+    at async loadComponentsImpl (/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/load-components.js:71:33)
+    at async DevServer.findPageComponentsImpl (/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/next-server.js:714:36) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/require.js',
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/load-components.js',
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/build/utils.js',
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/dev/hot-middleware.js',
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/dev/hot-reloader-webpack.js',
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js',
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/lib/router-server.js',
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/lib/start-server.js'
+  ]
+}
+ GET / 500 in 17ms
+ ⨯ Error: Cannot find module '/Users/catherinefratila/Desktop/hireme/.next/server/pages/_document.js'
+Require stack:
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/require.js
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/load-components.js
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/build/utils.js
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/dev/hot-middleware.js
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/dev/hot-reloader-webpack.js
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/lib/router-server.js
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/lib/start-server.js
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1410:15)
+    at /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1051:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1056:22)
+    at Module._load (node:internal/modules/cjs/loader:1219:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:238:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1493:12)
+    at mod.require (/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:152:16)
+    at requirePage (/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/require.js:109:84)
+    at /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/load-components.js:72:65
+    at async Promise.all (index 0)
+    at async loadComponentsImpl (/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/load-components.js:71:33)
+    at async DevServer.findPageComponentsImpl (/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/next-server.js:714:36) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/require.js',
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/load-components.js',
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/build/utils.js',
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/dev/hot-middleware.js',
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/dev/hot-reloader-webpack.js',
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js',
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/lib/router-server.js',
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/lib/start-server.js'
+  ]
+}
+ ⨯ Error: Cannot find module '/Users/catherinefratila/Desktop/hireme/.next/server/pages/_document.js'
+Require stack:
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/require.js
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/load-components.js
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/build/utils.js
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/dev/hot-middleware.js
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/dev/hot-reloader-webpack.js
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/lib/router-server.js
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/lib/start-server.js
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1410:15)
+    at /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1051:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1056:22)
+    at Module._load (node:internal/modules/cjs/loader:1219:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:238:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1493:12)
+    at mod.require (/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:152:16)
+    at requirePage (/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/require.js:109:84)
+    at /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/load-components.js:72:65
+    at async Promise.all (index 0)
+    at async loadComponentsImpl (/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/load-components.js:71:33)
+    at async DevServer.findPageComponentsImpl (/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/next-server.js:714:36) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/require.js',
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/load-components.js',
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/build/utils.js',
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/dev/hot-middleware.js',
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/dev/hot-reloader-webpack.js',
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js',
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/lib/router-server.js',
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/lib/start-server.js'
+  ]
+}
+ ⨯ Error: Cannot find module '/Users/catherinefratila/Desktop/hireme/.next/server/pages/_document.js'
+Require stack:
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/require.js
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/load-components.js
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/build/utils.js
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/dev/hot-middleware.js
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/dev/hot-reloader-webpack.js
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/lib/router-server.js
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/lib/start-server.js
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1410:15)
+    at /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1051:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1056:22)
+    at Module._load (node:internal/modules/cjs/loader:1219:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:238:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1493:12)
+    at mod.require (/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:152:16)
+    at requirePage (/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/require.js:109:84)
+    at /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/load-components.js:72:65
+    at async Promise.all (index 0)
+    at async loadComponentsImpl (/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/load-components.js:71:33)
+    at async DevServer.findPageComponentsImpl (/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/next-server.js:714:36) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/require.js',
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/load-components.js',
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/build/utils.js',
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/dev/hot-middleware.js',
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/dev/hot-reloader-webpack.js',
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js',
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/lib/router-server.js',
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/lib/start-server.js'
+  ]
+}
+ GET /_next/static/chunks/fallback/webpack.js 500 in 16ms
+ GET /_next/static/chunks/fallback/main.js 500 in 14ms
+ GET /_next/static/chunks/fallback/react-refresh.js 500 in 13ms
+ ⨯ Error: Cannot find module '/Users/catherinefratila/Desktop/hireme/.next/server/pages/_document.js'
+Require stack:
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/require.js
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/load-components.js
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/build/utils.js
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/dev/hot-middleware.js
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/dev/hot-reloader-webpack.js
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/lib/router-server.js
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/lib/start-server.js
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1410:15)
+    at /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1051:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1056:22)
+    at Module._load (node:internal/modules/cjs/loader:1219:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:238:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1493:12)
+    at mod.require (/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:152:16)
+    at requirePage (/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/require.js:109:84)
+    at /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/load-components.js:72:65
+    at async Promise.all (index 0)
+    at async loadComponentsImpl (/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/load-components.js:71:33)
+    at async DevServer.findPageComponentsImpl (/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/next-server.js:714:36) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/require.js',
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/load-components.js',
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/build/utils.js',
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/dev/hot-middleware.js',
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/dev/hot-reloader-webpack.js',
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js',
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/lib/router-server.js',
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/lib/start-server.js'
+  ]
+}
+ ⨯ Error: Cannot find module '/Users/catherinefratila/Desktop/hireme/.next/server/pages/_document.js'
+Require stack:
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/require.js
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/load-components.js
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/build/utils.js
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/dev/hot-middleware.js
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/dev/hot-reloader-webpack.js
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/lib/router-server.js
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/lib/start-server.js
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1410:15)
+    at /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1051:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1056:22)
+    at Module._load (node:internal/modules/cjs/loader:1219:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:238:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1493:12)
+    at mod.require (/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:152:16)
+    at requirePage (/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/require.js:109:84)
+    at /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/load-components.js:72:65
+    at async Promise.all (index 0)
+    at async loadComponentsImpl (/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/load-components.js:71:33)
+    at async DevServer.findPageComponentsImpl (/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/next-server.js:714:36) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/require.js',
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/load-components.js',
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/build/utils.js',
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/dev/hot-middleware.js',
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/dev/hot-reloader-webpack.js',
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js',
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/lib/router-server.js',
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/lib/start-server.js'
+  ]
+}
+ GET /_next/static/chunks/fallback/pages/_app.js 500 in 6ms
+ GET /_next/static/chunks/fallback/pages/_error.js 500 in 6ms
+ ⨯ Error: Cannot find module '/Users/catherinefratila/Desktop/hireme/.next/server/pages/_document.js'
+Require stack:
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/require.js
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/load-components.js
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/build/utils.js
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/dev/hot-middleware.js
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/dev/hot-reloader-webpack.js
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/lib/router-server.js
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/lib/start-server.js
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1410:15)
+    at /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1051:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1056:22)
+    at Module._load (node:internal/modules/cjs/loader:1219:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:238:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1493:12)
+    at mod.require (/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:152:16)
+    at requirePage (/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/require.js:109:84)
+    at /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/load-components.js:72:65
+    at async Promise.all (index 0)
+    at async loadComponentsImpl (/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/load-components.js:71:33)
+    at async DevServer.findPageComponentsImpl (/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/next-server.js:714:36) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/require.js',
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/load-components.js',
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/build/utils.js',
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/dev/hot-middleware.js',
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/dev/hot-reloader-webpack.js',
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js',
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/lib/router-server.js',
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/lib/start-server.js'
+  ]
+}
+ GET / 500 in 10ms
+ ⨯ Error: Cannot find module '/Users/catherinefratila/Desktop/hireme/.next/server/pages/_document.js'
+Require stack:
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/require.js
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/load-components.js
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/build/utils.js
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/dev/hot-middleware.js
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/dev/hot-reloader-webpack.js
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/lib/router-server.js
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/lib/start-server.js
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1410:15)
+    at /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1051:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1056:22)
+    at Module._load (node:internal/modules/cjs/loader:1219:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:238:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1493:12)
+    at mod.require (/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:152:16)
+    at requirePage (/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/require.js:109:84)
+    at /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/load-components.js:72:65
+    at async Promise.all (index 0)
+    at async loadComponentsImpl (/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/load-components.js:71:33)
+    at async DevServer.findPageComponentsImpl (/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/next-server.js:714:36) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/require.js',
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/load-components.js',
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/build/utils.js',
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/dev/hot-middleware.js',
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/dev/hot-reloader-webpack.js',
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js',
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/lib/router-server.js',
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/lib/start-server.js'
+  ]
+}
+ GET / 500 in 17ms
+ ⨯ Error: Cannot find module '/Users/catherinefratila/Desktop/hireme/.next/server/pages/_document.js'
+Require stack:
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/require.js
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/load-components.js
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/build/utils.js
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/dev/hot-middleware.js
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/dev/hot-reloader-webpack.js
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/lib/router-server.js
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/lib/start-server.js
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1410:15)
+    at /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1051:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1056:22)
+    at Module._load (node:internal/modules/cjs/loader:1219:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:238:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1493:12)
+    at mod.require (/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:152:16)
+    at requirePage (/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/require.js:109:84)
+    at /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/load-components.js:72:65
+    at async Promise.all (index 0)
+    at async loadComponentsImpl (/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/load-components.js:71:33)
+    at async DevServer.findPageComponentsImpl (/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/next-server.js:714:36) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/require.js',
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/load-components.js',
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/build/utils.js',
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/dev/hot-middleware.js',
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/dev/hot-reloader-webpack.js',
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js',
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/lib/router-server.js',
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/lib/start-server.js'
+  ]
+}
+ ⨯ Error: Cannot find module '/Users/catherinefratila/Desktop/hireme/.next/server/pages/_document.js'
+Require stack:
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/require.js
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/load-components.js
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/build/utils.js
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/dev/hot-middleware.js
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/dev/hot-reloader-webpack.js
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/lib/router-server.js
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/lib/start-server.js
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1410:15)
+    at /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1051:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1056:22)
+    at Module._load (node:internal/modules/cjs/loader:1219:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:238:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1493:12)
+    at mod.require (/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:152:16)
+    at requirePage (/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/require.js:109:84)
+    at /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/load-components.js:72:65
+    at async Promise.all (index 0)
+    at async loadComponentsImpl (/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/load-components.js:71:33)
+    at async DevServer.findPageComponentsImpl (/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/next-server.js:714:36) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/require.js',
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/load-components.js',
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/build/utils.js',
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/dev/hot-middleware.js',
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/dev/hot-reloader-webpack.js',
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js',
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/lib/router-server.js',
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/lib/start-server.js'
+  ]
+}
+ ⨯ Error: Cannot find module '/Users/catherinefratila/Desktop/hireme/.next/server/pages/_document.js'
+Require stack:
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/require.js
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/load-components.js
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/build/utils.js
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/dev/hot-middleware.js
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/dev/hot-reloader-webpack.js
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/lib/router-server.js
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/lib/start-server.js
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1410:15)
+    at /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1051:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1056:22)
+    at Module._load (node:internal/modules/cjs/loader:1219:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:238:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1493:12)
+    at mod.require (/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:152:16)
+    at requirePage (/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/require.js:109:84)
+    at /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/load-components.js:72:65
+    at async Promise.all (index 0)
+    at async loadComponentsImpl (/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/load-components.js:71:33)
+    at async DevServer.findPageComponentsImpl (/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/next-server.js:714:36) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/require.js',
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/load-components.js',
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/build/utils.js',
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/dev/hot-middleware.js',
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/dev/hot-reloader-webpack.js',
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js',
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/lib/router-server.js',
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/lib/start-server.js'
+  ]
+}
+ GET /_next/static/chunks/fallback/webpack.js 500 in 18ms
+ GET /_next/static/chunks/fallback/main.js 500 in 17ms
+ GET /_next/static/chunks/fallback/react-refresh.js 500 in 17ms
+ ⨯ Error: Cannot find module '/Users/catherinefratila/Desktop/hireme/.next/server/pages/_document.js'
+Require stack:
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/require.js
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/load-components.js
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/build/utils.js
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/dev/hot-middleware.js
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/dev/hot-reloader-webpack.js
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/lib/router-server.js
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/lib/start-server.js
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1410:15)
+    at /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1051:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1056:22)
+    at Module._load (node:internal/modules/cjs/loader:1219:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:238:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1493:12)
+    at mod.require (/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:152:16)
+    at requirePage (/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/require.js:109:84)
+    at /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/load-components.js:72:65
+    at async Promise.all (index 0)
+    at async loadComponentsImpl (/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/load-components.js:71:33)
+    at async DevServer.findPageComponentsImpl (/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/next-server.js:714:36) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/require.js',
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/load-components.js',
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/build/utils.js',
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/dev/hot-middleware.js',
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/dev/hot-reloader-webpack.js',
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js',
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/lib/router-server.js',
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/lib/start-server.js'
+  ]
+}
+ ⨯ Error: Cannot find module '/Users/catherinefratila/Desktop/hireme/.next/server/pages/_document.js'
+Require stack:
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/require.js
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/load-components.js
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/build/utils.js
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/dev/hot-middleware.js
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/dev/hot-reloader-webpack.js
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/lib/router-server.js
+- /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/lib/start-server.js
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1410:15)
+    at /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1051:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1056:22)
+    at Module._load (node:internal/modules/cjs/loader:1219:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:238:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1493:12)
+    at mod.require (/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:152:16)
+    at requirePage (/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/require.js:109:84)
+    at /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/load-components.js:72:65
+    at async Promise.all (index 0)
+    at async loadComponentsImpl (/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/load-components.js:71:33)
+    at async DevServer.findPageComponentsImpl (/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/next-server.js:714:36) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/require.js',
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/load-components.js',
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/build/utils.js',
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/dev/hot-middleware.js',
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/dev/hot-reloader-webpack.js',
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js',
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/lib/router-server.js',
+    '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/lib/start-server.js'
+  ]
+}
+ GET /_next/static/chunks/fallback/pages/_app.js 500 in 9ms
+ GET /_next/static/chunks/fallback/pages/_error.js 500 in 9ms
+ GET / 404 in 10ms
+ GET / 404 in 4ms
+ GET / 404 in 3ms
+ GET / 404 in 7ms
+ GET / 404 in 6ms
+ GET / 404 in 9ms
+ GET / 404 in 11ms
+ GET / 404 in 4ms
+ GET / 404 in 5ms
+ GET / 404 in 6ms
+ GET / 404 in 5ms
+ GET / 404 in 7ms
+ GET / 404 in 5ms
+ GET / 404 in 5ms
+ GET / 404 in 4ms
+ GET / 404 in 10ms
+ GET / 404 in 5ms
+ GET / 404 in 7ms
+ GET / 404 in 6ms
+ GET / 404 in 7ms
+ GET / 404 in 6ms
+ GET / 404 in 7ms
+ GET / 404 in 6ms
+ GET / 404 in 6ms
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, lstat '/Users/catherinefratila/Desktop/hireme/.next/server/app'
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving '../../../../.next/server/app/api/auth/verify-email/route' in /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server for build dependencies doesn't lead to expected result '/Users/catherinefratila/Desktop/hireme/.next/server/app/api/auth/verify-email/route.js', but to 'Error: Can't resolve '../../../../.next/server/app/api/auth/verify-email/route' in '/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server'' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ../../../../.next/server/app/api/auth/verify-email/route (expected /Users/catherinefratila/Desktop/hireme/.next/server/app/api/auth/verify-email/route.js)
+<w>  at file dependencies /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/require.js
+<w>  at file /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/require.js
+<w>  at file dependencies /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/load-components.js
+<w>  at file /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/server/load-components.js
+<w>  at file dependencies /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/build/utils.js
+<w>  at file /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/build/utils.js
+<w>  at file dependencies /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/build/webpack/loaders/next-route-loader/index.js
+<w>  at file /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/build/webpack/loaders/next-route-loader/index.js
+<w>  at resolve commonjs /Users/catherinefratila/Desktop/hireme/node_modules/next/dist/build/webpack/loaders/next-route-loader/index.js
+ GET / 404 in 11ms
+ GET / 404 in 9ms
+ GET / 404 in 6ms
+ GET / 404 in 4ms
+ GET / 404 in 6ms
+ GET / 404 in 6ms
+ GET / 404 in 8ms
+ GET / 404 in 7ms
+ GET / 404 in 8ms
+ GET / 404 in 6ms
+ GET / 404 in 6ms
+ GET / 404 in 7ms
+ GET / 404 in 5ms
+ GET / 404 in 6ms
+ GET / 404 in 6ms
+ GET / 404 in 7ms
+ GET / 404 in 6ms
+ GET / 404 in 6ms
+ GET / 404 in 6ms
+ GET / 404 in 6ms
+ GET / 404 in 6ms
+ GET / 404 in 7ms
+ GET / 404 in 8ms
+ GET / 404 in 5ms
+ GET / 404 in 7ms
+ GET / 404 in 5ms
+ GET / 404 in 5ms
+ GET / 404 in 4ms
+ GET / 404 in 6ms
+ GET / 404 in 6ms
+ GET / 404 in 5ms
+ GET / 404 in 4ms
+ GET / 404 in 5ms
+ GET / 404 in 6ms
+ GET / 404 in 6ms
+ GET / 404 in 6ms
+ GET / 404 in 6ms
+ GET / 404 in 6ms
+ GET / 404 in 3ms
+ GET / 404 in 5ms
+ GET / 404 in 5ms
+ GET / 404 in 3ms
+ GET / 404 in 5ms
+ GET / 404 in 5ms
+ GET / 404 in 5ms
+ GET / 404 in 5ms
+ GET / 404 in 4ms
+ GET / 404 in 4ms
+ GET / 404 in 6ms
+ GET / 404 in 6ms
+ GET / 404 in 5ms
+ GET / 404 in 5ms
+ GET / 404 in 4ms
+ GET / 404 in 5ms
+ GET / 404 in 5ms
+ GET / 404 in 6ms
+ GET / 404 in 5ms
+ GET / 404 in 4ms
+ GET / 404 in 5ms
+ GET / 404 in 3ms
+ GET / 404 in 5ms
+ GET / 404 in 3ms
+ GET / 404 in 5ms
+ GET / 404 in 6ms
+ GET / 404 in 5ms
+ GET / 404 in 4ms
+ GET / 404 in 5ms
+ GET / 404 in 4ms
+ GET / 404 in 5ms
+ GET / 404 in 6ms
+ GET / 404 in 5ms
+ GET / 404 in 5ms
+ GET / 404 in 3ms
+ GET / 404 in 4ms
+ GET / 404 in 6ms
+ GET / 404 in 6ms
+ GET / 404 in 6ms
+ GET / 404 in 5ms
+ GET / 404 in 4ms
+ GET / 404 in 6ms
+ GET / 404 in 5ms
+ GET / 404 in 6ms
+ GET / 404 in 5ms
+ GET / 404 in 4ms
+ GET / 404 in 6ms
+ GET / 404 in 5ms
+ GET / 404 in 18ms
+ GET / 404 in 6ms
+ GET / 404 in 4ms
+ GET / 404 in 5ms
+ GET / 404 in 4ms
+ GET / 404 in 4ms
+ GET / 404 in 4ms
+[?25h

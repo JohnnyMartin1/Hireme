@@ -7,7 +7,8 @@ import { Search, User, MapPin, GraduationCap, Star, Loader2, Filter, X, MessageS
 import { getProfilesByRole } from '@/lib/firebase-firestore';
 import SearchableDropdown from '@/components/SearchableDropdown';
 import MultiSelectDropdown from '@/components/MultiSelectDropdown';
-import { UNIVERSITIES, MAJORS, LOCATIONS, SKILLS, TOP_25_UNIVERSITIES } from '@/lib/profile-data';
+import { UNIVERSITIES, MAJORS, LOCATIONS, SKILLS, TOP_25_UNIVERSITIES, CAREER_INTERESTS } from '@/lib/profile-data';
+import { getEmployerJobs } from '@/lib/firebase-firestore';
 
 interface Candidate {
   id: string;
@@ -42,6 +43,13 @@ export default function SearchCandidatesPage() {
   const [hasProfileImage, setHasProfileImage] = useState(false);
   const [hasBio, setHasBio] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
+  
+  // Match to Job filter states
+  const [selectedJobId, setSelectedJobId] = useState('');
+  const [availableJobs, setAvailableJobs] = useState<any[]>([]);
+  const [selectedJob, setSelectedJob] = useState<any>(null);
+  const [matchToJobGpa, setMatchToJobGpa] = useState('');
+  const [matchToJobCareerInterests, setMatchToJobCareerInterests] = useState<string[]>([]);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -53,13 +61,33 @@ export default function SearchCandidatesPage() {
       router.push("/home/seeker");
       return;
     }
+
+    // Block access for unverified employers
+    if (profile && profile.role === 'EMPLOYER' && profile.status !== 'verified') {
+      router.push("/home/employer");
+      return;
+    }
   }, [user, profile, loading, router]);
 
   useEffect(() => {
     if (user && profile && (profile.role === 'EMPLOYER' || profile.role === 'RECRUITER')) {
       loadAllCandidates();
+      loadEmployerJobs();
     }
   }, [user, profile]);
+
+  const loadEmployerJobs = async () => {
+    if (!user) return;
+    
+    try {
+      const { data: jobs, error } = await getEmployerJobs(user.uid);
+      if (!error && jobs) {
+        setAvailableJobs(jobs);
+      }
+    } catch (error) {
+      console.error('Error loading employer jobs:', error);
+    }
+  };
 
   const loadAllCandidates = async () => {
     setIsLoading(true);
@@ -215,10 +243,10 @@ export default function SearchCandidatesPage() {
     setHasProfileImage(false);
     setHasBio(false);
     setSearchTerm('');
-    loadAllCandidates();
+    clearJobMatch();
   };
 
-  const hasActiveFilters = selectedUniversities.length > 0 || isTop25Selected || selectedMajors.length > 0 || selectedLocations.length > 0 || selectedSkills.length > 0 || hasVideo || hasResume || hasProfileImage || hasBio || searchTerm.trim();
+  const hasActiveFilters = selectedUniversities.length > 0 || isTop25Selected || selectedMajors.length > 0 || selectedLocations.length > 0 || selectedSkills.length > 0 || hasVideo || hasResume || hasProfileImage || hasBio || searchTerm.trim() || selectedJobId;
 
   const handleTop25Schools = () => {
     setIsTop25Selected(true);
@@ -237,6 +265,105 @@ export default function SearchCandidatesPage() {
   const removeTop25Filter = () => {
     setIsTop25Selected(false);
     handleSearch();
+  };
+
+  const handleJobSelection = (jobId: string) => {
+    setSelectedJobId(jobId);
+    const job = availableJobs.find(j => j.id === jobId);
+    setSelectedJob(job);
+    
+    if (job) {
+      // Apply job requirements as filters
+      if (job.requiredGpa) {
+        setMatchToJobGpa(job.requiredGpa);
+      }
+      if (job.requiredCareerInterests && job.requiredCareerInterests.length > 0) {
+        setMatchToJobCareerInterests(job.requiredCareerInterests);
+      }
+      
+      // Clear other filters and search
+      setSelectedUniversities([]);
+      setIsTop25Selected(false);
+      setSelectedMajors([]);
+      setSelectedLocations([]);
+      setSelectedSkills([]);
+      setHasVideo(false);
+      setHasResume(false);
+      setHasProfileImage(false);
+      setHasBio(false);
+      setSearchTerm('');
+      
+      // Apply the job-based filters
+      handleSearchWithJobRequirements(job);
+    }
+  };
+
+  const handleSearchWithJobRequirements = async (job: any) => {
+    setIsLoading(true);
+    try {
+      const { data: candidateProfiles, error } = await getProfilesByRole('JOB_SEEKER');
+      
+      if (error) {
+        console.error('Error searching candidates:', error);
+        return;
+      }
+
+      let filteredCandidates = candidateProfiles.filter((candidate: any) => 
+        candidate.firstName && 
+        candidate.lastName && 
+        candidate.email
+      ) as Candidate[];
+
+      // Apply GPA filter if specified
+      if (job.requiredGpa) {
+        const requiredGpa = parseFloat(job.requiredGpa);
+        filteredCandidates = filteredCandidates.filter((candidate: any) => {
+          // Check if candidate has GPA in education array
+          if (candidate.education && candidate.education.length > 0) {
+            return candidate.education.some((edu: any) => {
+              if (edu.gpa) {
+                const candidateGpa = parseFloat(edu.gpa.split('-')[0]); // Take min GPA from range
+                return candidateGpa >= requiredGpa;
+              }
+              return false;
+            });
+          }
+          // Fallback to legacy GPA field
+          if (candidate.gpa) {
+            const candidateGpa = parseFloat(candidate.gpa.split('-')[0]);
+            return candidateGpa >= requiredGpa;
+          }
+          return false;
+        });
+      }
+
+      // Apply career interests filter if specified
+      if (job.requiredCareerInterests && job.requiredCareerInterests.length > 0) {
+        filteredCandidates = filteredCandidates.filter((candidate: any) => {
+          if (candidate.careerInterests && candidate.careerInterests.length > 0) {
+            // Check if candidate has at least one matching career interest
+            return job.requiredCareerInterests.some((requiredInterest: string) =>
+              candidate.careerInterests.includes(requiredInterest)
+            );
+          }
+          return false;
+        });
+      }
+
+      setCandidates(filteredCandidates);
+    } catch (error) {
+      console.error('Error searching candidates:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const clearJobMatch = () => {
+    setSelectedJobId('');
+    setSelectedJob(null);
+    setMatchToJobGpa('');
+    setMatchToJobCareerInterests([]);
+    loadAllCandidates();
   };
 
   if (loading) {
@@ -299,7 +426,7 @@ export default function SearchCandidatesPage() {
                 Filters
                 {hasActiveFilters && (
                   <span className="ml-2 px-2 py-1 bg-green-500 text-white text-xs rounded-full">
-                    {[selectedUniversities.length > 0 ? 1 : 0, isTop25Selected ? 1 : 0, selectedMajors.length, selectedLocations.length, selectedSkills.length, hasVideo, hasResume, hasProfileImage, hasBio, searchTerm.trim() ? 1 : 0].filter(Boolean).length}
+                    {[selectedUniversities.length > 0 ? 1 : 0, isTop25Selected ? 1 : 0, selectedMajors.length, selectedLocations.length, selectedSkills.length, hasVideo, hasResume, hasProfileImage, hasBio, searchTerm.trim() ? 1 : 0, selectedJobId ? 1 : 0].filter(Boolean).length}
                   </span>
                 )}
               </button>
@@ -322,6 +449,60 @@ export default function SearchCandidatesPage() {
           {/* Advanced Filters */}
           {showFilters && (
             <div className="border-t pt-6">
+              {/* Match to Job Filter */}
+              <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <h3 className="text-lg font-semibold text-blue-900 mb-3">Match to Job</h3>
+                <p className="text-sm text-blue-700 mb-4">Select a job to automatically filter candidates based on job requirements.</p>
+                
+                <div className="flex gap-3 items-end">
+                  <div className="flex-1">
+                    <label className="block text-sm font-medium text-blue-800 mb-2">Select Job</label>
+                    <select
+                      value={selectedJobId}
+                      onChange={(e) => handleJobSelection(e.target.value)}
+                      className="w-full px-3 py-2 border border-blue-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="">Choose a job...</option>
+                      {availableJobs.map((job) => (
+                        <option key={job.id} value={job.id}>
+                          {job.title} - {job.locationCity}, {job.locationState}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  
+                  {selectedJobId && (
+                    <button
+                      onClick={clearJobMatch}
+                      className="px-3 py-2 text-blue-600 hover:text-blue-800 border border-blue-300 rounded-lg hover:bg-blue-100 transition-colors"
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+
+                {/* Show applied job requirements */}
+                {selectedJob && (
+                  <div className="mt-4 p-3 bg-white border border-blue-200 rounded-lg">
+                    <h4 className="font-medium text-gray-900 mb-2">Applied Requirements:</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedJob.requiredGpa && (
+                        <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
+                          GPA: {selectedJob.requiredGpa}+
+                        </span>
+                      )}
+                      {selectedJob.requiredCareerInterests && selectedJob.requiredCareerInterests.length > 0 && (
+                        selectedJob.requiredCareerInterests.map((interest: string, index: number) => (
+                          <span key={index} className="px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded-full">
+                            {interest}
+                          </span>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">University</label>

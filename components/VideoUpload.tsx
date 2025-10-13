@@ -1,5 +1,6 @@
 "use client";
 import { useState, useRef, useEffect } from 'react';
+import { useToast } from '@/components/NotificationSystem';
 import { Upload, X, Video, Loader2 } from 'lucide-react';
 import { uploadVideo, deleteFile } from '@/lib/firebase-storage';
 
@@ -16,6 +17,7 @@ export default function VideoUpload({
   onDelete, 
   userId 
 }: VideoUploadProps) {
+  const toast = useToast();
   const [isUploading, setIsUploading] = useState(false);
   const [dragActive, setDragActive] = useState(false);
   // Recording functionality removed
@@ -33,13 +35,13 @@ export default function VideoUpload({
 
     // Validate file type
     if (!file.type.includes('video/')) {
-      alert('Please upload a video file.');
+      toast.info('Info', 'Please upload a video file.');
       return;
     }
     
     // Check file size (1 minute video ~ 50MB)
     if (file.size > 50 * 1024 * 1024) {
-      alert('Video file size must be less than 50MB.');
+      toast.info('Info', 'Video file size must be less than 50MB.');
       return;
     }
 
@@ -51,7 +53,7 @@ export default function VideoUpload({
       onUploadComplete(url);
     } catch (error) {
       console.error('Upload error:', error);
-      alert('Failed to upload video. Please try again.');
+      toast.error('Error', 'Failed to upload video. Please try again.');
     } finally {
       setIsUploading(false);
     }
@@ -85,7 +87,7 @@ export default function VideoUpload({
       onDelete();
     } catch (error) {
       console.error('Delete error:', error);
-      alert('Failed to delete video. Please try again.');
+      toast.error('Error', 'Failed to delete video. Please try again.');
     }
   };
 

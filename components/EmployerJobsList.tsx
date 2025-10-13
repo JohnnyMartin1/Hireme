@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { useToast } from '@/components/NotificationSystem';
 import { useFirebaseAuth } from "@/components/FirebaseAuthProvider";
 import { useEffect, useState } from "react";
 import { 
@@ -15,6 +16,7 @@ import { getEmployerJobs } from '@/lib/firebase-firestore';
 import { deleteDocument } from '@/lib/firebase-firestore';
 
 export default function EmployerJobsList() {
+  const toast = useToast();
   const { user } = useFirebaseAuth();
   const [jobs, setJobs] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -44,16 +46,16 @@ export default function EmployerJobsList() {
       try {
         const { error } = await deleteDocument('jobs', jobId);
         if (error) {
-          alert('Failed to delete job. Please try again.');
+          toast.error('Error', 'Failed to delete job. Please try again.');
           return;
         }
         
         // Remove the job from the local state
         setJobs(jobs.filter(job => job.id !== jobId));
-        alert('Job deleted successfully!');
+        toast.success('Success', 'Job deleted successfully!');
       } catch (err) {
         console.error('Error deleting job:', err);
-        alert('Failed to delete job. Please try again.');
+        toast.error('Error', 'Failed to delete job. Please try again.');
       }
     }
   };

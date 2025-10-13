@@ -1,5 +1,6 @@
 "use client";
 import { useState } from 'react';
+import { useToast } from '@/components/NotificationSystem';
 import { useRouter } from 'next/navigation';
 import BackButton from '@/components/BackButton';
 
@@ -8,6 +9,7 @@ import BackButton from '@/components/BackButton';
  * a simple example that posts the old and new password to an API route.
  */
 export default function SecurityPage() {
+  const toast = useToast();
   const router = useRouter();
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -22,10 +24,10 @@ export default function SecurityPage() {
     });
     setLoading(false);
     if (res.ok) {
-      alert('Password updated');
+      toast.info('Info', 'Password updated');
       router.push('/account/profile');
     } else {
-      alert('Failed to change password');
+      toast.error('Error', 'Failed to change password');
     }
   };
   return (

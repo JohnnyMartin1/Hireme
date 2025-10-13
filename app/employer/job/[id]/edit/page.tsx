@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from 'react';
+import { useToast } from '@/components/NotificationSystem';
 import { useRouter } from 'next/navigation';
 import { useFirebaseAuth } from '@/components/FirebaseAuthProvider';
 import { getDocument, updateDocument } from '@/lib/firebase-firestore';
@@ -11,6 +12,7 @@ import { LOCATIONS } from '@/lib/profile-data';
 export default function EditJobPage({ params }: { params: { id: string } }) {
   const router = useRouter();
   const { user, profile } = useFirebaseAuth();
+  const toast = useToast();
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState('');
@@ -110,7 +112,7 @@ export default function EditJobPage({ params }: { params: { id: string } }) {
         return;
       }
 
-      alert('Job updated successfully!');
+      toast.success('Success', 'Job updated successfully!');
       router.push('/home/employer');
     } catch (error) {
       console.error('Error updating job:', error);

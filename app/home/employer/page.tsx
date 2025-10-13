@@ -47,6 +47,12 @@ export default function EmployerHomePage() {
       }
       return;
     }
+
+    // Check if company is verified (for employers only)
+    if (profile && profile.role === 'EMPLOYER' && profile.status === 'pending_verification') {
+      // Show pending verification message but allow access to dashboard
+      // The dashboard will show a verification banner
+    }
   }, [user, profile, loading, router]);
 
   // Fetch stats data
@@ -131,23 +137,61 @@ export default function EmployerHomePage() {
       </div>
 
       <div className="max-w-6xl mx-auto p-6">
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Link href="/employer/candidates-by-job" className="block">
-          <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-green-500 hover:shadow-xl transition-shadow">
+        {/* Company Verification Banner */}
+        {profile?.status === 'pending_verification' && (
+          <div className="bg-orange-50 border border-orange-200 rounded-xl p-6 mb-8">
             <div className="flex items-center">
-              <div className="p-2 bg-green-100 rounded-lg">
-                <Users className="h-6 w-6 text-green-600" />
+              <div className="flex-shrink-0">
+                <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
+                  <Building className="h-5 w-5 text-orange-600" />
+                </div>
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Candidates</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {isLoadingStats ? '...' : stats.candidates}
+                <h3 className="text-lg font-semibold text-orange-900">Company Verification Pending</h3>
+                <p className="text-orange-700 mt-1">
+                  Your company registration is under review. You'll receive an email notification once approved. 
+                  Some features may be limited until verification is complete.
                 </p>
               </div>
             </div>
           </div>
-          </Link>
+        )}
+
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          {/* Conditionally render candidates card based on verification status */}
+          {profile?.status === 'verified' || profile?.role === 'RECRUITER' ? (
+            <Link href="/employer/candidates-by-job" className="block">
+            <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-green-500 hover:shadow-xl transition-shadow">
+              <div className="flex items-center">
+                <div className="p-2 bg-green-100 rounded-lg">
+                  <Users className="h-6 w-6 text-green-600" />
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">Candidates</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {isLoadingStats ? '...' : stats.candidates}
+                  </p>
+                </div>
+              </div>
+            </div>
+            </Link>
+          ) : (
+            <div className="bg-gray-100 rounded-xl shadow-lg p-6 border-l-4 border-gray-300">
+              <div className="flex items-center">
+                <div className="p-2 bg-gray-200 rounded-lg">
+                  <Users className="h-6 w-6 text-gray-400" />
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-500">Candidates</p>
+                  <p className="text-2xl font-bold text-gray-400">
+                    {isLoadingStats ? '...' : '0'}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">Available after verification</p>
+                </div>
+              </div>
+            </div>
+          )}
 
           <Link href="/messages" className="block">
           <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-blue-500 hover:shadow-xl transition-shadow">
@@ -187,20 +231,33 @@ export default function EmployerHomePage() {
           <div className="bg-white rounded-xl shadow-lg p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
             <div className="space-y-3">
-              <Link
-                href="/search/candidates"
-                className="flex items-center p-3 bg-green-50 rounded-lg hover:bg-green-100 transition-colors"
-              >
-                <Search className="h-5 w-5 text-green-600 mr-3" />
-                <span className="text-green-800">Search Candidates</span>
-              </Link>
-              <Link
-                href="/saved/candidates"
-                className="flex items-center p-3 bg-orange-50 rounded-lg hover:bg-orange-100 transition-colors"
-              >
-                <Heart className="h-5 w-5 text-orange-600 mr-3" />
-                <span className="text-orange-800">Saved Candidates</span>
-              </Link>
+              {/* Conditionally render candidate search based on verification status */}
+              {profile?.status === 'verified' || profile?.role === 'RECRUITER' ? (
+                <>
+                  <Link
+                    href="/search/candidates"
+                    className="flex items-center p-3 bg-green-50 rounded-lg hover:bg-green-100 transition-colors"
+                  >
+                    <Search className="h-5 w-5 text-green-600 mr-3" />
+                    <span className="text-green-800">Search Candidates</span>
+                  </Link>
+                  <Link
+                    href="/saved/candidates"
+                    className="flex items-center p-3 bg-orange-50 rounded-lg hover:bg-orange-100 transition-colors"
+                  >
+                    <Heart className="h-5 w-5 text-orange-600 mr-3" />
+                    <span className="text-orange-800">Saved Candidates</span>
+                  </Link>
+                </>
+              ) : (
+                <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                  <div className="flex items-center">
+                    <Search className="h-5 w-5 text-gray-400 mr-3" />
+                    <span className="text-gray-500">Search Candidates</span>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">Available after company verification</p>
+                </div>
+              )}
               <Link
                 href="/messages"
                 className="flex items-center p-3 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors"

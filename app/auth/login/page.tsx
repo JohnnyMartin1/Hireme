@@ -40,8 +40,10 @@ export default function LoginPage() {
             const p = profile as Partial<UserProfile>;
             const userRole = p.role ?? null;
 
-            // Redirect based on user role
-            if (userRole === "EMPLOYER" || userRole === "RECRUITER") {
+            // Check for admin email first
+            if (user?.email === 'officialhiremeapp@gmail.com') {
+              router.push("/admin");
+            } else if (userRole === "EMPLOYER" || userRole === "RECRUITER") {
               router.push("/home/employer");
             } else if (userRole === "JOB_SEEKER") {
               router.push("/home/seeker");

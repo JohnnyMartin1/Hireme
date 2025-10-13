@@ -107,7 +107,44 @@ export const queryDocuments = async (collectionName: string, constraints: any[] 
 
 // Specific queries for your app
 export const getProfilesByRole = async (role: string) => {
-  return queryDocuments('users', [where('role', '==', role)]);
+  const result = await queryDocuments('users', [where('role', '==', role)]);
+  
+  // Verify all users still exist in Firebase Auth (not just job seekers)
+  if (result.data && result.data.length > 0) {
+    try {
+      const userIds = result.data.map((user: any) => user.id);
+      
+      // Verify users exist in Firebase Auth
+      const verifyResponse = await fetch('/api/auth/verify-users', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userIds }),
+      });
+      
+      if (verifyResponse.ok) {
+        const { validUserIds } = await verifyResponse.json();
+        
+        // Filter out users that don't exist in Firebase Auth
+        const validProfiles = result.data.filter((profile: any) => 
+          validUserIds.includes(profile.id)
+        );
+        
+        console.log(`Filtered ${result.data.length - validProfiles.length} invalid users from ${role} search`);
+        
+        return {
+          data: validProfiles,
+          error: null
+        };
+      }
+    } catch (error) {
+      console.error('Error verifying users in Firebase Auth:', error);
+      // Return original result if verification fails
+    }
+  }
+  
+  return result;
 };
 
 export const getProfilesBySkills = async (skills: string[]) => {
@@ -714,6 +751,9 @@ export const cancelInvitation = async (invitationId: string) => {
 export const createEndorsement = async (userId: string, endorsement: {
   endorserName: string;
   endorserEmail?: string;
+  endorserLinkedIn?: string;
+  endorserTitle?: string;
+  endorserCompany?: string;
   skill: string;
   message?: string;
 }) => {

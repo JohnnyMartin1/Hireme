@@ -1,5 +1,6 @@
 "use client";
 import { useState, useRef } from 'react';
+import { useToast } from '@/components/NotificationSystem';
 import { Upload, X, FileText, User, Loader2 } from 'lucide-react';
 import { uploadResume, uploadProfileImage, deleteFile } from '@/lib/firebase-storage';
 
@@ -18,6 +19,7 @@ export default function FileUpload({
   onDelete, 
   userId 
 }: FileUploadProps) {
+  const toast = useToast();
   const [isUploading, setIsUploading] = useState(false);
   const [dragActive, setDragActive] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -28,20 +30,20 @@ export default function FileUpload({
     // Validate file type
     if (type === 'resume') {
       if (!file.type.includes('pdf') && !file.type.includes('doc') && !file.type.includes('docx')) {
-        alert('Please upload a PDF, DOC, or DOCX file for your resume.');
+        toast.info('Info', 'Please upload a PDF, DOC, or DOCX file for your resume.');
         return;
       }
       if (file.size > 5 * 1024 * 1024) { // 5MB limit
-        alert('Resume file size must be less than 5MB.');
+        toast.info('Info', 'Resume file size must be less than 5MB.');
         return;
       }
     } else if (type === 'profile-image') {
       if (!file.type.includes('image/')) {
-        alert('Please upload an image file for your profile picture.');
+        toast.info('Info', 'Please upload an image file for your profile picture.');
         return;
       }
       if (file.size > 2 * 1024 * 1024) { // 2MB limit
-        alert('Profile image file size must be less than 2MB.');
+        toast.info('Info', 'Profile image file size must be less than 2MB.');
         return;
       }
     }
@@ -65,7 +67,7 @@ export default function FileUpload({
       onUploadComplete(fileUrl);
     } catch (error) {
       console.error('Upload error:', error);
-      alert(`Failed to upload ${type === 'resume' ? 'resume' : 'profile image'}. Please try again.`);
+      toast.error('Error', `Failed to upload ${type === 'resume' ? 'resume' : 'profile image'}. Please try again.`);
     } finally {
       setIsUploading(false);
     }
@@ -99,7 +101,7 @@ export default function FileUpload({
       onDelete();
     } catch (error) {
       console.error('Delete error:', error);
-      alert('Failed to delete file. Please try again.');
+      toast.error('Error', 'Failed to delete file. Please try again.');
     }
   };
 

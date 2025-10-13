@@ -1,5 +1,6 @@
 "use client";
 import { useState } from 'react';
+import { useToast } from '@/components/NotificationSystem';
 import BackButton from '@/components/BackButton';
 
 /**
@@ -8,6 +9,7 @@ import BackButton from '@/components/BackButton';
  * which must handle file storage and return a success status.
  */
 export default function UploadsPage() {
+  const toast = useToast();
   const [resumeFile, setResumeFile] = useState<File | null>(null);
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
@@ -18,7 +20,7 @@ export default function UploadsPage() {
     setLoading(true);
     const res = await fetch('/api/upload/resume', { method: 'POST', body: formData });
     setLoading(false);
-    if (res.ok) alert('Resume uploaded'); else alert('Failed to upload resume');
+    if (res.ok) toast.info('Info', 'Resume uploaded'); else toast.error('Error', 'Failed to upload resume');
   };
   const handleVideoUpload = async () => {
     if (!videoFile) return;
@@ -27,7 +29,7 @@ export default function UploadsPage() {
     setLoading(true);
     const res = await fetch('/api/upload/video', { method: 'POST', body: formData });
     setLoading(false);
-    if (res.ok) alert('Video uploaded'); else alert('Failed to upload video');
+    if (res.ok) toast.info('Info', 'Video uploaded'); else toast.error('Error', 'Failed to upload video');
   };
   return (
     <div className="max-w-xl mx-auto">
