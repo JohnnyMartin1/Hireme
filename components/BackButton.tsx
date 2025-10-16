@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
  * browser history (e.g. first page load). Use this on pages where
  * the user can navigate deeper in a flow and may need to return.
  */
-export default function BackButton({ fallback = '/home/seeker' }: { fallback?: string }) {
+export default function BackButton({ fallback = '/home/seeker', text = 'Back to Dashboard' }: { fallback?: string; text?: string }) {
   const router = useRouter();
   return (
     <button
@@ -20,7 +20,7 @@ export default function BackButton({ fallback = '/home/seeker' }: { fallback?: s
       className="text-blue-600 hover:underline flex items-center space-x-1"
     >
       <span>&larr;</span>
-      <span>Back</span>
+      <span>{text}</span>
     </button>
   );
 }

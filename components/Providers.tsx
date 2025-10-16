@@ -1,6 +1,10 @@
 "use client";
-import { useFirebaseAuth } from "./FirebaseAuthProvider";
+import { ProfileCompletionProvider } from "./ProfileCompletionProvider";
 
 export default function Providers({ children }: { children: React.ReactNode }) {
-  return <>{children}</>;
+  return (
+    <ProfileCompletionProvider>
+      {children}
+    </ProfileCompletionProvider>
+  );
 }

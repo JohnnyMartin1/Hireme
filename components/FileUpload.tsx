@@ -29,8 +29,8 @@ export default function FileUpload({
 
     // Validate file type
     if (type === 'resume') {
-      if (!file.type.includes('pdf') && !file.type.includes('doc') && !file.type.includes('docx')) {
-        toast.info('Info', 'Please upload a PDF, DOC, or DOCX file for your resume.');
+      if (!file.type.includes('pdf')) {
+        toast.info('Info', 'Please upload a PDF file for your resume.');
         return;
       }
       if (file.size > 5 * 1024 * 1024) { // 5MB limit
@@ -93,7 +93,10 @@ export default function FileUpload({
     }
   };
 
-  const handleDelete = async () => {
+  const handleDelete = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
     if (!currentFile) return;
     
     try {
@@ -151,7 +154,7 @@ export default function FileUpload({
           <input
             ref={fileInputRef}
             type="file"
-            accept={type === 'resume' ? '.pdf,.doc,.docx' : 'image/*'}
+            accept={type === 'resume' ? '.pdf' : 'image/*'}
             onChange={(e) => e.target.files?.[0] && handleFileSelect(e.target.files[0])}
             className="hidden"
           />
@@ -169,7 +172,7 @@ export default function FileUpload({
               </p>
               <p className="text-xs text-gray-500 mb-3">
                 {type === 'resume' 
-                  ? 'Drag and drop a PDF, DOC, or DOCX file here, or click to browse' 
+                  ? 'Drag and drop a PDF file here, or click to browse' 
                   : 'Drag and drop an image file here, or click to browse'
                 }
               </p>

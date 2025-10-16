@@ -79,7 +79,10 @@ export default function VideoUpload({
     }
   };
 
-  const handleDelete = async () => {
+  const handleDelete = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
     if (!currentVideo) return;
     
     try {

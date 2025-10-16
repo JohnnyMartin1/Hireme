@@ -2,8 +2,9 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useFirebaseAuth } from "@/components/FirebaseAuthProvider";
+import { useProfileCompletion } from "@/components/ProfileCompletionProvider";
 import { updateDocument, getDocument } from '@/lib/firebase-firestore';
-import { ArrowLeft, Save, GraduationCap, MapPin, Briefcase, Calendar, Globe, Award, BookOpen, User, Video, Share2, HelpCircle } from 'lucide-react';
+import { ArrowLeft, Save, GraduationCap, MapPin, Briefcase, Calendar, Globe, Award, BookOpen, User, Video, Share2, HelpCircle, Check } from 'lucide-react';
 import Link from 'next/link';
 import { useToast } from '@/components/NotificationSystem';
 import SearchableDropdown from '@/components/SearchableDropdown';
@@ -66,6 +67,7 @@ interface ProfileFormData {
 
 export default function EditProfilePage() {
   const { user, profile, loading } = useFirebaseAuth();
+  const { completion, updateCompletion } = useProfileCompletion();
   const router = useRouter();
   const toast = useToast();
   const [formData, setFormData] = useState<ProfileFormData>({
@@ -94,6 +96,69 @@ export default function EditProfilePage() {
     videoUrl: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Helper functions to check section completion
+  const isBasicInfoComplete = () => {
+    return formData.firstName.trim() !== '' && 
+           formData.lastName.trim() !== '' && 
+           formData.headline.trim() !== '';
+  };
+
+  const isEducationComplete = () => {
+    return formData.education.length > 0 && 
+           formData.education.every(edu => 
+             edu.school.trim() !== '' && 
+             edu.degree.trim() !== '' && 
+             edu.majors.length > 0 && 
+             edu.graduationYear.trim() !== ''
+           );
+  };
+
+  const isLocationComplete = () => {
+    return formData.locations.length > 0 && 
+           formData.workPreferences.length > 0 && 
+           formData.jobTypes.length > 0;
+  };
+
+  const isSkillsComplete = () => {
+    return formData.skills.length > 0;
+  };
+
+  const isExperienceComplete = () => {
+    return formData.experience.trim() !== '' || 
+           formData.extracurriculars.length > 0 || 
+           formData.certifications.length > 0 || 
+           formData.languages.length > 0;
+  };
+
+  const isCareerInterestsComplete = () => {
+    return formData.careerInterests.length > 0;
+  };
+
+  const isWorkAuthComplete = () => {
+    return formData.workAuthorization.authorizedToWork != null || 
+           formData.workAuthorization.requiresVisaSponsorship != null;
+  };
+
+  const isPersonalComplete = () => {
+    return formData.bio.trim() !== '' || 
+           formData.linkedinUrl.trim() !== '' || 
+           formData.portfolioUrl.trim() !== '';
+  };
+
+  const isFilesComplete = () => {
+    return formData.profileImageUrl.trim() !== '' && 
+           formData.resumeUrl.trim() !== '';
+  };
+
+  const isVideoComplete = () => {
+    return formData.videoUrl.trim() !== '';
+  };
+
+  // Recompute completion percentage whenever formData changes (real-time updates)
+  useEffect(() => {
+    updateCompletion(formData);
+  }, [formData, updateCompletion]);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -172,7 +237,13 @@ export default function EditProfilePage() {
         console.error('Error updating profile:', error);
         toast.error('Update Failed', 'Failed to update profile. Please try again.');
       } else {
+        toast.success('Profile Updated', 'Your profile has been saved successfully!');
+        
+        // Update the shared completion state with the saved data
+        updateCompletion(formData);
+        
         // Redirect to appropriate dashboard based on role
+        // Dashboard will show the updated completion immediately
         if (profile.role === 'JOB_SEEKER') {
           router.push('/home/seeker');
         } else if (profile.role === 'EMPLOYER' || profile.role === 'RECRUITER') {
@@ -210,14 +281,68 @@ export default function EditProfilePage() {
         {/* Header */}
         <div className="mb-8">
           <button
-            onClick={() => router.back()}
-            className="inline-flex items-center text-blue-600 hover:text-blue-700 mb-4"
+            onClick={() => {
+              // Navigate to the correct dashboard based on user role
+              if (profile?.role === 'JOB_SEEKER') {
+                router.push('/home/seeker');
+              } else if (profile?.role === 'EMPLOYER' || profile?.role === 'RECRUITER') {
+                router.push('/home/employer');
+              } else {
+                router.push('/home');
+              }
+            }}
+            className="inline-flex items-center px-4 py-2 bg-blue-50 text-navy-800 rounded-full hover:bg-blue-100 hover:shadow-sm transition-all duration-200 mb-6"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back
+            Back to Dashboard
           </button>
           <h1 className="text-3xl font-bold text-gray-900">Edit Profile</h1>
           <p className="text-gray-600 mt-2">Complete your profile to help employers find you</p>
+          
+          {/* Real-time Completion Progress */}
+          <div className={`mt-6 rounded-xl shadow-lg p-4 transition-all duration-500 ${
+            completion === 100 
+              ? 'bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200' 
+              : 'bg-white'
+          }`}>
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center">
+                <p className="text-sm font-medium text-gray-700">Profile Completion</p>
+                {completion === 100 && (
+                  <span className="ml-2 text-green-600">✓</span>
+                )}
+              </div>
+              <p className={`text-sm font-semibold ${
+                completion === 100 ? 'text-green-600' : 'text-gray-600'
+              }`}>
+                {completion}% ({Math.floor(completion / 10)}/10 sections)
+              </p>
+            </div>
+            <div className="w-full h-3 bg-gray-200 rounded-full overflow-hidden">
+              <div 
+                className={`h-3 transition-all duration-500 ease-in-out ${
+                  completion === 100 
+                    ? 'bg-gradient-to-r from-green-500 to-emerald-500' 
+                    : 'bg-gradient-to-r from-blue-500 to-indigo-600'
+                }`} 
+                style={{ width: `${completion}%` }} 
+              />
+            </div>
+            {completion === 100 ? (
+              <p className="text-xs text-green-600 mt-2 font-medium flex items-center">
+                <span className="mr-2">🎉</span>
+                Profile complete! You're ready to be discovered by employers.
+              </p>
+            ) : completion >= 80 ? (
+              <p className="text-xs text-gray-500 mt-2">
+                Almost there! Just a few more sections to complete.
+              </p>
+            ) : (
+              <p className="text-xs text-gray-500 mt-2">
+                Fill out all sections to reach 100%
+              </p>
+            )}
+          </div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-8">
@@ -226,6 +351,9 @@ export default function EditProfilePage() {
             <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
               <Globe className="h-5 w-5 mr-2 text-blue-600" />
               Basic Information
+              {isBasicInfoComplete() && (
+                <Check className="h-5 w-5 ml-2 text-green-600" />
+              )}
             </h2>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -279,6 +407,9 @@ export default function EditProfilePage() {
               <h2 className="text-xl font-semibold text-gray-900 flex items-center">
                 <GraduationCap className="h-5 w-5 mr-2 text-green-600" />
                 Education
+                {isEducationComplete() && (
+                  <Check className="h-5 w-5 ml-2 text-green-600" />
+                )}
               </h2>
               <button
                 type="button"
@@ -420,6 +551,9 @@ export default function EditProfilePage() {
             <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
               <MapPin className="h-5 w-5 mr-2 text-purple-600" />
               Location & Work Preferences
+              {isLocationComplete() && (
+                <Check className="h-5 w-5 ml-2 text-green-600" />
+              )}
             </h2>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -460,6 +594,9 @@ export default function EditProfilePage() {
             <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
               <Award className="h-5 w-5 mr-2 text-yellow-600" />
               Skills & Expertise
+              {formData.skills && formData.skills.length > 0 && (
+                <Check className="h-5 w-5 ml-2 text-green-600" />
+              )}
             </h2>
             
             <MultiSelectDropdown
@@ -478,6 +615,9 @@ export default function EditProfilePage() {
             <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
               <Briefcase className="h-5 w-5 mr-2 text-indigo-600" />
               Experience & Activities
+              {isExperienceComplete() && (
+                <Check className="h-5 w-5 ml-2 text-green-600" />
+              )}
             </h2>
             
             <div className="mb-6">
@@ -528,6 +668,9 @@ export default function EditProfilePage() {
             <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
               <Briefcase className="h-5 w-5 mr-2 text-indigo-600" />
               Career Interests
+              {isCareerInterestsComplete() && (
+                <Check className="h-5 w-5 ml-2 text-green-600" />
+              )}
             </h2>
             
             <div>
@@ -551,6 +694,9 @@ export default function EditProfilePage() {
             <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
               <HelpCircle className="h-5 w-5 mr-2 text-purple-600" />
               Work Authorization
+              {formData.workAuthorization && (formData.workAuthorization.authorizedToWork !== undefined || formData.workAuthorization.requiresVisaSponsorship !== undefined) && (
+                <Check className="h-5 w-5 ml-2 text-green-600" />
+              )}
             </h2>
             
             <div className="space-y-6">
@@ -633,6 +779,9 @@ export default function EditProfilePage() {
             <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
               <BookOpen className="h-5 w-5 mr-2 text-red-600" />
               Personal & Links
+              {isPersonalComplete() && (
+                <Check className="h-5 w-5 ml-2 text-green-600" />
+              )}
             </h2>
             
             <div className="mb-6">
@@ -682,6 +831,9 @@ export default function EditProfilePage() {
             <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
               <User className="h-5 w-5 mr-2 text-purple-600" />
               Profile Picture & Resume
+              {isFilesComplete() && (
+                <Check className="h-5 w-5 ml-2 text-green-600" />
+              )}
             </h2>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -720,6 +872,9 @@ export default function EditProfilePage() {
             <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
               <Video className="h-5 w-5 mr-2 text-orange-600" />
               Profile Video
+              {isVideoComplete() && (
+                <Check className="h-5 w-5 ml-2 text-green-600" />
+              )}
             </h2>
             
             <div>

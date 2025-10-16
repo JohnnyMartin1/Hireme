@@ -55,6 +55,8 @@ export default function CandidateProfilePage() {
   const [isSaved, setIsSaved] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [showResumeModal, setShowResumeModal] = useState(false);
+  const [resumePreviewError, setResumePreviewError] = useState(false);
+  const [useGoogleViewer, setUseGoogleViewer] = useState(false);
   const [endorsements, setEndorsements] = useState<any[]>([]);
 
   useEffect(() => {
@@ -243,9 +245,9 @@ export default function CandidateProfilePage() {
 
   if (loading || isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center">
+      <div className="min-h-screen bg-blue-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-navy-800 mx-auto mb-4"></div>
           <p className="text-gray-600">Loading candidate profile...</p>
         </div>
       </div>
@@ -258,12 +260,12 @@ export default function CandidateProfilePage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center">
+      <div className="min-h-screen bg-blue-50 flex items-center justify-center">
         <div className="text-center">
           <p className="text-red-600 mb-4">{error}</p>
           <Link 
             href="/search/candidates" 
-            className="text-blue-600 hover:text-blue-800 underline"
+            className="text-navy-800 hover:opacity-80 underline"
           >
             Back to candidate search
           </Link>
@@ -274,7 +276,7 @@ export default function CandidateProfilePage() {
 
   if (!candidate) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center">
+      <div className="min-h-screen bg-blue-50 flex items-center justify-center">
         <div className="text-center">
           <p className="text-gray-600">Loading...</p>
         </div>
@@ -283,13 +285,13 @@ export default function CandidateProfilePage() {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+    <main className="min-h-screen bg-blue-50">
       <div className="max-w-4xl mx-auto p-6">
         {/* Back Button */}
         <div className="mb-6">
           <Link 
             href={user?.uid === candidate.id ? "/home/seeker" : "/search/candidates"}
-            className="inline-flex items-center text-blue-600 hover:text-blue-800 transition-colors"
+            className="inline-flex items-center px-4 py-2 bg-blue-50 text-navy-800 rounded-full hover:bg-blue-100 hover:shadow-sm transition-all duration-200"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
             {user?.uid === candidate.id ? "Back to Dashboard" : "Back to candidate search"}
@@ -308,7 +310,7 @@ export default function CandidateProfilePage() {
                 />
               ) : (
                 <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center">
-                  <User className="h-10 w-10 text-blue-600" />
+                  <User className="h-10 w-10 text-navy-800" />
                 </div>
               )}
               <div>
@@ -407,7 +409,7 @@ export default function CandidateProfilePage() {
         {candidate.videoUrl && (
           <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
             <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-              <Video className="h-5 w-5 mr-2 text-orange-600" />
+              <Video className="h-5 w-5 mr-2 text-navy-800" />
               Profile Video
             </h2>
             <div className="aspect-video rounded-lg overflow-hidden">
@@ -426,12 +428,16 @@ export default function CandidateProfilePage() {
           <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
             <h2 className="text-xl font-semibold text-gray-900 mb-4">Resume</h2>
             <button
-              onClick={() => setShowResumeModal(true)}
-              className="w-full border-2 border-dashed border-gray-300 rounded-lg overflow-hidden bg-gray-50 hover:bg-gray-100 hover:border-blue-400 transition-all cursor-pointer group"
+              onClick={() => {
+                setShowResumeModal(true);
+                setResumePreviewError(false);
+                setUseGoogleViewer(false);
+              }}
+              className="w-full border-2 border-dashed border-gray-300 rounded-lg overflow-hidden bg-gray-50 hover:bg-gray-100 hover:border-navy-800 transition-all cursor-pointer group"
             >
               <div className="p-8 flex flex-col items-center justify-center">
-                <FileText className="h-16 w-16 text-gray-400 group-hover:text-blue-500 mb-4" />
-                <p className="text-lg font-medium text-gray-700 group-hover:text-blue-600 mb-2">
+                <FileText className="h-16 w-16 text-gray-400 group-hover:text-navy-800 mb-4" />
+                <p className="text-lg font-medium text-gray-700 group-hover:text-navy-800 mb-2">
                   Click to View Resume
                 </p>
                 <p className="text-sm text-gray-500">
@@ -672,31 +678,33 @@ export default function CandidateProfilePage() {
           </div>
         )}
 
-        {/* Contact Actions */}
-        <div className="bg-white rounded-xl shadow-lg p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Get in Touch</h2>
-          <div className="flex gap-4">
-            <button 
-              onClick={handleOpenMessageDialog}
-              className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center"
-            >
-              <MessageSquare className="h-5 w-5 mr-2" />
-              Send Message
-            </button>
-            <button 
-              onClick={handleSaveCandidate}
-              disabled={isSaving}
-              className={`flex-1 px-6 py-3 border rounded-lg transition-colors flex items-center justify-center ${
-                isSaved 
-                  ? 'border-green-600 text-green-600 bg-green-50' 
-                  : 'border-blue-600 text-blue-600 hover:bg-blue-50'
-              } ${isSaving ? 'opacity-50 cursor-not-allowed' : ''}`}
-            >
-              <Heart className={`h-5 w-5 mr-2 ${isSaved ? 'fill-current' : ''}`} />
-              {isSaving ? 'Saving...' : isSaved ? 'Saved!' : 'Save Candidate'}
-            </button>
+        {/* Contact Actions - Only show if user is viewing someone else's profile */}
+        {user?.uid !== candidate.id && (
+          <div className="bg-white rounded-xl shadow-lg p-6">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">Get in Touch</h2>
+            <div className="flex gap-4">
+              <button 
+                onClick={handleOpenMessageDialog}
+                className="flex-1 px-6 py-3 bg-navy-800 text-white rounded-lg hover:opacity-80 transition-opacity flex items-center justify-center"
+              >
+                <MessageSquare className="h-5 w-5 mr-2" />
+                Send Message
+              </button>
+              <button 
+                onClick={handleSaveCandidate}
+                disabled={isSaving}
+                className={`flex-1 px-6 py-3 border rounded-lg transition-colors flex items-center justify-center ${
+                  isSaved 
+                    ? 'border-green-600 text-green-600 bg-green-50' 
+                    : 'border-navy-800 text-navy-800 hover:bg-blue-50'
+                } ${isSaving ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                <Heart className={`h-5 w-5 mr-2 ${isSaved ? 'fill-current' : ''}`} />
+                {isSaving ? 'Saving...' : isSaved ? 'Saved!' : 'Save Candidate'}
+              </button>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Message Compose Dialog */}
         {showMessageDialog && (
@@ -708,7 +716,7 @@ export default function CandidateProfilePage() {
                 value={messageContent}
                 onChange={(e) => setMessageContent(e.target.value)}
                 placeholder="Type your message here..."
-                className="w-full p-3 border border-gray-300 rounded-lg mb-4 h-32 resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full p-3 border border-gray-300 rounded-lg mb-4 h-32 resize-none focus:ring-2 focus:ring-navy-800 focus:border-transparent"
                 disabled={isSendingMessage}
               />
               
@@ -749,7 +757,7 @@ export default function CandidateProfilePage() {
                 <button
                   onClick={handleSendMessage}
                   disabled={!messageContent.trim() || isSendingMessage}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center"
+                  className="px-4 py-2 bg-navy-800 text-white rounded-lg hover:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity flex items-center"
                 >
                   {isSendingMessage ? (
                     <Loader2 className="h-4 w-4 animate-spin mr-2" />
@@ -776,21 +784,17 @@ export default function CandidateProfilePage() {
                   <a
                     href={candidate.resumeUrl}
                     download
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center text-sm"
+                    className="px-4 py-2 bg-navy-800 text-white rounded-lg hover:opacity-80 transition-opacity flex items-center text-sm"
                   >
                     <Download className="h-4 w-4 mr-2" />
-                    Download PDF
-                  </a>
-                  <a
-                    href={candidate.resumeUrl}
-                    download
-                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center text-sm"
-                  >
-                    <Download className="h-4 w-4 mr-2" />
-                    Download DOC
+                    Download Resume
                   </a>
                   <button
-                    onClick={() => setShowResumeModal(false)}
+                    onClick={() => {
+                      setShowResumeModal(false);
+                      setResumePreviewError(false);
+                      setUseGoogleViewer(false);
+                    }}
                     className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
                   >
                     <X className="h-6 w-6 text-gray-600" />
@@ -800,13 +804,81 @@ export default function CandidateProfilePage() {
 
               {/* Modal Body - Resume Preview */}
               <div className="flex-1 overflow-hidden p-4 bg-gray-100">
-                <iframe
-                  src={`https://docs.google.com/viewer?url=${encodeURIComponent(candidate.resumeUrl)}&embedded=true`}
-                  className="w-full h-full border-0 rounded-lg bg-white"
-                  title="Resume Preview"
-                  frameBorder="0"
-                  allowFullScreen
-                />
+                {!resumePreviewError ? (
+                  <iframe
+                    src={useGoogleViewer ? `https://docs.google.com/viewer?url=${encodeURIComponent(candidate.resumeUrl)}&embedded=true` : candidate.resumeUrl}
+                    className="w-full h-full border-0 rounded-lg bg-white"
+                    title="Resume Preview"
+                    frameBorder="0"
+                    allowFullScreen
+                    onError={() => {
+                      if (!useGoogleViewer) {
+                        // Try Google Docs viewer as fallback
+                        setUseGoogleViewer(true);
+                      } else {
+                        // Both methods failed
+                        setResumePreviewError(true);
+                      }
+                    }}
+                    onLoad={(e) => {
+                      // Check if iframe loaded successfully
+                      const iframe = e.target as HTMLIFrameElement;
+                      setTimeout(() => {
+                        try {
+                          // If we can't access the iframe content, it might have failed to load
+                          if (!iframe.contentDocument || iframe.contentDocument.body.children.length === 0) {
+                            if (!useGoogleViewer) {
+                              // Try Google Docs viewer as fallback
+                              setUseGoogleViewer(true);
+                            } else {
+                              // Both methods failed
+                              setResumePreviewError(true);
+                            }
+                          }
+                        } catch (error) {
+                          // Cross-origin restrictions might prevent access, but that's okay
+                          // The iframe might still be working
+                        }
+                      }, 2000); // Wait 2 seconds before checking
+                    }}
+                  />
+                ) : (
+                  <div className="w-full h-full flex flex-col items-center justify-center bg-white rounded-lg border-2 border-dashed border-gray-300">
+                    <FileText className="h-16 w-16 text-gray-400 mb-4" />
+                    <h3 className="text-lg font-medium text-gray-700 mb-2">Resume Preview Unavailable</h3>
+                    <p className="text-sm text-gray-500 mb-4 text-center max-w-md">
+                      The resume preview couldn't be loaded. This is common in development environments (localhost) due to browser security restrictions. Use the options below to view the resume.
+                    </p>
+                    <div className="flex gap-3">
+                      <a
+                        href={candidate.resumeUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center text-sm"
+                      >
+                        <FileText className="h-4 w-4 mr-2" />
+                        Open in New Tab
+                      </a>
+                      <a
+                        href={candidate.resumeUrl}
+                        download
+                        className="px-4 py-2 bg-navy-800 text-white rounded-lg hover:opacity-80 transition-opacity flex items-center text-sm"
+                      >
+                        <Download className="h-4 w-4 mr-2" />
+                        Download Resume
+                      </a>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setResumePreviewError(false);
+                        setUseGoogleViewer(false);
+                      }}
+                      className="mt-3 text-sm text-blue-600 hover:text-blue-800 underline"
+                    >
+                      Try Preview Again
+                    </button>
+                  </div>
+                )}
               </div>
 
               {/* Modal Footer */}
@@ -816,7 +888,11 @@ export default function CandidateProfilePage() {
                     💡 Tip: Use scroll to navigate through the resume
                   </p>
                   <button
-                    onClick={() => setShowResumeModal(false)}
+                    onClick={() => {
+                      setShowResumeModal(false);
+                      setResumePreviewError(false);
+                      setUseGoogleViewer(false);
+                    }}
                     className="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
                   >
                     Close

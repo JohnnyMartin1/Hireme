@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useToast } from '@/components/NotificationSystem';
 import { useRouter } from 'next/navigation';
 import { useFirebaseAuth } from '@/components/FirebaseAuthProvider';
-import BackButton from '@/components/BackButton';
+import { ArrowLeft } from 'lucide-react';
 import { createDocument } from '@/lib/firebase-firestore';
 import { auth } from '@/lib/firebase';
 import SearchableDropdown from '@/components/SearchableDropdown';
@@ -100,7 +100,19 @@ export default function NewJobPage() {
   };
   return (
     <div className="max-w-2xl mx-auto">
-      <BackButton fallback="/home/employer" />
+      <button
+        onClick={() => {
+          if (typeof window !== 'undefined' && window.history.length > 1) {
+            router.back();
+          } else {
+            router.push('/home/employer');
+          }
+        }}
+        className="inline-flex items-center px-4 py-2 bg-blue-50 text-navy-800 rounded-full hover:bg-blue-100 hover:shadow-sm transition-all duration-200 mb-6"
+      >
+        <ArrowLeft className="h-4 w-4 mr-2" />
+        Back to Dashboard
+      </button>
       <h2 className="text-2xl font-bold my-4">Post a Job</h2>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
@@ -119,12 +131,13 @@ export default function NewJobPage() {
             value={location}
             onChange={setLocation}
             placeholder="Search for a city..."
+            required={true}
           />
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium mb-1" htmlFor="employment">Job Type</label>
-            <select id="employment" value={employment} onChange={(e) => setEmployment(e.target.value)} className="w-full px-3 py-2 border rounded">
+            <select id="employment" value={employment} onChange={(e) => setEmployment(e.target.value)} className="w-full px-3 py-2 border rounded" required>
               <option value="FULL_TIME">Full-time</option>
               <option value="PART_TIME">Part-time</option>
               <option value="CONTRACT">Contract</option>
@@ -133,7 +146,7 @@ export default function NewJobPage() {
           </div>
           <div>
             <label className="block text-sm font-medium mb-1" htmlFor="workMode">Work Mode</label>
-            <select id="workMode" value={workMode} onChange={(e) => setWorkMode(e.target.value)} className="w-full px-3 py-2 border rounded">
+            <select id="workMode" value={workMode} onChange={(e) => setWorkMode(e.target.value)} className="w-full px-3 py-2 border rounded" required>
               <option value="IN_PERSON">In-person</option>
               <option value="HYBRID">Hybrid</option>
               <option value="REMOTE">Remote</option>
