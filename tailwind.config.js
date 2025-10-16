@@ -20,6 +20,12 @@ module.exports = {
           800: "#1c489b",
           900: "#1b3f7c",
         },
+        navy: '#000080',
+        'light-blue': '#ADD8E6',
+        'light-gray': '#D3D3D3',
+      },
+      fontFamily: {
+        'inter': ['Inter', 'sans-serif'],
       },
       boxShadow: {
         card: "0 6px 24px rgba(0,0,0,0.06)",

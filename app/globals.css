@@ -2,12 +2,17 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Hide scrollbar */
+::-webkit-scrollbar { 
+  display: none;
+}
+
 /* HireMe Design System - Based on Logo Colors */
 :root {
   /* Primary Colors from Logo */
-  --hireme-navy: #1e3a8a;      /* Dark navy blue from logo */
+  --hireme-navy: #000080;      /* Navy blue from design */
   --hireme-blue: #3b82f6;      /* Bright blue from logo */
-  --hireme-light-blue: #dbeafe; /* Light blue for backgrounds */
+  --hireme-light-blue: #ADD8E6; /* Light blue from design */
   
   /* Neutral Colors */
   --bg: #f8fafc;               /* Very light gray background */
@@ -20,6 +25,9 @@
   --ring: 0 0 0 3px rgba(59, 130, 246, 0.2);
   --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  
+  /* Animation Variables */
+  --animation-duration: 280ms;
 }
 
 html, body, #__next {
@@ -99,4 +107,71 @@ body {
 
 .hireme-gradient-light {
   background: linear-gradient(135deg, var(--hireme-light-blue) 0%, #eff6ff 100%);
+}
+
+/* Skyline Background */
+.skyline-bg {
+  background: linear-gradient(180deg, #E6F0FF 0%, #F0F8FF 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.skyline-bg::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 250px;
+  background-image: url("data:image/svg+xml,%3Csvg width='1920' height='250' viewBox='0 0 1920 250' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 250H1920V150L1900 150V80L1880 80V150L1850 150V100L1820 100V150L1780 150V90L1750 90V150L1700 150V70L1670 70V150L1620 150V110L1600 110V150L1550 150V60L1520 60V150L1480 150V100L1450 100V150L1400 150V80L1370 80V150L1320 150V120L1300 120V150L1250 150V90L1220 90V150L1180 150V70L1150 70V150L1100 150V100L1070 100V150L1020 150V50L980 50V150L940 150V110L910 110V150L860 150V80L830 80V150L780 150V90L750 90V150L700 150V120L670 120V150L620 150V60L590 60V150L540 150V100L510 100V150L460 150V70L430 70V150L380 150V110L350 110V150L300 150V80L270 80V150L220 150V90L190 90V150L140 150V100L110 100V150L60 150V120L30 120V150H0Z' fill='rgba(173, 216, 230, 0.5)'/%3E%3C/svg%3E%0A");
+  background-repeat: repeat-x;
+  background-position: bottom;
+  background-size: 100% auto;
+  opacity: 0.8;
+  z-index: 1;
+  animation: slide-slow 80s linear infinite;
+}
+
+.skyline-bg::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 300px;
+  background-image: url("data:image/svg+xml,%3Csvg width='1920' height='300' viewBox='0 0 1920 300' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 300H1920V200L1880 200V100L1850 100V200H1820V150L1800 150V200H1760V120L1740 120V200H1700V80L1680 80V200H1640V140L1620 140V200H1580V90L1550 90L1555 80L1560 90V200H1500V160L1480 160V200H1440V110L1420 110V200H1380V130L1360 130V200H1320V70L1300 70V200H1260V150L1240 150V200H1200V50L1180 50V200H1140V120L1120 120V200H1080V100L1060 100V200H1020V140L1000 140V200H960V80L940 80V200H900V110L880 110V200H840V160L820 160V200H780V100L760 100V200H720V130L700 130V200H660V90L640 90V200H600V120L580 120V200H540V60L520 60V200H480V140L460 140V200H420V110L400 110V200H360V80L340 80V200H300V150L280 150V200H240V120L220 120V200H180V90L160 90V200H120V140L100 140V200H60V160L40 160V200H0Z' fill='rgba(0, 0, 128, 0.15)'/%3E%3C/svg%3E%0A");
+  background-repeat: repeat-x;
+  background-position: bottom;
+  background-size: 100% auto;
+  z-index: 2;
+  animation: slide-fast 60s linear infinite;
+}
+
+@keyframes slide-slow {
+  from { background-position-x: 0; }
+  to { background-position-x: -1920px; }
+}
+
+@keyframes slide-fast {
+  from { background-position-x: 0; }
+  to { background-position-x: -1920px; }
+}
+
+/* Card Glow Effect */
+.card-glow {
+  box-shadow: 0 4px 20px rgba(173, 216, 230, 0.15);
+}
+
+/* Button Hover Effect */
+.btn-hover:hover {
+  transform: translateY(-1px);
+  transition: all 0.2s ease;
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  .skyline-bg::before,
+  .skyline-bg::after {
+    animation: none;
+  }
 }
