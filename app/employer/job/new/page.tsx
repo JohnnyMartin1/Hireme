@@ -1,5 +1,5 @@
 "use client";
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useToast } from '@/components/NotificationSystem';
 import { useRouter } from 'next/navigation';
 import { useFirebaseAuth } from '@/components/FirebaseAuthProvider';
@@ -30,6 +30,16 @@ export default function NewJobPage() {
   const [requiredGpa, setRequiredGpa] = useState('');
   const [requiredCareerInterests, setRequiredCareerInterests] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  // Prevent hydration issues
+  if (!isMounted) {
+    return null;
+  }
 
   // Redirect if not logged in or not an employer/recruiter
   if (!user || !profile || (profile.role !== 'EMPLOYER' && profile.role !== 'RECRUITER')) {

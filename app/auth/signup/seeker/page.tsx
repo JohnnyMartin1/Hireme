@@ -204,6 +204,7 @@ export default function SeekerSignupPage() {
                     value={formData.school}
                     onChange={(value) => handleDropdownChange('school', value)}
                     placeholder="Select your university"
+                    label="University"
                     required
                     allowCustom
                   />
@@ -219,6 +220,7 @@ export default function SeekerSignupPage() {
                     value={formData.major}
                     onChange={(value) => handleDropdownChange('major', value)}
                     placeholder="Select your major"
+                    label="Major"
                     required
                     allowCustom
                   />
@@ -235,6 +237,7 @@ export default function SeekerSignupPage() {
                     value={formData.minor}
                     onChange={(value) => handleDropdownChange('minor', value)}
                     placeholder="Select your minor (optional)"
+                    label="Minor"
                     allowCustom
                   />
                 </div>
@@ -249,6 +252,7 @@ export default function SeekerSignupPage() {
                     value={formData.graduationYear}
                     onChange={(value) => handleDropdownChange('graduationYear', value)}
                     placeholder="Select graduation year"
+                    label="Graduation Year"
                     required
                   />
                 </div>

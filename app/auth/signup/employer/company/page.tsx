@@ -224,6 +224,7 @@ export default function CompanySignupPage() {
                         value={formData.companyLocation}
                         onChange={(value) => handleDropdownChange('companyLocation', value)}
                         placeholder="Select company location"
+                        label="Company Location"
                         required
                         allowCustom
                       />
