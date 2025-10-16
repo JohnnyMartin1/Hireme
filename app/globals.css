@@ -1,4 +1,3 @@
-@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css');
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 @tailwind base;
@@ -171,11 +170,54 @@ body {
   transition: all 0.2s ease;
 }
 
+/* AnimatedLogo Styles */
+.hireme-logo:hover .logo-magnifier {
+  transform: rotate(-6deg) scale(1.03);
+}
+
+.hireme-logo:hover .logo-handle {
+  transform: rotate(35deg) translateY(-2px);
+}
+
+.hireme-logo:hover .logo-person {
+  transform: translate(-50%, -50%) scale(1.08);
+}
+
+.hireme-logo:hover .logo-shine {
+  opacity: 1;
+  transform: translate(2px, -2px) scale(1.2);
+}
+
+.hireme-logo:hover .logo-glass {
+  box-shadow: 0 0 15px rgba(173, 216, 230, 0.4);
+}
+
 /* Reduced Motion */
 @media (prefers-reduced-motion: reduce) {
   .skyline-bg::before,
   .skyline-bg::after {
     animation: none;
+  }
+  
+  .hireme-logo,
+  .logo-magnifier,
+  .logo-glass,
+  .logo-handle,
+  .logo-person,
+  .logo-shine {
+    transition: none !important;
+  }
+  
+  .hireme-logo:hover .logo-magnifier {
+    transform: none;
+  }
+  
+  .hireme-logo:hover .logo-handle {
+    transform: rotate(45deg);
+  }
+  
+  .hireme-logo:hover .logo-person {
+    transform: translate(-50%, -50%);
   }
 }
 

@@ -2,10 +2,9 @@
 import Link from "next/link";
 import AnimatedLogo from "@/components/AnimatedLogo";
 import InteractiveWheel from "@/components/InteractiveWheel";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 function HomeContent() {
-  console.log('Home page rendering...');
-
   return (
     <div className="bg-white">
       {/* Hero Section */}
@@ -104,7 +103,9 @@ function HomeContent() {
               </Link>
             </div>
             <div>
-              <InteractiveWheel />
+              <ErrorBoundary>
+                <InteractiveWheel />
+              </ErrorBoundary>
             </div>
           </div>
         </div>

@@ -120,51 +120,6 @@ export default function AnimatedLogo({
         </span>
       )}
       
-      <style jsx>{`
-        .hireme-logo:hover .logo-magnifier {
-          transform: rotate(-6deg) scale(1.03);
-        }
-        
-        .hireme-logo:hover .logo-handle {
-          transform: rotate(35deg) translateY(-2px);
-        }
-        
-        .hireme-logo:hover .logo-person {
-          transform: translate(-50%, -50%) scale(1.08);
-        }
-        
-        .hireme-logo:hover .logo-shine {
-          opacity: 1;
-          transform: translate(2px, -2px) scale(1.2);
-        }
-        
-        .hireme-logo:hover .logo-glass {
-          box-shadow: 0 0 15px rgba(173, 216, 230, 0.4);
-        }
-        
-        @media (prefers-reduced-motion: reduce) {
-          .hireme-logo,
-          .logo-magnifier,
-          .logo-glass,
-          .logo-handle,
-          .logo-person,
-          .logo-shine {
-            transition: none !important;
-          }
-          
-          .hireme-logo:hover .logo-magnifier {
-            transform: none;
-          }
-          
-          .hireme-logo:hover .logo-handle {
-            transform: rotate(45deg);
-          }
-          
-          .hireme-logo:hover .logo-person {
-            transform: translate(-50%, -50%);
-          }
-        }
-      `}</style>
     </div>
   );
 }
