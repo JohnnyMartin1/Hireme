@@ -178,3 +178,167 @@ body {
     animation: none;
   }
 }
+
+/* Sign-up Page Styles */
+.pastel-bg {
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+}
+
+.card-glow {
+  box-shadow: 0 4px 20px rgba(173, 216, 230, 0.15);
+}
+
+.card-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 32px rgba(173, 216, 230, 0.25);
+}
+
+.btn-hover:hover {
+  transform: translateY(-1px);
+  transition: all 0.2s ease;
+}
+
+.btn-navy:hover {
+  background: #000066;
+  box-shadow: 0 6px 20px rgba(0, 0, 128, 0.3);
+}
+
+.btn-light-blue:hover {
+  background: #87CEEB;
+  box-shadow: 0 6px 20px rgba(173, 216, 230, 0.4);
+}
+
+.icon-scale:hover {
+  transform: scale(1.05);
+}
+
+.check-icon {
+  color: #ADD8E6;
+}
+
+/* Job Seeker Sign-up Form Styles */
+.form-label {
+  @apply block text-sm font-medium text-navy mb-2;
+}
+
+.form-input {
+  @apply w-full px-4 py-3 bg-white border border-light-gray rounded-xl text-navy placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-navy focus:border-navy transition-all duration-200;
+}
+
+.form-select {
+  @apply appearance-none;
+}
+
+.form-select-wrapper {
+  @apply relative;
+}
+
+.form-select-wrapper::after {
+  content: '\f078';
+  font-family: 'Font Awesome 6 Free';
+  font-weight: 900;
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: #000080;
+}
+
+/* Employer Profile Type Page Styles */
+.soft-blue {
+  background-color: rgba(173, 216, 230, 0.2);
+}
+
+.soft-purple {
+  background-color: rgba(221, 214, 254, 0.3);
+}
+
+/* Company Profile Sign-up Form Styles */
+.brand-navy {
+  color: #000080;
+}
+
+.brand-light-blue {
+  color: #ADD8E6;
+}
+
+.brand-light-gray {
+  color: #D3D3D3;
+}
+
+.brand-primary {
+  color: #2563EB;
+}
+
+.brand-primary-dark {
+  color: #1E40AF;
+}
+
+.brand-background {
+  background-color: #F8FAFC;
+}
+
+.brand-card {
+  background-color: #FFFFFF;
+}
+
+.brand-text-dark {
+  color: #111827;
+}
+
+.brand-text-light {
+  color: #6B7280;
+}
+
+.brand-icon-bg {
+  background-color: #E0E7FF;
+}
+
+.bg-brand-navy {
+  background-color: #000080;
+}
+
+.bg-brand-primary {
+  background-color: #2563EB;
+}
+
+.bg-brand-primary-dark {
+  background-color: #1E40AF;
+}
+
+.bg-brand-background {
+  background-color: #F8FAFC;
+}
+
+.bg-brand-card {
+  background-color: #FFFFFF;
+}
+
+.bg-brand-icon-bg {
+  background-color: #E0E7FF;
+}
+
+.text-brand-navy {
+  color: #000080;
+}
+
+.text-brand-primary {
+  color: #2563EB;
+}
+
+.text-brand-text-dark {
+  color: #111827;
+}
+
+.text-brand-text-light {
+  color: #6B7280;
+}
+
+.hover\:text-brand-primary:hover {
+  color: #2563EB;
+}
+
+.hover\:bg-brand-primary-dark:hover {
+  background-color: #1E40AF;
+}

@@ -1,109 +1,105 @@
 "use client";
 import { useRouter } from 'next/navigation';
-import { Building, Users, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 
 export default function EmployerTypePage() {
   const router = useRouter();
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center p-6">
-      <div className="max-w-4xl w-full">
-        {/* Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">Choose Your Profile Type</h1>
-          <p className="text-xl text-gray-600">Are you setting up a company profile or joining as a recruiter?</p>
-        </div>
+    <div className="flex flex-col min-h-screen bg-gray-50">
+      <main className="flex-grow flex flex-col items-center justify-center py-16 px-4 sm:px-6 lg:px-8">
+        <div className="w-full max-w-5xl mx-auto">
+          <div className="text-center mb-12">
+            <h1 className="text-4xl md:text-5xl font-extrabold text-navy mb-3">Choose Your Profile Type</h1>
+            <p className="text-lg text-gray-600">Are you setting up a company profile or joining as a recruiter?</p>
+          </div>
 
-        {/* Options */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {/* Company Profile Option */}
-          <button
-            onClick={() => router.push('/auth/signup/employer/company')}
-            className="bg-white rounded-2xl shadow-xl p-8 hover:shadow-2xl transition-all hover:scale-105 text-left group"
-          >
-            <div className="flex items-center justify-center w-16 h-16 bg-blue-100 rounded-xl mb-6 group-hover:bg-blue-600 transition-colors">
-              <Building className="h-8 w-8 text-blue-600 group-hover:text-white transition-colors" />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            
+            <div className="bg-white rounded-2xl p-8 shadow-lg border border-gray-200 flex flex-col hover:shadow-2xl hover:-translate-y-1 transition-all duration-300">
+              <div className="flex-grow">
+                <div className="flex items-center justify-center w-16 h-16 soft-blue rounded-xl mb-6">
+                  <i className="fa-solid fa-building text-navy text-3xl"></i>
+                </div>
+                <h2 className="text-2xl font-bold text-navy mb-3">Company Profile</h2>
+                <p className="text-gray-600 mb-6">Create a new company profile to represent your organization. You'll be able to post jobs and invite recruiters to help manage hiring.</p>
+                <ul className="space-y-3 text-gray-700">
+                  <li className="flex items-start">
+                    <i className="fa-solid fa-check text-navy mt-1 mr-3"></i>
+                    <span>Full company profile management</span>
+                  </li>
+                  <li className="flex items-start">
+                    <i className="fa-solid fa-check text-navy mt-1 mr-3"></i>
+                    <span>Post and manage job listings</span>
+                  </li>
+                  <li className="flex items-start">
+                    <i className="fa-solid fa-check text-navy mt-1 mr-3"></i>
+                    <span>Invite and manage recruiters</span>
+                  </li>
+                  <li className="flex items-start">
+                    <i className="fa-solid fa-check text-navy mt-1 mr-3"></i>
+                    <span>Access to candidate database</span>
+                  </li>
+                </ul>
+              </div>
+              <div className="mt-8">
+                <button
+                  onClick={() => router.push('/auth/signup/employer/company')}
+                  className="font-bold text-navy hover:text-light-blue transition-colors duration-200 group cursor-pointer"
+                >
+                  Set up company profile
+                  <i className="fa-solid fa-arrow-right ml-2 group-hover:translate-x-1 transition-transform"></i>
+                </button>
+              </div>
             </div>
-            
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Company Profile</h2>
-            <p className="text-gray-600 mb-6 leading-relaxed">
-              Create a new company profile to represent your organization. You'll be able to post jobs and invite recruiters to help manage hiring.
-            </p>
-            
-            <ul className="space-y-3 mb-6">
-              <li className="flex items-start text-gray-700">
-                <span className="text-green-600 mr-2">✓</span>
-                <span>Full company profile management</span>
-              </li>
-              <li className="flex items-start text-gray-700">
-                <span className="text-green-600 mr-2">✓</span>
-                <span>Post and manage job listings</span>
-              </li>
-              <li className="flex items-start text-gray-700">
-                <span className="text-green-600 mr-2">✓</span>
-                <span>Invite and manage recruiters</span>
-              </li>
-              <li className="flex items-start text-gray-700">
-                <span className="text-green-600 mr-2">✓</span>
-                <span>Access to candidate database</span>
-              </li>
-            </ul>
-            
-            <div className="flex items-center text-blue-600 font-semibold group-hover:text-blue-700">
-              <span>Set up company profile</span>
-              <ArrowRight className="h-5 w-5 ml-2 group-hover:translate-x-1 transition-transform" />
-            </div>
-          </button>
 
-          {/* Recruiter Profile Option */}
-          <button
-            onClick={() => router.push('/auth/signup/employer/recruiter')}
-            className="bg-white rounded-2xl shadow-xl p-8 hover:shadow-2xl transition-all hover:scale-105 text-left group"
-          >
-            <div className="flex items-center justify-center w-16 h-16 bg-purple-100 rounded-xl mb-6 group-hover:bg-purple-600 transition-colors">
-              <Users className="h-8 w-8 text-purple-600 group-hover:text-white transition-colors" />
+            <div className="bg-white rounded-2xl p-8 shadow-lg border border-gray-200 flex flex-col hover:shadow-2xl hover:-translate-y-1 transition-all duration-300">
+              <div className="flex-grow">
+                <div className="flex items-center justify-center w-16 h-16 soft-purple rounded-xl mb-6">
+                  <i className="fa-solid fa-users text-purple-700 text-3xl"></i>
+                </div>
+                <h2 className="text-2xl font-bold text-navy mb-3">Recruiter Profile</h2>
+                <p className="text-gray-600 mb-6">Join an existing company as a recruiter. You'll need an invitation from your company administrator to get started.</p>
+                <ul className="space-y-3 text-gray-700">
+                  <li className="flex items-start">
+                    <i className="fa-solid fa-check text-navy mt-1 mr-3"></i>
+                    <span>Link to company profile</span>
+                  </li>
+                  <li className="flex items-start">
+                    <i className="fa-solid fa-check text-navy mt-1 mr-3"></i>
+                    <span>Post jobs for your company</span>
+                  </li>
+                  <li className="flex items-start">
+                    <i className="fa-solid fa-check text-navy mt-1 mr-3"></i>
+                    <span>Search and contact candidates</span>
+                  </li>
+                  <li className="flex items-start">
+                    <i className="fa-solid fa-check text-navy mt-1 mr-3"></i>
+                    <span>Collaborate with other recruiters</span>
+                  </li>
+                </ul>
+              </div>
+              <div className="mt-8">
+                <button
+                  onClick={() => router.push('/auth/signup/employer/recruiter')}
+                  className="font-bold text-navy hover:text-light-blue transition-colors duration-200 group cursor-pointer"
+                >
+                  Join as recruiter
+                  <i className="fa-solid fa-arrow-right ml-2 group-hover:translate-x-1 transition-transform"></i>
+                </button>
+              </div>
             </div>
-            
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Recruiter Profile</h2>
-            <p className="text-gray-600 mb-6 leading-relaxed">
-              Join an existing company as a recruiter. You'll need an invitation from your company administrator to get started.
-            </p>
-            
-            <ul className="space-y-3 mb-6">
-              <li className="flex items-start text-gray-700">
-                <span className="text-green-600 mr-2">✓</span>
-                <span>Link to company profile</span>
-              </li>
-              <li className="flex items-start text-gray-700">
-                <span className="text-green-600 mr-2">✓</span>
-                <span>Post jobs for your company</span>
-              </li>
-              <li className="flex items-start text-gray-700">
-                <span className="text-green-600 mr-2">✓</span>
-                <span>Search and contact candidates</span>
-              </li>
-              <li className="flex items-start text-gray-700">
-                <span className="text-green-600 mr-2">✓</span>
-                <span>Collaborate with other recruiters</span>
-              </li>
-            </ul>
-            
-            <div className="flex items-center text-purple-600 font-semibold group-hover:text-purple-700">
-              <span>Join as recruiter</span>
-              <ArrowRight className="h-5 w-5 ml-2 group-hover:translate-x-1 transition-transform" />
-            </div>
-          </button>
-        </div>
+          </div>
 
-        {/* Back Link */}
-        <div className="text-center mt-8">
-          <Link href="/auth/signup" className="text-gray-600 hover:text-gray-900 transition-colors">
-            ← Back to signup options
-          </Link>
+          <div className="text-center mt-12">
+            <Link href="/auth/signup" className="text-gray-600 font-medium hover:text-navy transition-colors duration-200 group cursor-pointer">
+              <i className="fa-solid fa-arrow-left mr-2 group-hover:-translate-x-1 transition-transform"></i>
+              Back to signup options
+            </Link>
+          </div>
         </div>
-      </div>
-    </main>
+      </main>
+    </div>
   );
 }
 

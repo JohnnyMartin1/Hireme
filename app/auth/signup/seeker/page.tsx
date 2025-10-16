@@ -124,175 +124,200 @@ export default function SeekerSignupPage() {
   };
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center py-8">
-      <div className="w-full max-w-2xl p-8 bg-white rounded-xl shadow-lg">
-        <button
-          onClick={() => router.back()}
-          className="text-blue-600 hover:underline flex items-center space-x-1 mb-6"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          <span>Back</span>
-        </button>
-
-        <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <span className="text-2xl">👤</span>
-          </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Create Your Job Seeker Account</h1>
-          <p className="text-gray-600">Start building your professional profile</p>
+    <main className="flex flex-col items-center justify-center min-h-screen py-10 px-4 sm:px-6 lg:px-8 bg-gray-50">
+      <div className="w-full max-w-2xl mx-auto">
+        
+        <div className="mb-6">
+          <button
+            onClick={() => router.back()}
+            className="flex items-center text-navy font-medium hover:text-light-blue cursor-pointer transition-colors duration-200"
+          >
+            <i className="fa-solid fa-arrow-left mr-2"></i>
+            Back
+          </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Basic Information */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                First Name <span className="text-red-500">*</span>
-              </label>
-              <input
-                name="firstName"
-                type="text"
-                required
-                value={formData.firstName}
-                onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="John"
-              />
+        <div className="bg-white rounded-2xl p-8 md:p-12 shadow-lg border border-light-gray">
+          <div className="text-center mb-10">
+            <div className="inline-flex items-center justify-center w-20 h-20 bg-light-blue rounded-full mb-6">
+              <i className="fa-solid fa-user text-navy text-3xl"></i>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Last Name <span className="text-red-500">*</span>
-              </label>
-              <input
-                name="lastName"
-                type="text"
-                required
-                value={formData.lastName}
-                onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Doe"
-              />
-            </div>
+            <h1 className="text-3xl md:text-4xl font-bold text-navy mb-2">Create Your Job Seeker Account</h1>
+            <p className="text-gray-600">Start building your professional profile</p>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Email Address <span className="text-red-500">*</span>
-            </label>
-            <input
-              name="email"
-              type="email"
-              required
-              value={formData.email}
-              onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="john.doe@example.com"
-            />
-          </div>
-
-          {/* Education Information */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <SearchableDropdown
-              options={UNIVERSITIES}
-              value={formData.school}
-              onChange={(value) => handleDropdownChange('school', value)}
-              placeholder="Select your university"
-              label="University"
-              required
-              allowCustom
-            />
-            
-            <SearchableDropdown
-              options={MAJORS}
-              value={formData.major}
-              onChange={(value) => handleDropdownChange('major', value)}
-              placeholder="Select your major"
-              label="Major"
-              required
-              allowCustom
-            />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <SearchableDropdown
-              options={MINORS}
-              value={formData.minor}
-              onChange={(value) => handleDropdownChange('minor', value)}
-              placeholder="Select your minor (optional)"
-              label="Minor"
-              allowCustom
-            />
-            
-            <SearchableDropdown
-              options={GRADUATION_YEARS}
-              value={formData.graduationYear}
-              onChange={(value) => handleDropdownChange('graduationYear', value)}
-              placeholder="Select graduation year"
-              label="Expected Graduation Year"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Password <span className="text-red-500">*</span>
-            </label>
-            <input
-              name="password"
-              type="password"
-              required
-              value={formData.password}
-              onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="••••••••"
-            />
-            <p className="text-xs text-gray-500 mt-1">Must be at least 8 characters long</p>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Confirm Password <span className="text-red-500">*</span>
-            </label>
-            <input
-              name="confirmPassword"
-              type="password"
-              required
-              value={formData.confirmPassword}
-              onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="••••••••"
-            />
-          </div>
-
-          {err && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-sm text-red-600">{err}</p>
-            </div>
-          )}
-
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
-          >
-            {isLoading ? (
-              <div className="flex items-center justify-center">
-                <Loader2 className="h-5 w-5 animate-spin mr-2" />
-                Creating Account...
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="form-label">
+                  First Name <span className="text-red-500">*</span>
+                </label>
+                <input
+                  name="firstName"
+                  type="text"
+                  required
+                  value={formData.firstName}
+                  onChange={handleChange}
+                  className="form-input"
+                  placeholder="John"
+                />
               </div>
-            ) : (
-              'Create Account'
-            )}
-          </button>
-        </form>
+              <div>
+                <label className="form-label">
+                  Last Name <span className="text-red-500">*</span>
+                </label>
+                <input
+                  name="lastName"
+                  type="text"
+                  required
+                  value={formData.lastName}
+                  onChange={handleChange}
+                  className="form-input"
+                  placeholder="Doe"
+                />
+              </div>
+            </div>
 
-        <div className="mt-6 text-center">
-          <p className="text-sm text-gray-600">
-            Already have an account?{" "}
-            <Link href="/auth/login" className="text-blue-600 hover:text-blue-700 font-medium">
-              Log in
-            </Link>
-          </p>
+            <div>
+              <label className="form-label">
+                Email Address <span className="text-red-500">*</span>
+              </label>
+              <input
+                name="email"
+                type="email"
+                required
+                value={formData.email}
+                onChange={handleChange}
+                className="form-input"
+                placeholder="john.doe@example.com"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="form-label">
+                  University <span className="text-red-500">*</span>
+                </label>
+                <div className="form-select-wrapper">
+                  <SearchableDropdown
+                    options={UNIVERSITIES}
+                    value={formData.school}
+                    onChange={(value) => handleDropdownChange('school', value)}
+                    placeholder="Select your university"
+                    required
+                    allowCustom
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="form-label">
+                  Major <span className="text-red-500">*</span>
+                </label>
+                <div className="form-select-wrapper">
+                  <SearchableDropdown
+                    options={MAJORS}
+                    value={formData.major}
+                    onChange={(value) => handleDropdownChange('major', value)}
+                    placeholder="Select your major"
+                    required
+                    allowCustom
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="form-label">Minor</label>
+                <div className="form-select-wrapper">
+                  <SearchableDropdown
+                    options={MINORS}
+                    value={formData.minor}
+                    onChange={(value) => handleDropdownChange('minor', value)}
+                    placeholder="Select your minor (optional)"
+                    allowCustom
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="form-label">
+                  Expected Graduation Year <span className="text-red-500">*</span>
+                </label>
+                <div className="form-select-wrapper">
+                  <SearchableDropdown
+                    options={GRADUATION_YEARS}
+                    value={formData.graduationYear}
+                    onChange={(value) => handleDropdownChange('graduationYear', value)}
+                    placeholder="Select graduation year"
+                    required
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <label className="form-label">
+                Password <span className="text-red-500">*</span>
+              </label>
+              <input
+                name="password"
+                type="password"
+                required
+                value={formData.password}
+                onChange={handleChange}
+                className="form-input"
+                placeholder="••••••••"
+              />
+              <p className="text-xs text-gray-500 mt-2">Must be at least 8 characters long</p>
+            </div>
+            
+            <div>
+              <label className="form-label">
+                Confirm Password <span className="text-red-500">*</span>
+              </label>
+              <input
+                name="confirmPassword"
+                type="password"
+                required
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                className="form-input"
+                placeholder="••••••••"
+              />
+            </div>
+
+            {err && (
+              <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-sm text-red-600">{err}</p>
+              </div>
+            )}
+
+            <div className="pt-4">
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full bg-navy text-white font-bold py-4 px-4 rounded-xl hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-navy transition-all duration-300 border border-light-gray disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isLoading ? (
+                  <div className="flex items-center justify-center">
+                    <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                    Creating Account...
+                  </div>
+                ) : (
+                  'Create Account'
+                )}
+              </button>
+            </div>
+          </form>
+
+          <div className="text-center mt-8">
+            <p className="text-sm text-gray-600">
+              Already have an account?{" "}
+              <Link href="/auth/login" className="font-medium text-navy hover:text-light-blue cursor-pointer transition-colors duration-200">
+                Log in
+              </Link>
+            </p>
+          </div>
         </div>
       </div>
     </main>

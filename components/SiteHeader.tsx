@@ -15,7 +15,12 @@ export default function SiteHeader() {
 
         {!user ? (
           <div className="flex items-center space-x-8">
-            <span className="text-gray-700 font-medium hover:text-navy transition cursor-pointer">Home</span>
+            <Link
+              href="/"
+              className="text-gray-700 font-medium hover:text-navy transition cursor-pointer"
+            >
+              Home
+            </Link>
             <Link
               href="/auth/signup"
               className="bg-navy text-white px-6 py-2 rounded-full font-medium hover:bg-blue-900 transition btn-hover"

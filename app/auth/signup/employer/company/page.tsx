@@ -172,240 +172,185 @@ export default function CompanySignupPage() {
   };
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center py-8 px-4">
-      <div className="w-full max-w-2xl p-8 bg-white rounded-xl shadow-lg">
-        {/* Back Button */}
-        <Link 
-          href="/auth/signup/employer/type"
-          className="inline-flex items-center text-blue-600 hover:text-blue-800 transition-colors mb-6"
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to profile type
-        </Link>
+    <div className="flex flex-col min-h-screen bg-brand-background text-brand-text-dark">
+      <main className="flex-grow flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+        <div className="w-full max-w-3xl">
+          <div className="bg-brand-card rounded-2xl shadow-xl p-8 md:p-12">
+            <div className="mb-8">
+              <Link 
+                href="/auth/signup/employer/type"
+                className="text-brand-primary font-medium hover:text-brand-primary-dark transition-colors group cursor-pointer"
+              >
+                <i className="fa-solid fa-arrow-left mr-2 group-hover:-translate-x-1 transition-transform inline-block"></i>
+                Back to profile type
+              </Link>
+            </div>
 
-        <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <span className="text-2xl">🏢</span>
-          </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Create Company Profile</h1>
-          <p className="text-gray-600">Set up your company and start hiring</p>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Company Information */}
-          <div className="bg-gray-50 rounded-lg p-4">
-            <h3 className="font-semibold text-gray-900 mb-4">Company Information</h3>
-            
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Company Name <span className="text-red-500">*</span>
-                </label>
-                <input
-                  name="companyName"
-                  type="text"
-                  required
-                  value={formData.companyName}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Your Company Name"
-                />
-              </div>
-
-              <SearchableDropdown
-                options={LOCATIONS}
-                value={formData.companyLocation}
-                onChange={(value) => handleDropdownChange('companyLocation', value)}
-                placeholder="Select company location"
-                label="Company Location"
-                required
-                allowCustom
-              />
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Company Size
-                  </label>
-                  <SearchableDropdown
-                    options={['1-10 employees', '11-50 employees', '51-200 employees', '201-500 employees', '500+ employees']}
-                    value={formData.companySize}
-                    onChange={(value) => handleDropdownChange('companySize', value)}
-                    placeholder="Select company size"
-                    label="Company Size"
-                    allowCustom
-                  />
+            <div className="text-center mb-8">
+              <div className="flex justify-center mb-5">
+                <div className="w-16 h-16 bg-brand-icon-bg rounded-full flex items-center justify-center">
+                  <i className="fa-solid fa-building text-brand-primary text-3xl"></i>
                 </div>
+              </div>
+              <h1 className="text-3xl md:text-4xl font-extrabold text-brand-text-dark mb-2">Create Company Profile</h1>
+              <p className="text-brand-text-light text-base">Set up your company and start hiring</p>
+            </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Industry
-                  </label>
-                  <SearchableDropdown
-                    options={['Technology', 'Finance', 'Healthcare', 'Education', 'Retail', 'Manufacturing', 'Consulting', 'Real Estate', 'Other']}
-                    value={formData.industry}
-                    onChange={(value) => handleDropdownChange('industry', value)}
-                    placeholder="Select industry"
-                    label="Industry"
-                    allowCustom
-                  />
+            <form onSubmit={handleSubmit} className="space-y-8">
+              <div className="bg-gray-50/70 p-6 rounded-lg border border-gray-200/80">
+                <h2 className="text-lg font-bold text-brand-text-dark mb-4">Company Information</h2>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-brand-text-dark mb-1.5">
+                      Company Name <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      name="companyName"
+                      type="text"
+                      required
+                      value={formData.companyName}
+                      onChange={handleChange}
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-brand-primary transition-shadow duration-200"
+                      placeholder="Your Company Name"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-brand-text-dark mb-1.5">
+                      Company Location <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <SearchableDropdown
+                        options={LOCATIONS}
+                        value={formData.companyLocation}
+                        onChange={(value) => handleDropdownChange('companyLocation', value)}
+                        placeholder="Select company location"
+                        required
+                        allowCustom
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Website
-                  </label>
-                  <input
-                    name="website"
-                    type="url"
-                    value={formData.website}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="https://yourcompany.com"
-                  />
+              <div className="bg-gray-50/70 p-6 rounded-lg border border-gray-200/80">
+                <h2 className="text-lg font-bold text-brand-text-dark mb-4">Your Information</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-brand-text-dark mb-1.5">
+                      First Name <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      name="firstName"
+                      type="text"
+                      required
+                      value={formData.firstName}
+                      onChange={handleChange}
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-brand-primary transition-shadow duration-200"
+                      placeholder="John"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-brand-text-dark mb-1.5">
+                      Last Name <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      name="lastName"
+                      type="text"
+                      required
+                      value={formData.lastName}
+                      onChange={handleChange}
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-brand-primary transition-shadow duration-200"
+                      placeholder="Smith"
+                    />
+                  </div>
                 </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Phone Number
+                <div className="mt-4">
+                  <label className="block text-sm font-medium text-brand-text-dark mb-1.5">
+                    Email Address <span className="text-red-500">*</span>
                   </label>
                   <input
-                    name="phone"
-                    type="tel"
-                    value={formData.phone}
+                    name="email"
+                    type="email"
+                    required
+                    value={formData.email}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="(555) 123-4567"
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-brand-primary transition-shadow duration-200"
+                    placeholder="you@company.com"
                   />
                 </div>
               </div>
+
+              <div className="bg-gray-50/70 p-6 rounded-lg border border-gray-200/80">
+                <h2 className="text-lg font-bold text-brand-text-dark mb-4">Account Security</h2>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-brand-text-dark mb-1.5">
+                      Password <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      name="password"
+                      type="password"
+                      required
+                      value={formData.password}
+                      onChange={handleChange}
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-brand-primary transition-shadow duration-200"
+                      placeholder="••••••••"
+                    />
+                    <p className="mt-2 text-xs text-brand-text-light">Must be at least 8 characters long.</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-brand-text-dark mb-1.5">
+                      Confirm Password <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      name="confirmPassword"
+                      type="password"
+                      required
+                      value={formData.confirmPassword}
+                      onChange={handleChange}
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-brand-primary transition-shadow duration-200"
+                      placeholder="••••••••"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {err && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                  <p className="text-sm text-red-600">{err}</p>
+                </div>
+              )}
+
+              <div className="pt-4">
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full bg-brand-primary text-white font-bold py-3.5 px-4 rounded-lg hover:bg-brand-primary-dark focus:outline-none focus:ring-4 focus:ring-blue-300 transition-all duration-300 transform hover:scale-[1.01] disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isLoading ? (
+                    <div className="flex items-center justify-center">
+                      <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                      Creating Company...
+                    </div>
+                  ) : (
+                    'Create Company Profile'
+                  )}
+                </button>
+              </div>
+            </form>
+
+            <div className="text-center mt-8">
+              <p className="text-sm text-brand-text-light">
+                Already have an account?{" "}
+                <Link href="/auth/login" className="font-medium text-brand-primary hover:underline cursor-pointer">
+                  Log in
+                </Link>
+              </p>
             </div>
           </div>
-
-          {/* Personal Information */}
-          <div className="bg-gray-50 rounded-lg p-4">
-            <h3 className="font-semibold text-gray-900 mb-4">Your Information</h3>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  First Name <span className="text-red-500">*</span>
-                </label>
-                <input
-                  name="firstName"
-                  type="text"
-                  required
-                  value={formData.firstName}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="John"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Last Name <span className="text-red-500">*</span>
-                </label>
-                <input
-                  name="lastName"
-                  type="text"
-                  required
-                  value={formData.lastName}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Smith"
-                />
-              </div>
-            </div>
-
-            <div className="mt-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Email Address <span className="text-red-500">*</span>
-              </label>
-              <input
-                name="email"
-                type="email"
-                required
-                value={formData.email}
-                onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="you@company.com"
-              />
-            </div>
-          </div>
-
-          {/* Account Security */}
-          <div className="bg-gray-50 rounded-lg p-4">
-            <h3 className="font-semibold text-gray-900 mb-4">Account Security</h3>
-            
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Password <span className="text-red-500">*</span>
-                </label>
-                <input
-                  name="password"
-                  type="password"
-                  required
-                  value={formData.password}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="••••••••"
-                />
-                <p className="text-xs text-gray-500 mt-1">Must be at least 8 characters long</p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Confirm Password <span className="text-red-500">*</span>
-                </label>
-                <input
-                  name="confirmPassword"
-                  type="password"
-                  required
-                  value={formData.confirmPassword}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="••••••••"
-                />
-              </div>
-            </div>
-          </div>
-
-          {err && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-sm text-red-600">{err}</p>
-            </div>
-          )}
-
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
-          >
-            {isLoading ? (
-              <div className="flex items-center justify-center">
-                <Loader2 className="h-5 w-5 animate-spin mr-2" />
-                Creating Company...
-              </div>
-            ) : (
-              'Create Company Profile'
-            )}
-          </button>
-        </form>
-
-        <div className="mt-6 text-center">
-          <p className="text-sm text-gray-600">
-            Already have an account?{" "}
-            <Link href="/auth/login" className="text-blue-600 hover:text-blue-700 font-medium">
-              Log in
-            </Link>
-          </p>
         </div>
-      </div>
-    </main>
+      </main>
+    </div>
   );
 }
 
