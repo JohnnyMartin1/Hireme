@@ -4,7 +4,6 @@ import { FirebaseAuthProvider } from "@/components/FirebaseAuthProvider";
 import { ProfileCompletionProvider } from "@/components/ProfileCompletionProvider";
 import EmailVerificationBanner from "@/components/EmailVerificationBanner";
 import { NotificationProvider } from "@/components/NotificationSystem";
-import '@fortawesome/fontawesome-free/css/all.min.css';
 
 export const metadata = { title: "HireMe" };
 

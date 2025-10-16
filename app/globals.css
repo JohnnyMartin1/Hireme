@@ -1,3 +1,6 @@
+@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -35,7 +38,7 @@ html, body, #__next {
 }
 
 body {
-  @apply bg-[var(--bg)] text-[var(--text)] font-sans;
+  @apply bg-[var(--bg)] text-[var(--text)] font-inter;
 }
 
 /* HireMe Design Components */
