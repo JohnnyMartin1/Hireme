@@ -102,7 +102,7 @@ function HomeContent() {
                 <i className="fa-solid fa-arrow-right"></i>
               </Link>
             </div>
-            <div>
+            <div className="min-h-[480px] flex items-center justify-center">
               <ErrorBoundary>
                 <InteractiveWheel />
               </ErrorBoundary>
