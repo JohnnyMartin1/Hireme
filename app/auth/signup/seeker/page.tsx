@@ -130,9 +130,9 @@ export default function SeekerSignupPage() {
         <div className="mb-6">
           <button
             onClick={() => router.back()}
-            className="flex items-center text-navy font-medium hover:text-light-blue cursor-pointer transition-colors duration-200"
+            className="inline-flex items-center px-4 py-2 bg-blue-50 text-navy-800 rounded-full hover:bg-blue-100 hover:shadow-sm transition-all duration-200 hover:-translate-y-1"
           >
-            <i className="fa-solid fa-arrow-left mr-2"></i>
+            <ArrowLeft className="h-4 w-4 mr-2" />
             Back
           </button>
         </div>

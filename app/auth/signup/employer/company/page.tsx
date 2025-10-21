@@ -65,6 +65,24 @@ export default function CompanySignupPage() {
       return;
     }
 
+    if (!formData.website.trim()) {
+      setErr("Company website is required");
+      return;
+    }
+
+    // Basic URL validation
+    try {
+      new URL(formData.website);
+    } catch {
+      setErr("Please enter a valid website URL (e.g., https://www.yourcompany.com)");
+      return;
+    }
+
+    if (!formData.companySize) {
+      setErr("Company size is required");
+      return;
+    }
+
     if (!formData.firstName.trim() || !formData.lastName.trim()) {
       setErr("First and last name are required");
       return;
@@ -179,9 +197,9 @@ export default function CompanySignupPage() {
             <div className="mb-8">
               <Link 
                 href="/auth/signup/employer/type"
-                className="text-brand-primary font-medium hover:text-brand-primary-dark transition-colors group cursor-pointer"
+                className="inline-flex items-center px-4 py-2 bg-blue-50 text-navy-800 rounded-full hover:bg-blue-100 hover:shadow-sm transition-all duration-200 hover:-translate-y-1"
               >
-                <i className="fa-solid fa-arrow-left mr-2 group-hover:-translate-x-1 transition-transform inline-block"></i>
+                <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to profile type
               </Link>
             </div>
@@ -229,6 +247,42 @@ export default function CompanySignupPage() {
                         allowCustom
                       />
                     </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-brand-text-dark mb-1.5">
+                      Company Website <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      name="website"
+                      type="url"
+                      required
+                      value={formData.website}
+                      onChange={handleChange}
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-brand-primary transition-shadow duration-200"
+                      placeholder="https://www.yourcompany.com"
+                    />
+                    <p className="mt-2 text-xs text-brand-text-light">Enter your company's website URL</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-brand-text-dark mb-1.5">
+                      Number of Employees <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      name="companySize"
+                      required
+                      value={formData.companySize}
+                      onChange={handleChange}
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-brand-primary transition-shadow duration-200"
+                    >
+                      <option value="">Select company size</option>
+                      <option value="1-10">1-10 employees</option>
+                      <option value="11-50">11-50 employees</option>
+                      <option value="51-200">51-200 employees</option>
+                      <option value="201-500">201-500 employees</option>
+                      <option value="501-1000">501-1000 employees</option>
+                      <option value="1001-5000">1001-5000 employees</option>
+                      <option value="5000+">5000+ employees</option>
+                    </select>
                   </div>
                 </div>
               </div>

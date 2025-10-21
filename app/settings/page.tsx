@@ -82,10 +82,10 @@ export default function SettingsPage() {
       <div className="max-w-4xl mx-auto p-6 py-12">
         <Link 
           href={dashboardUrl}
-          className="text-blue-600 hover:underline flex items-center space-x-1 mb-6"
+          className="inline-flex items-center px-4 py-2 bg-blue-50 text-navy-800 rounded-full hover:bg-blue-100 hover:shadow-sm transition-all duration-200 mb-6"
         >
-          <ArrowLeft className="h-4 w-4" />
-          <span>Back to Dashboard</span>
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back to Dashboard
         </Link>
 
         <h1 className="text-3xl font-bold text-gray-900 mb-8">Settings</h1>

@@ -44,14 +44,14 @@ export default function SiteHeader() {
                   ? '/home/employer'
                   : '/'
               } 
-              className="text-sm text-[var(--muted)] hover:text-[var(--text)] transition-colors"
+              className="text-sm text-[var(--muted)] hover:text-[var(--text)] transition-all duration-200 hover:-translate-y-1 hover:shadow-md px-3 py-2 rounded-lg"
             >
               Dashboard
             </Link>
             {profile?.role === 'JOB_SEEKER' && (
               <Link 
                 href="/info" 
-                className="text-sm text-[var(--muted)] hover:text-[var(--text)] transition-colors"
+                className="text-sm text-[var(--muted)] hover:text-[var(--text)] transition-all duration-200 hover:-translate-y-1 hover:shadow-md px-3 py-2 rounded-lg"
               >
                 Information
               </Link>
@@ -59,20 +59,20 @@ export default function SiteHeader() {
             {profile?.role === 'EMPLOYER' && (
               <Link 
                 href="/info/employer" 
-                className="text-sm text-[var(--muted)] hover:text-[var(--text)] transition-colors"
+                className="text-sm text-[var(--muted)] hover:text-[var(--text)] transition-all duration-200 hover:-translate-y-1 hover:shadow-md px-3 py-2 rounded-lg"
               >
                 Information
               </Link>
             )}
             <Link 
               href="/settings" 
-              className="text-sm text-[var(--muted)] hover:text-[var(--text)] transition-colors"
+              className="text-sm text-[var(--muted)] hover:text-[var(--text)] transition-all duration-200 hover:-translate-y-1 hover:shadow-md px-3 py-2 rounded-lg"
             >
               Settings
             </Link>
             <button
               onClick={signOut}
-              className="hireme-btn hireme-btn-ghost text-sm"
+              className="hireme-btn hireme-btn-ghost text-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md"
             >
               Sign out
             </button>

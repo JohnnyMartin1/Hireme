@@ -879,7 +879,7 @@ export default function EditProfilePage() {
             
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-4">
-                Profile Video (Max 1 minute)
+                Profile Video (Max 30 seconds)
               </label>
               <VideoUpload
                 currentVideo={formData.videoUrl}
