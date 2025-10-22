@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useFirebaseAuth } from "./FirebaseAuthProvider";
-import AnimatedLogo from "./AnimatedLogo";
+import HireMeLogo from "./brand/HireMeLogo";
 
 export default function SiteHeader() {
   const { user, profile, signOut } = useFirebaseAuth();
@@ -9,8 +9,8 @@ export default function SiteHeader() {
   return (
     <header className="bg-white/80 backdrop-blur-sm py-4 px-6 sticky top-0 z-50 shadow-sm">
       <div className="container mx-auto flex items-center justify-between">
-        <Link href="/" className="shrink-0">
-          <AnimatedLogo size="md" />
+        <Link href="/" className="shrink-0" aria-label="HireMe home">
+          <HireMeLogo variant="full" className="h-8 w-auto" />
         </Link>
 
         {!user ? (

@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useRef, useState } from 'react';
+import React from 'react';
 
 interface WheelNode {
   id: string;
@@ -16,24 +16,6 @@ const wheelNodes: WheelNode[] = [
 ];
 
 export default function InteractiveWheel() {
-  const [isMounted, setIsMounted] = useState(false);
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
-
-  if (!isMounted) {
-    return (
-      <div className="min-h-[480px] flex items-center justify-center">
-        <div className="relative" style={{ width: 480, height: 480 }}>
-          <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 w-24 h-24 bg-gradient-to-br from-light-blue to-blue-100 rounded-full flex flex-col items-center justify-center z-10 shadow-lg">
-            <i className="fa-solid fa-handshake-angle text-navy text-3xl"></i>
-            <span className="text-sm font-medium text-navy mt-1">Hiring</span>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   const radius = 200;
   const angleStep = (2 * Math.PI) / wheelNodes.length;

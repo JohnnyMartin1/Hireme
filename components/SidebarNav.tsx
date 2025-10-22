@@ -10,7 +10,7 @@ import {
   Shield,
   Settings
 } from 'lucide-react';
-import Logo from './Logo';
+import HireMeLogo from './brand/HireMeLogo';
 
 interface NavItem {
   label: string;
@@ -46,7 +46,7 @@ export default function SidebarNav({ role }: SidebarNavProps) {
     <aside className="hidden md:block w-64 hireme-gradient-light h-full p-6 border-r border-[var(--border)] shadow-sm">
       <div className="mb-8">
         <div className="flex items-center mb-4">
-          <Logo size="sm" className="hireme-logo" />
+          <HireMeLogo variant="full" className="h-6 w-auto" />
         </div>
         <h2 className="text-lg font-semibold text-[var(--hireme-navy)] mb-2">Navigation</h2>
         <div className="w-12 h-1 bg-[var(--hireme-blue)] rounded"></div>

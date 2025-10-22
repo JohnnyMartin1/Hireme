@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import AnimatedLogo from "@/components/AnimatedLogo";
+import HireMeLogo from "@/components/brand/HireMeLogo";
 import InteractiveWheel from "@/components/InteractiveWheel";
 import ErrorBoundary from "@/components/ErrorBoundary";
 
@@ -11,8 +11,8 @@ function HomeContent() {
       <section className="relative skyline-bg py-20 px-6 h-[700px] flex items-center">
         <div className="container mx-auto max-w-4xl text-center relative z-10">
           <div className="mb-8">
-            <div className="w-20 h-20 bg-gradient-to-br from-white to-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
-              <AnimatedLogo size="lg" showText={false} />
+            <div className="w-24 h-24 bg-gradient-to-br from-white to-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
+              <HireMeLogo variant="mark" className="h-16 w-16" />
             </div>
           </div>
           
@@ -117,7 +117,7 @@ function HomeContent() {
           <div className="grid md:grid-cols-4 gap-8">
             <div>
               <div className="mb-4">
-                <AnimatedLogo size="md" variant="white" />
+                <HireMeLogo variant="full" className="h-6 w-auto" />
               </div>
               <p className="text-gray-400">
                 Connecting talent with opportunity through intelligent matching.

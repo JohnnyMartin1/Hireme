@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useFirebaseAuth } from "@/components/FirebaseAuthProvider";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import Logo from "@/components/Logo";
+import HireMeLogo from "@/components/brand/HireMeLogo";
 
 function LoadingSpinner() {
   return (
@@ -45,7 +45,7 @@ function HomeContent() {
       <div className="max-w-4xl mx-auto p-6 text-center">
         <div className="mb-12">
           <div className="flex justify-center mb-8">
-            <Logo size="lg" className="hireme-logo" />
+            <HireMeLogo variant="full" className="h-12 w-auto" />
           </div>
           <h1 className="text-5xl font-bold text-[var(--hireme-navy)] mb-6">
             Welcome to HireMe

@@ -1,0 +1,13 @@
+<svg width="120" height="32" viewBox="0 0 120 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Chat bubble mark -->
+  <g id="mark">
+    <path d="M24 6C24 3.79086 22.2091 2 20 2H6C3.79086 2 2 3.79086 2 6V18C2 20.2091 3.79086 22 6 22H15.5L18.5 25L20.5 22H20C22.2091 22 24 20.2091 24 18V6Z" fill="white"/>
+    <path d="M20 4L18 6L16 4L18 6L20 4Z" fill="white"/>
+    <!-- Person icon inside -->
+    <circle cx="13" cy="11" r="2.5" fill="#E6F0FF"/>
+    <path d="M10 16C10 14.5 11.5 13 13 13C14.5 13 16 14.5 16 16V17H10V16Z" fill="#E6F0FF"/>
+  </g>
+  
+  <!-- HireMe wordmark -->
+  <text x="32" y="22" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="white">HireMe</text>
+</svg>

@@ -11,10 +11,14 @@
 
 /* HireMe Design System - Based on Logo Colors */
 :root {
-  /* Primary Colors from Logo */
-  --hireme-navy: #000080;      /* Navy blue from design */
-  --hireme-blue: #3b82f6;      /* Bright blue from logo */
+  /* Primary Colors from Official Logo */
+  --brand-navy: #001F3F;       /* Exact navy from wordmark and chat bubble */
+  --brand-blue: #3366FF;       /* Exact blue from person icon */
   --hireme-light-blue: #ADD8E6; /* Light blue from design */
+  
+  /* Legacy aliases for compatibility */
+  --hireme-navy: var(--brand-navy);
+  --hireme-blue: var(--brand-blue);
   
   /* Neutral Colors */
   --bg: #f8fafc;               /* Very light gray background */
@@ -93,14 +97,7 @@ body {
   @apply bg-red-100 text-red-800;
 }
 
-/* Logo Animation */
-.hireme-logo {
-  @apply transition-transform duration-200;
-}
-
-.hireme-logo:hover {
-  @apply transform scale-105;
-}
+/* Logo Animation - Removed old magnifier logo styles */
 
 /* Gradient Backgrounds */
 .hireme-gradient {
@@ -170,27 +167,7 @@ body {
   transition: all 0.2s ease;
 }
 
-/* AnimatedLogo Styles */
-.hireme-logo:hover .logo-magnifier {
-  transform: rotate(-6deg) scale(1.03);
-}
-
-.hireme-logo:hover .logo-handle {
-  transform: rotate(35deg) translateY(-2px);
-}
-
-.hireme-logo:hover .logo-person {
-  transform: translate(-50%, -50%) scale(1.08);
-}
-
-.hireme-logo:hover .logo-shine {
-  opacity: 1;
-  transform: translate(2px, -2px) scale(1.2);
-}
-
-.hireme-logo:hover .logo-glass {
-  box-shadow: 0 0 15px rgba(173, 216, 230, 0.4);
-}
+/* Removed old AnimatedLogo styles */
 
 /* Reduced Motion */
 @media (prefers-reduced-motion: reduce) {
@@ -199,26 +176,7 @@ body {
     animation: none;
   }
   
-  .hireme-logo,
-  .logo-magnifier,
-  .logo-glass,
-  .logo-handle,
-  .logo-person,
-  .logo-shine {
-    transition: none !important;
-  }
-  
-  .hireme-logo:hover .logo-magnifier {
-    transform: none;
-  }
-  
-  .hireme-logo:hover .logo-handle {
-    transform: rotate(45deg);
-  }
-  
-  .hireme-logo:hover .logo-person {
-    transform: translate(-50%, -50%);
-  }
+  /* Removed old logo styles for reduced motion */
 }
 
 /* Sign-up Page Styles */
