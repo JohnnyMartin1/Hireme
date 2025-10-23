@@ -1,0 +1,782 @@
+<!DOCTYPE html><html><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script> window.FontAwesomeConfig = { autoReplaceSvg: 'nest'};</script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+    <style>
+        ::-webkit-scrollbar { display: none;}
+        body { font-family: 'Inter', sans-serif; background-color: #F8FAFC; }
+        .form-label {
+            @apply block text-sm font-medium text-navy mb-2;
+        }
+        .form-input {
+            @apply w-full px-4 py-3 bg-white border border-light-gray rounded-xl text-navy placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-navy focus:border-navy transition-all duration-200;
+        }
+        .form-select {
+            @apply appearance-none;
+        }
+        .form-select-wrapper {
+            @apply relative;
+        }
+        .form-select-wrapper::after {
+            content: '\f078';
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            position: absolute;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            pointer-events: none;
+            color: #000080;
+        }
+        .modal-backdrop {
+            backdrop-filter: blur(4px);
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+        .modal-card {
+            animation: modalEnter 0.3s ease-out;
+        }
+        @keyframes modalEnter {
+            from {
+                opacity: 0;
+                transform: scale(0.95) translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+        .slide-enter {
+            animation: slideEnter 0.3s ease-out;
+        }
+        @keyframes slideEnter {
+            from {
+                opacity: 0;
+                transform: translateX(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        .progress-dot {
+            transition: all 0.2s ease-in-out;
+        }
+        .progress-dot.active {
+            background-color: #000080;
+            transform: scale(1.2);
+        }
+        .btn-hover:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 128, 0.15);
+        }
+        .btn-press:active {
+            transform: translateY(0) scale(0.98);
+        }
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'navy': '#000080',
+                        'light-blue': '#ADD8E6',
+                        'light-gray': '#D3D3D3',
+                        'brand-blue': '#3B82F6',
+                        'brand-blue-dark': '#2563EB',
+                        'brand-blue-light': '#EFF6FF',
+                        'brand-green': '#10B981',
+                        'brand-yellow': '#F59E0B',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50">
+
+<header id="header" class="bg-gradient-to-r from-navy via-blue-800 to-indigo-800 shadow-lg sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-20">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center border border-white/30">
+                            <i class="fa-solid fa-magnifying-glass text-white text-lg"></i>
+                        </div>
+                        <span class="text-2xl font-bold text-white">HireMe</span>
+                    </div>
+                </div>
+            </div>
+            <div class="hidden md:block">
+                <div class="ml-10 flex items-baseline space-x-2">
+                    <span class="bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-xl text-sm font-medium cursor-pointer border border-white/30" aria-current="page">Dashboard</span>
+                    <span class="text-white/80 hover:bg-white/10 hover:text-white px-4 py-2 rounded-xl text-sm font-medium cursor-pointer transition-all duration-200">Information</span>
+                    <span class="text-white/80 hover:bg-white/10 hover:text-white px-4 py-2 rounded-xl text-sm font-medium cursor-pointer transition-all duration-200">Settings</span>
+                    <span class="text-white/80 hover:bg-white/10 hover:text-white px-4 py-2 rounded-xl text-sm font-medium cursor-pointer transition-all duration-200">Sign out</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<main id="job-seeker-dashboard" class="bg-slate-50 min-h-screen">
+    <!-- PageShell (title + actions) -->
+    <section id="page-shell" class="max-w-7xl mx-auto pt-8 pb-4">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+                <h1 class="text-3xl font-bold text-slate-900">Dashboard</h1>
+                <p class="text-slate-500">Welcome back, John! Ready to find your next opportunity?</p>
+            </div>
+            <div class="flex gap-3">
+                <button class="px-4 py-2 rounded-xl bg-navy text-white font-semibold hover:bg-opacity-90">Update Profile</button>
+                <button class="px-4 py-2 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50">Edit Preferences</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Filters Bar -->
+    <section id="filters-bar" class="max-w-7xl mx-auto sticky top-[80px] z-30 bg-white/70 backdrop-blur supports-[backdrop-filter]:bg-white/60 border-y border-slate-200">
+        <div class="px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap items-center gap-3">
+            <div class="flex items-center gap-2 flex-1 min-w-[260px] max-w-xl">
+                <div class="relative flex-1">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                    <input type="search" placeholder="Search applications…" class="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-navy focus:border-navy">
+                </div>
+                <button class="px-3 py-1.5 rounded-full bg-slate-100 text-slate-700 text-sm">Applied</button>
+                <button class="px-3 py-1.5 rounded-full bg-slate-100 text-slate-700 text-sm">Under Review</button>
+                <button class="px-3 py-1.5 rounded-full bg-slate-100 text-slate-700 text-sm">Interview</button>
+                <button class="px-3 py-1.5 rounded-full bg-slate-100 text-slate-700 text-sm">Rejected</button>
+                <button class="px-3 py-1.5 rounded-full bg-slate-100 text-slate-700 text-sm">Offered</button>
+            </div>
+
+            <div class="flex items-center gap-2 ml-auto">
+                <input type="text" placeholder="mm/dd/yyyy" class="w-[140px] px-3 py-2 rounded-xl border border-slate-200 text-sm">
+                <input type="text" placeholder="mm/dd/yyyy" class="w-[140px] px-3 py-2 rounded-xl border border-slate-200 text-sm">
+                <select class="px-3 py-2 rounded-xl border border-slate-200 text-sm">
+                    <option>Newest First</option>
+                    <option>Oldest First</option>
+                </select>
+                <button class="text-slate-500 text-sm hover:text-slate-700">Reset</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stat cards -->
+    <section id="stat-cards" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <!-- Applications -->
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="h-10 w-10 rounded-xl bg-blue-50 flex items-center justify-center">
+                            <i class="fa-regular fa-clipboard text-blue-600"></i>
+                        </div>
+                        <span class="text-slate-500 font-medium">Applications</span>
+                    </div>
+                    <span class="text-emerald-600 text-xs font-semibold bg-emerald-50 rounded-full px-2 py-0.5">↑ 15%</span>
+                </div>
+                <div class="mt-3 text-3xl font-bold text-slate-900">12</div>
+            </div>
+
+            <!-- Interviews -->
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="h-10 w-10 rounded-xl bg-indigo-50 flex items-center justify-center">
+                            <i class="fa-regular fa-calendar text-indigo-600"></i>
+                        </div>
+                        <span class="text-slate-500 font-medium">Interviews</span>
+                    </div>
+                    <span class="text-emerald-600 text-xs font-semibold bg-emerald-50 rounded-full px-2 py-0.5">↑ 5%</span>
+                </div>
+                <div class="mt-3 text-3xl font-bold text-slate-900">3</div>
+            </div>
+
+            <!-- Responses -->
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="h-10 w-10 rounded-xl bg-sky-50 flex items-center justify-center">
+                            <i class="fa-regular fa-comment text-sky-600"></i>
+                        </div>
+                        <span class="text-slate-500 font-medium">Responses</span>
+                    </div>
+                    <span class="text-rose-600 text-xs font-semibold bg-rose-50 rounded-full px-2 py-0.5">↓ 2%</span>
+                </div>
+                <div class="mt-3 text-3xl font-bold text-slate-900">8</div>
+            </div>
+
+            <!-- Profile strength -->
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+                <div class="flex items-center gap-3">
+                    <div class="h-10 w-10 rounded-xl bg-slate-50 flex items-center justify-center">
+                        <i class="fa-solid fa-chart-line text-slate-700"></i>
+                    </div>
+                    <span class="text-slate-500 font-medium">Profile Strength</span>
+                </div>
+                <div class="mt-3 flex items-center justify-between">
+                    <div class="w-full h-2 bg-slate-100 rounded-full">
+                        <div class="h-2 bg-navy rounded-full" style="width:75%"></div>
+                    </div>
+                    <span class="ml-3 font-bold text-slate-900">75%</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main split -->
+    <section id="main-split" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Applications (2/3 width) -->
+            <div class="lg:col-span-2 bg-white rounded-2xl border border-slate-200 shadow-sm">
+                <div class="p-5 border-b border-slate-200">
+                    <h2 class="text-lg font-semibold text-slate-900">Applications</h2>
+                </div>
+                <div class="p-5">
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full text-sm">
+                            <thead class="text-slate-500">
+                                <tr class="[&>th]:py-3 [&>th]:text-left [&>th]:font-medium">
+                                    <th>Job</th><th>Company</th><th>Status</th><th>Last Update</th><th class="text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 text-slate-700">
+                                <tr class="hover:bg-slate-50">
+                                    <td class="py-4">
+                                        <div class="font-semibold text-slate-900">Frontend Developer</div>
+                                        <div class="text-xs text-slate-500">Applied Dec 15, 2024</div>
+                                    </td>
+                                    <td>TechCorp</td>
+                                    <td><span class="px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 text-xs">Applied</span></td>
+                                    <td>2 days ago</td>
+                                    <td class="text-right space-x-3">
+                                        <button class="text-navy font-semibold">View</button>
+                                        <button class="text-rose-600 font-semibold">Withdraw</button>
+                                    </td>
+                                </tr>
+                                <tr class="hover:bg-slate-50">
+                                    <td class="py-4">
+                                        <div class="font-semibold text-slate-900">React Developer</div>
+                                        <div class="text-xs text-slate-500">Applied Dec 10, 2024</div>
+                                    </td>
+                                    <td>StartupXYZ</td>
+                                    <td><span class="px-2 py-0.5 rounded-full bg-violet-50 text-violet-700 text-xs">Interview</span></td>
+                                    <td>1 day ago</td>
+                                    <td class="text-right">
+                                        <button class="text-navy font-semibold">View</button>
+                                    </td>
+                                </tr>
+                                <tr class="hover:bg-slate-50">
+                                    <td class="py-4">
+                                        <div class="font-semibold text-slate-900">Full Stack Developer</div>
+                                        <div class="text-xs text-slate-500">Applied Dec 8, 2024</div>
+                                    </td>
+                                    <td>BigTech Inc</td>
+                                    <td><span class="px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 text-xs">Under Review</span></td>
+                                    <td>3 days ago</td>
+                                    <td class="text-right">
+                                        <button class="text-navy font-semibold">View</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recommended Jobs (1/3 width) -->
+            <aside id="recommended-jobs" class="bg-white rounded-2xl border border-slate-200 shadow-sm">
+                <div class="p-5 border-b border-slate-200 flex items-center justify-between">
+                    <h2 class="text-lg font-semibold text-slate-900">Recommended Jobs</h2>
+                    <div class="flex gap-2">
+                        <button class="h-9 w-9 grid place-items-center rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50">
+                            <i class="fa-regular fa-heart"></i>
+                        </button>
+                        <button class="h-9 w-9 grid place-items-center rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50">
+                            <i class="fa-regular fa-xmark"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="p-5 space-y-4">
+                    <!-- Job card -->
+                    <div class="p-4 rounded-xl border border-slate-200 hover:bg-slate-50">
+                        <div class="font-semibold text-slate-900">Senior React Developer</div>
+                        <div class="text-sm text-slate-500">Innovation Labs • San Francisco, CA</div>
+                        <div class="text-emerald-600 text-sm font-semibold mt-1">$120k – $150k</div>
+                        <div class="mt-2 flex flex-wrap gap-2 text-xs">
+                            <span class="px-2 py-0.5 bg-slate-100 rounded-full">React</span>
+                            <span class="px-2 py-0.5 bg-slate-100 rounded-full">TypeScript</span>
+                            <span class="px-2 py-0.5 bg-slate-100 rounded-full">Node.js</span>
+                        </div>
+                        <div class="mt-2 text-xs text-slate-500">Posted 2 days ago</div>
+                        <div class="mt-2">
+                            <button class="text-navy font-semibold">View Details</button>
+                        </div>
+                    </div>
+
+                    <div class="p-4 rounded-xl border border-slate-200 hover:bg-slate-50">
+                        <div class="font-semibold text-slate-900">Frontend Engineer</div>
+                        <div class="text-sm text-slate-500">Design Co • Remote</div>
+                        <div class="text-emerald-600 text-sm font-semibold mt-1">$100k – $130k</div>
+                        <div class="mt-2 flex flex-wrap gap-2 text-xs">
+                            <span class="px-2 py-0.5 bg-slate-100 rounded-full">Vue.js</span>
+                            <span class="px-2 py-0.5 bg-slate-100 rounded-full">CSS</span>
+                            <span class="px-2 py-0.5 bg-slate-100 rounded-full">Design Systems</span>
+                        </div>
+                        <div class="mt-2">
+                            <button class="text-navy font-semibold">View Details</button>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+        </div>
+    </section>
+
+    <!-- Recent Activity -->
+    <section id="recent-activity" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 mb-12">
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm">
+            <div class="p-5 border-b border-slate-200">
+                <h2 class="text-lg font-semibold text-slate-900">Recent Activity</h2>
+            </div>
+            <div class="p-5">
+                <ul class="space-y-4">
+                    <li class="flex items-start gap-3">
+                        <span class="h-8 w-8 rounded-full bg-navy text-white grid place-items-center">
+                            <i class="fa-solid fa-envelope-open-text text-xs"></i>
+                        </span>
+                        <div>
+                            <div class="text-slate-900">Recruiter viewed your application</div>
+                            <div class="text-xs text-slate-500">2 hours ago</div>
+                        </div>
+                    </li>
+                    <li class="flex items-start gap-3">
+                        <span class="h-8 w-8 rounded-full bg-indigo-600 text-white grid place-items-center">
+                            <i class="fa-solid fa-calendar-check text-xs"></i>
+                        </span>
+                        <div>
+                            <div class="text-slate-900">Interview scheduled with StartupXYZ</div>
+                            <div class="text-xs text-slate-500">Yesterday</div>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </section>
+</main>
+
+<div id="onboarding-modal" class="fixed inset-0 z-50 modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="onboarding-title">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div id="modal-card" class="bg-white rounded-3xl shadow-2xl w-full max-w-2xl modal-card relative flex flex-col h-[85vh] max-h-[600px]">
+            
+            <button id="close-modal" class="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-800 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-navy focus:ring-offset-2 z-10" aria-label="Close onboarding">
+                <i class="fa-solid fa-times text-sm"></i>
+            </button>
+
+            <div id="slide-container" class="flex-1 flex flex-col justify-between p-4 md:p-6 pb-0">
+                
+                <div id="slide-1" class="slide-content slide-enter flex-1 flex flex-col justify-between">
+                    <div class="text-center">
+                        <div class="inline-flex items-center justify-center w-12 h-12 bg-light-blue rounded-full mb-3">
+                            <i class="fa-solid fa-rocket text-navy text-lg"></i>
+                        </div>
+                        <h1 id="onboarding-title" class="text-xl md:text-2xl font-bold text-navy mb-2">Welcome to HireMe! 🎉</h1>
+                        <p class="text-sm text-gray-600 max-w-sm mx-auto mb-4">Let's get you set up to connect with amazing employers who are actively looking for talent like you.</p>
+                    </div>
+
+                    <div class="space-y-2 mb-4">
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0 w-4 h-4 bg-navy rounded-full flex items-center justify-center mr-3 mt-1">
+                                <i class="fa-solid fa-check text-white text-xs"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-navy text-sm mb-0.5">Complete Your Profile</h3>
+                                <p class="text-gray-600 text-xs">Build a comprehensive profile that showcases your skills.</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0 w-4 h-4 bg-navy rounded-full flex items-center justify-center mr-3 mt-1">
+                                <i class="fa-solid fa-check text-white text-xs"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-navy text-sm mb-0.5">Get Discovered</h3>
+                                <p class="text-gray-600 text-xs">Employers will find you based on your skills and preferences.</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0 w-4 h-4 bg-navy rounded-full flex items-center justify-center mr-3 mt-1">
+                                <i class="fa-solid fa-check text-white text-xs"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-navy text-sm mb-0.5">Connect & Get Hired</h3>
+                                <p class="text-gray-600 text-xs">Receive direct messages from interested employers.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-gradient-to-r from-light-blue to-blue-100 rounded-lg p-3">
+                        <div class="flex items-center mb-1">
+                            <i class="fa-solid fa-lightbulb text-navy text-sm mr-2"></i>
+                            <span class="font-semibold text-navy text-sm">Tip:</span>
+                        </div>
+                        <p class="text-navy text-xs">You'll only interact with serious, professional employers who respect your time.</p>
+                    </div>
+                </div>
+
+                <div id="slide-2" class="slide-content hidden flex-1 flex flex-col justify-between">
+                    <div class="text-center">
+                        <div class="inline-flex items-center justify-center w-12 h-12 bg-light-blue rounded-full mb-3">
+                            <i class="fa-solid fa-user-edit text-navy text-lg"></i>
+                        </div>
+                        <h1 class="text-xl md:text-2xl font-bold text-navy mb-2">Build Your Professional Profile</h1>
+                        <p class="text-sm text-gray-600 max-w-sm mx-auto mb-4">Create a standout profile that highlights your unique strengths and career goals.</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+                        <div class="bg-white border border-light-gray rounded-lg p-3">
+                            <div class="flex items-center mb-2">
+                                <i class="fa-solid fa-file-alt text-navy text-sm mr-2"></i>
+                                <h3 class="font-semibold text-navy text-sm">Resume & Portfolio</h3>
+                            </div>
+                            <p class="text-gray-600 text-xs">Upload your resume and showcase your best work.</p>
+                        </div>
+                        <div class="bg-white border border-light-gray rounded-lg p-3">
+                            <div class="flex items-center mb-2">
+                                <i class="fa-solid fa-video text-navy text-sm mr-2"></i>
+                                <h3 class="font-semibold text-navy text-sm">Video Introduction</h3>
+                            </div>
+                            <p class="text-gray-600 text-xs">Record a brief video to let your personality shine.</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-3 border border-green-200">
+                        <div class="flex items-center mb-1">
+                            <i class="fa-solid fa-trophy text-green-600 text-sm mr-2"></i>
+                            <span class="font-semibold text-green-800 text-sm">Result:</span>
+                        </div>
+                        <p class="text-green-800 text-xs">Profiles with videos get 3x more employer views and messages.</p>
+                    </div>
+                </div>
+
+                <div id="slide-3" class="slide-content hidden flex-1 flex flex-col justify-between">
+                    <div class="text-center">
+                        <div class="inline-flex items-center justify-center w-12 h-12 bg-light-blue rounded-full mb-3">
+                            <i class="fa-solid fa-search text-navy text-lg"></i>
+                        </div>
+                        <h1 class="text-xl md:text-2xl font-bold text-navy mb-2">Employers Will Find You</h1>
+                        <p class="text-sm text-gray-600 max-w-sm mx-auto mb-4">Sit back and let qualified employers discover your profile and reach out directly.</p>
+                    </div>
+
+                    <div class="space-y-3 mb-4">
+                        <div class="flex items-center justify-between bg-gray-50 rounded-lg p-3">
+                            <div class="flex items-center">
+                                <div class="呈现w-8 h-8 bg-navy rounded-full flex items-center justify-center mr-3">
+                                    <i class="fa-solid fa-building text-white text-xs"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-semibold text-navy text-sm">Verified Companies</h3>
+                                    <p class="text-gray-600 text-xs">Only legitimate businesses can access our platform</p>
+                                </div>
+                            </div>
+                            <i class="fa-solid fa-shield-alt text-green-500 text-lg"></i>
+                        </div>
+                        
+                        <div class="flex items-center justify-between bg-gray-50 rounded-lg p-3">
+                            <div class="flex items-center">
+                                <div class="w-8 h-8 bg-navy rounded-full flex items-center justify-center mr-3">
+                                    <i class="fa-solid fa-target text-white text-xs"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-semibold text-navy text-sm">Smart Matching</h3>
+                                    <p class="text-gray-600 text-xs">AI connects you with relevant opportunities</p>
+                                </div>
+                            </div>
+                            <i class="fa-solid fa-magic text-purple-500 text-lg"></i>
+                        </div>
+                    </div>
+
+                    <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-3 border border-blue-200">
+                        <div class="flex items-center mb-1">
+                            <i class="fa-solid fa-info-circle text-blue-600 text-sm mr-2"></i>
+                            <span class="font-semibold text-blue-800 text-sm">Success:</span>
+                        </div>
+                        <p class="text-blue-800 text-xs">85% of our users receive their first employer message within 2 weeks.</p>
+                    </div>
+                </div>
+
+                <div id="slide-4" class="slide-content hidden flex-1 flex flex-col justify-between">
+                    <div class="text-center">
+                        <div class="inline-flex items-center justify-center w-12 h-12 bg-light-blue rounded-full mb-3">
+                            <i class="fa-solid fa-handshake text-navy text-lg"></i>
+                        </div>
+                        <h1 class="text-xl md:text-2xl font-bold text-navy mb-2">Ready to Get Started?</h1>
+                        <p class="text-sm text-gray-600 max-w-sm mx-auto mb-4">You're just a few steps away from connecting with your next career opportunity.</p>
+                    </div>
+
+                    <div class="bg-gradient-to-br from-navy to-blue-800 rounded-xl p-4 text-center text-white mb-4">
+                        <h2 class="text-lg font-bold mb-2">Complete Your Profile Now</h2>
+                        <p class="text-blue-100 text-xs mb-3">Join thousands of job seekers who have found their perfect match through HireMe.</p>
+                        <div class="flex items-center justify-center space-x-4">
+                            <div class="text-center">
+                                <div class="text-lg font-bold">10K+</div>
+                                <div class="text-blue-200 text-xs">Active Job Seekers</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="text-lg font-bold">500+</div>
+                                <div class="text-blue-200 text-xs">Partner Companies</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="text-lg font-bold">85%</div>
+                                <div class="text-blue-200 text-xs">Success Rate</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-center">
+                        <button id="start-profile-btn" class="bg-light-blue text-navy font-bold py-2 px-5 rounded-lg hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-navy transition-all duration-300 btn-hover btn-press text-sm">
+                            <i class="fa-solid fa-arrow-right mr-2"></i>
+                            Start Building Your Profile
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="modal-footer" class="bg-gray-50 rounded-b-3xl p-4 flex items-center justify-between border-t border-light-gray flex-shrink-0">
+                <button id="prev-btn" class="text-navy font-medium hover:text-light-blue transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-navy focus:ring-offset-2 rounded px-2 py-1 disabled:opacity-50 disabled:cursor-not-allowed text-sm" disabled>
+                    <i class="fa-solid fa-arrow-left mr-1"></i>
+                    Previous
+                </button>
+
+                <div id="progress-dots" class="flex space-x-2">
+                    <button class="progress-dot w-2.5 h-2.5 rounded-full bg-gray-300 active focus:outline-none focus:ring-2 focus:ring-navy focus:ring-offset-2" data-slide="1" aria-label="Go to slide 1"></button>
+                    <button class="progress-dot w-2.5 h-2.5 rounded-full bg-gray-300 focus:outline-none focus:ring-2 focus:ring-navy focus:ring-offset-2" data-slide="2" aria-label="Go to slide 2"></button>
+                    <button class="progress-dot w-2.5 h-2.5 rounded-full bg-gray-300 focus:outline-none focus:ring-2 focus:ring-navy focus:ring-offset-2" data-slide="3" aria-label="Go to slide 3"></button>
+                    <button class="progress-dot w-2.5 h-2.5 rounded-full bg-gray-300 focus:outline-none focus:ring-2 focus:ring-navy focus:ring-offset-2" data-slide="4" aria-label="Go to slide 4"></button>
+                </div>
+
+                <button id="next-btn" class="bg-navy text-white font-medium px-4 py-1 rounded-lg hover:bg-opacity-90 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-navy btn-hover btn-press text-sm">
+                    Next
+                    <i class="fa-solid fa-arrow-right ml-1"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentSlide = 1;
+const totalSlides = 4;
+let modalElement;
+let focusableElements;
+let firstFocusableElement;
+let lastFocusableElement;
+
+function showOnboardingModal(event) {
+    if (event) event.preventDefault();
+    
+    const modal = document.getElementById('onboarding-modal');
+    modal.classList.remove('hidden');
+    modal.setAttribute('aria-hidden', 'false');
+    
+    modalElement = document.getElementById('modal-card');
+    focusableElements = modalElement.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+    firstFocusableElement = focusableElements[0];
+    lastFocusableElement = focusableElements[focusableElements.length - 1];
+    
+    firstFocusableElement.focus();
+    
+    emitAnalytics('onboarding_open');
+    emitAnalytics('slide_viewed', { slide_id: 1 });
+    
+    document.addEventListener('keydown', handleKeyDown);
+}
+
+function hideOnboardingModal() {
+    const modal = document.getElementById('onboarding-modal');
+    modal.classList.add('hidden');
+    modal.setAttribute('aria-hidden', 'true');
+    
+    document.removeEventListener('keydown', handleKeyDown);
+    emitAnalytics('onboarding_dismissed');
+}
+
+function showSlide(slideNumber) {
+    document.querySelectorAll('.slide-content').forEach(slide => {
+        slide.classList.add('hidden');
+        slide.classList.remove('slide-enter');
+    });
+    
+    const targetSlide = document.getElementById(`slide-${slideNumber}`);
+    targetSlide.classList.remove('hidden');
+    targetSlide.classList.add('slide-enter');
+    
+    document.querySelectorAll('.progress-dot').forEach((dot, index) => {
+        if (index + 1 === slideNumber) {
+            dot.classList.add('active');
+            dot.setAttribute('aria-current', 'true');
+        } else {
+            dot.classList.remove('active');
+            dot.removeAttribute('aria-current');
+        }
+    });
+    
+    const prevBtn = document.getElementById('prev-btn');
+    const nextBtn = document.getElementById('next-btn');
+    
+    prevBtn.disabled = slideNumber === 1;
+    
+    if (slideNumber === totalSlides) {
+        nextBtn.style.display = 'none';
+    } else {
+        nextBtn.style.display = 'block';
+    }
+    
+    currentSlide = slideNumber;
+    emitAnalytics('slide_viewed', { slide_id: slideNumber });
+}
+
+function nextSlide() {
+    if (currentSlide < totalSlides) {
+        showSlide(currentSlide + 1);
+        emitAnalytics('next_clicked', { from_slide: currentSlide - 1 });
+    }
+}
+
+function prevSlide() {
+    if (currentSlide > 1) {
+        showSlide(currentSlide - 1);
+        emitAnalytics('previous_clicked', { from_slide: currentSlide + 1 });
+    }
+}
+
+function handleKeyDown(event) {
+    if (event.key === 'Escape') {
+        hideOnboardingModal();
+        return;
+    }
+    
+    if (event.key === 'Tab') {
+        if (event.shiftKey) {
+            if (document.activeElement === firstFocusableElement) {
+                lastFocusableElement.focus();
+                event.preventDefault();
+            }
+        } else {
+            if (document.activeElement === lastFocusableElement) {
+                firstFocusableElement.focus();
+                event.preventDefault();
+            }
+        }
+    }
+    
+    if (event.key === 'ArrowRight') {
+        nextSlide();
+        event.preventDefault();
+    }
+    
+    if (event.key === 'ArrowLeft') {
+        prevSlide();
+        event.preventDefault();
+    }
+    
+    if (event.key === 'Enter' && document.activeElement.classList.contains('progress-dot')) {
+        const slideNumber = parseInt(document.activeElement.dataset.slide);
+        showSlide(slideNumber);
+        emitAnalytics('progress_dot_clicked', { target_slide: slideNumber });
+        event.preventDefault();
+    }
+}
+
+function startProfileBuilding() {
+    emitAnalytics('cta_clicked', { slide_id: currentSlide });
+    
+    const button = document.getElementById('start-profile-btn');
+    const originalText = button.innerHTML;
+    button.innerHTML = '<i class="fa-solid fa-check mr-2"></i>Success!';
+    button.classList.add('bg-green-500', 'text-white');
+    button.classList.remove('bg-light-blue', 'text-navy');
+    
+    setTimeout(() => {
+        hideOnboardingModal();
+        // Navigate to profile builder
+        // For demo, we just log it. In a real app, this would navigate.
+        console.log('Navigating to /profile/builder');
+        // window.location.href = '/profile/builder';
+    }, 800);
+}
+
+function emitAnalytics(eventName, data = {}) {
+    // Analytics implementation
+    console.log('Analytics:', eventName, data);
+    
+    // Example implementation for real analytics:
+    // gtag('event', eventName, data);
+    // or
+    // analytics.track(eventName, data);
+}
+
+// Event listeners
+document.addEventListener('DOMContentLoaded', (event) => {
+    // Automatically show the modal on page load for this specific page
+    showOnboardingModal();
+
+    document.getElementById('close-modal').addEventListener('click', hideOnboardingModal);
+    document.getElementById('next-btn').addEventListener('click', nextSlide);
+    document.getElementById('prev-btn').addEventListener('click', prevSlide);
+    document.getElementById('start-profile-btn').addEventListener('click', startProfileBuilding);
+
+    document.querySelectorAll('.progress-dot').forEach(dot => {
+        dot.addEventListener('click', function() {
+            const slideNumber = parseInt(this.dataset.slide);
+            showSlide(slideNumber);
+            emitAnalytics('progress_dot_clicked', { target_slide: slideNumber });
+        });
+    });
+
+    // Touch/swipe support
+    let touchStartX = 0;
+    let touchEndX = 0;
+    const slideContainer = document.getElementById('slide-container');
+
+    slideContainer.addEventListener('touchstart', function(event) {
+        touchStartX = event.changedTouches[0].screenX;
+    });
+
+    slideContainer.addEventListener('touchend', function(event) {
+        touchEndX = event.changedTouches[0].screenX;
+        handleSwipe();
+    });
+
+    function handleSwipe() {
+        const swipeThreshold = 50;
+        const diff = touchStartX - touchEndX;
+        
+        if (Math.abs(diff) > swipeThreshold) {
+            if (diff > 0) {
+                // Swipe left - next slide
+                nextSlide();
+            } else {
+                // Swipe right - previous slide
+                prevSlide();
+            }
+        }
+    }
+
+    // Initialize first slide
+    showSlide(1);
+});
+</script>
+
+
+</body></html>
