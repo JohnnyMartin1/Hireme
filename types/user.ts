@@ -56,6 +56,10 @@ export interface UserProfile {
   portfolioUrl?: string | null;
   createdAt?: Date | null;
 
+  // Onboarding
+  onboardingSeen?: boolean | null;
+  hasSeenWelcomePopup?: boolean | null; // Legacy field for backward compatibility
+
   // Keep this so pages don't explode if we forgot a field somewhere
   [key: string]: any;
 }

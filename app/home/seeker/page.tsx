@@ -30,26 +30,50 @@ export default function SeekerHomePage() {
   };
   const [isLoadingStats, setIsLoadingStats] = useState(true);
   const [threadDetails, setThreadDetails] = useState<any[]>([]);
-  const [showWelcomePopup, setShowWelcomePopup] = useState(false);
+  // Tri-state for modal visibility to prevent flicker
+  const [onboardingModalState, setOnboardingModalState] = useState<'unknown' | 'open' | 'closed'>('unknown');
   const [endorsements, setEndorsements] = useState<any[]>([]);
 
-  const handleCloseWelcomePopup = async () => {
-    setShowWelcomePopup(false);
+  // Utility function to determine if onboarding should be shown
+  const shouldShowOnboarding = useCallback((userProfile: UserProfile | null, localDismissed: string | null): boolean => {
+    // Don't show if user is not authenticated
+    if (!userProfile || !user) return false;
     
-    // Mark that the user has seen the welcome popup
+    // Don't show if server flag is true (onboardingSeen or legacy hasSeenWelcomePopup)
+    if (userProfile.onboardingSeen === true || userProfile.hasSeenWelcomePopup === true) return false;
+    
+    // Don't show if localStorage flag is set
+    if (localDismissed === '1') return false;
+    
+    // Show only for authenticated job seekers who haven't seen it
+    return userProfile.role === 'JOB_SEEKER' && userProfile.emailVerified === true;
+  }, [user]);
+
+  const handleCloseWelcomePopup = async () => {
+    // Optimistically update localStorage immediately
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('hireme:onboarding:v1:dismissed', '1');
+    }
+    
+    // Update component state immediately
+    setOnboardingModalState('closed');
+    
+    // Update server flag
     if (user && profile) {
       try {
         await updateDocument('users', user.uid, {
-          hasSeenWelcomePopup: true
+          onboardingSeen: true,
+          hasSeenWelcomePopup: true // Keep legacy field for backward compatibility
         });
         
-        // Immediately update local profile state to prevent popup from showing again
+        // Update local profile state
         setUserProfile(prevProfile => ({
           ...prevProfile,
+          onboardingSeen: true,
           hasSeenWelcomePopup: true
         }));
       } catch (error) {
-        console.error('Failed to update welcome popup status:', error);
+        console.error('Failed to update onboarding status:', error);
       }
     }
   };
@@ -79,16 +103,24 @@ export default function SeekerHomePage() {
     if (profile) {
       setUserProfile(profile);
       
-      // Check if this is the user's first login after email verification
-      // Show welcome popup if they just verified their email and haven't seen the welcome popup yet
-      if (profile.emailVerified && !profile.hasSeenWelcomePopup && !userProfile?.hasSeenWelcomePopup) {
-        setShowWelcomePopup(true);
-      }
-      
       // Update shared completion state
       updateCompletion(profile);
     }
   }, [user, profile, loading, router]);
+
+  // Effect to compute onboarding modal state once user data is available
+  useEffect(() => {
+    if (!user || !userProfile || onboardingModalState !== 'unknown') return;
+
+    // Get localStorage value (browser only)
+    const localDismissed = typeof window !== 'undefined' 
+      ? localStorage.getItem('hireme:onboarding:v1:dismissed') 
+      : null;
+
+    // Compute whether to show onboarding
+    const shouldShow = shouldShowOnboarding(userProfile, localDismissed);
+    setOnboardingModalState(shouldShow ? 'open' : 'closed');
+  }, [user, userProfile, shouldShowOnboarding, onboardingModalState]);
 
   // Listen for page focus/visibility changes to refresh completion when returning from profile page
   useEffect(() => {
@@ -120,22 +152,19 @@ export default function SeekerHomePage() {
     };
   }, [user, profile, updateCompletion]);
 
-  // Track navigation to profile page and auto-close popup
+  // Multi-tab support: Listen for storage events to close modal if dismissed in another tab
   useEffect(() => {
-    // Check if user has navigated to profile and completed it
-    if (showWelcomePopup && profile) {
-      const profileComplete = profile.firstName && profile.lastName && profile.headline;
-      
-      // If profile is complete, auto-close the popup and mark as seen
-      if (profileComplete) {
-        const timer = setTimeout(() => {
-          handleCloseWelcomePopup();
-        }, 500);
-        
-        return () => clearTimeout(timer);
+    if (typeof window === 'undefined') return;
+
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'hireme:onboarding:v1:dismissed' && e.newValue === '1') {
+        setOnboardingModalState('closed');
       }
-    }
-  }, [showWelcomePopup, profile]);
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
 
   // Fetch real-time data (optimized with parallel requests)
   useEffect(() => {
@@ -442,10 +471,12 @@ export default function SeekerHomePage() {
       </div>
       
       {/* Welcome Popup for first-time users */}
-      <WelcomePopup 
-        isVisible={showWelcomePopup} 
-        onClose={handleCloseWelcomePopup} 
-      />
+      {onboardingModalState === 'open' && (
+        <WelcomePopup 
+          isVisible={true} 
+          onClose={handleCloseWelcomePopup} 
+        />
+      )}
     </main>
   );
 }
