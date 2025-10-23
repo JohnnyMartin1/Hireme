@@ -179,11 +179,6 @@ export default function SeekerSignupPage() {
 
         // Move to welcome step
         nextStep();
-        
-        // Redirect to dashboard after a short delay to show the welcome message
-        setTimeout(() => {
-          window.location.href = '/home/seeker';
-        }, 2000);
       }
     } catch (error: any) {
       setError("An error occurred during signup. Please try again.");
