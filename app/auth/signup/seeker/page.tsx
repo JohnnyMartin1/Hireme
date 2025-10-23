@@ -172,20 +172,8 @@ export default function SeekerSignupPage() {
           console.error('Profile creation error:', profileError);
         }
 
-        // Send verification email
-        try {
-          await fetch('/api/auth/send-verification', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              userId: user.uid,
-              email: formData.email,
-              userName: `${formData.firstName} ${formData.lastName}`
-            })
-          });
-        } catch (verifyError) {
-          console.error('Failed to send verification email:', verifyError);
-        }
+        // Email is already verified through the 6-digit code verification
+        // No need to send additional verification email
 
         // Move to welcome step
         nextStep();

@@ -53,6 +53,21 @@ export async function POST(request: NextRequest) {
       usedAt: new Date().toISOString()
     });
 
+    // Find the user by email and mark email as verified
+    const usersSnapshot = await adminDb
+      .collection('users')
+      .where('email', '==', email)
+      .limit(1)
+      .get();
+
+    if (!usersSnapshot.empty) {
+      const userDoc = usersSnapshot.docs[0];
+      await userDoc.ref.update({
+        emailVerified: true,
+        emailVerifiedAt: new Date().toISOString()
+      });
+    }
+
     return NextResponse.json({ 
       success: true,
       message: 'Email verified successfully' 
