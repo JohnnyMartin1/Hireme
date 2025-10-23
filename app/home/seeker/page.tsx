@@ -3,7 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useFirebaseAuth } from "@/components/FirebaseAuthProvider";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useMemo, useCallback } from "react";
+import { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import { 
   User, 
   MessageSquare, 
@@ -25,15 +25,20 @@ export default function SeekerHomePage() {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [threads, setThreads] = useState<any[]>([]);
   const [profileViews, setProfileViews] = useState(0);
-  const routerToViews = () => {
-    router.push('/home/seeker/profile-views');
-  };
   const [isLoadingStats, setIsLoadingStats] = useState(true);
   const [threadDetails, setThreadDetails] = useState<any[]>([]);
   const [showWelcomePopup, setShowWelcomePopup] = useState(false);
   const [endorsements, setEndorsements] = useState<any[]>([]);
+  
+  // Add refs to prevent unnecessary re-renders
+  const hasInitialized = useRef(false);
+  const isFetchingData = useRef(false);
 
-  const handleCloseWelcomePopup = async () => {
+  const routerToViews = () => {
+    router.push('/home/seeker/profile-views');
+  };
+
+  const handleCloseWelcomePopup = useCallback(async () => {
     setShowWelcomePopup(false);
     
     // Mark that the user has seen the welcome popup
@@ -52,10 +57,33 @@ export default function SeekerHomePage() {
         console.error('Failed to update welcome popup status:', error);
       }
     }
-  };
+  }, [user, profile, updateDocument]);
 
+  // Memoized helper function to format time difference
+  const formatTimeAgo = useCallback((timestamp: any) => {
+    if (!timestamp) return 'Recently';
+    
+    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+    const now = new Date();
+    const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
+    
+    if (diffInHours < 1) return 'Just now';
+    if (diffInHours < 24) return `${diffInHours} hour${diffInHours === 1 ? '' : 's'} ago`;
+    
+    const diffInDays = Math.floor(diffInHours / 24);
+    if (diffInDays < 7) return `${diffInDays} day${diffInDays === 1 ? '' : 's'} ago`;
+    
+    const diffInWeeks = Math.floor(diffInDays / 7);
+    if (diffInWeeks < 4) return `${diffInWeeks} week${diffInWeeks === 1 ? '' : 's'} ago`;
+    
+    return date.toLocaleDateString();
+  }, []);
+
+  // Main initialization effect - only runs once
   useEffect(() => {
-    if (!loading && !user) {
+    if (loading || hasInitialized.current) return;
+
+    if (!user) {
       router.push("/auth/login");
       return;
     }
@@ -80,69 +108,24 @@ export default function SeekerHomePage() {
       setUserProfile(profile);
       
       // Check if this is the user's first login after email verification
-      // Show welcome popup if they just verified their email and haven't seen the welcome popup yet
       if (profile.emailVerified && !profile.hasSeenWelcomePopup && !userProfile?.hasSeenWelcomePopup) {
         setShowWelcomePopup(true);
       }
       
       // Update shared completion state
       updateCompletion(profile);
+      hasInitialized.current = true;
     }
-  }, [user, profile, loading, router]);
+  }, [user, profile, loading, router, updateCompletion, userProfile?.hasSeenWelcomePopup]);
 
-  // Listen for page focus/visibility changes to refresh completion when returning from profile page
-  useEffect(() => {
-    const handleFocus = async () => {
-      if (user && profile) {
-        // Refetch fresh profile data when page becomes visible
-        try {
-          const { data: freshProfile, error } = await getDocument('users', user.uid);
-          if (!error && freshProfile) {
-            setUserProfile(freshProfile);
-            updateCompletion(freshProfile);
-          }
-        } catch (error) {
-          console.error('Error refreshing profile data:', error);
-        }
-      }
-    };
-
-    window.addEventListener('focus', handleFocus);
-    document.addEventListener('visibilitychange', () => {
-      if (!document.hidden) {
-        handleFocus();
-      }
-    });
-
-    return () => {
-      window.removeEventListener('focus', handleFocus);
-      document.removeEventListener('visibilitychange', handleFocus);
-    };
-  }, [user, profile, updateCompletion]);
-
-  // Track navigation to profile page and auto-close popup
-  useEffect(() => {
-    // Check if user has navigated to profile and completed it
-    if (showWelcomePopup && profile) {
-      const profileComplete = profile.firstName && profile.lastName && profile.headline;
-      
-      // If profile is complete, auto-close the popup and mark as seen
-      if (profileComplete) {
-        const timer = setTimeout(() => {
-          handleCloseWelcomePopup();
-        }, 500);
-        
-        return () => clearTimeout(timer);
-      }
-    }
-  }, [showWelcomePopup, profile]);
-
-  // Fetch real-time data (optimized with parallel requests)
+  // Fetch dashboard data - only runs once when user is available
   useEffect(() => {
     const fetchDashboardData = async () => {
-      if (!user) return;
+      if (!user || isFetchingData.current) return;
 
+      isFetchingData.current = true;
       setIsLoadingStats(true);
+      
       try {
         // Fetch threads and views in parallel for better performance
         const [threadsResult, viewsResult, endorsementsResult] = await Promise.all([
@@ -199,34 +182,38 @@ export default function SeekerHomePage() {
         }
 
       } catch (error) {
-        // Silent fail - already handled by loading state
+        console.error('Error fetching dashboard data:', error);
       } finally {
         setIsLoadingStats(false);
+        isFetchingData.current = false;
       }
     };
 
-    fetchDashboardData();
-  }, [user]);
+    if (user && profile?.role === 'JOB_SEEKER') {
+      fetchDashboardData();
+    }
+  }, [user?.uid]); // Only depend on user ID to prevent re-fetching
 
-  // Memoized helper function to format time difference
-  const formatTimeAgo = useCallback((timestamp: any) => {
-    if (!timestamp) return 'Recently';
-    
-    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-    const now = new Date();
-    const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
-    
-    if (diffInHours < 1) return 'Just now';
-    if (diffInHours < 24) return `${diffInHours} hour${diffInHours === 1 ? '' : 's'} ago`;
-    
-    const diffInDays = Math.floor(diffInHours / 24);
-    if (diffInDays < 7) return `${diffInDays} day${diffInDays === 1 ? '' : 's'} ago`;
-    
-    const diffInWeeks = Math.floor(diffInDays / 7);
-    if (diffInWeeks < 4) return `${diffInWeeks} week${diffInWeeks === 1 ? '' : 's'} ago`;
-    
-    return date.toLocaleDateString();
-  }, []);
+  // Track navigation to profile page and auto-close popup
+  useEffect(() => {
+    if (showWelcomePopup && profile) {
+      const profileComplete = profile.firstName && profile.lastName && profile.headline;
+      
+      // If profile is complete, auto-close the popup and mark as seen
+      if (profileComplete) {
+        const timer = setTimeout(() => {
+          handleCloseWelcomePopup();
+        }, 500);
+        
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [showWelcomePopup, profile, handleCloseWelcomePopup]);
+
+  // Memoized values to prevent unnecessary re-renders
+  const memoizedEndorsements = useMemo(() => endorsements, [endorsements.length]);
+  const memoizedThreadDetails = useMemo(() => threadDetails, [threadDetails.length]);
+  const memoizedProfileViews = useMemo(() => profileViews, [profileViews]);
 
   if (loading) {
     return (
@@ -356,51 +343,51 @@ export default function SeekerHomePage() {
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600 group-hover:text-gray-700 transition-colors duration-200">Companies Viewed You</p>
                 <p className="text-2xl font-bold text-gray-900 group-hover:text-green-600 transition-colors duration-200">
-                  {isLoadingStats ? '...' : profileViews}
+                  {isLoadingStats ? '...' : memoizedProfileViews}
                 </p>
               </div>
             </div>
           </button>
 
           <Link href="/endorsements" className={`relative overflow-hidden rounded-xl shadow-lg p-6 border-l-4 transition-all duration-300 hover:shadow-xl hover:scale-105 cursor-pointer ${
-            endorsements.length === 0 
+            memoizedEndorsements.length === 0 
               ? 'bg-gradient-to-r from-yellow-50 to-amber-50 border-yellow-500 hover:from-yellow-100 hover:to-amber-100' 
               : 'bg-white border-yellow-500'
           }`}>
             {/* Special animation for 0 endorsements */}
-            {endorsements.length === 0 && (
+            {memoizedEndorsements.length === 0 && (
               <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-br from-yellow-400 to-amber-500 rounded-full -translate-y-8 translate-x-8 opacity-20 animate-pulse"></div>
             )}
             
             <div className="flex items-center">
               <div className={`p-2 rounded-lg transition-all duration-300 ${
-                endorsements.length === 0 
+                memoizedEndorsements.length === 0 
                   ? 'bg-gradient-to-r from-yellow-200 to-amber-200 animate-pulse' 
                   : 'bg-yellow-100'
               }`}>
                 <Star className={`h-6 w-6 transition-colors duration-300 ${
-                  endorsements.length === 0 ? 'text-yellow-700' : 'text-yellow-600'
+                  memoizedEndorsements.length === 0 ? 'text-yellow-700' : 'text-yellow-600'
                 }`} />
               </div>
               <div className="ml-4 flex-1">
                 <div className="flex items-center justify-between">
                   <p className={`text-sm font-medium transition-colors duration-300 ${
-                    endorsements.length === 0 ? 'text-yellow-800' : 'text-gray-600'
+                    memoizedEndorsements.length === 0 ? 'text-yellow-800' : 'text-gray-600'
                   }`}>
                     Endorsements
                   </p>
-                  {endorsements.length === 0 && (
+                  {memoizedEndorsements.length === 0 && (
                     <span className="text-xs bg-yellow-200 text-yellow-800 px-2 py-1 rounded-full font-semibold animate-bounce">
                       NEW
                     </span>
                   )}
                 </div>
                 <p className={`text-2xl font-bold transition-colors duration-300 ${
-                  endorsements.length === 0 ? 'text-yellow-800' : 'text-gray-900'
+                  memoizedEndorsements.length === 0 ? 'text-yellow-800' : 'text-gray-900'
                 }`}>
-                  {isLoadingStats ? '...' : endorsements.length}
+                  {isLoadingStats ? '...' : memoizedEndorsements.length}
                 </p>
-                {endorsements.length === 0 && (
+                {memoizedEndorsements.length === 0 && (
                   <p className="text-xs text-yellow-700 mt-1 font-medium">
                     Get endorsements to stand out! ✨
                   </p>
@@ -411,7 +398,7 @@ export default function SeekerHomePage() {
         </div>
 
         {/* Endorsements Call-to-Action */}
-        {endorsements.length === 0 && (
+        {memoizedEndorsements.length === 0 && (
           <div className="bg-gradient-to-r from-yellow-50 to-amber-50 border border-yellow-200 rounded-xl shadow-lg p-6 mb-8">
             <div className="flex items-center justify-between">
               <div className="flex items-center">
@@ -465,7 +452,7 @@ export default function SeekerHomePage() {
                 </div>
                 <span className="text-purple-800 ml-3 group-hover:text-purple-900 transition-colors duration-200">View Messages</span>
               </Link>
-              {endorsements.length === 0 && (
+              {memoizedEndorsements.length === 0 && (
                 <Link
                   href="/endorsements"
                   className="flex items-center p-3 bg-gradient-to-r from-yellow-50 to-amber-50 rounded-lg hover:from-yellow-100 hover:to-amber-100 hover:scale-105 transition-all duration-200 border border-yellow-200 group cursor-pointer"
@@ -486,9 +473,9 @@ export default function SeekerHomePage() {
         {/* Recent Activity */}
         <div className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow duration-200">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Activity</h3>
-          {threadDetails.length > 0 ? (
+          {memoizedThreadDetails.length > 0 ? (
             <div className="space-y-3">
-              {threadDetails.slice(0, 3).map((thread: any, index: number) => (
+              {memoizedThreadDetails.slice(0, 3).map((thread: any, index: number) => (
                 <Link
                   key={thread.id || index}
                   href={`/messages/${thread.id}`}
