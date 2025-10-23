@@ -64,100 +64,126 @@ export default function EndorsementsPage() {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
-      <div className="max-w-4xl mx-auto p-6">
-        {/* Header */}
-        <div className="mb-8">
+    <main className="min-h-screen" style={{background: 'linear-gradient(180deg, #E6F0FF 0%, #F0F8FF 40%, #F8FAFC 100%)'}}>
+      <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-6 space-y-6">
+        
+        {/* Back to Dashboard Link */}
+        <div className="mb-10">
           <Link 
             href="/home/seeker"
-            className="text-blue-600 hover:underline flex items-center space-x-1 mb-4"
+            className="text-navy font-semibold hover:underline decoration-2 underline-offset-4 transition-all cursor-pointer"
           >
-            <ArrowLeft className="h-4 w-4" />
-            <span>Back to Dashboard</span>
+            <ArrowLeft className="h-4 w-4 inline mr-2" />
+            Back to Dashboard
           </Link>
-          <div className="flex items-center gap-3">
-            <Star className="h-8 w-8 text-yellow-500" />
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Your Endorsements</h1>
-              <p className="text-gray-600">Professional recommendations from colleagues, managers, and peers</p>
-            </div>
-          </div>
         </div>
 
-        {/* Stats Summary */}
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
-          <div className="flex items-center justify-between">
+        {/* Page Header */}
+        <header className="mb-10">
+          <div className="flex items-center space-x-4">
+            <Star className="h-12 w-12 text-yellow-400" />
             <div>
-              <h2 className="text-xl font-semibold text-gray-900 mb-2">Endorsement Summary</h2>
-              <p className="text-gray-600">
-                You have received <span className="font-semibold text-blue-600">{endorsements.length}</span> endorsement{endorsements.length !== 1 ? 's' : ''}
-              </p>
+              <h1 className="text-4xl font-extrabold text-navy">Your Endorsements</h1>
+              <p className="text-gray-500 mt-1 text-lg">Professional recommendations from colleagues, managers, and peers.</p>
             </div>
+          </div>
+        </header>
+
+        {/* Endorsement Summary Card */}
+        <section className="bg-white/90 backdrop-blur-sm p-8 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between mb-8 hover:shadow-lg transition-all duration-200">
+          <div>
+            <h2 className="text-xl font-bold text-navy">Endorsement Summary</h2>
+            <p className="text-gray-600 mt-1">You have received <span className="font-bold text-navy">{endorsements.length}</span> endorsements.</p>
+          </div>
+          <div className="flex items-center space-x-4">
             <div className="text-right">
-              <div className="text-3xl font-bold text-yellow-500">{endorsements.length}</div>
-              <div className="text-sm text-gray-500">Total Endorsements</div>
+              <p className="text-5xl font-extrabold text-yellow-500">{endorsements.length}</p>
+              <p className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Total Endorsements</p>
             </div>
           </div>
-        </div>
-
-        {/* Share Link Section */}
-        <div className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl shadow-lg p-6 mb-8">
-          <h3 className="text-xl font-semibold mb-3 flex items-center">
-            <MessageSquare className="h-5 w-5 mr-2" />
-            Share Your Endorsement Link
-          </h3>
-          <p className="mb-4 text-blue-100">
-            Send this link to colleagues, managers, professors, or anyone who can vouch for your skills and experience.
-          </p>
-          <div className="bg-white/10 rounded-lg p-4">
-            <div className="flex items-center justify-between">
-              <code className="text-sm font-mono bg-white/20 px-3 py-2 rounded flex-1 mr-4">
-                {typeof window !== 'undefined' ? `${window.location.origin}/endorse/${user.uid}` : `/endorse/${user.uid}`}
-              </code>
-              <button
-                onClick={() => {
-                  const link = typeof window !== 'undefined' ? `${window.location.origin}/endorse/${user.uid}` : `/endorse/${user.uid}`;
-                  navigator.clipboard.writeText(link);
-                  // You could add a toast notification here
-                }}
-                className="px-4 py-2 bg-white text-blue-600 rounded-lg hover:bg-blue-50 transition-colors font-medium"
-              >
-                Copy Link
-              </button>
+        </section>
+        
+        {/* Share Link Promo Card */}
+        <section className="bg-gradient-to-br from-light-blue to-navy text-white p-8 rounded-2xl shadow-lg mb-8 hover:shadow-xl transition-all duration-200">
+          <div className="flex items-start space-x-4 mb-6">
+            <svg className="w-8 h-8 mt-1 text-blue-100" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/>
+            </svg>
+            <div>
+              <h2 className="text-2xl font-bold">Share Your Endorsement Link</h2>
+              <p className="text-blue-100 mt-1">Send this link to colleagues, managers, professors, or anyone who can vouch for your skills and experience.</p>
             </div>
           </div>
-        </div>
+          <div className="flex flex-col sm:flex-row items-center space-y-3 sm:space-y-0 sm:space-x-4">
+            <div className="relative flex-grow w-full">
+              <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M10.59 13.41c.41.39.41 1.03 0 1.42-.39.39-1.03.39-1.42 0a5.003 5.003 0 0 1 0-7.07l3.54-3.54a5.003 5.003 0 0 1 7.07 0 5.003 5.003 0 0 1 0 7.07l-1.49 1.49c.01-.82-.12-1.64-.4-2.42l.47-.48a2.982 2.982 0 0 0 0-4.24 2.982 2.982 0 0 0-4.24 0l-3.53 3.53a2.982 2.982 0 0 0 0 4.24zm2.82-4.24c.39-.39 1.03-.39 1.42 0a5.003 5.003 0 0 1 0 7.07l-3.54 3.54a5.003 5.003 0 0 1-7.07 0 5.003 5.003 0 0 1 0-7.07l1.49-1.49c-.01.82.12 1.64.4 2.42l-.47.48a2.982 2.982 0 0 0 0 4.24 2.982 2.982 0 0 0 4.24 0l3.53-3.53a2.982 2.982 0 0 0 0-4.24z"/>
+              </svg>
+              <input 
+                type="text" 
+                value={typeof window !== 'undefined' ? `${window.location.origin}/endorse/${user.uid}` : `/endorse/${user.uid}`}
+                readOnly 
+                className="w-full bg-white/20 border-2 border-white/30 rounded-lg py-3 pl-10 pr-4 text-white placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-white/50 transition-all cursor-pointer"
+              />
+            </div>
+            <button
+              onClick={() => {
+                const link = typeof window !== 'undefined' ? `${window.location.origin}/endorse/${user.uid}` : `/endorse/${user.uid}`;
+                navigator.clipboard.writeText(link);
+                // You could add a toast notification here
+              }}
+              className="bg-white text-navy font-bold py-3 px-8 rounded-lg w-full sm:w-auto hover:bg-light-blue/20 transition-colors duration-200 shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-navy focus:ring-white"
+            >
+              <span>Copy Link</span>
+              <svg className="w-4 h-4 ml-2 inline" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
+              </svg>
+            </button>
+          </div>
+        </section>
 
-        {/* Endorsements List */}
+        {/* Error Display */}
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-4 mb-6">
             {error}
           </div>
         )}
 
+        {/* Empty State Card */}
         {endorsements.length === 0 ? (
-          <div className="bg-white rounded-xl shadow-lg p-12 text-center">
-            <Star className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">No endorsements yet</h3>
-            <p className="text-gray-600 mb-6">
-              Start building your professional reputation by sharing your endorsement link with colleagues and mentors.
-            </p>
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 max-w-md mx-auto">
-              <p className="text-sm text-blue-800 mb-2">
-                <strong>Share your link with:</strong>
-              </p>
-              <ul className="text-sm text-blue-700 space-y-1">
-                <li>• Former managers and supervisors</li>
-                <li>• Colleagues and teammates</li>
-                <li>• Professors and academic advisors</li>
-                <li>• Clients and collaborators</li>
+          <section className="bg-white/90 backdrop-blur-sm p-8 rounded-2xl shadow-sm border border-slate-200 text-center hover:shadow-lg transition-all duration-200">
+            <div className="w-24 h-24 mx-auto bg-slate-100 rounded-full flex items-center justify-center mb-6">
+              <Star className="h-12 w-12 text-slate-400" />
+            </div>
+            <h2 className="text-2xl font-bold text-navy">No endorsements yet</h2>
+            <p className="text-gray-500 mt-2 max-w-md mx-auto">Start building your professional reputation by sharing your endorsement link with colleagues and mentors.</p>
+            <div className="mt-8 bg-light-blue/20 border border-light-blue/50 rounded-xl p-6 max-w-sm mx-auto text-left">
+              <h3 className="font-bold text-navy mb-4">Share your link with:</h3>
+              <ul className="space-y-3 text-gray-700">
+                <li className="flex items-start">
+                  <div className="w-2 h-2 bg-light-blue rounded-full mr-3 mt-2 flex-shrink-0"></div>
+                  <span>Former managers and supervisors</span>
+                </li>
+                <li className="flex items-start">
+                  <div className="w-2 h-2 bg-light-blue rounded-full mr-3 mt-2 flex-shrink-0"></div>
+                  <span>Colleagues and teammates</span>
+                </li>
+                <li className="flex items-start">
+                  <div className="w-2 h-2 bg-light-blue rounded-full mr-3 mt-2 flex-shrink-0"></div>
+                  <span>Professors and academic advisors</span>
+                </li>
+                <li className="flex items-start">
+                  <div className="w-2 h-2 bg-light-blue rounded-full mr-3 mt-2 flex-shrink-0"></div>
+                  <span>Clients and collaborators</span>
+                </li>
               </ul>
             </div>
-          </div>
+          </section>
         ) : (
+          /* Endorsements List */
           <div className="space-y-6">
             {endorsements.map((endorsement: any, index: number) => (
-              <div key={index} className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-yellow-400">
+              <div key={index} className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-sm border border-slate-200 p-6 hover:shadow-lg transition-all duration-200">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex-1">
                     <h4 className="text-lg font-semibold text-gray-900 mb-2">{endorsement.skill}</h4>
@@ -202,12 +228,12 @@ export default function EndorsementsPage() {
             ))}
           </div>
         )}
-
+        
         {/* Footer */}
-        <div className="text-center mt-8 text-sm text-gray-500">
+        <footer className="text-center mt-12 text-gray-500 text-sm">
           <p>Endorsements help employers understand your strengths and professional relationships.</p>
-          <p className="mt-1">Keep sharing your link to build a strong professional reputation!</p>
-        </div>
+          <p>Keep sharing your link to build a strong professional reputation!</p>
+        </footer>
       </div>
     </main>
   );
