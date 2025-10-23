@@ -249,15 +249,15 @@ export default function SeekerHomePage() {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+    <main className="min-h-screen bg-gradient-to-br from-slate-50 via-indigo-50 to-slate-50">
       {/* Hero Section */}
-      <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white py-8 px-6">
-        <div className="max-w-6xl mx-auto">
-          <div className="flex items-center gap-4">
+      <div className="bg-gradient-to-r from-navy to-blue-900 text-white py-8 px-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex items-center gap-6">
             {/* Profile Picture */}
             <div className="flex-shrink-0">
               {(userProfile as any)?.profileImageUrl ? (
-                <div className="relative w-20 h-20 rounded-full overflow-hidden border-4 border-white shadow-lg">
+                <div className="relative w-20 h-20 rounded-full overflow-hidden border-4 border-white/30 shadow-lg">
                   <Image
                     src={(userProfile as any).profileImageUrl}
                     alt={`${profile?.firstName || 'User'}'s profile`}
@@ -266,7 +266,7 @@ export default function SeekerHomePage() {
                   />
                 </div>
               ) : (
-                <div className="w-20 h-20 rounded-full bg-white/20 border-4 border-white shadow-lg flex items-center justify-center">
+                <div className="w-20 h-20 rounded-full bg-white/20 border-4 border-white/30 shadow-lg flex items-center justify-center">
                   <User className="h-10 w-10 text-white" />
                 </div>
               )}
@@ -277,7 +277,7 @@ export default function SeekerHomePage() {
               <h1 className="text-3xl font-bold mb-2">
                 Welcome back, {profile?.firstName || 'Job Seeker'}! 👋
               </h1>
-              <p className="text-blue-100 text-lg">
+              <p className="text-blue-200 text-lg">
                 {profile?.headline || 'Ready to find your next opportunity?'}
               </p>
             </div>
@@ -285,87 +285,87 @@ export default function SeekerHomePage() {
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto p-6">
+      <div className="max-w-7xl mx-auto px-6 md:px-8 py-10">
         {/* Completion Bar */}
-        <div className={`rounded-xl shadow-lg p-4 mb-6 transition-all duration-500 ${
+        <div className={`rounded-2xl shadow-sm border border-slate-200/60 p-6 md:p-7 mb-8 transition-all duration-500 ${
           completion === 100 
-            ? 'bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200' 
+            ? 'bg-gradient-to-r from-green-50 to-emerald-50 border-green-200' 
             : 'bg-white'
         }`}>
-          <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center justify-between mb-4">
             <div className="flex items-center">
-              <p className="text-sm font-medium text-gray-700">Profile Completion</p>
+              <p className="text-lg font-semibold text-slate-900">Profile Completion</p>
               {completion === 100 && (
                 <span className="ml-2 text-green-600">✓</span>
               )}
             </div>
-            <p className={`text-sm font-semibold ${
-              completion === 100 ? 'text-green-600' : 'text-gray-600'
+            <p className={`text-2xl font-bold ${
+              completion === 100 ? 'text-green-600' : 'text-slate-900'
             }`}>
               {completion}%
             </p>
           </div>
-          <div className="w-full h-3 bg-gray-200 rounded-full overflow-hidden">
+          <div className="w-full h-3 bg-slate-200 rounded-full overflow-hidden shadow-inner">
             <div 
               className={`h-3 transition-all duration-500 ease-in-out ${
                 completion === 100 
                   ? 'bg-gradient-to-r from-green-500 to-emerald-500' 
-                  : 'bg-blue-600'
+                  : 'bg-gradient-to-r from-navy to-blue-600'
               }`} 
               style={{ width: `${completion}%` }} 
             />
           </div>
           {completion === 100 ? (
-            <div className="mt-3 text-sm text-green-600 font-medium flex items-center">
+            <div className="mt-4 text-sm text-green-600 font-medium flex items-center">
               <span className="mr-2">🎉</span>
               Profile complete! You're ready to be discovered by employers.
             </div>
           ) : completion >= 80 ? (
-            <div className="mt-3 text-sm text-gray-600">
+            <div className="mt-4 text-sm text-slate-600">
               Almost there! Just a few more sections to complete.{' '}
-              <a href="/account/profile" className="text-blue-600 hover:underline">Finish profile</a>
+              <a href="/account/profile" className="text-blue-600 hover:underline font-semibold">Finish profile →</a>
             </div>
           ) : (
-            <div className="mt-3 text-sm text-gray-600">
+            <div className="mt-4 text-sm text-slate-600">
               Complete your profile to get noticed faster.{' '}
-              <a href="/account/profile" className="text-blue-600 hover:underline">Finish profile</a>
+              <a href="/account/profile" className="text-blue-600 hover:underline font-semibold">Finish profile →</a>
             </div>
           )}
         </div>
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Link href="/messages/candidate" className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-blue-500 hover:shadow-xl hover:scale-105 transition-all duration-200 cursor-pointer group">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+          <Link href="/messages/candidate" className="bg-white rounded-2xl shadow-sm border border-slate-200/60 p-6 md:p-7 hover:shadow-lg hover:scale-105 transition-all duration-200 cursor-pointer group">
             <div className="flex items-center">
-              <div className="p-2 bg-blue-100 rounded-lg group-hover:bg-blue-200 transition-colors duration-200">
+              <div className="w-14 h-14 bg-blue-50 rounded-full flex items-center justify-center group-hover:bg-blue-100 transition-colors duration-200">
                 <MessageSquare className="h-6 w-6 text-blue-600 group-hover:text-blue-700 transition-colors duration-200" />
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600 group-hover:text-gray-700 transition-colors duration-200">Messages</p>
-                <p className="text-2xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors duration-200">
+                <p className="text-sm font-medium text-slate-600 group-hover:text-slate-700 transition-colors duration-200">Messages</p>
+                <p className="text-3xl font-bold text-slate-900 group-hover:text-blue-600 transition-colors duration-200">
                   {isLoadingStats ? '...' : threads.length}
                 </p>
               </div>
             </div>
           </Link>
 
-          <button onClick={routerToViews} className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-green-500 text-left w-full hover:shadow-xl hover:scale-105 transition-all duration-200 group">
+          <button onClick={routerToViews} className="bg-white rounded-2xl shadow-sm border border-slate-200/60 p-6 md:p-7 text-left w-full hover:shadow-lg hover:scale-105 transition-all duration-200 group">
             <div className="flex items-center">
-              <div className="p-2 bg-green-100 rounded-lg group-hover:bg-green-200 transition-colors duration-200">
+              <div className="w-14 h-14 bg-green-50 rounded-full flex items-center justify-center group-hover:bg-green-100 transition-colors duration-200">
                 <Eye className="h-6 w-6 text-green-600 group-hover:text-green-700 transition-colors duration-200" />
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600 group-hover:text-gray-700 transition-colors duration-200">Companies Viewed You</p>
-                <p className="text-2xl font-bold text-gray-900 group-hover:text-green-600 transition-colors duration-200">
+                <p className="text-sm font-medium text-slate-600 group-hover:text-slate-700 transition-colors duration-200">Companies Viewed You</p>
+                <p className="text-3xl font-bold text-slate-900 group-hover:text-green-600 transition-colors duration-200">
                   {isLoadingStats ? '...' : profileViews}
                 </p>
               </div>
             </div>
           </button>
 
-          <Link href="/endorsements" className={`relative overflow-hidden rounded-xl shadow-lg p-6 border-l-4 transition-all duration-300 hover:shadow-xl hover:scale-105 cursor-pointer ${
+          <Link href="/endorsements" className={`relative overflow-hidden rounded-2xl shadow-sm border border-slate-200/60 p-6 md:p-7 transition-all duration-300 hover:shadow-lg hover:scale-105 cursor-pointer ${
             endorsements.length === 0 
-              ? 'bg-gradient-to-r from-yellow-50 to-amber-50 border-yellow-500 hover:from-yellow-100 hover:to-amber-100' 
-              : 'bg-white border-yellow-500'
+              ? 'bg-gradient-to-r from-yellow-50 to-amber-50 border-yellow-200 hover:from-yellow-100 hover:to-amber-100' 
+              : 'bg-white'
           }`}>
             {/* Special animation for 0 endorsements */}
             {endorsements.length === 0 && (
@@ -373,10 +373,10 @@ export default function SeekerHomePage() {
             )}
             
             <div className="flex items-center">
-              <div className={`p-2 rounded-lg transition-all duration-300 ${
+              <div className={`w-14 h-14 rounded-full flex items-center justify-center transition-all duration-300 ${
                 endorsements.length === 0 
                   ? 'bg-gradient-to-r from-yellow-200 to-amber-200 animate-pulse' 
-                  : 'bg-yellow-100'
+                  : 'bg-yellow-50'
               }`}>
                 <Star className={`h-6 w-6 transition-colors duration-300 ${
                   endorsements.length === 0 ? 'text-yellow-700' : 'text-yellow-600'
@@ -385,7 +385,7 @@ export default function SeekerHomePage() {
               <div className="ml-4 flex-1">
                 <div className="flex items-center justify-between">
                   <p className={`text-sm font-medium transition-colors duration-300 ${
-                    endorsements.length === 0 ? 'text-yellow-800' : 'text-gray-600'
+                    endorsements.length === 0 ? 'text-yellow-800' : 'text-slate-600'
                   }`}>
                     Endorsements
                   </p>
@@ -395,8 +395,8 @@ export default function SeekerHomePage() {
                     </span>
                   )}
                 </div>
-                <p className={`text-2xl font-bold transition-colors duration-300 ${
-                  endorsements.length === 0 ? 'text-yellow-800' : 'text-gray-900'
+                <p className={`text-3xl font-bold transition-colors duration-300 ${
+                  endorsements.length === 0 ? 'text-yellow-800' : 'text-slate-900'
                 }`}>
                   {isLoadingStats ? '...' : endorsements.length}
                 </p>
@@ -412,10 +412,10 @@ export default function SeekerHomePage() {
 
         {/* Endorsements Call-to-Action */}
         {endorsements.length === 0 && (
-          <div className="bg-gradient-to-r from-yellow-50 to-amber-50 border border-yellow-200 rounded-xl shadow-lg p-6 mb-8">
+          <div className="bg-gradient-to-r from-yellow-50 to-amber-50 border border-yellow-200 rounded-2xl shadow-sm p-6 md:p-7 mb-8">
             <div className="flex items-center justify-between">
               <div className="flex items-center">
-                <div className="p-3 bg-gradient-to-r from-yellow-200 to-amber-200 rounded-lg mr-4">
+                <div className="w-12 h-12 bg-gradient-to-r from-yellow-200 to-amber-200 rounded-full flex items-center justify-center mr-4">
                   <Star className="h-6 w-6 text-yellow-700" />
                 </div>
                 <div>
@@ -434,47 +434,47 @@ export default function SeekerHomePage() {
         )}
 
         {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-1 gap-6 mb-8">
-          <div className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow duration-200">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
-            <div className="space-y-3">
+        <div className="grid grid-cols-1 md:grid-cols-1 gap-8 mb-8">
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-200/60 p-6 md:p-7 hover:shadow-lg transition-shadow duration-200">
+            <h3 className="text-lg font-semibold text-slate-900 mb-5">Quick Actions</h3>
+            <div className="space-y-2">
               <Link
                 href="/account/profile"
-                className="flex items-center p-3 bg-blue-50 rounded-lg hover:bg-blue-100 hover:scale-105 transition-all duration-200 group cursor-pointer"
+                className="flex items-center p-4 rounded-lg hover:bg-blue-50 hover:scale-105 transition-all duration-200 group cursor-pointer"
               >
-                <div className="p-1 bg-blue-100 rounded group-hover:bg-blue-200 transition-colors duration-200">
-                  <User className="h-4 w-4 text-blue-600 group-hover:text-blue-700 transition-colors duration-200" />
+                <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center group-hover:bg-blue-100 transition-colors duration-200">
+                  <User className="h-5 w-5 text-blue-600 group-hover:text-blue-700 transition-colors duration-200" />
                 </div>
-                <span className="text-blue-800 ml-3 group-hover:text-blue-900 transition-colors duration-200">Edit Profile</span>
+                <span className="text-slate-700 font-medium ml-4 group-hover:text-blue-900 transition-colors duration-200">Edit Profile</span>
               </Link>
               <Link
                 href={`/candidate/${user?.uid}`}
-                className="flex items-center p-3 bg-green-50 rounded-lg hover:bg-green-100 hover:scale-105 transition-all duration-200 group cursor-pointer"
+                className="flex items-center p-4 rounded-lg hover:bg-green-50 hover:scale-105 transition-all duration-200 group cursor-pointer"
               >
-                <div className="p-1 bg-green-100 rounded group-hover:bg-green-200 transition-colors duration-200">
-                  <Eye className="h-4 w-4 text-green-600 group-hover:text-green-700 transition-colors duration-200" />
+                <div className="w-10 h-10 bg-green-50 rounded-lg flex items-center justify-center group-hover:bg-green-100 transition-colors duration-200">
+                  <Eye className="h-5 w-5 text-green-600 group-hover:text-green-700 transition-colors duration-200" />
                 </div>
-                <span className="text-green-800 ml-3 group-hover:text-green-900 transition-colors duration-200">Preview Profile</span>
+                <span className="text-slate-700 font-medium ml-4 group-hover:text-green-900 transition-colors duration-200">Preview Profile</span>
               </Link>
               <Link
                 href="/messages/candidate"
-                className="flex items-center p-3 bg-purple-50 rounded-lg hover:bg-purple-100 hover:scale-105 transition-all duration-200 group cursor-pointer"
+                className="flex items-center p-4 rounded-lg hover:bg-purple-50 hover:scale-105 transition-all duration-200 group cursor-pointer"
               >
-                <div className="p-1 bg-purple-100 rounded group-hover:bg-purple-200 transition-colors duration-200">
-                  <MessageSquare className="h-4 w-4 text-purple-600 group-hover:text-purple-700 transition-colors duration-200" />
+                <div className="w-10 h-10 bg-purple-50 rounded-lg flex items-center justify-center group-hover:bg-purple-100 transition-colors duration-200">
+                  <MessageSquare className="h-5 w-5 text-purple-600 group-hover:text-purple-700 transition-colors duration-200" />
                 </div>
-                <span className="text-purple-800 ml-3 group-hover:text-purple-900 transition-colors duration-200">View Messages</span>
+                <span className="text-slate-700 font-medium ml-4 group-hover:text-purple-900 transition-colors duration-200">View Messages</span>
               </Link>
               {endorsements.length === 0 && (
                 <Link
                   href="/endorsements"
-                  className="flex items-center p-3 bg-gradient-to-r from-yellow-50 to-amber-50 rounded-lg hover:from-yellow-100 hover:to-amber-100 hover:scale-105 transition-all duration-200 border border-yellow-200 group cursor-pointer"
+                  className="flex items-center p-4 rounded-lg hover:bg-yellow-50 hover:scale-105 transition-all duration-200 border border-yellow-200 group cursor-pointer"
                 >
-                  <div className="p-1 bg-yellow-200 rounded group-hover:bg-yellow-300 transition-colors duration-200">
-                    <Star className="h-4 w-4 text-yellow-600 group-hover:text-yellow-700 transition-colors duration-200" />
+                  <div className="w-10 h-10 bg-yellow-50 rounded-lg flex items-center justify-center group-hover:bg-yellow-100 transition-colors duration-200">
+                    <Star className="h-5 w-5 text-yellow-600 group-hover:text-yellow-700 transition-colors duration-200" />
                   </div>
-                  <span className="text-yellow-800 font-semibold ml-3 group-hover:text-yellow-900 transition-colors duration-200">Get Endorsements</span>
-                  <span className="ml-auto text-xs bg-yellow-200 text-yellow-800 px-2 py-1 rounded-full font-semibold group-hover:bg-yellow-300 transition-colors duration-200">
+                  <span className="text-slate-700 font-medium ml-4 group-hover:text-yellow-900 transition-colors duration-200">Get Endorsements</span>
+                  <span className="ml-auto text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full font-semibold group-hover:bg-yellow-200 transition-colors duration-200">
                     Recommended
                   </span>
                 </Link>
@@ -484,21 +484,21 @@ export default function SeekerHomePage() {
         </div>
 
         {/* Recent Activity */}
-        <div className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow duration-200">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Activity</h3>
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200/60 p-6 md:p-7 hover:shadow-lg transition-shadow duration-200">
+          <h3 className="text-lg font-semibold text-slate-900 mb-5">Recent Activity</h3>
           {threadDetails.length > 0 ? (
             <div className="space-y-3">
               {threadDetails.slice(0, 3).map((thread: any, index: number) => (
                 <Link
                   key={thread.id || index}
                   href={`/messages/${thread.id}`}
-                  className="flex items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 hover:scale-105 transition-all duration-200 cursor-pointer group"
+                  className="flex items-center p-4 bg-slate-50 rounded-lg hover:bg-slate-100 hover:scale-105 transition-all duration-200 cursor-pointer group"
                 >
-                  <div className="p-1 bg-gray-200 rounded group-hover:bg-blue-100 transition-colors duration-200">
-                    <MessageSquare className="h-4 w-4 text-gray-400 group-hover:text-blue-600 transition-colors duration-200" />
+                  <div className="w-10 h-10 bg-slate-200 rounded-lg flex items-center justify-center group-hover:bg-blue-100 transition-colors duration-200">
+                    <MessageSquare className="h-5 w-5 text-slate-400 group-hover:text-blue-600 transition-colors duration-200" />
                   </div>
-                  <div className="flex-1 ml-3">
-                    <span className="text-gray-700 group-hover:text-gray-900 transition-colors duration-200">
+                  <div className="flex-1 ml-4">
+                    <span className="text-slate-700 group-hover:text-slate-900 transition-colors duration-200">
                       New message from{' '}
                       <span className="font-medium group-hover:text-blue-600 transition-colors duration-200">
                         {thread.otherParticipant?.companyName || 
@@ -507,19 +507,19 @@ export default function SeekerHomePage() {
                       </span>
                     </span>
                   </div>
-                  <span className="text-sm text-gray-500 group-hover:text-gray-700 transition-colors duration-200">
+                  <span className="text-sm text-slate-500 group-hover:text-slate-700 transition-colors duration-200">
                     {formatTimeAgo(thread.lastMessageAt)}
                   </span>
                 </Link>
               ))}
             </div>
           ) : (
-            <div className="text-center py-8">
-              <div className="p-4 bg-gray-100 rounded-full w-20 h-20 mx-auto mb-4 flex items-center justify-center">
-                <MessageSquare className="h-8 w-8 text-gray-300" />
+            <div className="text-center py-12">
+              <div className="w-20 h-20 bg-slate-100 rounded-full mx-auto mb-6 flex items-center justify-center">
+                <MessageSquare className="h-8 w-8 text-slate-400" />
               </div>
-              <p className="text-gray-500 mb-2">No recent activity</p>
-              <p className="text-sm text-gray-400">Complete your profile to start receiving messages</p>
+              <p className="text-slate-500 mb-2 font-medium">No recent activity</p>
+              <p className="text-sm text-slate-400">Complete your profile to start receiving messages</p>
             </div>
           )}
         </div>
