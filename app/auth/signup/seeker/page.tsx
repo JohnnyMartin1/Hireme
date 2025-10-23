@@ -261,6 +261,12 @@ export default function SeekerSignupPage() {
                     placeholder="Enter your email address"
                     value={formData.email}
                     onChange={handleChange}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        sendVerificationCode();
+                      }
+                    }}
                     className="w-full bg-white border border-light-gray rounded-xl py-4 px-6 text-text-primary focus:border-navy focus:outline-none transition-all duration-200 text-lg"
                     required
                   />
@@ -293,7 +299,42 @@ export default function SeekerSignupPage() {
                             const newCode = verificationCode.split('');
                             newCode[digit - 1] = e.target.value;
                             setVerificationCode(newCode.join(''));
+                            
+                            // Auto-advance to next input if a digit was entered
+                            if (e.target.value && digit < 6) {
+                              const nextInput = document.querySelector(`input[data-digit="${digit + 1}"]`) as HTMLInputElement;
+                              if (nextInput) {
+                                nextInput.focus();
+                              }
+                            }
                           }}
+                          onPaste={(e) => {
+                            e.preventDefault();
+                            const pastedData = e.clipboardData.getData('text');
+                            // Only accept 6-digit codes
+                            if (/^\d{6}$/.test(pastedData)) {
+                              setVerificationCode(pastedData);
+                              // Focus the last input after pasting
+                              const lastInput = document.querySelector(`input[data-digit="6"]`) as HTMLInputElement;
+                              if (lastInput) {
+                                lastInput.focus();
+                              }
+                            }
+                          }}
+                          onKeyDown={(e) => {
+                            // Handle backspace to go to previous input
+                            if (e.key === 'Backspace' && !e.currentTarget.value && digit > 1) {
+                              const prevInput = document.querySelector(`input[data-digit="${digit - 1}"]`) as HTMLInputElement;
+                              if (prevInput) {
+                                prevInput.focus();
+                              }
+                            }
+                            // Handle Enter key to verify code when all 6 digits are entered
+                            if (e.key === 'Enter' && verificationCode.length === 6) {
+                              verifyCode();
+                            }
+                          }}
+                          data-digit={digit}
                           className="w-14 h-14 text-center text-xl font-bold border border-light-gray rounded-xl focus:border-navy focus:outline-none transition-all duration-200"
                         />
                       ))}
