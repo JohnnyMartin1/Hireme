@@ -1,14 +1,14 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Loader2, ArrowLeft } from "lucide-react";
 import { signUpWithFirebase } from "@/lib/firebase-auth";
 import { createDocument } from "@/lib/firebase-firestore";
 import SearchableDropdown from '@/components/SearchableDropdown';
 import { UNIVERSITIES, MAJORS, MINORS, GRADUATION_YEARS } from '@/lib/profile-data';
 
 export default function SeekerSignupPage() {
+  const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -20,8 +20,10 @@ export default function SeekerSignupPage() {
     minor: "",
     graduationYear: "",
   });
-  const [err, setErr] = useState<string | null>(null);
+  const [verificationCode, setVerificationCode] = useState("");
+  const [emailSent, setEmailSent] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -38,28 +40,103 @@ export default function SeekerSignupPage() {
     }));
   };
 
+  const nextStep = () => {
+    setCurrentStep(prev => prev + 1);
+  };
+
+  const sendVerificationCode = async () => {
+    if (!formData.email || !isValidEmail(formData.email)) {
+      setError("Please enter a valid email address");
+      return;
+    }
+    
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch('/api/auth/send-verification-code', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: formData.email,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setEmailSent(true);
+      } else {
+        setError(data.error || 'Failed to send verification code');
+      }
+    } catch (error: any) {
+      console.error('Error sending verification code:', error);
+      setError('Failed to send verification code. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const verifyCode = async () => {
+    if (verificationCode.length !== 6) {
+      setError("Please enter a 6-digit verification code.");
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch('/api/auth/verify-code', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          code: verificationCode,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        nextStep();
+      } else {
+        setError(data.error || 'Invalid verification code. Please try again.');
+      }
+    } catch (error: any) {
+      console.error('Error verifying code:', error);
+      setError('Failed to verify code. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setErr(null);
+    setError(null);
 
     // Validation
     if (formData.password !== formData.confirmPassword) {
-      setErr("Passwords don't match");
+      setError("Passwords don't match");
       return;
     }
 
     if (formData.password.length < 8) {
-      setErr("Password must be at least 8 characters long");
+      setError("Password must be at least 8 characters long");
       return;
     }
 
     if (!formData.firstName.trim() || !formData.lastName.trim()) {
-      setErr("First name and last name are required");
+      setError("First name and last name are required");
       return;
     }
 
     if (!formData.school || !formData.major || !formData.graduationYear) {
-      setErr("University, major, and graduation year are required");
+      setError("University, major, and graduation year are required");
       return;
     }
 
@@ -70,7 +147,7 @@ export default function SeekerSignupPage() {
       const { user, error } = await signUpWithFirebase(formData.email, formData.password);
 
       if (error) {
-        setErr(error);
+        setError(error);
         return;
       }
 
@@ -86,119 +163,236 @@ export default function SeekerSignupPage() {
           minor: formData.minor || '',
           graduationYear: formData.graduationYear,
           createdAt: new Date(),
-          openToOpp: true
+          openToOpp: true,
+          emailVerified: true, // Email is already verified with 6-digit code
+          emailVerifiedAt: new Date().toISOString()
         };
 
         const { error: profileError } = await createDocument('users', profileData, user.uid);
 
         if (profileError) {
           console.error('Profile creation error:', profileError);
-          // User account was created but profile failed - we can handle this later
         }
 
-        // Send verification email via Resend (better deliverability)
-        try {
-          await fetch('/api/auth/send-verification', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              userId: user.uid,
-              email: formData.email,
-              userName: `${formData.firstName} ${formData.lastName}`
-            })
-          });
-        } catch (verifyError) {
-          console.error('Failed to send verification email:', verifyError);
-          // Don't block signup if email fails to send
-        }
+        // Email is already verified through the 6-digit code verification
+        // No need to send additional verification email
 
-        // Success! Redirect to verification page
-        router.push("/auth/verify-email");
+        // Move to welcome step
+        nextStep();
       }
     } catch (error: any) {
-      setErr("An error occurred during signup. Please try again.");
+      setError("An error occurred during signup. Please try again.");
       console.error('Signup error:', error);
     } finally {
       setIsLoading(false);
     }
   };
 
-  return (
-    <main className="flex flex-col items-center justify-center min-h-screen py-10 px-4 sm:px-6 lg:px-8 bg-gray-50">
-      <div className="w-full max-w-2xl mx-auto">
-        
-        <div className="mb-6">
-          <button
-            onClick={() => router.back()}
-            className="inline-flex items-center px-4 py-2 bg-blue-50 text-navy-800 rounded-full hover:bg-blue-100 hover:shadow-sm transition-all duration-200 hover:-translate-y-1"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back
-          </button>
-        </div>
+  const isValidEmail = (email: string) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  };
 
-        <div className="bg-white rounded-2xl p-8 md:p-12 shadow-lg border border-light-gray">
-          <div className="text-center mb-10">
-            <div className="inline-flex items-center justify-center w-20 h-20 bg-light-blue rounded-full mb-6">
-              <i className="fa-solid fa-user text-navy text-3xl"></i>
+  const getProgressPercentage = () => {
+    return (currentStep / 3) * 100;
+  };
+
+  return (
+    <main className="h-screen flex bg-brand-gray overflow-hidden">
+      {/* Left Column - Content & Form */}
+      <div className="w-[48%] flex flex-col justify-center p-8 bg-white relative">
+        <div className="flex-grow flex flex-col justify-center">
+          {/* Progress Stepper */}
+          <div className="flex items-center space-x-4 text-sm mb-8">
+            <div className={`flex items-center ${currentStep >= 1 ? 'text-navy font-semibold' : 'text-text-secondary'}`}>
+              <span className={`flex items-center justify-center w-8 h-8 rounded-full mr-3 text-xs ${
+                currentStep > 1 ? 'bg-success-green text-white' : currentStep === 1 ? 'bg-navy text-white' : 'bg-light-gray text-text-secondary'
+              }`}>
+                {currentStep > 1 ? <i className="fa-solid fa-check"></i> : <i className="fa-solid fa-envelope"></i>}
+              </span>
+              Search
             </div>
-            <h1 className="text-3xl md:text-4xl font-bold text-navy mb-2">Create Your Job Seeker Account</h1>
-            <p className="text-gray-600">Start building your professional profile</p>
+            <i className="fa-solid fa-chevron-right text-light-gray text-xs"></i>
+            <div className={`flex items-center ${currentStep >= 2 ? 'text-navy font-semibold' : 'text-text-secondary'}`}>
+              <span className={`flex items-center justify-center w-8 h-8 rounded-full mr-3 text-xs ${
+                currentStep > 2 ? 'bg-success-green text-white' : currentStep === 2 ? 'bg-navy text-white' : 'bg-light-gray text-text-secondary'
+              }`}>
+                {currentStep > 2 ? <i className="fa-solid fa-check"></i> : <i className="fa-solid fa-user-plus"></i>}
+              </span>
+              Create Account
+            </div>
+            <i className="fa-solid fa-chevron-right text-light-gray text-xs"></i>
+            <div className={`flex items-center ${currentStep >= 3 ? 'text-navy font-semibold' : 'text-text-secondary'}`}>
+              <span className={`flex items-center justify-center w-8 h-8 rounded-full mr-3 text-xs ${
+                currentStep === 3 ? 'bg-navy text-white' : 'bg-light-gray text-text-secondary'
+              }`}>
+                <i className="fa-solid fa-smile"></i>
+              </span>
+              Personalize
+            </div>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="form-label">
-                  First Name <span className="text-red-500">*</span>
-                </label>
-                <input
-                  name="firstName"
-                  type="text"
-                  required
-                  value={formData.firstName}
-                  onChange={handleChange}
-                  className="form-input"
-                  placeholder="John"
-                />
-              </div>
-              <div>
-                <label className="form-label">
-                  Last Name <span className="text-red-500">*</span>
-                </label>
-                <input
-                  name="lastName"
-                  type="text"
-                  required
-                  value={formData.lastName}
-                  onChange={handleChange}
-                  className="form-input"
-                  placeholder="Doe"
-                />
-              </div>
-            </div>
+          {/* Progress Bar */}
+          <div className="w-full bg-light-gray rounded-full h-2 mb-8">
+            <div 
+              className="bg-navy h-2 rounded-full transition-all duration-300" 
+              style={{ width: `${getProgressPercentage()}%` }}
+            ></div>
+          </div>
 
+          {/* Step 1: Email Verification */}
+          {currentStep === 1 && (
             <div>
-              <label className="form-label">
-                Email Address <span className="text-red-500">*</span>
-              </label>
-              <input
-                name="email"
-                type="email"
-                required
-                value={formData.email}
-                onChange={handleChange}
-                className="form-input"
-                placeholder="john.doe@example.com"
-              />
+              <h1 className="text-4xl font-bold text-text-primary mb-6">Enter your email to get started</h1>
+              <div className="space-y-6">
+                <div className="relative">
+                  <input 
+                    type="email" 
+                    name="email"
+                    placeholder="Enter your email address"
+                    value={formData.email}
+                    onChange={handleChange}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        sendVerificationCode();
+                      }
+                    }}
+                    className="w-full bg-white border border-light-gray rounded-xl py-4 px-6 text-text-primary focus:border-navy focus:outline-none transition-all duration-200 text-lg"
+                    required
+                  />
+                  <button 
+                    type="button" 
+                    onClick={sendVerificationCode}
+                    disabled={isLoading}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 bg-navy text-white px-6 py-2 rounded-lg hover:bg-opacity-90 transition-all duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isLoading ? (
+                      <i className="fa-solid fa-spinner animate-spin"></i>
+                    ) : (
+                      'Send Code'
+                    )}
+                  </button>
+                </div>
+                <p className="text-sm text-text-secondary">We'll email a 6-digit code to verify your address.</p>
+                
+                {emailSent && (
+                  <div className="space-y-6">
+                    <div className="text-sm text-success-green">Code sent to {formData.email}</div>
+                    <div className="flex space-x-3">
+                      {[1, 2, 3, 4, 5, 6].map((digit) => (
+                        <input 
+                          key={digit}
+                          type="text" 
+                          maxLength={1}
+                          value={verificationCode[digit - 1] || ''}
+                          onChange={(e) => {
+                            const newCode = verificationCode.split('');
+                            newCode[digit - 1] = e.target.value;
+                            setVerificationCode(newCode.join(''));
+                            
+                            // Auto-advance to next input if a digit was entered
+                            if (e.target.value && digit < 6) {
+                              const nextInput = document.querySelector(`input[data-digit="${digit + 1}"]`) as HTMLInputElement;
+                              if (nextInput) {
+                                nextInput.focus();
+                              }
+                            }
+                          }}
+                          onPaste={(e) => {
+                            e.preventDefault();
+                            const pastedData = e.clipboardData.getData('text');
+                            // Only accept 6-digit codes
+                            if (/^\d{6}$/.test(pastedData)) {
+                              setVerificationCode(pastedData);
+                              // Focus the last input after pasting
+                              const lastInput = document.querySelector(`input[data-digit="6"]`) as HTMLInputElement;
+                              if (lastInput) {
+                                lastInput.focus();
+                              }
+                            }
+                          }}
+                          onKeyDown={(e) => {
+                            // Handle backspace to go to previous input
+                            if (e.key === 'Backspace' && !e.currentTarget.value && digit > 1) {
+                              const prevInput = document.querySelector(`input[data-digit="${digit - 1}"]`) as HTMLInputElement;
+                              if (prevInput) {
+                                prevInput.focus();
+                              }
+                            }
+                            // Handle Enter key to verify code when all 6 digits are entered
+                            if (e.key === 'Enter' && verificationCode.length === 6) {
+                              verifyCode();
+                            }
+                          }}
+                          data-digit={digit}
+                          className="w-14 h-14 text-center text-xl font-bold border border-light-gray rounded-xl focus:border-navy focus:outline-none transition-all duration-200"
+                        />
+                      ))}
+                    </div>
+                    {error && <div className="text-sm text-error-red">{error}</div>}
+                    <button 
+                      type="button" 
+                      onClick={verifyCode}
+                      disabled={isLoading || verificationCode.length !== 6}
+                      className="w-full bg-navy text-white py-4 rounded-xl font-semibold hover:bg-opacity-90 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isLoading ? (
+                        <i className="fa-solid fa-spinner animate-spin"></i>
+                      ) : (
+                        'Verify Code'
+                      )}
+                    </button>
+                  </div>
+                )}
+                {error && !emailSent && <div className="text-sm text-error-red">{error}</div>}
+              </div>
             </div>
+          )}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="form-label">
-                  University <span className="text-red-500">*</span>
-                </label>
-                <div className="form-select-wrapper">
+          {/* Step 2: Create Account */}
+          {currentStep === 2 && (
+            <div>
+              <h1 className="text-4xl font-bold text-text-primary mb-6">Create your account</h1>
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <input 
+                      type="text" 
+                      name="firstName"
+                      placeholder="First name"
+                      value={formData.firstName}
+                      onChange={handleChange}
+                      className="w-full bg-white border border-light-gray rounded-xl py-4 px-6 text-text-primary focus:border-navy focus:outline-none transition-all duration-200"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <input 
+                      type="text" 
+                      name="lastName"
+                      placeholder="Last name"
+                      value={formData.lastName}
+                      onChange={handleChange}
+                      className="w-full bg-white border border-light-gray rounded-xl py-4 px-6 text-text-primary focus:border-navy focus:outline-none transition-all duration-200"
+                      required
+                    />
+                  </div>
+                </div>
+                
+                <div className="relative">
+                  <input 
+                    type="email" 
+                    name="email"
+                    value={formData.email}
+                    readOnly
+                    className="w-full bg-gray-50 border-2 border-success-green rounded-xl py-4 px-6 pr-20 text-text-primary"
+                  />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 bg-success-green text-white px-3 py-1 rounded-full text-xs font-medium">
+                    <i className="fa-solid fa-check mr-1"></i>Verified
+                  </span>
+                </div>
+
+                <div>
                   <SearchableDropdown
                     options={UNIVERSITIES}
                     value={formData.school}
@@ -209,44 +403,32 @@ export default function SeekerSignupPage() {
                     allowCustom
                   />
                 </div>
-              </div>
-              <div>
-                <label className="form-label">
-                  Major <span className="text-red-500">*</span>
-                </label>
-                <div className="form-select-wrapper">
-                  <SearchableDropdown
-                    options={MAJORS}
-                    value={formData.major}
-                    onChange={(value) => handleDropdownChange('major', value)}
-                    placeholder="Select your major"
-                    label="Major"
-                    required
-                    allowCustom
-                  />
-                </div>
-              </div>
-            </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="form-label">Minor</label>
-                <div className="form-select-wrapper">
-                  <SearchableDropdown
-                    options={MINORS}
-                    value={formData.minor}
-                    onChange={(value) => handleDropdownChange('minor', value)}
-                    placeholder="Select your minor (optional)"
-                    label="Minor"
-                    allowCustom
-                  />
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <SearchableDropdown
+                      options={MAJORS}
+                      value={formData.major}
+                      onChange={(value) => handleDropdownChange('major', value)}
+                      placeholder="Select your major"
+                      label="Major"
+                      required
+                      allowCustom
+                    />
+                  </div>
+                  <div>
+                    <SearchableDropdown
+                      options={MINORS}
+                      value={formData.minor}
+                      onChange={(value) => handleDropdownChange('minor', value)}
+                      placeholder="Select your minor (optional)"
+                      label="Minor"
+                      allowCustom
+                    />
+                  </div>
                 </div>
-              </div>
-              <div>
-                <label className="form-label">
-                  Expected Graduation Year <span className="text-red-500">*</span>
-                </label>
-                <div className="form-select-wrapper">
+
+                <div>
                   <SearchableDropdown
                     options={GRADUATION_YEARS}
                     value={formData.graduationYear}
@@ -256,71 +438,92 @@ export default function SeekerSignupPage() {
                     required
                   />
                 </div>
-              </div>
-            </div>
 
-            <div>
-              <label className="form-label">
-                Password <span className="text-red-500">*</span>
-              </label>
-              <input
-                name="password"
-                type="password"
-                required
-                value={formData.password}
-                onChange={handleChange}
-                className="form-input"
-                placeholder="••••••••"
-              />
-              <p className="text-xs text-gray-500 mt-2">Must be at least 8 characters long</p>
-            </div>
-            
-            <div>
-              <label className="form-label">
-                Confirm Password <span className="text-red-500">*</span>
-              </label>
-              <input
-                name="confirmPassword"
-                type="password"
-                required
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                className="form-input"
-                placeholder="••••••••"
-              />
-            </div>
-
-            {err && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-                <p className="text-sm text-red-600">{err}</p>
-              </div>
-            )}
-
-            <div className="pt-4">
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="w-full bg-navy text-white font-bold py-4 px-4 rounded-xl hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-navy transition-all duration-300 border border-light-gray disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isLoading ? (
-                  <div className="flex items-center justify-center">
-                    <Loader2 className="h-5 w-5 animate-spin mr-2" />
-                    Creating Account...
+                <div className="space-y-4">
+                  <div className="relative">
+                    <input 
+                      type="password" 
+                      name="password"
+                      placeholder="Password"
+                      value={formData.password}
+                      onChange={handleChange}
+                      className="w-full bg-white border border-light-gray rounded-xl py-4 px-6 text-text-primary focus:border-navy focus:outline-none transition-all duration-200"
+                      required
+                    />
                   </div>
-                ) : (
-                  'Create Account'
-                )}
-              </button>
-            </div>
-          </form>
+                  <div className="relative">
+                    <input 
+                      type="password" 
+                      name="confirmPassword"
+                      placeholder="Confirm password"
+                      value={formData.confirmPassword}
+                      onChange={handleChange}
+                      className="w-full bg-white border border-light-gray rounded-xl py-4 px-6 text-text-primary focus:border-navy focus:outline-none transition-all duration-200"
+                      required
+                    />
+                    {formData.password === formData.confirmPassword && formData.confirmPassword.length > 0 && (
+                      <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                        <i className="fa-solid fa-check text-success-green"></i>
+                      </div>
+                    )}
+                  </div>
+                </div>
 
-          <div className="text-center mt-8">
-            <p className="text-sm text-gray-600">
-              Already have an account?{" "}
-              <Link href="/auth/login" className="font-medium text-navy hover:text-light-blue cursor-pointer transition-colors duration-200">
-                Log in
-              </Link>
-            </p>
+                {error && (
+                  <div className="text-sm text-error-red">{error}</div>
+                )}
+
+                <button 
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full bg-navy text-white py-4 rounded-xl font-semibold hover:bg-opacity-90 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isLoading ? 'Creating Account...' : 'Create Account'}
+                </button>
+              </form>
+            </div>
+          )}
+
+          {/* Step 3: Welcome */}
+          {currentStep === 3 && (
+            <div className="text-center">
+              <div className="space-y-8">
+                <h1 className="text-4xl font-bold text-text-primary">
+                  Welcome, {formData.firstName} — ready to get hired?
+                </h1>
+                <p className="text-lg text-text-secondary">
+                  Let's finish setting up your profile so employers can discover your amazing potential.
+                </p>
+                <button 
+                  onClick={() => router.push("/home/seeker")}
+                  className="bg-navy text-white px-8 py-4 rounded-xl font-semibold hover:bg-opacity-90 transition-all duration-200"
+                >
+                  Start profile setup
+                  <i className="fa-solid fa-arrow-right ml-2"></i>
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Right Column - Profile Gallery */}
+      <div className="w-[52%] bg-brand-gray p-8 overflow-hidden relative">
+        <div className="absolute inset-0 bg-gradient-to-br from-brand-gray via-subtle-gray to-brand-gray"></div>
+        
+        <div className="h-full w-full relative">
+          <div className="grid grid-cols-4 gap-4 h-full content-start">
+            {Array.from({ length: 32 }).map((_, i) => (
+              <div key={i} className="bg-white rounded-xl p-4 shadow-sm border border-gray-200/50 aspect-[3/4] flex flex-col items-center justify-center space-y-3 transition-all duration-300 hover:shadow-md hover:-translate-y-1 opacity-0 animate-fade-in" style={{ animationDelay: `${i * 30}ms` }}>
+                <div className="w-12 h-12 bg-light-gray rounded-full flex items-center justify-center">
+                  <svg className="w-7 h-7 text-text-secondary" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd"></path>
+                  </svg>
+                </div>
+                <div className="w-3/4 h-2 bg-light-gray rounded-full"></div>
+                <div className="w-1/2 h-2 bg-light-gray rounded-full"></div>
+              </div>
+            ))}
           </div>
         </div>
       </div>

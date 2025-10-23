@@ -10,7 +10,13 @@ export default function EmailVerificationBanner() {
   const [message, setMessage] = useState("");
 
   // Don't show banner while loading profile data, or if email is verified or user not logged in
+  // Also don't show for job seekers who have completed the 6-digit verification sign-up process
   if (loading || !user || !profile || profile?.emailVerified || !isVisible) {
+    return null;
+  }
+
+  // Don't show verification banner for job seekers - they verify via 6-digit code during sign-up
+  if (profile?.role === 'JOB_SEEKER') {
     return null;
   }
 
