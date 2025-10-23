@@ -160,23 +160,7 @@ export default function SeekerSignupPage() {
   return (
     <main className="h-screen flex bg-brand-gray overflow-hidden">
       {/* Left Column - Content & Form */}
-      <div className="w-[48%] flex flex-col justify-between p-8 bg-white relative">
-        <header className="flex items-center justify-between mb-8">
-          <div className="flex items-center space-x-3">
-            <svg className="h-8 w-8 text-navy" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="11" cy="11" r="8"/>
-              <path d="m21 21-4.35-4.35"/>
-              <circle cx="11" cy="8" r="2"/>
-              <path d="M11 12a3 3 0 0 0-3 3h6a3 3 0 0 0-3-3z"/>
-            </svg>
-            <span className="font-bold text-2xl text-navy">HireMe</span>
-          </div>
-          <nav className="flex items-center space-x-6 text-text-secondary font-medium">
-            <Link href="/" className="hover:text-text-primary transition-colors">Explore</Link>
-            <Link href="/auth/login" className="px-5 py-2 bg-navy text-white font-semibold rounded-lg hover:bg-opacity-90 transition-all duration-200">Get Started</Link>
-          </nav>
-        </header>
-
+      <div className="w-[48%] flex flex-col justify-center p-8 bg-white relative">
         <div className="flex-grow flex flex-col justify-center">
           {/* Progress Stepper */}
           <div className="flex items-center space-x-4 text-sm mb-8">
@@ -432,10 +416,6 @@ export default function SeekerSignupPage() {
             </div>
           )}
         </div>
-
-        <footer className="text-center text-xs text-text-secondary mt-8">
-          <p>&copy; 2025 HireMe Inc. &nbsp;&bull;&nbsp; <span className="hover:underline cursor-pointer">Privacy</span> &nbsp;&bull;&nbsp; <span className="hover:underline cursor-pointer">Terms</span></p>
-        </footer>
       </div>
 
       {/* Right Column - Profile Gallery */}
