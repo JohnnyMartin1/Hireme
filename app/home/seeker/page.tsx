@@ -40,23 +40,35 @@ export default function SeekerHomePage() {
     if (!userProfile || !user) return false;
     
     // Don't show if server flag is true (onboardingSeen or legacy hasSeenWelcomePopup)
-    if (userProfile.onboardingSeen === true || userProfile.hasSeenWelcomePopup === true) return false;
+    if (userProfile.onboardingSeen === true || userProfile.hasSeenWelcomePopup === true) {
+      console.log('Onboarding already seen - server flags:', { onboardingSeen: userProfile.onboardingSeen, hasSeenWelcomePopup: userProfile.hasSeenWelcomePopup });
+      return false;
+    }
     
     // Don't show if localStorage flag is set
-    if (localDismissed === '1') return false;
+    if (localDismissed === '1') {
+      console.log('Onboarding dismissed in localStorage');
+      return false;
+    }
     
     // Show only for authenticated job seekers who haven't seen it
-    return userProfile.role === 'JOB_SEEKER' && userProfile.emailVerified === true;
+    const shouldShow = userProfile.role === 'JOB_SEEKER' && userProfile.emailVerified === true;
+    console.log('Onboarding decision:', { shouldShow, role: userProfile.role, emailVerified: userProfile.emailVerified, onboardingSeen: userProfile.onboardingSeen, hasSeenWelcomePopup: userProfile.hasSeenWelcomePopup, localDismissed });
+    return shouldShow;
   }, [user]);
 
   const handleCloseWelcomePopup = async () => {
+    console.log('Closing welcome popup - setting localStorage and server flags');
+    
     // Optimistically update localStorage immediately
     if (typeof window !== 'undefined') {
       localStorage.setItem('hireme:onboarding:v1:dismissed', '1');
+      console.log('Set localStorage flag to 1');
     }
     
     // Update component state immediately
     setOnboardingModalState('closed');
+    console.log('Set onboarding modal state to closed');
     
     // Update server flag
     if (user && profile) {
@@ -65,6 +77,7 @@ export default function SeekerHomePage() {
           onboardingSeen: true,
           hasSeenWelcomePopup: true // Keep legacy field for backward compatibility
         });
+        console.log('Updated server flags: onboardingSeen=true, hasSeenWelcomePopup=true');
         
         // Update local profile state
         setUserProfile(prevProfile => ({
@@ -72,6 +85,7 @@ export default function SeekerHomePage() {
           onboardingSeen: true,
           hasSeenWelcomePopup: true
         }));
+        console.log('Updated local profile state with server flags');
       } catch (error) {
         console.error('Failed to update onboarding status:', error);
       }
@@ -110,7 +124,7 @@ export default function SeekerHomePage() {
 
   // Effect to compute onboarding modal state once user data is available
   useEffect(() => {
-    if (!user || !userProfile || onboardingModalState !== 'unknown') return;
+    if (!user || !userProfile) return;
 
     // Get localStorage value (browser only)
     const localDismissed = typeof window !== 'undefined' 
@@ -119,7 +133,13 @@ export default function SeekerHomePage() {
 
     // Compute whether to show onboarding
     const shouldShow = shouldShowOnboarding(userProfile, localDismissed);
-    setOnboardingModalState(shouldShow ? 'open' : 'closed');
+    
+    // Only update state if it's currently unknown or if the decision has changed
+    if (onboardingModalState === 'unknown' || 
+        (onboardingModalState === 'open' && !shouldShow) ||
+        (onboardingModalState === 'closed' && shouldShow)) {
+      setOnboardingModalState(shouldShow ? 'open' : 'closed');
+    }
   }, [user, userProfile, shouldShowOnboarding, onboardingModalState]);
 
   // Listen for page focus/visibility changes to refresh completion when returning from profile page
