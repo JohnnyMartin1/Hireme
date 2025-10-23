@@ -163,7 +163,9 @@ export default function SeekerSignupPage() {
           minor: formData.minor || '',
           graduationYear: formData.graduationYear,
           createdAt: new Date(),
-          openToOpp: true
+          openToOpp: true,
+          emailVerified: true, // Email is already verified with 6-digit code
+          emailVerifiedAt: new Date().toISOString()
         };
 
         const { error: profileError } = await createDocument('users', profileData, user.uid);
