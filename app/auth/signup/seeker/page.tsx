@@ -44,25 +44,74 @@ export default function SeekerSignupPage() {
     setCurrentStep(prev => prev + 1);
   };
 
-  const sendVerificationCode = () => {
+  const sendVerificationCode = async () => {
     if (!formData.email || !isValidEmail(formData.email)) {
       setError("Please enter a valid email address");
       return;
     }
     
-    setEmailSent(true);
+    setIsLoading(true);
     setError(null);
-    // Simulate sending code
-    setTimeout(() => {
-      nextStep();
-    }, 1000);
+
+    try {
+      const response = await fetch('/api/auth/send-verification-code', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: formData.email,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setEmailSent(true);
+      } else {
+        setError(data.error || 'Failed to send verification code');
+      }
+    } catch (error: any) {
+      console.error('Error sending verification code:', error);
+      setError('Failed to send verification code. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const verifyCode = () => {
-    if (verificationCode === "123456") { // Demo code
-      nextStep();
-    } else {
-      setError("Invalid verification code. Please try again.");
+  const verifyCode = async () => {
+    if (verificationCode.length !== 6) {
+      setError("Please enter a 6-digit verification code.");
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch('/api/auth/verify-code', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          code: verificationCode,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        nextStep();
+      } else {
+        setError(data.error || 'Invalid verification code. Please try again.');
+      }
+    } catch (error: any) {
+      console.error('Error verifying code:', error);
+      setError('Failed to verify code. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -218,9 +267,14 @@ export default function SeekerSignupPage() {
                   <button 
                     type="button" 
                     onClick={sendVerificationCode}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 bg-navy text-white px-6 py-2 rounded-lg hover:bg-opacity-90 transition-all duration-200 font-medium"
+                    disabled={isLoading}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 bg-navy text-white px-6 py-2 rounded-lg hover:bg-opacity-90 transition-all duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Send Code
+                    {isLoading ? (
+                      <i className="fa-solid fa-spinner animate-spin"></i>
+                    ) : (
+                      'Send Code'
+                    )}
                   </button>
                 </div>
                 <p className="text-sm text-text-secondary">We'll email a 6-digit code to verify your address.</p>
@@ -248,10 +302,14 @@ export default function SeekerSignupPage() {
                     <button 
                       type="button" 
                       onClick={verifyCode}
-                      disabled={verificationCode.length !== 6}
+                      disabled={isLoading || verificationCode.length !== 6}
                       className="w-full bg-navy text-white py-4 rounded-xl font-semibold hover:bg-opacity-90 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      Verify Code
+                      {isLoading ? (
+                        <i className="fa-solid fa-spinner animate-spin"></i>
+                      ) : (
+                        'Verify Code'
+                      )}
                     </button>
                   </div>
                 )}
