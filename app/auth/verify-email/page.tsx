@@ -29,13 +29,17 @@ function VerifyEmailContent() {
       return;
     }
 
+    // For job seekers, redirect to dashboard immediately since they verify via 6-digit code
+    if (profile?.role === 'JOB_SEEKER') {
+      router.push("/home/seeker");
+      return;
+    }
+
     // Check if email is verified in Firestore
     if (profile?.emailVerified) {
       const role = profile?.role;
       if (role === 'EMPLOYER' || role === 'RECRUITER') {
         router.push("/home/employer");
-      } else if (role === 'JOB_SEEKER') {
-        router.push("/home/seeker");
       } else {
         router.push("/home");
       }
@@ -131,6 +135,11 @@ function VerifyEmailContent() {
   }
 
   if (!user || profile?.emailVerified) {
+    return null; // Will redirect via useEffect
+  }
+
+  // For job seekers, don't show this page - redirect to dashboard
+  if (profile?.role === 'JOB_SEEKER') {
     return null; // Will redirect via useEffect
   }
 
