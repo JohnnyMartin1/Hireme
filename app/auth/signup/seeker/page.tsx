@@ -177,6 +177,11 @@ export default function SeekerSignupPage() {
 
         // Move to welcome step
         nextStep();
+        
+        // Redirect to dashboard after a short delay to show the welcome message
+        setTimeout(() => {
+          window.location.href = '/home/seeker';
+        }, 2000);
       }
     } catch (error: any) {
       setError("An error occurred during signup. Please try again.");
@@ -493,7 +498,7 @@ export default function SeekerSignupPage() {
                   Let's finish setting up your profile so employers can discover your amazing potential.
                 </p>
                 <button 
-                  onClick={() => router.push("/auth/verify-email")}
+                  onClick={() => router.push("/home/seeker")}
                   className="bg-navy text-white px-8 py-4 rounded-xl font-semibold hover:bg-opacity-90 transition-all duration-200"
                 >
                   Start profile setup
