@@ -249,279 +249,195 @@ export default function SeekerHomePage() {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-50 via-indigo-50 to-slate-50">
-      {/* Hero Section */}
-      <div className="bg-gradient-to-r from-navy to-blue-900 text-white py-8 px-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex items-center gap-6">
-            {/* Profile Picture */}
-            <div className="flex-shrink-0">
-              {(userProfile as any)?.profileImageUrl ? (
-                <div className="relative w-20 h-20 rounded-full overflow-hidden border-4 border-white/30 shadow-lg">
+    <main className="min-h-screen" style={{background: 'linear-gradient(180deg, #E6F0FF 0%, #F0F8FF 100%)'}}>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2 space-y-8">
+            
+            {/* Welcome Banner */}
+            <section className="bg-gradient-to-r from-navy to-blue-900 text-white p-8 rounded-2xl flex items-center justify-between shadow-lg">
+              <div className="flex items-center space-x-6">
+                {(userProfile as any)?.profileImageUrl ? (
                   <Image
                     src={(userProfile as any).profileImageUrl}
-                    alt={`${profile?.firstName || 'User'}'s profile`}
-                    fill
-                    className="object-cover"
+                    alt={`${profile?.firstName || 'User'}'s avatar`}
+                    width={80}
+                    height={80}
+                    className="w-20 h-20 rounded-full border-4 border-white/30 shadow-lg"
                   />
+                ) : (
+                  <div className="w-20 h-20 rounded-full border-4 border-white/30 shadow-lg bg-white/20 flex items-center justify-center">
+                    <User className="h-10 w-10 text-white" />
+                  </div>
+                )}
+                <div>
+                  <h1 className="text-3xl font-bold">Welcome back, {profile?.firstName || 'Job Seeker'}! 👋</h1>
+                  <p className="text-blue-200 mt-1">Here's your dashboard overview for today.</p>
                 </div>
-              ) : (
-                <div className="w-20 h-20 rounded-full bg-white/20 border-4 border-white/30 shadow-lg flex items-center justify-center">
-                  <User className="h-10 w-10 text-white" />
-                </div>
-              )}
-            </div>
-            
-            {/* Welcome Text */}
-            <div className="flex-1">
-              <h1 className="text-3xl font-bold mb-2">
-                Welcome back, {profile?.firstName || 'Job Seeker'}! 👋
-              </h1>
-              <p className="text-blue-200 text-lg">
-                {profile?.headline || 'Ready to find your next opportunity?'}
+              </div>
+            </section>
+
+            {/* Profile Completion Card */}
+            <div className="bg-white/90 backdrop-blur-sm p-8 rounded-2xl shadow-sm border border-light-gray hover:shadow-lg transition-all duration-200">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-bold text-navy">Profile Completion</h2>
+                <span className="text-2xl font-bold text-navy bg-light-blue/30 px-4 py-1.5 rounded-full">{completion}%</span>
+              </div>
+              <div className="w-full bg-light-gray/50 rounded-full h-3 mb-3 shadow-inner">
+                <div 
+                  className="bg-gradient-to-r from-navy to-light-blue h-3 rounded-full transition-all duration-500 ease-out" 
+                  style={{ width: `${completion}%` }}
+                />
+              </div>
+              <p className="text-gray-600 text-sm">
+                Complete your profile to increase your visibility to top employers.{' '}
+                <a href="/account/profile" className="font-semibold text-navy hover:underline decoration-2 underline-offset-2 cursor-pointer">Finish profile →</a>
               </p>
             </div>
-          </div>
-        </div>
-      </div>
 
-      <div className="max-w-7xl mx-auto px-6 md:px-8 py-10">
-        {/* Completion Bar */}
-        <div className={`rounded-2xl shadow-sm border border-slate-200/60 p-6 md:p-7 mb-8 transition-all duration-500 ${
-          completion === 100 
-            ? 'bg-gradient-to-r from-green-50 to-emerald-50 border-green-200' 
-            : 'bg-white'
-        }`}>
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center">
-              <p className="text-lg font-semibold text-slate-900">Profile Completion</p>
-              {completion === 100 && (
-                <span className="ml-2 text-green-600">✓</span>
-              )}
-            </div>
-            <p className={`text-2xl font-bold ${
-              completion === 100 ? 'text-green-600' : 'text-slate-900'
-            }`}>
-              {completion}%
-            </p>
-          </div>
-          <div className="w-full h-3 bg-slate-200 rounded-full overflow-hidden shadow-inner">
-            <div 
-              className={`h-3 transition-all duration-500 ease-in-out ${
-                completion === 100 
-                  ? 'bg-gradient-to-r from-green-500 to-emerald-500' 
-                  : 'bg-gradient-to-r from-navy to-blue-600'
-              }`} 
-              style={{ width: `${completion}%` }} 
-            />
-          </div>
-          {completion === 100 ? (
-            <div className="mt-4 text-sm text-green-600 font-medium flex items-center">
-              <span className="mr-2">🎉</span>
-              Profile complete! You're ready to be discovered by employers.
-            </div>
-          ) : completion >= 80 ? (
-            <div className="mt-4 text-sm text-slate-600">
-              Almost there! Just a few more sections to complete.{' '}
-              <a href="/account/profile" className="text-blue-600 hover:underline font-semibold">Finish profile →</a>
-            </div>
-          ) : (
-            <div className="mt-4 text-sm text-slate-600">
-              Complete your profile to get noticed faster.{' '}
-              <a href="/account/profile" className="text-blue-600 hover:underline font-semibold">Finish profile →</a>
-            </div>
-          )}
-        </div>
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
-          <Link href="/messages/candidate" className="bg-white rounded-2xl shadow-sm border border-slate-200/60 p-6 md:p-7 hover:shadow-lg hover:scale-105 transition-all duration-200 cursor-pointer group">
-            <div className="flex items-center">
-              <div className="w-14 h-14 bg-blue-50 rounded-full flex items-center justify-center group-hover:bg-blue-100 transition-colors duration-200">
-                <MessageSquare className="h-6 w-6 text-blue-600 group-hover:text-blue-700 transition-colors duration-200" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-slate-600 group-hover:text-slate-700 transition-colors duration-200">Messages</p>
-                <p className="text-3xl font-bold text-slate-900 group-hover:text-blue-600 transition-colors duration-200">
-                  {isLoadingStats ? '...' : threads.length}
-                </p>
-              </div>
-            </div>
-          </Link>
+            {/* Stats Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <Link href="/messages/candidate" className="bg-white/90 backdrop-blur-sm p-6 rounded-2xl shadow-sm border border-light-gray hover:shadow-lg transition-all duration-200 text-center group">
+                <div className="w-14 h-14 mx-auto rounded-full bg-light-blue/30 flex items-center justify-center mb-3">
+                  <MessageSquare className="h-6 w-6 text-navy" />
+                </div>
+                <p className="text-4xl font-extrabold text-navy">{isLoadingStats ? '...' : threads.length}</p>
+                <p className="text-gray-500 font-medium mt-1">Messages</p>
+              </Link>
 
-          <button onClick={routerToViews} className="bg-white rounded-2xl shadow-sm border border-slate-200/60 p-6 md:p-7 text-left w-full hover:shadow-lg hover:scale-105 transition-all duration-200 group">
-            <div className="flex items-center">
-              <div className="w-14 h-14 bg-green-50 rounded-full flex items-center justify-center group-hover:bg-green-100 transition-colors duration-200">
-                <Eye className="h-6 w-6 text-green-600 group-hover:text-green-700 transition-colors duration-200" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-slate-600 group-hover:text-slate-700 transition-colors duration-200">Companies Viewed You</p>
-                <p className="text-3xl font-bold text-slate-900 group-hover:text-green-600 transition-colors duration-200">
-                  {isLoadingStats ? '...' : profileViews}
-                </p>
-              </div>
-            </div>
-          </button>
+              <button onClick={routerToViews} className="bg-white/90 backdrop-blur-sm p-6 rounded-2xl shadow-sm border border-light-gray hover:shadow-lg transition-all duration-200 text-center group w-full">
+                <div className="w-14 h-14 mx-auto rounded-full bg-light-blue/30 flex items-center justify-center mb-3">
+                  <Eye className="h-6 w-6 text-navy" />
+                </div>
+                <p className="text-4xl font-extrabold text-navy">{isLoadingStats ? '...' : profileViews}</p>
+                <p className="text-gray-500 font-medium mt-1">Companies Viewed You</p>
+              </button>
 
-          <Link href="/endorsements" className={`relative overflow-hidden rounded-2xl shadow-sm border border-slate-200/60 p-6 md:p-7 transition-all duration-300 hover:shadow-lg hover:scale-105 cursor-pointer ${
-            endorsements.length === 0 
-              ? 'bg-gradient-to-r from-yellow-50 to-amber-50 border-yellow-200 hover:from-yellow-100 hover:to-amber-100' 
-              : 'bg-white'
-          }`}>
-            {/* Special animation for 0 endorsements */}
-            {endorsements.length === 0 && (
-              <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-br from-yellow-400 to-amber-500 rounded-full -translate-y-8 translate-x-8 opacity-20 animate-pulse"></div>
-            )}
-            
-            <div className="flex items-center">
-              <div className={`w-14 h-14 rounded-full flex items-center justify-center transition-all duration-300 ${
-                endorsements.length === 0 
-                  ? 'bg-gradient-to-r from-yellow-200 to-amber-200 animate-pulse' 
-                  : 'bg-yellow-50'
-              }`}>
-                <Star className={`h-6 w-6 transition-colors duration-300 ${
-                  endorsements.length === 0 ? 'text-yellow-700' : 'text-yellow-600'
-                }`} />
-              </div>
-              <div className="ml-4 flex-1">
-                <div className="flex items-center justify-between">
-                  <p className={`text-sm font-medium transition-colors duration-300 ${
-                    endorsements.length === 0 ? 'text-yellow-800' : 'text-slate-600'
-                  }`}>
-                    Endorsements
-                  </p>
+              <Link href="/endorsements" className="bg-white/90 backdrop-blur-sm p-6 rounded-2xl shadow-sm border border-light-gray hover:shadow-lg transition-all duration-200 text-center group relative">
+                <div className="w-14 h-14 mx-auto rounded-full bg-light-blue/30 flex items-center justify-center mb-3 relative">
+                  <Star className="h-6 w-6 text-navy" />
                   {endorsements.length === 0 && (
-                    <span className="text-xs bg-yellow-200 text-yellow-800 px-2 py-1 rounded-full font-semibold animate-bounce">
-                      NEW
-                    </span>
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">NEW</span>
                   )}
                 </div>
-                <p className={`text-3xl font-bold transition-colors duration-300 ${
-                  endorsements.length === 0 ? 'text-yellow-800' : 'text-slate-900'
-                }`}>
-                  {isLoadingStats ? '...' : endorsements.length}
-                </p>
+                <p className="text-4xl font-extrabold text-navy">{isLoadingStats ? '...' : endorsements.length}</p>
+                <p className="text-gray-500 font-medium mt-1">Endorsements</p>
+              </Link>
+            </div>
+
+            {/* Endorsement Promo Card */}
+            {endorsements.length === 0 && (
+              <div className="bg-light-blue/20 backdrop-blur-sm p-8 rounded-2xl shadow-sm border border-light-blue/30 hover:shadow-lg transition-all duration-200 flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-md">
+                    <Star className="h-6 w-6 text-navy" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-navy">Get Your First Endorsement!</h3>
+                    <p className="text-navy/80">Boost your profile credibility and stand out from the crowd.</p>
+                  </div>
+                </div>
+                <Link
+                  href="/endorsements"
+                  className="bg-navy text-white font-semibold py-3 px-6 rounded-lg hover:bg-blue-900 transition-colors duration-200 shadow-md hover:shadow-lg"
+                >
+                  Get Endorsements
+                </Link>
+              </div>
+            )}
+
+            {/* Recent Activity Card */}
+            <div className="bg-white/90 backdrop-blur-sm p-8 rounded-2xl shadow-sm border border-light-gray hover:shadow-lg transition-all duration-200">
+              <h2 className="text-xl font-bold text-navy mb-6">Recent Activity</h2>
+              {threadDetails.length > 0 ? (
+                <div className="space-y-3">
+                  {threadDetails.slice(0, 3).map((thread: any, index: number) => (
+                    <Link
+                      key={thread.id || index}
+                      href={`/messages/${thread.id}`}
+                      className="flex items-center p-4 bg-slate-50 rounded-lg hover:bg-slate-100 transition-all duration-200 cursor-pointer group"
+                    >
+                      <div className="w-10 h-10 bg-slate-200 rounded-lg flex items-center justify-center group-hover:bg-blue-100 transition-colors duration-200">
+                        <MessageSquare className="h-5 w-5 text-slate-400 group-hover:text-blue-600 transition-colors duration-200" />
+                      </div>
+                      <div className="flex-1 ml-4">
+                        <span className="text-slate-700 group-hover:text-slate-900 transition-colors duration-200">
+                          New message from{' '}
+                          <span className="font-medium group-hover:text-blue-600 transition-colors duration-200">
+                            {thread.otherParticipant?.companyName || 
+                             `${thread.otherParticipant?.firstName || ''} ${thread.otherParticipant?.lastName || ''}`.trim() || 
+                             'employer'}
+                          </span>
+                        </span>
+                      </div>
+                      <span className="text-sm text-slate-500 group-hover:text-slate-700 transition-colors duration-200">
+                        {formatTimeAgo(thread.lastMessageAt)}
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <div className="w-20 h-20 mx-auto bg-slate-100 rounded-full flex items-center justify-center mb-6">
+                    <MessageSquare className="h-8 w-8 text-slate-400" />
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-700">No recent activity</h3>
+                  <p className="text-gray-500 mt-2 max-w-sm mx-auto">Your activity, such as profile views and new messages, will appear here.</p>
+                </div>
+              )}
+            </div>
+
+          </div>
+
+          {/* Quick Actions Sidebar */}
+          <div className="lg:col-span-1">
+            <div className="bg-white/90 backdrop-blur-sm p-6 rounded-2xl shadow-sm border border-light-gray hover:shadow-lg transition-all duration-200 sticky top-28">
+              <h2 className="text-xl font-bold text-navy mb-5 px-2">Quick Actions</h2>
+              <div className="space-y-2">
+                <Link href="/account/profile" className="flex items-center p-4 rounded-lg hover:bg-light-blue/20 transition-all duration-200 cursor-pointer group">
+                  <div className="w-10 h-10 bg-light-blue/30 rounded-lg flex items-center justify-center mr-4">
+                    <User className="h-5 w-5 text-navy" />
+                  </div>
+                  <span className="font-semibold text-gray-700">Edit Profile</span>
+                  <div className="ml-auto">
+                    <div className="w-4 h-4 border-r-2 border-b-2 border-gray-400 rotate-45"></div>
+                  </div>
+                </Link>
+                <Link href={`/candidate/${user?.uid}`} className="flex items-center p-4 rounded-lg hover:bg-light-blue/20 transition-all duration-200 cursor-pointer group">
+                  <div className="w-10 h-10 bg-light-blue/30 rounded-lg flex items-center justify-center mr-4">
+                    <Eye className="h-5 w-5 text-navy" />
+                  </div>
+                  <span className="font-semibold text-gray-700">Preview Profile</span>
+                  <div className="ml-auto">
+                    <div className="w-4 h-4 border-r-2 border-b-2 border-gray-400 rotate-45"></div>
+                  </div>
+                </Link>
+                <Link href="/messages/candidate" className="flex items-center p-4 rounded-lg hover:bg-light-blue/20 transition-all duration-200 cursor-pointer group">
+                  <div className="w-10 h-10 bg-light-blue/30 rounded-lg flex items-center justify-center mr-4">
+                    <MessageSquare className="h-5 w-5 text-navy" />
+                  </div>
+                  <span className="font-semibold text-gray-700">View Messages</span>
+                  <div className="ml-auto">
+                    <div className="w-4 h-4 border-r-2 border-b-2 border-gray-400 rotate-45"></div>
+                  </div>
+                </Link>
                 {endorsements.length === 0 && (
-                  <p className="text-xs text-yellow-700 mt-1 font-medium">
-                    Get endorsements to stand out! ✨
-                  </p>
+                  <Link href="/endorsements" className="flex items-center p-4 rounded-lg hover:bg-light-blue/20 transition-all duration-200 cursor-pointer group">
+                    <div className="w-10 h-10 bg-light-blue/30 rounded-lg flex items-center justify-center mr-4">
+                      <Star className="h-5 w-5 text-navy" />
+                    </div>
+                    <div className="flex-grow">
+                      <span className="font-semibold text-gray-700">Get Endorsements</span>
+                      <span className="block text-xs bg-yellow-100 text-yellow-800 font-bold px-2 py-0.5 rounded-full w-fit mt-1">Recommended</span>
+                    </div>
+                    <div className="ml-auto">
+                      <div className="w-4 h-4 border-r-2 border-b-2 border-gray-400 rotate-45"></div>
+                    </div>
+                  </Link>
                 )}
               </div>
             </div>
-          </Link>
-        </div>
-
-        {/* Endorsements Call-to-Action */}
-        {endorsements.length === 0 && (
-          <div className="bg-gradient-to-r from-yellow-50 to-amber-50 border border-yellow-200 rounded-2xl shadow-sm p-6 md:p-7 mb-8">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <div className="w-12 h-12 bg-gradient-to-r from-yellow-200 to-amber-200 rounded-full flex items-center justify-center mr-4">
-                  <Star className="h-6 w-6 text-yellow-700" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-yellow-800">Get Your First Endorsement!</h3>
-                  <p className="text-sm text-yellow-700">Endorsements make your profile stand out to employers</p>
-                </div>
-              </div>
-              <Link
-                href="/endorsements"
-                className="bg-gradient-to-r from-yellow-500 to-amber-500 text-white px-6 py-3 rounded-lg font-semibold hover:from-yellow-600 hover:to-amber-600 transition-all duration-200 hover:scale-105 shadow-lg"
-              >
-                Get Endorsements
-              </Link>
-            </div>
           </div>
-        )}
-
-        {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-1 gap-8 mb-8">
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-200/60 p-6 md:p-7 hover:shadow-lg transition-shadow duration-200">
-            <h3 className="text-lg font-semibold text-slate-900 mb-5">Quick Actions</h3>
-            <div className="space-y-2">
-              <Link
-                href="/account/profile"
-                className="flex items-center p-4 rounded-lg hover:bg-blue-50 hover:scale-105 transition-all duration-200 group cursor-pointer"
-              >
-                <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center group-hover:bg-blue-100 transition-colors duration-200">
-                  <User className="h-5 w-5 text-blue-600 group-hover:text-blue-700 transition-colors duration-200" />
-                </div>
-                <span className="text-slate-700 font-medium ml-4 group-hover:text-blue-900 transition-colors duration-200">Edit Profile</span>
-              </Link>
-              <Link
-                href={`/candidate/${user?.uid}`}
-                className="flex items-center p-4 rounded-lg hover:bg-green-50 hover:scale-105 transition-all duration-200 group cursor-pointer"
-              >
-                <div className="w-10 h-10 bg-green-50 rounded-lg flex items-center justify-center group-hover:bg-green-100 transition-colors duration-200">
-                  <Eye className="h-5 w-5 text-green-600 group-hover:text-green-700 transition-colors duration-200" />
-                </div>
-                <span className="text-slate-700 font-medium ml-4 group-hover:text-green-900 transition-colors duration-200">Preview Profile</span>
-              </Link>
-              <Link
-                href="/messages/candidate"
-                className="flex items-center p-4 rounded-lg hover:bg-purple-50 hover:scale-105 transition-all duration-200 group cursor-pointer"
-              >
-                <div className="w-10 h-10 bg-purple-50 rounded-lg flex items-center justify-center group-hover:bg-purple-100 transition-colors duration-200">
-                  <MessageSquare className="h-5 w-5 text-purple-600 group-hover:text-purple-700 transition-colors duration-200" />
-                </div>
-                <span className="text-slate-700 font-medium ml-4 group-hover:text-purple-900 transition-colors duration-200">View Messages</span>
-              </Link>
-              {endorsements.length === 0 && (
-                <Link
-                  href="/endorsements"
-                  className="flex items-center p-4 rounded-lg hover:bg-yellow-50 hover:scale-105 transition-all duration-200 border border-yellow-200 group cursor-pointer"
-                >
-                  <div className="w-10 h-10 bg-yellow-50 rounded-lg flex items-center justify-center group-hover:bg-yellow-100 transition-colors duration-200">
-                    <Star className="h-5 w-5 text-yellow-600 group-hover:text-yellow-700 transition-colors duration-200" />
-                  </div>
-                  <span className="text-slate-700 font-medium ml-4 group-hover:text-yellow-900 transition-colors duration-200">Get Endorsements</span>
-                  <span className="ml-auto text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full font-semibold group-hover:bg-yellow-200 transition-colors duration-200">
-                    Recommended
-                  </span>
-                </Link>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Recent Activity */}
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200/60 p-6 md:p-7 hover:shadow-lg transition-shadow duration-200">
-          <h3 className="text-lg font-semibold text-slate-900 mb-5">Recent Activity</h3>
-          {threadDetails.length > 0 ? (
-            <div className="space-y-3">
-              {threadDetails.slice(0, 3).map((thread: any, index: number) => (
-                <Link
-                  key={thread.id || index}
-                  href={`/messages/${thread.id}`}
-                  className="flex items-center p-4 bg-slate-50 rounded-lg hover:bg-slate-100 hover:scale-105 transition-all duration-200 cursor-pointer group"
-                >
-                  <div className="w-10 h-10 bg-slate-200 rounded-lg flex items-center justify-center group-hover:bg-blue-100 transition-colors duration-200">
-                    <MessageSquare className="h-5 w-5 text-slate-400 group-hover:text-blue-600 transition-colors duration-200" />
-                  </div>
-                  <div className="flex-1 ml-4">
-                    <span className="text-slate-700 group-hover:text-slate-900 transition-colors duration-200">
-                      New message from{' '}
-                      <span className="font-medium group-hover:text-blue-600 transition-colors duration-200">
-                        {thread.otherParticipant?.companyName || 
-                         `${thread.otherParticipant?.firstName || ''} ${thread.otherParticipant?.lastName || ''}`.trim() || 
-                         'employer'}
-                      </span>
-                    </span>
-                  </div>
-                  <span className="text-sm text-slate-500 group-hover:text-slate-700 transition-colors duration-200">
-                    {formatTimeAgo(thread.lastMessageAt)}
-                  </span>
-                </Link>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-12">
-              <div className="w-20 h-20 bg-slate-100 rounded-full mx-auto mb-6 flex items-center justify-center">
-                <MessageSquare className="h-8 w-8 text-slate-400" />
-              </div>
-              <p className="text-slate-500 mb-2 font-medium">No recent activity</p>
-              <p className="text-sm text-slate-400">Complete your profile to start receiving messages</p>
-            </div>
-          )}
         </div>
       </div>
       
