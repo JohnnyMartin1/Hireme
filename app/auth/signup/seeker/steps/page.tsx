@@ -280,62 +280,16 @@ export default function NextStepsOnboarding() {
 
             {/* Slide 2: Skills & Expertise */}
             {currentSlide === 2 && (
-              <div className="relative">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Technical & Professional Skills
-                </label>
-                <div className="relative" ref={dropdownRef}>
-                  <input
-                    type="text"
-                    placeholder=" "
-                    value={searchQuery}
-                    onChange={(e) => {
-                      setSearchQuery(e.target.value);
-                      setShowDropdown('skills');
-                    }}
-                    onFocus={() => setShowDropdown('skills')}
-                    className="w-full h-12 bg-blue-50/50 rounded-xl border border-gray-200 px-4 pt-6 pb-2 focus:border-navy focus:ring-2 focus:ring-navy/20 focus:outline-none transition-all"
-                  />
-                  <label className="absolute left-4 top-4 text-gray-500 text-sm pointer-events-none">
-                    Technical & Professional Skills
-                  </label>
-                  
-                  {showDropdown === 'skills' && (
-                    <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-lg border border-gray-200 z-20 max-h-48 overflow-y-auto">
-                      <div className="p-2">
-                        {getFilteredOptions(skills).map((skill) => (
-                          <div
-                            key={skill}
-                            onClick={() => {
-                              handleMultiSelect('skills', skill);
-                              setSearchQuery('');
-                            }}
-                            className="px-3 py-2 hover:bg-gray-50 rounded-lg cursor-pointer flex items-center justify-between"
-                          >
-                            <span>{skill}</span>
-                            {profileData.skills.includes(skill) && (
-                              <i className="fa-solid fa-check text-navy"></i>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  
-                  <div className="flex flex-wrap gap-2 mt-3">
-                    {profileData.skills.map((skill, index) => (
-                      <span key={index} className="bg-navy/10 text-navy px-3 py-1 rounded-full text-sm flex items-center space-x-2">
-                        <span>{skill}</span>
-                        <button
-                          onClick={() => removeItem('skills', skill)}
-                          className="text-navy/60 hover:text-navy"
-                        >
-                          <i className="fa-solid fa-times text-xs"></i>
-                        </button>
-                      </span>
-                    ))}
-                  </div>
-                </div>
+              <div>
+                <MultiSelectDropdown
+                  options={SKILLS}
+                  values={profileData.skills}
+                  onChange={(values) => setProfileData({...profileData, skills: values})}
+                  placeholder="Select your skills"
+                  label="Technical & Professional Skills"
+                  allowCustom
+                  maxSelections={10}
+                />
               </div>
             )}
 
@@ -365,62 +319,16 @@ export default function NextStepsOnboarding() {
 
             {/* Slide 4: Industries */}
             {currentSlide === 4 && (
-              <div className="relative">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Career Industries
-                </label>
-                <div className="relative" ref={dropdownRef}>
-                  <input
-                    type="text"
-                    placeholder=" "
-                    value={searchQuery}
-                    onChange={(e) => {
-                      setSearchQuery(e.target.value);
-                      setShowDropdown('industries');
-                    }}
-                    onFocus={() => setShowDropdown('industries')}
-                    className="w-full h-12 bg-blue-50/50 rounded-xl border border-gray-200 px-4 pt-6 pb-2 focus:border-navy focus:ring-2 focus:ring-navy/20 focus:outline-none transition-all"
-                  />
-                  <label className="absolute left-4 top-4 text-gray-500 text-sm pointer-events-none">
-                    Career Industries
-                  </label>
-                  
-                  {showDropdown === 'industries' && (
-                    <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-lg border border-gray-200 z-20 max-h-48 overflow-y-auto">
-                      <div className="p-2">
-                        {getFilteredOptions(industries).map((industry) => (
-                          <div
-                            key={industry}
-                            onClick={() => {
-                              handleMultiSelect('industries', industry);
-                              setSearchQuery('');
-                            }}
-                            className="px-3 py-2 hover:bg-gray-50 rounded-lg cursor-pointer flex items-center justify-between"
-                          >
-                            <span>{industry}</span>
-                            {profileData.industries.includes(industry) && (
-                              <i className="fa-solid fa-check text-navy"></i>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  
-                  <div className="flex flex-wrap gap-2 mt-3">
-                    {profileData.industries.map((industry, index) => (
-                      <span key={index} className="bg-navy/10 text-navy px-3 py-1 rounded-full text-sm flex items-center space-x-2">
-                        <span>{industry}</span>
-                        <button
-                          onClick={() => removeItem('industries', industry)}
-                          className="text-navy/60 hover:text-navy"
-                        >
-                          <i className="fa-solid fa-times text-xs"></i>
-                        </button>
-                      </span>
-                    ))}
-                  </div>
-                </div>
+              <div>
+                <MultiSelectDropdown
+                  options={INDUSTRIES}
+                  values={profileData.industries}
+                  onChange={(values) => setProfileData({...profileData, industries: values})}
+                  placeholder="Select industries"
+                  label="Career Industries"
+                  allowCustom
+                  maxSelections={5}
+                />
               </div>
             )}
 
