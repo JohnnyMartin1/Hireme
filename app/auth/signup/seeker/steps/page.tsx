@@ -340,12 +340,9 @@ export default function NextStepsOnboarding() {
                     type="url"
                     value={profileData.linkedin}
                     onChange={(e) => setProfileData({...profileData, linkedin: e.target.value})}
-                    placeholder=" "
-                    className="w-full h-12 bg-blue-50/50 rounded-xl border border-gray-200 px-4 pt-6 pb-2 focus:border-navy focus:ring-2 focus:ring-navy/20 focus:outline-none transition-all"
+                    placeholder="https://linkedin.com/in/yourprofile"
+                    className="w-full h-12 bg-blue-50/50 rounded-xl border border-gray-200 px-4 py-4 focus:border-navy focus:ring-2 focus:ring-navy/20 focus:outline-none transition-all"
                   />
-                  <label className="absolute left-4 top-4 text-gray-500 text-sm pointer-events-none">
-                    LinkedIn URL
-                  </label>
                 </div>
                 <div className="relative">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -355,12 +352,9 @@ export default function NextStepsOnboarding() {
                     type="url"
                     value={profileData.portfolio}
                     onChange={(e) => setProfileData({...profileData, portfolio: e.target.value})}
-                    placeholder=" "
-                    className="w-full h-12 bg-blue-50/50 rounded-xl border border-gray-200 px-4 pt-6 pb-2 focus:border-navy focus:ring-2 focus:ring-navy/20 focus:outline-none transition-all"
+                    placeholder="https://yourportfolio.com"
+                    className="w-full h-12 bg-blue-50/50 rounded-xl border border-gray-200 px-4 py-4 focus:border-navy focus:ring-2 focus:ring-navy/20 focus:outline-none transition-all"
                   />
-                  <label className="absolute left-4 top-4 text-gray-500 text-sm pointer-events-none">
-                    Portfolio/Website URL
-                  </label>
                 </div>
               </div>
             )}
