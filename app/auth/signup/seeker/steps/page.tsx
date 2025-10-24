@@ -157,23 +157,15 @@ export default function NextStepsOnboarding() {
         industries: profileData.industries,
         linkedinUrl: profileData.linkedin,
         portfolioUrl: profileData.portfolio,
+        profileImageUrl: profileData.avatar,
+        resumeUrl: profileData.resume,
+        videoUrl: profileData.video,
         onboardingComplete: true,
         profileComplete: true
       };
 
       if (user?.uid) {
         await updateDocument('profiles', user.uid, profileUpdate);
-        
-        // Handle file uploads if present
-        if (profileData.avatar) {
-          // Upload avatar logic
-        }
-        if (profileData.resume) {
-          // Upload resume logic
-        }
-        if (profileData.video) {
-          // Upload video logic
-        }
       }
 
       // Redirect to dashboard
@@ -366,9 +358,9 @@ export default function NextStepsOnboarding() {
                   <label className="block text-sm font-medium text-gray-700 mb-3">Profile Picture</label>
                   <FileUpload
                     type="profile-image"
-                    currentFile=""
-                    onUploadComplete={(url) => console.log('Avatar uploaded:', url)}
-                    onDelete={() => console.log('Avatar deleted')}
+                    currentFile={profileData.avatar || ''}
+                    onUploadComplete={(url) => setProfileData({...profileData, avatar: url})}
+                    onDelete={() => setProfileData({...profileData, avatar: ''})}
                     userId={user?.uid || ''}
                   />
                 </div>
@@ -376,9 +368,9 @@ export default function NextStepsOnboarding() {
                   <label className="block text-sm font-medium text-gray-700 mb-3">Resume</label>
                   <FileUpload
                     type="resume"
-                    currentFile=""
-                    onUploadComplete={(url) => console.log('Resume uploaded:', url)}
-                    onDelete={() => console.log('Resume deleted')}
+                    currentFile={profileData.resume || ''}
+                    onUploadComplete={(url) => setProfileData({...profileData, resume: url})}
+                    onDelete={() => setProfileData({...profileData, resume: ''})}
                     userId={user?.uid || ''}
                   />
                 </div>
