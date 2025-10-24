@@ -495,7 +495,7 @@ export default function SeekerSignupPage() {
                   Let's finish setting up your profile so employers can discover your amazing potential.
                 </p>
                 <button 
-                  onClick={() => router.push("/home/seeker")}
+                  onClick={() => router.push("/auth/signup/seeker/steps")}
                   className="bg-navy text-white px-8 py-4 rounded-xl font-semibold hover:bg-opacity-90 transition-all duration-200"
                 >
                   Start profile setup
