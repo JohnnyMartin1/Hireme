@@ -9,8 +9,8 @@ export default function HireMeLogo({
   variant = 'full', 
   className = '' 
 }: HireMeLogoProps) {
-  // Use the official asset as source of truth
-  const logoSrc = variant === 'mark' ? '/brand/hireme-official-mark.svg' : '/brand/hireme-official.svg';
+  // Use the new logo.svg file
+  const logoSrc = '/logo.svg';
 
   return (
     <img
