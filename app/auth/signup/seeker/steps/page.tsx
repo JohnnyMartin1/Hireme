@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import { useFirebaseAuth } from '@/components/FirebaseAuthProvider';
 import { createDocument, updateDocument } from '@/lib/firebase-firestore';
 import { FileUpload } from '@/components/FileUpload';
-import { VideoUpload } from '@/components/VideoUpload';
 
 interface ProfileData {
   workLocations: string[];
@@ -638,12 +637,15 @@ export default function NextStepsOnboarding() {
             {currentSlide === 7 && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-3">Bio Video (Optional)</label>
-                <VideoUpload
-                  currentVideo=""
-                  onUploadComplete={(url) => console.log('Video uploaded:', url)}
-                  onDelete={() => console.log('Video deleted')}
-                  userId={user?.uid || ''}
-                />
+                <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center">
+                  <div className="w-16 h-16 bg-gray-100 rounded-xl mx-auto flex items-center justify-center mb-4">
+                    <i className="fa-solid fa-video text-2xl text-gray-500"></i>
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900 mb-2">Upload a 30-second intro</p>
+                    <p className="text-sm text-gray-500">MP4, MOV up to 50MB</p>
+                  </div>
+                </div>
               </div>
             )}
 
