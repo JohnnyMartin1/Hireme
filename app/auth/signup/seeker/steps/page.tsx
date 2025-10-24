@@ -302,7 +302,7 @@ export default function NextStepsOnboarding() {
                       className="w-full h-12 bg-blue-50/50 rounded-xl border border-gray-200 px-4 pt-6 pb-2 focus:border-navy focus:ring-2 focus:ring-navy/20 focus:outline-none transition-all"
                     />
                     <label className="absolute left-4 top-4 text-gray-500 text-sm pointer-events-none">
-                      Preferred Work Locations
+                      Search locations...
                     </label>
                     
                     {showDropdown === 'locations' && (
@@ -351,16 +351,13 @@ export default function NextStepsOnboarding() {
                   <select
                     value={profileData.workArrangements}
                     onChange={(e) => setProfileData({...profileData, workArrangements: e.target.value})}
-                    className="w-full h-12 bg-blue-50/50 rounded-xl border border-gray-200 px-4 pt-6 pb-2 focus:border-navy focus:ring-2 focus:ring-navy/20 focus:outline-none transition-all appearance-none"
+                    className="w-full h-12 bg-blue-50/50 rounded-xl border border-gray-200 px-4 focus:border-navy focus:ring-2 focus:ring-navy/20 focus:outline-none transition-all appearance-none"
                   >
-                    <option value="" disabled></option>
+                    <option value="" disabled>Select work arrangement</option>
                     <option value="remote">Remote</option>
                     <option value="hybrid">Hybrid</option>
                     <option value="onsite">On-site</option>
                   </select>
-                  <label className="absolute left-4 top-4 text-gray-500 text-sm pointer-events-none">
-                    Work Arrangements
-                  </label>
                   <i className="fa-solid fa-chevron-down absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500 pointer-events-none"></i>
                 </div>
 
