@@ -23,6 +23,8 @@ module.exports = {
         navy: '#000080',
         'light-blue': '#ADD8E6',
         'light-gray': '#D3D3D3',
+        'brand-blue': '#2563EB',
+        'form-bg': '#F8FAFC',
       },
       fontFamily: {
         'inter': ['Inter', 'sans-serif'],
