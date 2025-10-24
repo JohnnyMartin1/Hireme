@@ -118,13 +118,18 @@ export default function NextStepsOnboarding() {
   }, []);
 
   const handleMultiSelect = (type: keyof ProfileData, value: string) => {
+    console.log('handleMultiSelect called with:', { type, value });
     const currentArray = profileData[type] as string[];
+    console.log('Current array:', currentArray);
+    
     if (currentArray.includes(value)) {
+      console.log('Removing value from array');
       setProfileData({
         ...profileData,
         [type]: currentArray.filter(item => item !== value)
       });
     } else {
+      console.log('Adding value to array');
       setProfileData({
         ...profileData,
         [type]: [...currentArray, value]
@@ -312,8 +317,11 @@ export default function NextStepsOnboarding() {
                             <div
                               key={location}
                               onClick={() => {
+                                console.log('Clicked location:', location);
+                                console.log('Current workLocations:', profileData.workLocations);
                                 handleMultiSelect('workLocations', location);
                                 setSearchQuery('');
+                                console.log('After click workLocations:', profileData.workLocations);
                               }}
                               className="px-3 py-2 hover:bg-gray-50 rounded-lg cursor-pointer flex items-center justify-between"
                             >
