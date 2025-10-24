@@ -614,7 +614,7 @@ export default function NextStepsOnboarding() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-3">Profile Picture</label>
                   <FileUpload
-                    type="profile"
+                    type="profile-image"
                     currentFile=""
                     onUploadComplete={(url) => console.log('Avatar uploaded:', url)}
                     onDelete={() => console.log('Avatar deleted')}
