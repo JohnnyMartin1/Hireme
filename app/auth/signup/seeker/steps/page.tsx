@@ -114,9 +114,36 @@ export default function NextStepsOnboarding() {
     return slideNumber;
   };
 
+  const saveCurrentSlideData = async () => {
+    if (!user?.uid) return;
+    
+    try {
+      // Save current slide data to user profile
+      const currentData = {
+        locations: profileData.workLocations,
+        workPreferences: profileData.workArrangements ? [profileData.workArrangements] : [],
+        jobTypes: profileData.jobTypes,
+        skills: profileData.skills,
+        experience: profileData.experience,
+        careerInterests: profileData.industries,
+        linkedinUrl: profileData.linkedin,
+        portfolioUrl: profileData.portfolio,
+        profileImageUrl: profileData.avatar,
+        resumeUrl: profileData.resume,
+        videoUrl: profileData.video,
+      };
+      
+      await updateDocument('users', user.uid, currentData);
+    } catch (error) {
+      console.error('Error saving slide data:', error);
+    }
+  };
+
   const nextSlide = () => {
     if (currentSlide < totalSlides) {
       if (validateCurrentSlide()) {
+        // Save current slide data before moving to next slide
+        saveCurrentSlideData();
         setCurrentSlide(currentSlide + 1);
       }
     } else {
@@ -150,12 +177,12 @@ export default function NextStepsOnboarding() {
     try {
       // Create or update profile with the collected data
       const profileUpdate = {
-        workLocations: profileData.workLocations,
-        workArrangements: profileData.workArrangements,
+        locations: profileData.workLocations,
+        workPreferences: profileData.workArrangements ? [profileData.workArrangements] : [],
         jobTypes: profileData.jobTypes,
         skills: profileData.skills,
         experience: profileData.experience,
-        industries: profileData.industries,
+        careerInterests: profileData.industries,
         linkedinUrl: profileData.linkedin,
         portfolioUrl: profileData.portfolio,
         profileImageUrl: profileData.avatar,
@@ -166,7 +193,7 @@ export default function NextStepsOnboarding() {
       };
 
       if (user?.uid) {
-        await updateDocument('profiles', user.uid, profileUpdate);
+        await updateDocument('users', user.uid, profileUpdate);
       }
 
       // Redirect to dashboard
