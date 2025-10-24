@@ -115,6 +115,8 @@ export default function SeekerHomePage() {
     }
 
     if (profile) {
+      console.log('Profile data loaded:', profile);
+      console.log('Profile image URL:', profile.profileImageUrl);
       setUserProfile(profile);
       
       // Update shared completion state
@@ -306,19 +308,22 @@ export default function SeekerHomePage() {
             {/* Welcome Banner */}
             <section className="bg-gradient-to-r from-navy to-blue-900 text-white p-8 rounded-2xl flex items-center justify-between shadow-lg">
               <div className="flex items-center space-x-6">
-                {userProfile?.profileImageUrl ? (
-                  <Image
-                    src={userProfile.profileImageUrl}
-                    alt={`${profile?.firstName || 'User'}'s avatar`}
-                    width={80}
-                    height={80}
-                    className="w-20 h-20 rounded-full border-4 border-white/30 shadow-lg"
-                  />
-                ) : (
-                  <div className="w-20 h-20 rounded-full border-4 border-white/30 shadow-lg bg-white/20 flex items-center justify-center">
-                    <User className="h-10 w-10 text-white" />
-                  </div>
-                )}
+                {(() => {
+                  console.log('Rendering profile image:', userProfile?.profileImageUrl);
+                  return userProfile?.profileImageUrl ? (
+                    <Image
+                      src={userProfile.profileImageUrl}
+                      alt={`${profile?.firstName || 'User'}'s avatar`}
+                      width={80}
+                      height={80}
+                      className="w-20 h-20 rounded-full border-4 border-white/30 shadow-lg"
+                    />
+                  ) : (
+                    <div className="w-20 h-20 rounded-full border-4 border-white/30 shadow-lg bg-white/20 flex items-center justify-center">
+                      <User className="h-10 w-10 text-white" />
+                    </div>
+                  );
+                })()}
                 <div>
                   <h1 className="text-3xl font-bold">Welcome back, {profile?.firstName || 'Job Seeker'}! 👋</h1>
                   <p className="text-blue-200 mt-1">Here's your dashboard overview for today.</p>
