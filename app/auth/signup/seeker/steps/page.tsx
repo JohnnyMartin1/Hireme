@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useFirebaseAuth } from '@/components/FirebaseAuthProvider';
 import { createDocument, updateDocument } from '@/lib/firebase-firestore';
-import { FileUpload } from '@/components/FileUpload';
+import FileUpload from '@/components/FileUpload';
 
 interface ProfileData {
   workLocations: string[];
