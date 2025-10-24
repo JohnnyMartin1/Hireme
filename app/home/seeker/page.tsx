@@ -306,9 +306,9 @@ export default function SeekerHomePage() {
             {/* Welcome Banner */}
             <section className="bg-gradient-to-r from-navy to-blue-900 text-white p-8 rounded-2xl flex items-center justify-between shadow-lg">
               <div className="flex items-center space-x-6">
-                {(userProfile as any)?.profileImageUrl ? (
+                {userProfile?.profileImageUrl ? (
                   <Image
-                    src={(userProfile as any).profileImageUrl}
+                    src={userProfile.profileImageUrl}
                     alt={`${profile?.firstName || 'User'}'s avatar`}
                     width={80}
                     height={80}

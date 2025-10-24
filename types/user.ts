@@ -52,6 +52,7 @@ export interface UserProfile {
 
   // Personal
   bio?: string | null;
+  profileImageUrl?: string | null;
   linkedinUrl?: string | null;
   portfolioUrl?: string | null;
   createdAt?: Date | null;
