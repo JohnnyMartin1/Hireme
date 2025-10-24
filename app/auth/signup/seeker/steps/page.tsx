@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { useFirebaseAuth } from '@/lib/firebase-auth';
+import { useFirebaseAuth } from '@/components/FirebaseAuthProvider';
 import { createDocument, updateDocument } from '@/lib/firebase-firestore';
 import { FileUpload } from '@/components/FileUpload';
 import { VideoUpload } from '@/components/VideoUpload';
