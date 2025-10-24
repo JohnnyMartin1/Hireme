@@ -8,10 +8,10 @@ function HomeContent() {
   return (
     <div className="bg-white">
       {/* Hero Section */}
-      <section className="relative skyline-bg py-20 px-6 h-[700px] flex items-center">
+      <section className="relative skyline-bg py-12 sm:py-20 px-4 sm:px-6 h-auto sm:h-[700px] flex items-center mobile-safe-top">
         <div className="container mx-auto max-w-4xl text-center relative z-10">
-          <div className="mb-8">
-            <div className="w-24 h-24 flex items-center justify-center mx-auto mb-6">
+          <div className="mb-6 sm:mb-8">
+            <div className="w-16 h-16 sm:w-24 sm:h-24 flex items-center justify-center mx-auto mb-4 sm:mb-6">
               <svg width="269" height="274" viewBox="0 0 269 274" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full" preserveAspectRatio="xMidYMid meet" role="img" aria-label="HireMe magnifying glass logo">
                 <path d="M111.028 0C172.347 0.000238791 222.055 51.647 222.055 115.356C222.055 140.617 214.238 163.98 200.983 182.981L258.517 242.758L238.036 264.036L181.077 204.857C161.97 221.02 137.589 230.713 111.028 230.713C49.7092 230.713 2.76862e-05 179.066 0 115.356C0 51.6468 49.7092 0 111.028 0Z" fill="#0B1F4B"/>
                 <path d="M205.69 115.392C205.69 170.42 163.308 215.029 111.028 215.029C58.748 215.029 16.3666 170.42 16.3666 115.392C16.3666 60.3646 58.748 15.7559 111.028 15.7559C163.308 15.7559 205.69 60.3646 205.69 115.392Z" fill="#4F86F7"/>
@@ -21,24 +21,24 @@ function HomeContent() {
             </div>
           </div>
           
-          <h1 className="text-5xl md:text-6xl font-bold text-navy leading-tight mb-6">
+          <h1 className="text-3xl sm:text-5xl md:text-6xl font-bold text-navy leading-tight mb-4 sm:mb-6">
             Welcome to HireMe
           </h1>
           
-          <p className="text-xl text-gray-600 mb-12 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-lg sm:text-xl text-gray-600 mb-8 sm:mb-12 max-w-2xl mx-auto leading-relaxed">
             Connect employers with early-career talent. Find your next opportunity or discover the perfect candidate.
           </p>
           
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center">
             <Link 
               href="/auth/signup"
-              className="bg-navy text-white px-8 py-4 rounded-full font-semibold text-lg hover:bg-blue-900 transition btn-hover shadow-lg"
+              className="w-full sm:w-auto bg-navy text-white px-6 sm:px-8 py-3 sm:py-4 rounded-full font-semibold text-base sm:text-lg hover:bg-blue-900 transition btn-hover shadow-lg min-h-[44px] flex items-center justify-center"
             >
               Get Started
             </Link>
             <Link 
               href="/auth/login"
-              className="bg-white/80 backdrop-blur-sm text-navy border border-gray-300 px-8 py-4 rounded-full font-semibold text-lg hover:bg-light-blue/50 hover:border-light-blue transition btn-hover shadow-sm"
+              className="w-full sm:w-auto bg-white/80 backdrop-blur-sm text-navy border border-gray-300 px-6 sm:px-8 py-3 sm:py-4 rounded-full font-semibold text-base sm:text-lg hover:bg-light-blue/50 hover:border-light-blue transition btn-hover shadow-sm min-h-[44px] flex items-center justify-center"
             >
               Sign In
             </Link>
@@ -47,12 +47,12 @@ function HomeContent() {
       </section>
 
       {/* Feature Cards Section */}
-      <section className="py-20 px-6 bg-gray-50">
+      <section className="py-12 sm:py-20 px-4 sm:px-6 bg-gray-50">
         <div className="container mx-auto max-w-6xl">
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
             
             {/* For Job Seekers Card */}
-            <div className="bg-white rounded-2xl p-8 text-center card-glow hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2">
+            <div className="bg-white rounded-2xl p-6 sm:p-8 text-center card-glow hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2">
               <div className="w-16 h-16 bg-gradient-to-br from-light-blue to-blue-200 rounded-full flex items-center justify-center mx-auto mb-6">
                 <i className="fa-solid fa-bullseye text-navy text-xl"></i>
               </div>

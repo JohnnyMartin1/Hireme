@@ -300,14 +300,14 @@ export default function SeekerHomePage() {
   }
 
   return (
-    <main className="min-h-screen" style={{background: 'linear-gradient(180deg, #E6F0FF 0%, #F0F8FF 100%)'}}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2 space-y-8">
+    <main className="min-h-screen mobile-safe-top mobile-safe-bottom" style={{background: 'linear-gradient(180deg, #E6F0FF 0%, #F0F8FF 100%)'}}>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-8">
+          <div className="lg:col-span-2 space-y-4 sm:space-y-8">
             
             {/* Welcome Banner */}
-            <section className="bg-gradient-to-r from-navy to-blue-900 text-white p-8 rounded-2xl flex items-center justify-between shadow-lg">
-              <div className="flex items-center space-x-6">
+            <section className="bg-gradient-to-r from-navy to-blue-900 text-white p-4 sm:p-8 rounded-2xl flex flex-col sm:flex-row items-center justify-between shadow-lg">
+              <div className="flex items-center space-x-4 sm:space-x-6">
                 {(() => {
                   console.log('Rendering profile image:', userProfile?.profileImageUrl);
                   return userProfile?.profileImageUrl ? (
@@ -316,26 +316,26 @@ export default function SeekerHomePage() {
                       alt={`${profile?.firstName || 'User'}'s avatar`}
                       width={80}
                       height={80}
-                      className="w-20 h-20 rounded-full border-4 border-white/30 shadow-lg"
+                      className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-4 border-white/30 shadow-lg"
                     />
                   ) : (
-                    <div className="w-20 h-20 rounded-full border-4 border-white/30 shadow-lg bg-white/20 flex items-center justify-center">
-                      <User className="h-10 w-10 text-white" />
+                    <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-4 border-white/30 shadow-lg bg-white/20 flex items-center justify-center">
+                      <User className="h-8 w-8 sm:h-10 sm:w-10 text-white" />
                     </div>
                   );
                 })()}
-                <div>
-                  <h1 className="text-3xl font-bold">Welcome back, {profile?.firstName || 'Job Seeker'}! 👋</h1>
-                  <p className="text-blue-200 mt-1">Here's your dashboard overview for today.</p>
+                <div className="text-center sm:text-left">
+                  <h1 className="text-xl sm:text-3xl font-bold">Welcome back, {profile?.firstName || 'Job Seeker'}! 👋</h1>
+                  <p className="text-blue-200 mt-1 text-sm sm:text-base">Here's your dashboard overview for today.</p>
                 </div>
               </div>
             </section>
 
             {/* Profile Completion Card */}
-            <div className="bg-white/90 backdrop-blur-sm p-8 rounded-2xl shadow-sm border border-light-gray hover:shadow-lg transition-all duration-200">
+            <div className="bg-white/90 backdrop-blur-sm p-4 sm:p-8 rounded-2xl shadow-sm border border-light-gray hover:shadow-lg transition-all duration-200">
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-bold text-navy">Profile Completion</h2>
-                <span className="text-2xl font-bold text-navy bg-light-blue/30 px-4 py-1.5 rounded-full">{completion}%</span>
+                <h2 className="text-lg sm:text-xl font-bold text-navy">Profile Completion</h2>
+                <span className="text-xl sm:text-2xl font-bold text-navy bg-light-blue/30 px-3 sm:px-4 py-1.5 rounded-full">{completion}%</span>
               </div>
               <div className="w-full bg-light-gray/50 rounded-full h-3 mb-3 shadow-inner">
                 <div 
@@ -343,15 +343,15 @@ export default function SeekerHomePage() {
                   style={{ width: `${completion}%` }}
                 />
               </div>
-              <p className="text-gray-600 text-sm">
+              <p className="text-gray-600 text-sm break-words">
                 Complete your profile to increase your visibility to top employers.{' '}
                 <a href="/account/profile" className="font-semibold text-navy hover:underline decoration-2 underline-offset-2 cursor-pointer">Finish profile →</a>
               </p>
             </div>
 
             {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <Link href="/messages/candidate" className="bg-white/90 backdrop-blur-sm p-6 rounded-2xl shadow-sm border border-light-gray hover:shadow-lg transition-all duration-200 text-center group">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-8">
+              <Link href="/messages/candidate" className="bg-white/90 backdrop-blur-sm p-4 sm:p-6 rounded-2xl shadow-sm border border-light-gray hover:shadow-lg transition-all duration-200 text-center group">
                 <div className="w-14 h-14 mx-auto rounded-full bg-light-blue/30 flex items-center justify-center mb-3">
                   <MessageSquare className="h-6 w-6 text-navy" />
                 </div>

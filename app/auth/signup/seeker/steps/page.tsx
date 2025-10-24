@@ -221,22 +221,22 @@ export default function NextStepsOnboarding() {
   const progressPercentage = updateProgress();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 relative">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 relative mobile-safe-top mobile-safe-bottom">
       <div className="absolute inset-0 bg-gradient-radial from-transparent via-transparent to-blue-100/30 pointer-events-none"></div>
       
       <main className="relative z-10 min-h-screen">
         {/* Top Bar */}
-        <header className="px-6 py-4">
+        <header className="px-4 sm:px-6 py-4">
           {/* Empty header for spacing */}
         </header>
 
         {/* Header Stack */}
-        <div className="text-center px-6 mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-3">{currentContent.title}</h1>
-          <p className="text-lg text-gray-600 mb-8">{currentContent.description}</p>
+        <div className="text-center px-4 sm:px-6 mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-3">{currentContent.title}</h1>
+          <p className="text-base sm:text-lg text-gray-600 mb-6 sm:mb-8">{currentContent.description}</p>
           
           {/* Progress Module */}
-          <div className="max-w-md mx-auto bg-white rounded-2xl p-6 shadow-sm border border-gray-200/30">
+          <div className="max-w-md mx-auto bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-200/30">
             <div className="flex items-center justify-between mb-3">
               <span className="text-sm font-medium text-gray-600">Progress</span>
               <span className="text-sm font-semibold text-navy">Step {currentSlide} of {totalSlides}</span>
@@ -251,12 +251,12 @@ export default function NextStepsOnboarding() {
         </div>
 
         {/* Stage Area */}
-        <div className="max-w-4xl mx-auto px-6 pb-32">
-          <div className="bg-white/50 backdrop-blur-sm rounded-3xl p-8 shadow-lg border border-white/60">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 pb-24 sm:pb-32">
+          <div className="bg-white/50 backdrop-blur-sm rounded-3xl p-4 sm:p-8 shadow-lg border border-white/60">
             
             {/* Slide 1: Work Preferences */}
             {currentSlide === 1 && (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-8">
                 {/* Work Locations */}
                 <div className="lg:col-span-2">
                   <MultiSelectDropdown

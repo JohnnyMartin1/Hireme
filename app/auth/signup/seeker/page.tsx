@@ -197,14 +197,14 @@ export default function SeekerSignupPage() {
   };
 
   return (
-    <main className="h-screen flex bg-brand-gray overflow-hidden">
+    <main className="h-screen flex flex-col sm:flex-row bg-brand-gray overflow-hidden mobile-safe-top mobile-safe-bottom">
       {/* Left Column - Content & Form */}
-      <div className="w-[48%] flex flex-col justify-center p-8 bg-white relative">
-        <div className="flex-grow flex flex-col justify-center">
+      <div className="w-full sm:w-[48%] flex flex-col justify-center p-4 sm:p-8 bg-white relative">
+        <div className="flex-grow flex flex-col justify-center max-w-full">
           {/* Progress Stepper */}
-          <div className="flex items-center space-x-4 text-sm mb-8">
-            <div className={`flex items-center ${currentStep >= 1 ? 'text-navy font-semibold' : 'text-text-secondary'}`}>
-              <span className={`flex items-center justify-center w-8 h-8 rounded-full mr-3 text-xs ${
+          <div className="flex items-center space-x-2 sm:space-x-4 text-xs sm:text-sm mb-6 sm:mb-8 overflow-x-auto">
+            <div className={`flex items-center ${currentStep >= 1 ? 'text-navy font-semibold' : 'text-text-secondary'} whitespace-nowrap`}>
+              <span className={`flex items-center justify-center w-6 h-6 sm:w-8 sm:h-8 rounded-full mr-2 sm:mr-3 text-xs ${
                 currentStep > 1 ? 'bg-success-green text-white' : currentStep === 1 ? 'bg-navy text-white' : 'bg-light-gray text-text-secondary'
               }`}>
                 {currentStep > 1 ? <i className="fa-solid fa-check"></i> : <i className="fa-solid fa-envelope"></i>}
@@ -212,8 +212,8 @@ export default function SeekerSignupPage() {
               Search
             </div>
             <i className="fa-solid fa-chevron-right text-light-gray text-xs"></i>
-            <div className={`flex items-center ${currentStep >= 2 ? 'text-navy font-semibold' : 'text-text-secondary'}`}>
-              <span className={`flex items-center justify-center w-8 h-8 rounded-full mr-3 text-xs ${
+            <div className={`flex items-center ${currentStep >= 2 ? 'text-navy font-semibold' : 'text-text-secondary'} whitespace-nowrap`}>
+              <span className={`flex items-center justify-center w-6 h-6 sm:w-8 sm:h-8 rounded-full mr-2 sm:mr-3 text-xs ${
                 currentStep > 2 ? 'bg-success-green text-white' : currentStep === 2 ? 'bg-navy text-white' : 'bg-light-gray text-text-secondary'
               }`}>
                 {currentStep > 2 ? <i className="fa-solid fa-check"></i> : <i className="fa-solid fa-user-plus"></i>}
@@ -221,8 +221,8 @@ export default function SeekerSignupPage() {
               Create Account
             </div>
             <i className="fa-solid fa-chevron-right text-light-gray text-xs"></i>
-            <div className={`flex items-center ${currentStep >= 3 ? 'text-navy font-semibold' : 'text-text-secondary'}`}>
-              <span className={`flex items-center justify-center w-8 h-8 rounded-full mr-3 text-xs ${
+            <div className={`flex items-center ${currentStep >= 3 ? 'text-navy font-semibold' : 'text-text-secondary'} whitespace-nowrap`}>
+              <span className={`flex items-center justify-center w-6 h-6 sm:w-8 sm:h-8 rounded-full mr-2 sm:mr-3 text-xs ${
                 currentStep === 3 ? 'bg-navy text-white' : 'bg-light-gray text-text-secondary'
               }`}>
                 <i className="fa-solid fa-smile"></i>
@@ -232,7 +232,7 @@ export default function SeekerSignupPage() {
           </div>
 
           {/* Progress Bar */}
-          <div className="w-full bg-light-gray rounded-full h-2 mb-8">
+          <div className="w-full bg-light-gray rounded-full h-2 mb-6 sm:mb-8">
             <div 
               className="bg-navy h-2 rounded-full transition-all duration-300" 
               style={{ width: `${getProgressPercentage()}%` }}
@@ -242,8 +242,8 @@ export default function SeekerSignupPage() {
           {/* Step 1: Email Verification */}
           {currentStep === 1 && (
             <div>
-              <h1 className="text-4xl font-bold text-text-primary mb-6">Enter your email to get started</h1>
-              <div className="space-y-6">
+              <h1 className="text-2xl sm:text-4xl font-bold text-text-primary mb-4 sm:mb-6">Enter your email to get started</h1>
+              <div className="space-y-4 sm:space-y-6">
                 <div className="relative">
                   <input 
                     type="email" 
@@ -257,14 +257,14 @@ export default function SeekerSignupPage() {
                         sendVerificationCode();
                       }
                     }}
-                    className="w-full bg-white border border-light-gray rounded-xl py-4 px-6 text-text-primary focus:border-navy focus:outline-none transition-all duration-200 text-lg"
+                    className="w-full bg-white border border-light-gray rounded-xl py-3 sm:py-4 px-4 sm:px-6 text-text-primary focus:border-navy focus:outline-none transition-all duration-200 text-base min-h-[44px]"
                     required
                   />
                   <button 
                     type="button" 
                     onClick={sendVerificationCode}
                     disabled={isLoading}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 bg-navy text-white px-6 py-2 rounded-lg hover:bg-opacity-90 transition-all duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 bg-navy text-white px-3 sm:px-6 py-2 rounded-lg hover:bg-opacity-90 transition-all duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base min-h-[44px]"
                   >
                     {isLoading ? (
                       <i className="fa-solid fa-spinner animate-spin"></i>

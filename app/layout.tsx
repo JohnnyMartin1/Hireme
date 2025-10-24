@@ -6,7 +6,15 @@ import EmailVerificationBanner from "@/components/EmailVerificationBanner";
 import { NotificationProvider } from "@/components/NotificationSystem";
 import FontAwesomeFallback from "@/components/FontAwesomeFallback";
 
-export const metadata = { title: "HireMe" };
+export const metadata = { 
+  title: "HireMe"
+};
+
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover'
+};
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
