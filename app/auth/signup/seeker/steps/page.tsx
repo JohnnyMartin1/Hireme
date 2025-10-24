@@ -303,12 +303,9 @@ export default function NextStepsOnboarding() {
                   value={profileData.experience}
                   onChange={(e) => setProfileData({...profileData, experience: e.target.value})}
                   rows={6}
-                  placeholder=" "
-                  className="w-full bg-blue-50/50 rounded-xl border border-gray-200 px-4 pt-6 pb-2 focus:border-navy focus:ring-2 focus:ring-navy/20 focus:outline-none transition-all resize-none"
+                  placeholder="Describe your work experience, internships, projects, and achievements..."
+                  className="w-full bg-blue-50/50 rounded-xl border border-gray-200 px-4 py-4 focus:border-navy focus:ring-2 focus:ring-navy/20 focus:outline-none transition-all resize-none"
                 />
-                <label className="absolute left-4 top-4 text-gray-500 text-sm pointer-events-none">
-                  Experience & Relevant Experience
-                </label>
                 <div className="flex justify-end mt-2">
                   <span className="text-sm text-gray-500">
                     {profileData.experience.split(/\s+/).filter(word => word.length > 0).length} words
