@@ -91,7 +91,6 @@ export default function NextStepsOnboarding() {
   });
 
   const totalSlides = 8;
-  const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Redirect if user is already onboarded
   useEffect(() => {
