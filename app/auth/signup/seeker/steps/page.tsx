@@ -18,9 +18,9 @@ interface ProfileData {
   industries: string[];
   linkedin: string;
   portfolio: string;
-  avatar: File | null;
-  resume: File | null;
-  video: File | null;
+  avatar: string;
+  resume: string;
+  video: string;
 }
 
 const slideContents = [
@@ -74,7 +74,7 @@ const industries = [
 
 export default function NextStepsOnboarding() {
   const router = useRouter();
-  const { user } = useFirebaseAuth();
+  const { user, profile } = useFirebaseAuth();
   const [currentSlide, setCurrentSlide] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [profileData, setProfileData] = useState<ProfileData>({
@@ -86,19 +86,19 @@ export default function NextStepsOnboarding() {
     industries: [],
     linkedin: '',
     portfolio: '',
-    avatar: null,
-    resume: null,
-    video: null
+    avatar: '',
+    resume: '',
+    video: ''
   });
 
   const totalSlides = 8;
 
   // Redirect if user is already onboarded
   useEffect(() => {
-    if (user && user.onboardingComplete) {
+    if (user && profile?.onboardingComplete) {
       router.push('/home/seeker');
     }
-  }, [user, router]);
+  }, [user, profile, router]);
 
   const updateSlideContent = () => {
     const content = slideContents[currentSlide - 1];
