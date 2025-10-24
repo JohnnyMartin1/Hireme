@@ -1,10 +1,12 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useFirebaseAuth } from '@/components/FirebaseAuthProvider';
 import { createDocument, updateDocument } from '@/lib/firebase-firestore';
 import FileUpload from '@/components/FileUpload';
+import MultiSelectDropdown from '@/components/MultiSelectDropdown';
+import { LOCATIONS, WORK_PREFERENCES, JOB_TYPES, SKILLS, INDUSTRIES } from '@/lib/profile-data';
 
 interface ProfileData {
   workLocations: string[];
@@ -55,11 +57,6 @@ const slideContents = [
   }
 ];
 
-const workLocations = [
-  'New York, NY', 'San Francisco, CA', 'Austin, TX', 'Seattle, WA', 'Chicago, IL',
-  'Boston, MA', 'Los Angeles, CA', 'Denver, CO', 'Miami, FL', 'Atlanta, GA'
-];
-
 const jobTypes = [
   'Full-time', 'Part-time', 'Contract', 'Internship', 'Freelance', 'Temporary'
 ];
@@ -79,8 +76,6 @@ export default function NextStepsOnboarding() {
   const { user } = useFirebaseAuth();
   const [currentSlide, setCurrentSlide] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showDropdown, setShowDropdown] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
   const [profileData, setProfileData] = useState<ProfileData>({
     workLocations: [],
     workArrangements: '',
@@ -104,52 +99,6 @@ export default function NextStepsOnboarding() {
       router.push('/home/seeker');
     }
   }, [user, router]);
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setShowDropdown(null);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  const handleMultiSelect = (type: keyof ProfileData, value: string) => {
-    console.log('handleMultiSelect called with:', { type, value });
-    const currentArray = profileData[type] as string[];
-    console.log('Current array:', currentArray);
-    
-    if (currentArray.includes(value)) {
-      console.log('Removing value from array');
-      setProfileData({
-        ...profileData,
-        [type]: currentArray.filter(item => item !== value)
-      });
-    } else {
-      console.log('Adding value to array');
-      setProfileData({
-        ...profileData,
-        [type]: [...currentArray, value]
-      });
-    }
-  };
-
-  const removeItem = (type: keyof ProfileData, value: string) => {
-    const currentArray = profileData[type] as string[];
-    setProfileData({
-      ...profileData,
-      [type]: currentArray.filter(item => item !== value)
-    });
-  };
-
-  const getFilteredOptions = (options: string[]) => {
-    return options.filter(option => 
-      option.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  };
 
   const updateSlideContent = () => {
     const content = slideContents[currentSlide - 1];
@@ -290,142 +239,42 @@ export default function NextStepsOnboarding() {
             {currentSlide === 1 && (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {/* Work Locations */}
-                <div className="lg:col-span-2 relative">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Preferred Work Locations
-                  </label>
-                  <div className="relative" ref={dropdownRef}>
-                    <input
-                      type="text"
-                      placeholder=" "
-                      value={searchQuery}
-                      onChange={(e) => {
-                        setSearchQuery(e.target.value);
-                        setShowDropdown('locations');
-                      }}
-                      onFocus={() => setShowDropdown('locations')}
-                      className="w-full h-12 bg-blue-50/50 rounded-xl border border-gray-200 px-4 pt-6 pb-2 focus:border-navy focus:ring-2 focus:ring-navy/20 focus:outline-none transition-all"
-                    />
-                    <label className="absolute left-4 top-4 text-gray-500 text-sm pointer-events-none">
-                      Search locations...
-                    </label>
-                    
-                    {showDropdown === 'locations' && (
-                      <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-lg border border-gray-200 z-20 max-h-48 overflow-y-auto">
-                        <div className="p-2">
-                          {getFilteredOptions(workLocations).map((location) => (
-                            <div
-                              key={location}
-                              onClick={() => {
-                                console.log('Clicked location:', location);
-                                console.log('Current workLocations:', profileData.workLocations);
-                                handleMultiSelect('workLocations', location);
-                                setSearchQuery('');
-                                console.log('After click workLocations:', profileData.workLocations);
-                              }}
-                              className="px-3 py-2 hover:bg-gray-50 rounded-lg cursor-pointer flex items-center justify-between"
-                            >
-                              <span>{location}</span>
-                              {profileData.workLocations.includes(location) && (
-                                <i className="fa-solid fa-check text-navy"></i>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    
-                    <div className="flex flex-wrap gap-2 mt-3">
-                      {profileData.workLocations.map((location, index) => (
-                        <span key={index} className="bg-navy/10 text-navy px-3 py-1 rounded-full text-sm flex items-center space-x-2">
-                          <span>{location}</span>
-                          <button
-                            onClick={() => removeItem('workLocations', location)}
-                            className="text-navy/60 hover:text-navy"
-                          >
-                            <i className="fa-solid fa-times text-xs"></i>
-                          </button>
-                        </span>
-                      ))}
-                    </div>
-                  </div>
+                <div className="lg:col-span-2">
+                  <MultiSelectDropdown
+                    options={LOCATIONS}
+                    values={profileData.workLocations}
+                    onChange={(values) => setProfileData({...profileData, workLocations: values})}
+                    placeholder="Select preferred work locations"
+                    label="Preferred Work Locations"
+                    allowCustom
+                    maxSelections={5}
+                  />
                 </div>
 
                 {/* Work Arrangements */}
-                <div className="relative">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Work Arrangements
-                  </label>
-                  <select
-                    value={profileData.workArrangements}
-                    onChange={(e) => setProfileData({...profileData, workArrangements: e.target.value})}
-                    className="w-full h-12 bg-blue-50/50 rounded-xl border border-gray-200 px-4 focus:border-navy focus:ring-2 focus:ring-navy/20 focus:outline-none transition-all appearance-none"
-                  >
-                    <option value="" disabled>Select work arrangement</option>
-                    <option value="remote">Remote</option>
-                    <option value="hybrid">Hybrid</option>
-                    <option value="onsite">On-site</option>
-                  </select>
-                  <i className="fa-solid fa-chevron-down absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500 pointer-events-none"></i>
+                <div>
+                  <MultiSelectDropdown
+                    options={WORK_PREFERENCES}
+                    values={profileData.workArrangements ? [profileData.workArrangements] : []}
+                    onChange={(values) => setProfileData({...profileData, workArrangements: values[0] || ''})}
+                    placeholder="Select work arrangements"
+                    label="Work Arrangements"
+                    allowCustom
+                    maxSelections={1}
+                  />
                 </div>
 
                 {/* Job Types */}
-                <div className="relative">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Job Types
-                  </label>
-                  <div className="relative" ref={dropdownRef}>
-                    <input
-                      type="text"
-                      placeholder=" "
-                      value={searchQuery}
-                      onChange={(e) => {
-                        setSearchQuery(e.target.value);
-                        setShowDropdown('jobTypes');
-                      }}
-                      onFocus={() => setShowDropdown('jobTypes')}
-                      className="w-full h-12 bg-blue-50/50 rounded-xl border border-gray-200 px-4 pt-6 pb-2 focus:border-navy focus:ring-2 focus:ring-navy/20 focus:outline-none transition-all"
-                    />
-                    <label className="absolute left-4 top-4 text-gray-500 text-sm pointer-events-none">
-                      Job Types
-                    </label>
-                    
-                    {showDropdown === 'jobTypes' && (
-                      <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-lg border border-gray-200 z-20 max-h-48 overflow-y-auto">
-                        <div className="p-2">
-                          {getFilteredOptions(jobTypes).map((type) => (
-                            <div
-                              key={type}
-                              onClick={() => {
-                                handleMultiSelect('jobTypes', type);
-                                setSearchQuery('');
-                              }}
-                              className="px-3 py-2 hover:bg-gray-50 rounded-lg cursor-pointer flex items-center justify-between"
-                            >
-                              <span>{type}</span>
-                              {profileData.jobTypes.includes(type) && (
-                                <i className="fa-solid fa-check text-navy"></i>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    
-                    <div className="flex flex-wrap gap-2 mt-3">
-                      {profileData.jobTypes.map((type, index) => (
-                        <span key={index} className="bg-navy/10 text-navy px-3 py-1 rounded-full text-sm flex items-center space-x-2">
-                          <span>{type}</span>
-                          <button
-                            onClick={() => removeItem('jobTypes', type)}
-                            className="text-navy/60 hover:text-navy"
-                          >
-                            <i className="fa-solid fa-times text-xs"></i>
-                          </button>
-                        </span>
-                      ))}
-                    </div>
-                  </div>
+                <div>
+                  <MultiSelectDropdown
+                    options={JOB_TYPES}
+                    values={profileData.jobTypes}
+                    onChange={(values) => setProfileData({...profileData, jobTypes: values})}
+                    placeholder="Select job types"
+                    label="Job Types"
+                    allowCustom
+                    maxSelections={5}
+                  />
                 </div>
               </div>
             )}
