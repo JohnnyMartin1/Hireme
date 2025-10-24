@@ -255,13 +255,7 @@ export default function NextStepsOnboarding() {
       <main className="relative z-10 min-h-screen">
         {/* Top Bar */}
         <header className="px-6 py-4">
-          <button 
-            onClick={() => router.push('/home/seeker')}
-            className="flex items-center text-navy hover:text-opacity-80 transition-colors font-medium"
-          >
-            <i className="fa-solid fa-arrow-left mr-2"></i>
-            Back to Dashboard
-          </button>
+          {/* Empty header for spacing */}
         </header>
 
         {/* Header Stack */}
