@@ -155,6 +155,10 @@ export default function EditProfilePage() {
     return formData.videoUrl.trim() !== '';
   };
 
+  const isEndorsementsComplete = () => {
+    return true; // Endorsements section is always considered complete as it's just sharing
+  };
+
   // Recompute completion percentage whenever formData changes (real-time updates)
   useEffect(() => {
     updateCompletion(formData);
@@ -276,141 +280,140 @@ export default function EditProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
-      <div className="max-w-4xl mx-auto p-6">
-        {/* Header */}
-        <div className="mb-8">
-          <button
-            onClick={() => {
-              // Navigate to the correct dashboard based on user role
-              if (profile?.role === 'JOB_SEEKER') {
-                router.push('/home/seeker');
-              } else if (profile?.role === 'EMPLOYER' || profile?.role === 'RECRUITER') {
-                router.push('/home/employer');
-              } else {
-                router.push('/home');
-              }
-            }}
-            className="inline-flex items-center px-4 py-2 bg-blue-50 text-navy-800 rounded-full hover:bg-blue-100 hover:shadow-sm transition-all duration-200 mb-6"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Dashboard
-          </button>
-          <h1 className="text-3xl font-bold text-gray-900">Edit Profile</h1>
-          <p className="text-gray-600 mt-2">Complete your profile to help employers find you</p>
-          
-          {/* Real-time Completion Progress */}
-          <div className={`mt-6 rounded-xl shadow-lg p-4 transition-all duration-500 ${
-            completion === 100 
-              ? 'bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200' 
-              : 'bg-white'
-          }`}>
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center">
-                <p className="text-sm font-medium text-gray-700">Profile Completion</p>
-                {completion === 100 && (
-                  <span className="ml-2 text-green-600">✓</span>
-                )}
+    <div className="min-h-screen" style={{background: 'linear-gradient(180deg, #E6F0FF 0%, #F0F8FF 100%)'}}>
+      {/* Header */}
+      <header className="bg-white/80 backdrop-blur-md sticky top-0 z-40 border-b border-light-gray/30">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-20">
+            <div className="flex items-center space-x-6">
+              <button
+                onClick={() => {
+                  if (profile?.role === 'JOB_SEEKER') {
+                    router.push('/home/seeker');
+                  } else if (profile?.role === 'EMPLOYER' || profile?.role === 'RECRUITER') {
+                    router.push('/home/employer');
+                  } else {
+                    router.push('/home');
+                  }
+                }}
+                className="flex items-center space-x-2 text-navy hover:text-navy/80 transition-colors"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                <span className="font-semibold">Back to Dashboard</span>
+              </button>
+            </div>
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-navy rounded-xl flex items-center justify-center">
+                <i className="fa-solid fa-magnifying-glass text-white text-lg"></i>
               </div>
-              <p className={`text-sm font-semibold ${
-                completion === 100 ? 'text-green-600' : 'text-gray-600'
-              }`}>
-                {completion}% ({Math.floor(completion / 10)}/10 sections)
-              </p>
+              <span className="text-2xl font-bold text-navy">HireMe</span>
             </div>
-            <div className="w-full h-3 bg-gray-200 rounded-full overflow-hidden">
-              <div 
-                className={`h-3 transition-all duration-500 ease-in-out ${
-                  completion === 100 
-                    ? 'bg-gradient-to-r from-green-500 to-emerald-500' 
-                    : 'bg-gradient-to-r from-blue-500 to-indigo-600'
-                }`} 
-                style={{ width: `${completion}%` }} 
-              />
-            </div>
-            {completion === 100 ? (
-              <p className="text-xs text-green-600 mt-2 font-medium flex items-center">
-                <span className="mr-2">🎉</span>
-                Profile complete! You're ready to be discovered by employers.
-              </p>
-            ) : completion >= 80 ? (
-              <p className="text-xs text-gray-500 mt-2">
-                Almost there! Just a few more sections to complete.
-              </p>
-            ) : (
-              <p className="text-xs text-gray-500 mt-2">
-                Fill out all sections to reach 100%
-              </p>
-            )}
           </div>
         </div>
+      </header>
 
-        <form onSubmit={handleSubmit} className="space-y-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="flex gap-8">
+          <div className="flex-1">
+            {/* Page Header */}
+            <div className="mb-8">
+              <h1 className="text-3xl font-bold text-navy mb-2">Edit Profile</h1>
+              <p className="text-gray-600">Complete your profile to increase visibility and connect with top employers.</p>
+            </div>
+          
+            {/* Profile Completion Card */}
+            <div className="bg-white/90 backdrop-blur-sm p-6 rounded-2xl shadow-sm border border-light-gray/30 mb-8">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-bold text-navy">Profile Completion</h2>
+                <span className="text-2xl font-bold text-navy bg-light-blue/30 px-4 py-1.5 rounded-full">{completion}%</span>
+              </div>
+              <div className="w-full bg-light-gray/30 rounded-full h-3 mb-3">
+                <div className="bg-gradient-to-r from-navy to-light-blue h-3 rounded-full transition-all duration-500" style={{ width: `${completion}%` }}></div>
+              </div>
+              <p className="text-gray-600 text-sm">{Math.floor(completion / 10)} of 10 sections completed</p>
+            </div>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-6">
           {/* Basic Information */}
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
-              <Globe className="h-5 w-5 mr-2 text-blue-600" />
-              Basic Information
+          <div className="bg-white/90 backdrop-blur-sm p-8 rounded-2xl shadow-sm border border-light-gray/30">
+            <div className="flex items-center mb-6">
+              <div className="w-12 h-12 bg-light-blue/30 rounded-xl flex items-center justify-center mr-4">
+                <User className="text-navy text-lg" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-xl font-bold text-navy">Basic Information</h3>
+                <p className="text-gray-600 text-sm">Your core personal details</p>
+              </div>
               {isBasicInfoComplete() && (
-                <Check className="h-5 w-5 ml-2 text-green-600" />
+                <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+                  <Check className="text-white text-sm" />
+                </div>
               )}
-            </h2>
+            </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  First Name <span className="text-red-500">*</span>
-                </label>
+                <label className="block text-sm font-semibold text-navy mb-2">First Name *</label>
                 <input
                   type="text"
                   required
                   value={formData.firstName}
                   onChange={(e) => handleInputChange('firstName', e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full h-12 px-4 rounded-xl bg-light-blue/8 border border-light-blue/20 text-gray-800 focus:outline-none focus:ring-2 focus:ring-navy/30 focus:border-navy focus:bg-light-blue/12 transition-all duration-200"
                   placeholder="John"
                 />
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Last Name <span className="text-red-500">*</span>
-                </label>
+                <label className="block text-sm font-semibold text-navy mb-2">Last Name *</label>
                 <input
                   type="text"
                   required
                   value={formData.lastName}
                   onChange={(e) => handleInputChange('lastName', e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full h-12 px-4 rounded-xl bg-light-blue/8 border border-light-blue/20 text-gray-800 focus:outline-none focus:ring-2 focus:ring-navy/30 focus:border-navy focus:bg-light-blue/12 transition-all duration-200"
                   placeholder="Doe"
                 />
               </div>
             </div>
 
-            <div className="mt-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Professional Headline <span className="text-red-500">*</span>
-              </label>
+            <div className="mb-6">
+              <label className="block text-sm font-semibold text-navy mb-2">Professional Headline *</label>
               <input
                 type="text"
                 required
                 value={formData.headline}
                 onChange={(e) => handleInputChange('headline', e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full h-12 px-4 rounded-xl bg-light-blue/8 border border-light-blue/20 text-gray-800 focus:outline-none focus:ring-2 focus:ring-navy/30 focus:border-navy focus:bg-light-blue/12 transition-all duration-200"
                 placeholder="e.g., Computer Science Student | Full-Stack Developer"
               />
+            </div>
+            
+            <div className="flex space-x-3">
+              <button type="button" className="bg-navy text-white font-semibold py-3 px-6 rounded-xl hover:bg-blue-900 transition-all duration-200">Save</button>
+              <button type="button" className="bg-light-blue/10 text-navy font-semibold py-3 px-6 rounded-xl border border-light-blue/40 hover:bg-light-blue/15 transition-all duration-200">Cancel</button>
             </div>
           </div>
 
           {/* Education */}
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold text-gray-900 flex items-center">
-                <GraduationCap className="h-5 w-5 mr-2 text-green-600" />
-                Education
-                {isEducationComplete() && (
-                  <Check className="h-5 w-5 ml-2 text-green-600" />
-                )}
-              </h2>
+          <div className="bg-white/90 backdrop-blur-sm p-8 rounded-2xl shadow-sm border border-light-gray/30">
+            <div className="flex items-center mb-6">
+              <div className="w-12 h-12 bg-light-blue/30 rounded-xl flex items-center justify-center mr-4">
+                <GraduationCap className="text-navy text-lg" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-xl font-bold text-navy">Education</h3>
+                <p className="text-gray-600 text-sm">Your academic background and achievements</p>
+              </div>
+              {isEducationComplete() && (
+                <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+                  <Check className="text-white text-sm" />
+                </div>
+              )}
+            </div>
+            
+            <div className="flex justify-end mb-6">
               <button
                 type="button"
                 onClick={() => {
@@ -424,7 +427,7 @@ export default function EditProfilePage() {
                   }];
                   handleInputChange('education', newEducation);
                 }}
-                className="px-3 py-1 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors"
+                className="px-4 py-2 bg-navy text-white text-sm rounded-xl hover:bg-blue-900 transition-colors"
               >
                 Add Education
               </button>
@@ -544,17 +547,32 @@ export default function EditProfilePage() {
                 <p className="text-sm">Click "Add Education" to get started</p>
               </div>
             )}
+            
+            <div className="flex space-x-3 mt-6">
+              <button type="button" className="bg-navy text-white font-semibold py-3 px-6 rounded-xl hover:bg-blue-900 transition-all duration-200">Save</button>
+              <button type="button" className="bg-light-blue/10 text-navy font-semibold py-3 px-6 rounded-xl border border-light-blue/40 hover:bg-light-blue/15 transition-all duration-200">Cancel</button>
+            </div>
           </div>
 
           {/* Location & Preferences */}
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
-              <MapPin className="h-5 w-5 mr-2 text-purple-600" />
-              Location & Work Preferences
-              {isLocationComplete() && (
-                <Check className="h-5 w-5 ml-2 text-green-600" />
+          <div className="bg-white/90 backdrop-blur-sm p-8 rounded-2xl shadow-sm border border-light-gray/30">
+            <div className="flex items-center mb-6">
+              <div className="w-12 h-12 bg-light-blue/30 rounded-xl flex items-center justify-center mr-4">
+                <MapPin className="text-navy text-lg" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-xl font-bold text-navy">Location & Work Preferences</h3>
+                <p className="text-gray-600 text-sm">Where and how you'd like to work</p>
+              </div>
+              {!isLocationComplete() && (
+                <span className="text-sm font-semibold text-orange-600 bg-orange-100 px-3 py-1 rounded-full">Required</span>
               )}
-            </h2>
+              {isLocationComplete() && (
+                <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+                  <Check className="text-white text-sm" />
+                </div>
+              )}
+            </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <MultiSelectDropdown
@@ -587,17 +605,32 @@ export default function EditProfilePage() {
                 allowCustom
               />
             </div>
+            
+            <div className="flex space-x-3 mt-6">
+              <button type="button" className="bg-navy text-white font-semibold py-3 px-6 rounded-xl hover:bg-blue-900 transition-all duration-200">Save</button>
+              <button type="button" className="bg-light-blue/10 text-navy font-semibold py-3 px-6 rounded-xl border border-light-blue/40 hover:bg-light-blue/15 transition-all duration-200">Cancel</button>
+            </div>
           </div>
 
           {/* Skills */}
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
-              <Award className="h-5 w-5 mr-2 text-yellow-600" />
-              Skills & Expertise
-              {formData.skills && formData.skills.length > 0 && (
-                <Check className="h-5 w-5 ml-2 text-green-600" />
+          <div className="bg-white/90 backdrop-blur-sm p-8 rounded-2xl shadow-sm border border-light-gray/30">
+            <div className="flex items-center mb-6">
+              <div className="w-12 h-12 bg-light-blue/30 rounded-xl flex items-center justify-center mr-4">
+                <Award className="text-navy text-lg" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-xl font-bold text-navy">Skills & Expertise</h3>
+                <p className="text-gray-600 text-sm">Technical and professional skills (up to 20)</p>
+              </div>
+              {!isSkillsComplete() && (
+                <span className="text-sm font-semibold text-orange-600 bg-orange-100 px-3 py-1 rounded-full">Required</span>
               )}
-            </h2>
+              {isSkillsComplete() && (
+                <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+                  <Check className="text-white text-sm" />
+                </div>
+              )}
+            </div>
             
             <MultiSelectDropdown
               options={SKILLS}
@@ -608,27 +641,40 @@ export default function EditProfilePage() {
               allowCustom
               maxSelections={20}
             />
+            
+            <div className="flex space-x-3 mt-6">
+              <button type="button" className="bg-navy text-white font-semibold py-3 px-6 rounded-xl hover:bg-blue-900 transition-all duration-200">Save</button>
+              <button type="button" className="bg-light-blue/10 text-navy font-semibold py-3 px-6 rounded-xl border border-light-blue/40 hover:bg-light-blue/15 transition-all duration-200">Cancel</button>
+            </div>
           </div>
 
           {/* Experience & Activities */}
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
-              <Briefcase className="h-5 w-5 mr-2 text-indigo-600" />
-              Experience & Activities
-              {isExperienceComplete() && (
-                <Check className="h-5 w-5 ml-2 text-green-600" />
+          <div className="bg-white/90 backdrop-blur-sm p-8 rounded-2xl shadow-sm border border-light-gray/30">
+            <div className="flex items-center mb-6">
+              <div className="w-12 h-12 bg-light-blue/30 rounded-xl flex items-center justify-center mr-4">
+                <Briefcase className="text-navy text-lg" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-xl font-bold text-navy">Experience & Activities</h3>
+                <p className="text-gray-600 text-sm">Your professional and academic experiences</p>
+              </div>
+              {!isExperienceComplete() && (
+                <span className="text-sm font-semibold text-orange-600 bg-orange-100 px-3 py-1 rounded-full">Required</span>
               )}
-            </h2>
+              {isExperienceComplete() && (
+                <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+                  <Check className="text-white text-sm" />
+                </div>
+              )}
+            </div>
             
             <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Relevant Experience
-              </label>
+              <label className="block text-sm font-semibold text-navy mb-2">Relevant Experience</label>
               <textarea
                 value={formData.experience}
                 onChange={(e) => handleInputChange('experience', e.target.value)}
                 rows={4}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-3 rounded-xl bg-light-blue/8 border border-light-blue/20 text-gray-800 focus:outline-none focus:ring-2 focus:ring-navy/30 focus:border-navy focus:bg-light-blue/12 transition-all duration-200 resize-none"
                 placeholder="Describe your relevant work experience, internships, projects, etc."
               />
             </div>
@@ -661,17 +707,32 @@ export default function EditProfilePage() {
                 allowCustom
               />
             </div>
+            
+            <div className="flex space-x-3 mt-6">
+              <button type="button" className="bg-navy text-white font-semibold py-3 px-6 rounded-xl hover:bg-blue-900 transition-all duration-200">Save</button>
+              <button type="button" className="bg-light-blue/10 text-navy font-semibold py-3 px-6 rounded-xl border border-light-blue/40 hover:bg-light-blue/15 transition-all duration-200">Cancel</button>
+            </div>
           </div>
 
           {/* Career Interests */}
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
-              <Briefcase className="h-5 w-5 mr-2 text-indigo-600" />
-              Career Interests
-              {isCareerInterestsComplete() && (
-                <Check className="h-5 w-5 ml-2 text-green-600" />
+          <div className="bg-white/90 backdrop-blur-sm p-8 rounded-2xl shadow-sm border border-light-gray/30">
+            <div className="flex items-center mb-6">
+              <div className="w-12 h-12 bg-light-blue/30 rounded-xl flex items-center justify-center mr-4">
+                <Briefcase className="text-navy text-lg" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-xl font-bold text-navy">Career Interests</h3>
+                <p className="text-gray-600 text-sm">Industries and roles you're interested in (up to 5)</p>
+              </div>
+              {!isCareerInterestsComplete() && (
+                <span className="text-sm font-semibold text-orange-600 bg-orange-100 px-3 py-1 rounded-full">Required</span>
               )}
-            </h2>
+              {isCareerInterestsComplete() && (
+                <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+                  <Check className="text-white text-sm" />
+                </div>
+              )}
+            </div>
             
             <div>
               <MultiSelectDropdown
@@ -687,23 +748,36 @@ export default function EditProfilePage() {
                 Select up to 5 industries you're most interested in pursuing for your career.
               </p>
             </div>
+            
+            <div className="flex space-x-3 mt-6">
+              <button type="button" className="bg-navy text-white font-semibold py-3 px-6 rounded-xl hover:bg-blue-900 transition-all duration-200">Save</button>
+              <button type="button" className="bg-light-blue/10 text-navy font-semibold py-3 px-6 rounded-xl border border-light-blue/40 hover:bg-light-blue/15 transition-all duration-200">Cancel</button>
+            </div>
           </div>
 
           {/* Work Authorization */}
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
-              <HelpCircle className="h-5 w-5 mr-2 text-purple-600" />
-              Work Authorization
-              {formData.workAuthorization && (formData.workAuthorization.authorizedToWork !== undefined || formData.workAuthorization.requiresVisaSponsorship !== undefined) && (
-                <Check className="h-5 w-5 ml-2 text-green-600" />
+          <div className="bg-white/90 backdrop-blur-sm p-8 rounded-2xl shadow-sm border border-light-gray/30">
+            <div className="flex items-center mb-6">
+              <div className="w-12 h-12 bg-light-blue/30 rounded-xl flex items-center justify-center mr-4">
+                <HelpCircle className="text-navy text-lg" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-xl font-bold text-navy">Work Authorization</h3>
+                <p className="text-gray-600 text-sm">Your work eligibility status</p>
+              </div>
+              {!isWorkAuthComplete() && (
+                <span className="text-sm font-semibold text-orange-600 bg-orange-100 px-3 py-1 rounded-full">Required</span>
               )}
-            </h2>
+              {isWorkAuthComplete() && (
+                <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+                  <Check className="text-white text-sm" />
+                </div>
+              )}
+            </div>
             
-            <div className="space-y-6">
+            <div className="space-y-6 mb-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3">
-                  Are you legally authorized to work in the United States?
-                </label>
+                <label className="block text-sm font-semibold text-navy mb-3">Are you authorized to work in the United States?</label>
                 <div className="flex space-x-6">
                   <label className="flex items-center">
                     <input
@@ -715,9 +789,9 @@ export default function EditProfilePage() {
                         ...formData.workAuthorization,
                         authorizedToWork: e.target.value === 'yes'
                       })}
-                      className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300"
+                      className="w-4 h-4 text-navy focus:ring-navy/30 border-light-gray/30"
                     />
-                    <span className="ml-2 text-sm text-gray-700">Yes</span>
+                    <span className="ml-2 text-gray-800">Yes</span>
                   </label>
                   <label className="flex items-center">
                     <input
@@ -729,17 +803,15 @@ export default function EditProfilePage() {
                         ...formData.workAuthorization,
                         authorizedToWork: false
                       })}
-                      className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300"
+                      className="w-4 h-4 text-navy focus:ring-navy/30 border-light-gray/30"
                     />
-                    <span className="ml-2 text-sm text-gray-700">No</span>
+                    <span className="ml-2 text-gray-800">No</span>
                   </label>
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3">
-                  Will you now or in the future require visa sponsorship?
-                </label>
+                <label className="block text-sm font-semibold text-navy mb-3">Do you require sponsorship for employment visa status?</label>
                 <div className="flex space-x-6">
                   <label className="flex items-center">
                     <input
@@ -751,9 +823,9 @@ export default function EditProfilePage() {
                         ...formData.workAuthorization,
                         requiresVisaSponsorship: e.target.value === 'yes'
                       })}
-                      className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300"
+                      className="w-4 h-4 text-navy focus:ring-navy/30 border-light-gray/30"
                     />
-                    <span className="ml-2 text-sm text-gray-700">Yes</span>
+                    <span className="ml-2 text-gray-800">Yes</span>
                   </label>
                   <label className="flex items-center">
                     <input
@@ -765,24 +837,36 @@ export default function EditProfilePage() {
                         ...formData.workAuthorization,
                         requiresVisaSponsorship: false
                       })}
-                      className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300"
+                      className="w-4 h-4 text-navy focus:ring-navy/30 border-light-gray/30"
                     />
-                    <span className="ml-2 text-sm text-gray-700">No</span>
+                    <span className="ml-2 text-gray-800">No</span>
                   </label>
                 </div>
               </div>
             </div>
+            
+            <div className="flex space-x-3">
+              <button type="button" className="bg-navy text-white font-semibold py-3 px-6 rounded-xl hover:bg-blue-900 transition-all duration-200">Save</button>
+              <button type="button" className="bg-light-blue/10 text-navy font-semibold py-3 px-6 rounded-xl border border-light-blue/40 hover:bg-light-blue/15 transition-all duration-200">Cancel</button>
+            </div>
           </div>
 
           {/* Personal & Links */}
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
-              <BookOpen className="h-5 w-5 mr-2 text-red-600" />
-              Personal & Links
+          <div className="bg-white/90 backdrop-blur-sm p-8 rounded-2xl shadow-sm border border-light-gray/30">
+            <div className="flex items-center mb-6">
+              <div className="w-12 h-12 bg-light-blue/30 rounded-xl flex items-center justify-center mr-4">
+                <BookOpen className="text-navy text-lg" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-xl font-bold text-navy">Personal & Links</h3>
+                <p className="text-gray-600 text-sm">Tell employers about yourself and share your work</p>
+              </div>
               {isPersonalComplete() && (
-                <Check className="h-5 w-5 ml-2 text-green-600" />
+                <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+                  <Check className="text-white text-sm" />
+                </div>
               )}
-            </h2>
+            </div>
             
             <div className="mb-6">
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -792,7 +876,7 @@ export default function EditProfilePage() {
                 value={formData.bio}
                 onChange={(e) => handleInputChange('bio', e.target.value)}
                 rows={4}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-3 rounded-xl bg-light-blue/8 border border-light-blue/20 text-gray-800 focus:outline-none focus:ring-2 focus:ring-navy/30 focus:border-navy focus:bg-light-blue/12 transition-all duration-200"
                 placeholder="Tell employers about yourself, your goals, and what makes you unique..."
               />
             </div>
@@ -806,7 +890,7 @@ export default function EditProfilePage() {
                   type="url"
                   value={formData.linkedinUrl}
                   onChange={(e) => handleInputChange('linkedinUrl', e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full h-12 px-4 rounded-xl bg-light-blue/8 border border-light-blue/20 text-gray-800 focus:outline-none focus:ring-2 focus:ring-navy/30 focus:border-navy focus:bg-light-blue/12 transition-all duration-200"
                   placeholder="https://linkedin.com/in/yourprofile"
                 />
               </div>
@@ -819,22 +903,34 @@ export default function EditProfilePage() {
                   type="url"
                   value={formData.portfolioUrl}
                   onChange={(e) => handleInputChange('portfolioUrl', e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full h-12 px-4 rounded-xl bg-light-blue/8 border border-light-blue/20 text-gray-800 focus:outline-none focus:ring-2 focus:ring-navy/30 focus:border-navy focus:bg-light-blue/12 transition-all duration-200"
                   placeholder="https://yourportfolio.com"
                 />
               </div>
             </div>
+            
+            <div className="flex space-x-3 mt-6">
+              <button type="button" className="bg-navy text-white font-semibold py-3 px-6 rounded-xl hover:bg-blue-900 transition-all duration-200">Save</button>
+              <button type="button" className="bg-light-blue/10 text-navy font-semibold py-3 px-6 rounded-xl border border-light-blue/40 hover:bg-light-blue/15 transition-all duration-200">Cancel</button>
+            </div>
           </div>
 
           {/* Profile Picture & Resume */}
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
-              <User className="h-5 w-5 mr-2 text-purple-600" />
-              Profile Picture & Resume
+          <div className="bg-white/90 backdrop-blur-sm p-8 rounded-2xl shadow-sm border border-light-gray/30">
+            <div className="flex items-center mb-6">
+              <div className="w-12 h-12 bg-light-blue/30 rounded-xl flex items-center justify-center mr-4">
+                <User className="text-navy text-lg" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-xl font-bold text-navy">Profile Picture & Resume</h3>
+                <p className="text-gray-600 text-sm">Upload your photo and resume to stand out</p>
+              </div>
               {isFilesComplete() && (
-                <Check className="h-5 w-5 ml-2 text-green-600" />
+                <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+                  <Check className="text-white text-sm" />
+                </div>
               )}
-            </h2>
+            </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {/* Profile Picture */}
@@ -865,17 +961,29 @@ export default function EditProfilePage() {
                 />
               </div>
             </div>
+            
+            <div className="flex space-x-3 mt-6">
+              <button type="button" className="bg-navy text-white font-semibold py-3 px-6 rounded-xl hover:bg-blue-900 transition-all duration-200">Save</button>
+              <button type="button" className="bg-light-blue/10 text-navy font-semibold py-3 px-6 rounded-xl border border-light-blue/40 hover:bg-light-blue/15 transition-all duration-200">Cancel</button>
+            </div>
           </div>
 
           {/* Profile Video */}
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
-              <Video className="h-5 w-5 mr-2 text-orange-600" />
-              Profile Video
+          <div className="bg-white/90 backdrop-blur-sm p-8 rounded-2xl shadow-sm border border-light-gray/30">
+            <div className="flex items-center mb-6">
+              <div className="w-12 h-12 bg-light-blue/30 rounded-xl flex items-center justify-center mr-4">
+                <Video className="text-navy text-lg" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-xl font-bold text-navy">Profile Video</h3>
+                <p className="text-gray-600 text-sm">Record a short video to introduce yourself</p>
+              </div>
               {isVideoComplete() && (
-                <Check className="h-5 w-5 ml-2 text-green-600" />
+                <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+                  <Check className="text-white text-sm" />
+                </div>
               )}
-            </h2>
+            </div>
             
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-4">
@@ -888,40 +996,73 @@ export default function EditProfilePage() {
                 userId={user.uid}
               />
             </div>
+            
+            <div className="flex space-x-3 mt-6">
+              <button type="button" className="bg-navy text-white font-semibold py-3 px-6 rounded-xl hover:bg-blue-900 transition-all duration-200">Save</button>
+              <button type="button" className="bg-light-blue/10 text-navy font-semibold py-3 px-6 rounded-xl border border-light-blue/40 hover:bg-light-blue/15 transition-all duration-200">Cancel</button>
+            </div>
           </div>
 
           {/* Endorsements */}
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold text-gray-900 flex items-center">
-                <Award className="h-5 w-5 mr-2 text-yellow-600" />
-                Endorsements
-              </h2>
-              <div className="text-sm text-gray-700 flex items-center">
-                <Share2 className="h-4 w-4 mr-2" />
-                <span className="mr-2">Share link:</span>
-                <code className="bg-gray-100 px-2 py-1 rounded">
-                  {typeof window !== 'undefined' ? `${window.location.origin}/endorse/${user.uid}` : `/endorse/${user.uid}`}
-                </code>
+          <div className="bg-white/90 backdrop-blur-sm p-8 rounded-2xl shadow-sm border border-light-gray/30">
+            <div className="flex items-center mb-6">
+              <div className="w-12 h-12 bg-light-blue/30 rounded-xl flex items-center justify-center mr-4">
+                <Award className="text-navy text-lg" />
               </div>
+              <div className="flex-1">
+                <h3 className="text-xl font-bold text-navy">Endorsements</h3>
+                <p className="text-gray-600 text-sm">Share your profile to get endorsements</p>
+              </div>
+              {isEndorsementsComplete() && (
+                <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+                  <Check className="text-white text-sm" />
+                </div>
+              )}
+            </div>
+            <div className="text-sm text-gray-700 flex items-center mb-6">
+              <Share2 className="h-4 w-4 mr-2" />
+              <span className="mr-2">Share link:</span>
+              <code className="bg-light-blue/20 px-3 py-2 rounded-lg text-navy font-mono text-sm">
+                {typeof window !== 'undefined' ? `${window.location.origin}/endorse/${user.uid}` : `/endorse/${user.uid}`}
+              </code>
             </div>
             <p className="text-gray-600 mb-2">Send this link to colleagues, managers or peers so they can vouch for your skills.</p>
             <Link href={`/endorse/${user.uid}`} className="text-blue-600 hover:underline text-sm">Open endorsement form</Link>
+            
+            <div className="flex space-x-3 mt-6">
+              <button type="button" className="bg-navy text-white font-semibold py-3 px-6 rounded-xl hover:bg-blue-900 transition-all duration-200">Save</button>
+              <button type="button" className="bg-light-blue/10 text-navy font-semibold py-3 px-6 rounded-xl border border-light-blue/40 hover:bg-light-blue/15 transition-all duration-200">Cancel</button>
+            </div>
           </div>
 
-          {/* Submit Button */}
-          <div className="flex justify-end">
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="inline-flex items-center px-8 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-lg"
-            >
-              <Save className="h-5 w-5 mr-2" />
-              {isSubmitting ? 'Saving...' : 'Save Profile'}
-            </button>
+          {/* Save All Changes */}
+          <div className="sticky bottom-0 bg-white/95 backdrop-blur-md border-t border-light-gray/30 p-6 rounded-t-2xl shadow-lg">
+            <div className="max-w-7xl mx-auto flex justify-between items-center">
+              <div>
+                <h3 className="text-lg font-semibold text-navy">Save All Changes</h3>
+                <p className="text-gray-600 text-sm">Review and save your profile updates</p>
+              </div>
+              <div className="flex space-x-3">
+                <button
+                  type="button"
+                  className="bg-light-blue/10 text-navy font-semibold py-3 px-6 rounded-xl border border-light-blue/40 hover:bg-light-blue/15 transition-all duration-200"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="bg-navy text-white font-semibold py-3 px-8 rounded-xl hover:bg-blue-900 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                >
+                  <Save className="h-5 w-5 mr-2" />
+                  {isSubmitting ? 'Saving...' : 'Save All Changes'}
+                </button>
+              </div>
+            </div>
           </div>
         </form>
       </div>
+    </main>
     </div>
   );
 }
