@@ -27,7 +27,7 @@ const MultiSelectDropdown = memo(function MultiSelectDropdown({
 }: MultiSelectDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filteredOptions, setFilteredOptions] = useState(options);
+  const [filteredOptions, setFilteredOptions] = useState(options || []);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -43,6 +43,8 @@ const MultiSelectDropdown = memo(function MultiSelectDropdown({
   }, []);
 
   useEffect(() => {
+    if (!options) return;
+    
     if (searchTerm.trim() === '') {
       setFilteredOptions(options);
     } else {

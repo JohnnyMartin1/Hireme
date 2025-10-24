@@ -6,7 +6,7 @@ import { useFirebaseAuth } from '@/components/FirebaseAuthProvider';
 import { createDocument, updateDocument } from '@/lib/firebase-firestore';
 import FileUpload from '@/components/FileUpload';
 import MultiSelectDropdown from '@/components/MultiSelectDropdown';
-import { LOCATIONS, WORK_PREFERENCES, JOB_TYPES, SKILLS, INDUSTRIES } from '@/lib/profile-data';
+import { LOCATIONS, WORK_PREFERENCES, JOB_TYPES, SKILLS, CAREER_INTERESTS } from '@/lib/profile-data';
 
 interface ProfileData {
   workLocations: string[];
@@ -318,7 +318,7 @@ export default function NextStepsOnboarding() {
             {currentSlide === 4 && (
               <div>
                 <MultiSelectDropdown
-                  options={INDUSTRIES}
+                  options={CAREER_INTERESTS}
                   values={profileData.industries}
                   onChange={(values) => setProfileData({...profileData, industries: values})}
                   placeholder="Select industries"
