@@ -366,12 +366,20 @@ export default function SearchCandidatesPage() {
     loadAllCandidates();
   };
 
+  const getInitials = (firstName?: string, lastName?: string) => {
+    const first = firstName?.charAt(0) || '';
+    const last = lastName?.charAt(0) || '';
+    return `${first}${last}`.toUpperCase();
+  };
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
+      <div className="min-h-screen" style={{background: 'linear-gradient(180deg, #E6F0FF 0%, #F8FAFC 100%)'}}>
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <Loader2 className="h-12 w-12 animate-spin text-navy mx-auto mb-4" />
+            <p className="text-gray-600">Loading...</p>
+          </div>
         </div>
       </div>
     );
@@ -381,76 +389,80 @@ export default function SearchCandidatesPage() {
     return null; // Will redirect
   }
 
+  const filterCount = [selectedUniversities.length > 0 ? 1 : 0, isTop25Selected ? 1 : 0, selectedMajors.length, selectedLocations.length, selectedSkills.length, hasVideo, hasResume, hasProfileImage, hasBio, searchTerm.trim() ? 1 : 0, selectedJobId ? 1 : 0].filter(Boolean).length;
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50">
-      <div className="max-w-7xl mx-auto p-6">
-        {/* Header */}
-        <div className="mb-8">
+    <div className="min-h-screen" style={{background: 'linear-gradient(180deg, #E6F0FF 0%, #F8FAFC 100%)'}}>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        {/* Breadcrumb */}
+        <section className="mb-8">
           <Link 
             href="/home/employer"
-            className="text-blue-600 hover:underline flex items-center space-x-1 mb-4"
+            className="flex items-center text-navy font-semibold hover:text-blue-900 transition-colors duration-200 bg-light-blue/10 hover:bg-light-blue/20 px-4 py-2 rounded-full w-fit"
           >
-            <ArrowLeft className="h-4 w-4" />
-            <span>Back to Dashboard</span>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Dashboard
           </Link>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Find Your Perfect Candidate</h1>
-          <p className="text-gray-600">Search through talented job seekers to find the right fit for your company</p>
-        </div>
+        </section>
 
-        {/* Search and Filters */}
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
-          <div className="flex flex-col lg:flex-row gap-4 mb-6">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Search by name, skills, or keywords..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                />
-              </div>
+        {/* Page Header */}
+        <section className="mb-10">
+          <h1 className="text-4xl font-bold text-navy mb-2">Find Your Perfect Candidate</h1>
+          <p className="text-gray-600 text-lg">Search through talented job seekers to find the right fit for your company.</p>
+        </section>
+
+        {/* Search Toolbar */}
+        <section className="sticky top-20 z-30 bg-white/90 backdrop-blur-sm p-6 rounded-2xl shadow-sm border border-light-gray mb-8">
+          <div className="flex flex-col lg:flex-row gap-4 items-stretch lg:items-center">
+            <div className="flex-1 relative">
+              <input 
+                type="text"
+                placeholder="Search by name, skills, or keywords..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleSearch();
+                  }
+                }}
+                className="w-full px-4 py-3 pl-12 border border-gray-300 rounded-lg bg-white focus:outline-none focus:border-navy focus:ring-4 focus:ring-navy/10 transition-all duration-200"
+                aria-label="Search candidates"
+              />
+              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
             </div>
-            
             <div className="flex gap-3">
-              <button
+              <button 
                 onClick={() => setShowFilters(!showFilters)}
-                className={`px-4 py-3 rounded-lg border transition-colors flex items-center ${
-                  showFilters 
-                    ? 'border-green-500 bg-green-50 text-green-700' 
-                    : 'border-gray-300 hover:border-green-400'
-                }`}
+                className="relative bg-white border border-gray-300 text-gray-700 font-semibold py-3 px-6 rounded-lg hover:bg-gray-50 hover:shadow-sm transition-all duration-200 flex items-center space-x-2"
               >
-                <Filter className="h-4 w-4 mr-2" />
-                Filters
+                <Filter className="h-4 w-4" />
+                <span>Filters</span>
                 {hasActiveFilters && (
-                  <span className="ml-2 px-2 py-1 bg-green-500 text-white text-xs rounded-full">
-                    {[selectedUniversities.length > 0 ? 1 : 0, isTop25Selected ? 1 : 0, selectedMajors.length, selectedLocations.length, selectedSkills.length, hasVideo, hasResume, hasProfileImage, hasBio, searchTerm.trim() ? 1 : 0, selectedJobId ? 1 : 0].filter(Boolean).length}
-                  </span>
+                  <div className="absolute -top-2 -right-2 bg-navy text-white text-xs rounded-full w-6 h-6 flex items-center justify-center">
+                    {filterCount}
+                  </div>
                 )}
               </button>
-              
-              <button
+              <button 
                 onClick={handleSearch}
                 disabled={isLoading}
-                className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center"
+                className="bg-navy text-white font-semibold py-3 px-8 rounded-lg hover:bg-blue-900 hover:shadow-md transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
               >
                 {isLoading ? (
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
-                  <Search className="h-4 w-4 mr-2" />
+                  <Search className="h-4 w-4" />
                 )}
-                Search
+                <span>Search</span>
               </button>
             </div>
           </div>
 
           {/* Advanced Filters */}
           {showFilters && (
-            <div className="border-t pt-6">
+            <div className="border-t border-gray-200 pt-6 mt-6 space-y-6">
               {/* Match to Job Filter */}
-              <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
                 <h3 className="text-lg font-semibold text-blue-900 mb-3">Match to Job</h3>
                 <p className="text-sm text-blue-700 mb-4">Select a job to automatically filter candidates based on job requirements.</p>
                 
@@ -503,7 +515,7 @@ export default function SearchCandidatesPage() {
                 )}
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">University</label>
                   <div className="space-y-2">
@@ -560,7 +572,7 @@ export default function SearchCandidatesPage() {
               </div>
 
               {/* Profile Completeness Filters */}
-              <div className="border-t pt-6 mb-6">
+              <div className="border-t border-gray-200 pt-6">
                 <h3 className="text-lg font-medium text-gray-900 mb-4">Profile Completeness</h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <label className="flex items-center space-x-3 cursor-pointer">
@@ -568,7 +580,7 @@ export default function SearchCandidatesPage() {
                       type="checkbox"
                       checked={hasVideo}
                       onChange={(e) => setHasVideo(e.target.checked)}
-                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      className="h-4 w-4 text-navy focus:ring-navy border-gray-300 rounded"
                     />
                     <span className="text-sm text-gray-700">Has Video</span>
                   </label>
@@ -578,7 +590,7 @@ export default function SearchCandidatesPage() {
                       type="checkbox"
                       checked={hasResume}
                       onChange={(e) => setHasResume(e.target.checked)}
-                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      className="h-4 w-4 text-navy focus:ring-navy border-gray-300 rounded"
                     />
                     <span className="text-sm text-gray-700">Has Resume</span>
                   </label>
@@ -588,7 +600,7 @@ export default function SearchCandidatesPage() {
                       type="checkbox"
                       checked={hasProfileImage}
                       onChange={(e) => setHasProfileImage(e.target.checked)}
-                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      className="h-4 w-4 text-navy focus:ring-navy border-gray-300 rounded"
                     />
                     <span className="text-sm text-gray-700">Has Photo</span>
                   </label>
@@ -598,7 +610,7 @@ export default function SearchCandidatesPage() {
                       type="checkbox"
                       checked={hasBio}
                       onChange={(e) => setHasBio(e.target.checked)}
-                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      className="h-4 w-4 text-navy focus:ring-navy border-gray-300 rounded"
                     />
                     <span className="text-sm text-gray-700">Has Bio</span>
                   </label>
@@ -626,122 +638,128 @@ export default function SearchCandidatesPage() {
               </div>
             </div>
           )}
-        </div>
+        </section>
 
-        {/* Results */}
-        <div className="bg-white rounded-xl shadow-lg p-6">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-semibold text-gray-900">
+        {/* Results Meta */}
+        <section className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+          <div className="flex items-center gap-4">
+            <h2 className="text-xl font-bold text-navy">
               {isLoading ? 'Searching...' : `Found ${candidates.length} candidate${candidates.length !== 1 ? 's' : ''}`}
             </h2>
-            
-            {candidates.length > 0 && (
-              <div className="text-sm text-gray-500">
-                Showing {candidates.length} result{candidates.length !== 1 ? 's' : ''}
-              </div>
-            )}
           </div>
-
-          {isInitialLoad && !isLoading ? (
-            <div className="text-center py-12">
-              <Search className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500">Use the search bar above to find candidates</p>
-            </div>
-          ) : isLoading ? (
-            <div className="text-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-green-600 mx-auto mb-4" />
-              <p className="text-gray-600">Searching for candidates...</p>
-            </div>
-          ) : candidates.length === 0 ? (
-            <div className="text-center py-12">
-              <User className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500">No candidates found matching your criteria</p>
-              <p className="text-sm text-gray-400 mt-2">Try adjusting your search terms or filters</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {candidates.map((candidate) => (
-                <div key={candidate.id} className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
-                  <div className="flex items-start justify-between mb-4">
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-900">
-                        {candidate.firstName} {candidate.lastName}
-                      </h3>
-                      <p className="text-gray-600 text-sm">{candidate.headline || 'No headline'}</p>
-                    </div>
-                    <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                      <User className="h-6 w-6 text-green-600" />
-                    </div>
-                  </div>
-
-                  <div className="space-y-3 mb-4">
-                    {candidate.school && (
-                      <div className="flex items-center text-sm text-gray-600">
-                        <GraduationCap className="h-4 w-4 mr-2 text-gray-400" />
-                        {candidate.school}
-                      </div>
-                    )}
-                    
-                    {candidate.major && (
-                      <div className="flex items-center text-sm text-gray-600">
-                        <Star className="h-4 w-4 mr-2 text-gray-400" />
-                        {candidate.major}
-                      </div>
-                    )}
-                    
-                    {candidate.location && (
-                      <div className="flex items-center text-sm text-gray-600">
-                        <MapPin className="h-4 w-4 mr-2 text-gray-400" />
-                        {candidate.location}
-                      </div>
-                    )}
-                  </div>
-
-                  {candidate.skills && candidate.skills.length > 0 && (
-                    <div className="mb-4">
-                      <p className="text-sm font-medium text-gray-700 mb-2">Skills</p>
-                      <div className="flex flex-wrap gap-1">
-                        {candidate.skills.slice(0, 5).map((skill, index) => (
-                          <span
-                            key={index}
-                            className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full"
-                          >
-                            {skill}
-                          </span>
-                        ))}
-                        {candidate.skills.length > 5 && (
-                          <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
-                            +{candidate.skills.length - 5} more
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs text-gray-500">
-                      Member since {candidate.createdAt ? new Date(candidate.createdAt.toDate ? candidate.createdAt.toDate() : candidate.createdAt).toLocaleDateString() : 'Recently'}
-                    </span>
-                    <div className="flex gap-2">
-                      <Link
-                        href={`/candidate/${candidate.id}`}
-                        className="px-3 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors"
-                      >
-                        View Profile
-                      </Link>
-                      <Link
-                        href={`/candidate/${candidate.id}`}
-                        className="px-3 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors"
-                      >
-                        <MessageSquare className="h-4 w-4" />
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-              ))}
+          {candidates.length > 0 && (
+            <div className="text-sm text-gray-500">
+              Showing {candidates.length} result{candidates.length !== 1 ? 's' : ''}
             </div>
           )}
-        </div>
+        </section>
+
+        {/* Results Grid */}
+        {isInitialLoad && !isLoading ? (
+          <div className="text-center py-16 bg-white rounded-2xl shadow-sm border border-gray-200">
+            <Search className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+            <p className="text-gray-500">Use the search bar above to find candidates</p>
+          </div>
+        ) : isLoading ? (
+          <div className="text-center py-16 bg-white rounded-2xl shadow-sm border border-gray-200">
+            <Loader2 className="h-8 w-8 animate-spin text-navy mx-auto mb-4" />
+            <p className="text-gray-600">Searching for candidates...</p>
+          </div>
+        ) : candidates.length === 0 ? (
+          <div className="text-center py-16 bg-white rounded-2xl shadow-sm border border-gray-200">
+            <User className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+            <p className="text-gray-500">No candidates found matching your criteria</p>
+            <p className="text-sm text-gray-400 mt-2">Try adjusting your search terms or filters</p>
+            <button
+              onClick={clearFilters}
+              className="mt-4 bg-navy text-white font-semibold py-2 px-5 rounded-lg hover:bg-blue-900 transition-colors"
+            >
+              Clear filters
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            {candidates.map((candidate) => (
+              <div key={candidate.id} className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200">
+                <div className="flex justify-between items-start mb-4">
+                  <div>
+                    <h3 className="text-lg font-bold text-navy">
+                      {candidate.firstName} {candidate.lastName}
+                    </h3>
+                    <p className="text-sm text-gray-500">{candidate.headline || 'No headline'}</p>
+                  </div>
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center bg-green-100">
+                    <span className="font-bold text-green-700">{getInitials(candidate.firstName, candidate.lastName)}</span>
+                  </div>
+                </div>
+
+                <div className="space-y-1.5 mb-4 text-sm text-gray-700">
+                  {candidate.school && (
+                    <div className="flex items-center space-x-2">
+                      <GraduationCap className="h-4 w-4 text-gray-400" />
+                      <span>{candidate.school}</span>
+                    </div>
+                  )}
+                  
+                  {candidate.major && (
+                    <div className="flex items-center space-x-2">
+                      <Star className="h-4 w-4 text-gray-400" />
+                      <span>{candidate.major}</span>
+                    </div>
+                  )}
+                  
+                  {candidate.location && (
+                    <div className="flex items-center space-x-2">
+                      <MapPin className="h-4 w-4 text-gray-400" />
+                      <span>{candidate.location}</span>
+                    </div>
+                  )}
+                </div>
+
+                {candidate.skills && candidate.skills.length > 0 && (
+                  <div className="mb-4">
+                    <h4 className="font-semibold text-sm text-gray-800 mb-2">Skills</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {candidate.skills.slice(0, 4).map((skill, index) => (
+                        <span
+                          key={index}
+                          className="bg-light-blue/20 text-navy px-3 py-1 rounded-full text-xs font-medium"
+                        >
+                          {skill}
+                        </span>
+                      ))}
+                      {candidate.skills.length > 4 && (
+                        <span className="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-xs font-medium">
+                          +{candidate.skills.length - 4} more
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex justify-between items-center border-t border-gray-100 pt-4 mt-4">
+                  <span className="text-xs text-gray-500">
+                    Member since {candidate.createdAt ? new Date(candidate.createdAt.toDate ? candidate.createdAt.toDate() : candidate.createdAt).toLocaleDateString() : 'Recently'}
+                  </span>
+                  <div className="flex space-x-2">
+                    <Link
+                      href={`/candidate/${candidate.id}`}
+                      className="bg-navy text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-900 transition-colors"
+                    >
+                      View Profile
+                    </Link>
+                    <Link
+                      href={`/candidate/${candidate.id}`}
+                      className="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-lg w-10 h-10 flex items-center justify-center transition-colors"
+                    >
+                      <MessageSquare className="h-4 w-4" />
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
