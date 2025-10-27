@@ -489,11 +489,10 @@ export const JOB_TYPES = [
 ];
 
 export const GRADUATION_YEARS = (() => {
-  const currentYear = new Date().getFullYear();
   const years = [];
   
-  // Generate years from 1980 to 6 years in the future
-  for (let year = currentYear + 6; year >= 1980; year--) {
+  // Generate years from 2020 to 2030
+  for (let year = 2030; year >= 2020; year--) {
     years.push(year.toString());
   }
   
