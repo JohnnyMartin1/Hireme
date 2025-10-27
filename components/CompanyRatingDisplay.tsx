@@ -62,9 +62,12 @@ export default function CompanyRatingDisplay({
 
   if (totalRatings === 0) {
     return (
-      <div className="text-center py-4 text-gray-500">
-        <Star className="h-8 w-8 mx-auto mb-2 text-gray-300" />
-        <p className="text-sm">No ratings yet</p>
+      <div className="text-center py-12">
+        <div className="w-20 h-20 mx-auto bg-slate-100 rounded-full flex items-center justify-center mb-6">
+          <Star className="h-10 w-10 text-slate-400" />
+        </div>
+        <h3 className="text-xl font-bold text-gray-700">No ratings yet</h3>
+        <p className="text-gray-500 mt-2 max-w-sm mx-auto">Candidate ratings and reviews will appear here once received.</p>
       </div>
     );
   }

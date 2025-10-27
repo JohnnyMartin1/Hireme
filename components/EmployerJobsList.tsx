@@ -10,7 +10,8 @@ import {
   Trash2,
   Calendar,
   MapPin,
-  DollarSign
+  DollarSign,
+  FileText
 } from "lucide-react";
 import { getEmployerJobs } from '@/lib/firebase-firestore';
 import { deleteDocument } from '@/lib/firebase-firestore';
@@ -71,10 +72,12 @@ export default function EmployerJobsList() {
 
   if (jobs.length === 0) {
     return (
-      <div className="text-center py-8">
-        <Building className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-        <p className="text-gray-500 mb-2">No jobs posted yet</p>
-        <p className="text-sm text-gray-400">Create your first job posting to start attracting candidates</p>
+      <div className="text-center py-12">
+        <div className="w-20 h-20 mx-auto bg-slate-100 rounded-full flex items-center justify-center mb-6">
+          <FileText className="h-10 w-10 text-slate-400" />
+        </div>
+        <h3 className="text-xl font-bold text-gray-700">No jobs posted yet</h3>
+        <p className="text-gray-500 mt-2 max-w-sm mx-auto">Create your first job posting to start attracting candidates.</p>
       </div>
     );
   }

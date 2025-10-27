@@ -238,8 +238,17 @@ body {
 }
 
 .card-hover:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 32px rgba(173, 216, 230, 0.25);
+  transform: translateY(-3px);
+  box-shadow: 0 10px 20px rgba(173, 216, 230, 0.15), 0 3px 6px rgba(173, 216, 230, 0.1);
+}
+
+.action-row-hover {
+  transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+.action-row-hover:hover {
+  transform: scale(1.01);
+  background-color: #E6F0FF;
 }
 
 .btn-hover:hover {

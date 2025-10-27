@@ -10,7 +10,8 @@ import {
   MessageSquare, 
   TrendingUp,
   Star,
-  Heart
+  Heart,
+  FileText
 } from "lucide-react";
 import EmployerJobsList from "@/components/EmployerJobsList";
 import { getEmployerJobs, getCompanyJobs, getUserMessageThreads, getProfilesByRole } from '@/lib/firebase-firestore';
@@ -102,10 +103,12 @@ export default function EmployerHomePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
+      <div className="min-h-screen mobile-safe-top mobile-safe-bottom" style={{background: 'linear-gradient(180deg, #E6F0FF 0%, #F8FAFC 100%)'}}>
+        <div className="flex items-center justify-center h-screen">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-navy mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading...</p>
+          </div>
         </div>
       </div>
     );
@@ -120,218 +123,259 @@ export default function EmployerHomePage() {
     return null; // Will redirect to appropriate dashboard
   }
 
-  return (
-    <main className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50">
-      {/* Hero Section */}
-      <div className="bg-gradient-to-r from-green-600 to-emerald-700 text-white py-8 px-6">
-        <div className="max-w-6xl mx-auto">
-          <h1 className="text-3xl font-bold mb-2">
-            Welcome back, {profile?.isCompanyOwner 
-              ? (profile?.companyName || 'Employer') 
-              : (profile?.firstName || 'there')}! 👋
-          </h1>
-          <p className="text-green-100 text-lg">
-            Ready to find your next talented candidate?
-          </p>
-        </div>
-      </div>
+  const companyName = profile?.companyName || profile?.isCompanyOwner 
+    ? (profile?.companyName || 'Your Company') 
+    : (profile?.firstName || 'Employer');
+  
+  const companyInitial = companyName.charAt(0).toUpperCase();
+  const isVerified = profile?.status === 'verified' || profile?.role === 'RECRUITER';
 
-      <div className="max-w-6xl mx-auto p-6">
-        {/* Company Verification Banner */}
-        {profile?.status === 'pending_verification' && (
-          <div className="bg-orange-50 border border-orange-200 rounded-xl p-6 mb-8">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
-                  <Building className="h-5 w-5 text-orange-600" />
-                </div>
-              </div>
-              <div className="ml-4">
-                <h3 className="text-lg font-semibold text-orange-900">Company Verification Pending</h3>
-                <p className="text-orange-700 mt-1">
-                  Your company registration is under review. You'll receive an email notification once approved. 
-                  Some features may be limited until verification is complete.
-                </p>
-              </div>
+  return (
+    <main className="min-h-screen mobile-safe-top mobile-safe-bottom" style={{background: 'linear-gradient(180deg, #E6F0FF 0%, #F8FAFC 100%)'}}>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
+        
+        {/* Welcome Banner */}
+        <section className="bg-gradient-to-r from-navy to-blue-900 text-white p-4 sm:p-8 rounded-2xl flex items-center justify-between mb-6 sm:mb-8 shadow-lg">
+          <div className="flex items-center space-x-4 sm:space-x-6">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-light-blue/20 flex items-center justify-center border-4 border-white/30 shadow-lg">
+              <span className="text-2xl sm:text-3xl font-bold text-white">{companyInitial}</span>
+            </div>
+            <div>
+              <h1 className="text-xl sm:text-3xl font-bold">Welcome back, {companyName}! 👋</h1>
+              <p className="text-blue-200 mt-1 text-sm sm:text-base">Ready to find your next talented candidate?</p>
             </div>
           </div>
-        )}
-
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          {/* Conditionally render candidates card based on verification status */}
-          {profile?.status === 'verified' || profile?.role === 'RECRUITER' ? (
-            <Link href="/employer/candidates-by-job" className="block">
-            <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-green-500 hover:shadow-xl transition-shadow">
-              <div className="flex items-center">
-                <div className="p-2 bg-green-100 rounded-lg">
-                  <Users className="h-6 w-6 text-green-600" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Candidates</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {isLoadingStats ? '...' : stats.candidates}
-                  </p>
-                </div>
-              </div>
+        </section>
+        
+        {/* Verification Banner */}
+        {profile?.status === 'pending_verification' && (
+          <section className="bg-orange-100/60 border border-orange-200 text-orange-800 p-4 sm:p-6 rounded-2xl flex items-start space-x-3 sm:space-x-4 mb-6 sm:mb-8">
+            <div className="text-orange-500 text-lg sm:text-xl mt-1">
+              ⚠️
             </div>
+            <div>
+              <h2 className="font-bold text-base sm:text-lg">Company Verification Pending</h2>
+              <p className="text-sm">Your company registration is under review. You'll receive an email notification once approved. Some features may be limited until verification is complete. <a href="#" className="font-semibold underline">Learn more</a></p>
+            </div>
+          </section>
+        )}
+        
+        {/* KPI Cards */}
+        <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-8 mb-6 sm:mb-8">
+          {/* Candidates Card */}
+          {isVerified ? (
+            <Link href="/employer/candidates-by-job" className="block">
+              <div className="bg-white/90 backdrop-blur-sm p-4 sm:p-6 rounded-2xl shadow-sm border border-light-gray card-hover text-center">
+                <div className="w-12 h-12 sm:w-14 sm:h-14 mx-auto rounded-full bg-light-blue/30 flex items-center justify-center mb-3">
+                  <Users className="h-5 w-5 sm:h-7 sm:w-7 text-navy" />
+                </div>
+                <p className="text-3xl sm:text-4xl font-extrabold text-navy">{isLoadingStats ? '...' : stats.candidates}</p>
+                <p className="text-gray-500 font-medium mt-1 text-sm sm:text-base">Candidates</p>
+              </div>
             </Link>
           ) : (
-            <div className="bg-gray-100 rounded-xl shadow-lg p-6 border-l-4 border-gray-300">
-              <div className="flex items-center">
-                <div className="p-2 bg-gray-200 rounded-lg">
-                  <Users className="h-6 w-6 text-gray-400" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-500">Candidates</p>
-                  <p className="text-2xl font-bold text-gray-400">
-                    {isLoadingStats ? '...' : '0'}
-                  </p>
-                  <p className="text-xs text-gray-500 mt-1">Available after verification</p>
-                </div>
+            <div className="bg-white/90 backdrop-blur-sm p-4 sm:p-6 rounded-2xl shadow-sm border border-light-gray text-center opacity-60 cursor-not-allowed" title="Available after verification">
+              <div className="w-12 h-12 sm:w-14 sm:h-14 mx-auto rounded-full bg-slate-200 flex items-center justify-center mb-3">
+                <Users className="h-5 w-5 sm:h-7 sm:w-7 text-slate-500" />
               </div>
+              <p className="text-3xl sm:text-4xl font-extrabold text-slate-600">0</p>
+              <p className="text-slate-500 font-medium mt-1 text-sm sm:text-base">Candidates</p>
+              <p className="text-xs text-slate-400 mt-1">Available after verification</p>
             </div>
           )}
 
+          {/* Messages Card */}
           <Link href="/messages" className="block">
-          <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-blue-500 hover:shadow-xl transition-shadow">
-            <div className="flex items-center">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <MessageSquare className="h-6 w-6 text-blue-600" />
+            <div className="bg-white/90 backdrop-blur-sm p-4 sm:p-6 rounded-2xl shadow-sm border border-light-gray card-hover text-center">
+              <div className="w-12 h-12 sm:w-14 sm:h-14 mx-auto rounded-full bg-light-blue/30 flex items-center justify-center mb-3">
+                <MessageSquare className="h-5 w-5 sm:h-7 sm:w-7 text-navy" />
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Messages</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {isLoadingStats ? '...' : stats.messages}
-                </p>
-              </div>
+              <p className="text-3xl sm:text-4xl font-extrabold text-navy">{isLoadingStats ? '...' : stats.messages}</p>
+              <p className="text-gray-500 font-medium mt-1 text-sm sm:text-base">Messages</p>
             </div>
-          </div>
           </Link>
 
+          {/* Active Jobs Card */}
           <Link href="/employer/jobs" className="block">
-          <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-purple-500 hover:shadow-xl transition-shadow">
-            <div className="flex items-center">
-              <div className="p-2 bg-purple-100 rounded-lg">
-                <TrendingUp className="h-6 w-6 text-purple-600" />
+            <div className="bg-white/90 backdrop-blur-sm p-4 sm:p-6 rounded-2xl shadow-sm border border-light-gray card-hover text-center">
+              <div className="w-12 h-12 sm:w-14 sm:h-14 mx-auto rounded-full bg-light-blue/30 flex items-center justify-center mb-3">
+                <TrendingUp className="h-5 w-5 sm:h-7 sm:w-7 text-navy" />
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Active Jobs</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {isLoadingStats ? '...' : stats.activeJobs}
-                </p>
+              <p className="text-3xl sm:text-4xl font-extrabold text-navy">{isLoadingStats ? '...' : stats.activeJobs}</p>
+              <p className="text-gray-500 font-medium mt-1 text-sm sm:text-base">Active Jobs</p>
+            </div>
+          </Link>
+        </section>
+
+        {/* Main Content Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-8">
+          {/* Left Column - Main Content */}
+          <div className="lg:col-span-2 space-y-4 sm:space-y-8">
+            {/* Manage Jobs Card */}
+            <div className="bg-white/90 backdrop-blur-sm p-4 sm:p-8 rounded-2xl shadow-sm border border-light-gray card-hover">
+              <div className="flex justify-between items-center mb-4 sm:mb-6">
+                <h2 className="text-lg sm:text-xl font-bold text-navy">Manage Jobs</h2>
+                <Link
+                  href="/employer/job/new"
+                  className="bg-navy text-white font-semibold py-2 sm:py-2.5 px-4 sm:px-5 rounded-lg hover:bg-blue-900 transition-colors duration-200 shadow-md hover:shadow-lg flex items-center space-x-2 text-sm sm:text-base"
+                >
+                  <Building className="h-4 w-4" />
+                  <span>Post New Job</span>
+                </Link>
               </div>
+              <EmployerJobsList />
+            </div>
+
+            {/* Company Ratings Card */}
+            <div className="bg-white/90 backdrop-blur-sm p-4 sm:p-8 rounded-2xl shadow-sm border border-light-gray card-hover">
+              <h2 className="text-lg sm:text-xl font-bold text-navy mb-4 sm:mb-6">Company Ratings</h2>
+              <CompanyRatingDisplay employerId={user.uid} showDetails={true} />
             </div>
           </div>
-          </Link>
-        </div>
 
-        {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
-            <div className="space-y-3">
-              {/* Conditionally render candidate search based on verification status */}
-              {profile?.status === 'verified' || profile?.role === 'RECRUITER' ? (
-                <>
+          {/* Right Column - Sidebar */}
+          <div className="lg:col-span-1 space-y-4 sm:space-y-8">
+            {/* Quick Actions Card */}
+            <div className="bg-white/90 backdrop-blur-sm p-4 sm:p-6 rounded-2xl shadow-sm border border-light-gray card-hover">
+              <h2 className="text-lg sm:text-xl font-bold text-navy mb-4 sm:mb-5 px-2">Quick Actions</h2>
+              <div className="space-y-2">
+                {/* Search Candidates */}
+                {isVerified ? (
                   <Link
                     href="/search/candidates"
-                    className="flex items-center p-3 bg-green-50 rounded-lg hover:bg-green-100 transition-colors"
+                    className="flex items-center p-3 sm:p-4 rounded-lg action-row-hover"
                   >
-                    <Search className="h-5 w-5 text-green-600 mr-3" />
-                    <span className="text-green-800">Search Candidates</span>
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 bg-light-blue/30 rounded-lg flex items-center justify-center mr-3 sm:mr-4">
+                      <Search className="h-4 w-4 sm:h-5 sm:w-5 text-navy" />
+                    </div>
+                    <span className="font-semibold text-gray-700 text-sm sm:text-base">Search Candidates</span>
+                    <div className="ml-auto">
+                      <div className="text-gray-400">›</div>
+                    </div>
                   </Link>
-                  <Link
-                    href="/saved/candidates"
-                    className="flex items-center p-3 bg-orange-50 rounded-lg hover:bg-orange-100 transition-colors"
-                  >
-                    <Heart className="h-5 w-5 text-orange-600 mr-3" />
-                    <span className="text-orange-800">Saved Candidates</span>
-                  </Link>
-                </>
-              ) : (
-                <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-                  <div className="flex items-center">
-                    <Search className="h-5 w-5 text-gray-400 mr-3" />
-                    <span className="text-gray-500">Search Candidates</span>
+                ) : (
+                  <div className="flex items-center p-3 sm:p-4 rounded-lg cursor-not-allowed opacity-50" title="Available after company verification">
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 bg-slate-200 rounded-lg flex items-center justify-center mr-3 sm:mr-4">
+                      <Search className="h-4 w-4 sm:h-5 sm:w-5 text-slate-500" />
+                    </div>
+                    <div className="flex-grow">
+                      <span className="font-semibold text-gray-500 text-sm sm:text-base">Search Candidates</span>
+                      <span className="text-xs text-gray-400 block">Available after verification</span>
+                    </div>
+                    <div className="ml-auto">
+                      <div className="text-gray-400">🔒</div>
+                    </div>
                   </div>
-                  <p className="text-xs text-gray-500 mt-1">Available after company verification</p>
-                </div>
-              )}
-              <Link
-                href="/messages"
-                className="flex items-center p-3 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors"
-              >
-                <MessageSquare className="h-5 w-5 text-purple-600 mr-3" />
-                <span className="text-purple-800">View Messages</span>
-              </Link>
-            </div>
-          </div>
+                )}
 
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Company Profile</h3>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-gray-600">Company Name</span>
-                <span className="text-sm font-medium text-gray-900">
-                  {profile?.companyName || 'Not set'}
-                </span>
+                {/* View Messages */}
+                <Link
+                  href="/messages"
+                  className="flex items-center p-3 sm:p-4 rounded-lg action-row-hover"
+                >
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 bg-light-blue/30 rounded-lg flex items-center justify-center mr-3 sm:mr-4">
+                    <MessageSquare className="h-4 w-4 sm:h-5 sm:w-5 text-navy" />
+                  </div>
+                  <span className="font-semibold text-gray-700 text-sm sm:text-base">View Messages</span>
+                  <div className="ml-auto">
+                    <div className="text-gray-400">›</div>
+                  </div>
+                </Link>
+
+                {/* Post New Job */}
+                <Link
+                  href="/employer/job/new"
+                  className="flex items-center p-3 sm:p-4 rounded-lg action-row-hover"
+                >
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 bg-light-blue/30 rounded-lg flex items-center justify-center mr-3 sm:mr-4">
+                    <Building className="h-4 w-4 sm:h-5 sm:w-5 text-navy" />
+                  </div>
+                  <span className="font-semibold text-gray-700 text-sm sm:text-base">Post New Job</span>
+                  <div className="ml-auto">
+                    <div className="text-gray-400">›</div>
+                  </div>
+                </Link>
+
+                {/* Get Verified - only show if pending */}
+                {profile?.status === 'pending_verification' && (
+                  <Link
+                    href="/account/company"
+                    className="flex items-center p-3 sm:p-4 rounded-lg bg-yellow-100/60 hover:bg-yellow-100"
+                  >
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 bg-yellow-200/80 rounded-lg flex items-center justify-center mr-3 sm:mr-4">
+                      <Star className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-700" />
+                    </div>
+                    <span className="font-semibold text-yellow-800 text-sm sm:text-base">Get Verified</span>
+                    <div className="ml-auto">
+                      <div className="text-yellow-600">›</div>
+                    </div>
+                  </Link>
+                )}
               </div>
-              <div className="pt-3 border-t space-y-2">
+            </div>
+
+            {/* Company Profile Card */}
+            <div className="bg-white/90 backdrop-blur-sm p-4 sm:p-6 rounded-2xl shadow-sm border border-light-gray card-hover">
+              <h2 className="text-lg sm:text-xl font-bold text-navy mb-4 sm:mb-5 px-2">Company Profile</h2>
+              <div className="space-y-4">
+                <div className="px-2">
+                  <label className="text-xs sm:text-sm font-medium text-gray-500">Company Name</label>
+                  <p className="font-semibold text-gray-800 flex items-center mt-1 text-sm sm:text-base">
+                    {companyName}
+                    {profile?.status === 'pending_verification' && (
+                      <span className="ml-2 text-xs bg-orange-100 text-orange-700 font-bold px-2 py-0.5 rounded-full">Pending</span>
+                    )}
+                  </p>
+                </div>
+                
+                {/* Edit Company Profile */}
                 {profile?.isCompanyOwner ? (
                   <Link
                     href="/account/company"
-                    className="flex items-center p-3 bg-green-50 rounded-lg hover:bg-green-100 transition-colors"
+                    className="flex items-center p-3 sm:p-4 rounded-lg action-row-hover"
                   >
-                    <Building className="h-5 w-5 text-green-600 mr-3" />
-                    <span className="text-green-800">Edit Company Profile</span>
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 bg-light-blue/30 rounded-lg flex items-center justify-center mr-3 sm:mr-4">
+                      <Building className="h-4 w-4 sm:h-5 sm:w-5 text-navy" />
+                    </div>
+                    <span className="font-semibold text-gray-700 text-sm sm:text-base">Edit Company Profile</span>
+                    <div className="ml-auto">
+                      <div className="text-gray-400">›</div>
+                    </div>
                   </Link>
                 ) : (
                   <Link
                     href="/company/view"
-                    className="flex items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                    className="flex items-center p-3 sm:p-4 rounded-lg action-row-hover"
                   >
-                    <Building className="h-5 w-5 text-gray-600 mr-3" />
-                    <span className="text-gray-800">View Company Profile</span>
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 bg-light-blue/30 rounded-lg flex items-center justify-center mr-3 sm:mr-4">
+                      <Building className="h-4 w-4 sm:h-5 sm:w-5 text-navy" />
+                    </div>
+                    <span className="font-semibold text-gray-700 text-sm sm:text-base">View Company Profile</span>
+                    <div className="ml-auto">
+                      <div className="text-gray-400">›</div>
+                    </div>
                   </Link>
                 )}
-                
+
+                {/* Manage Recruiters */}
                 {profile?.isCompanyOwner && (
                   <Link
                     href="/company/manage/recruiters"
-                    className="flex items-center p-3 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors"
+                    className="flex items-center p-3 sm:p-4 rounded-lg action-row-hover"
                   >
-                    <Users className="h-5 w-5 text-purple-600 mr-3" />
-                    <span className="text-purple-800">Manage Recruiters</span>
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 bg-light-blue/30 rounded-lg flex items-center justify-center mr-3 sm:mr-4">
+                      <Users className="h-4 w-4 sm:h-5 sm:w-5 text-navy" />
+                    </div>
+                    <span className="font-semibold text-gray-700 text-sm sm:text-base">Manage Recruiters</span>
+                    <div className="ml-auto">
+                      <div className="text-gray-400">›</div>
+                    </div>
                   </Link>
                 )}
               </div>
             </div>
           </div>
         </div>
-
-        {/* Manage Jobs */}
-        <div id="manage-jobs" className="bg-white rounded-xl shadow-lg p-6 mb-8">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-semibold text-gray-900">Manage Jobs</h3>
-            <Link
-              href="/employer/job/new"
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center"
-            >
-              <Building className="h-4 w-4 mr-2" />
-              Post New Job
-            </Link>
-          </div>
-          <EmployerJobsList />
-        </div>
-
-        {/* Company Ratings */}
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Company Ratings</h3>
-          <CompanyRatingDisplay employerId={user.uid} showDetails={true} />
-        </div>
-
-        
       </div>
     </main>
   );
