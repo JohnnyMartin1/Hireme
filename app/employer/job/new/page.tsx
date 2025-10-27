@@ -108,120 +108,213 @@ export default function NewJobPage() {
       setLoading(false);
     }
   };
-  return (
-    <div className="max-w-2xl mx-auto">
-      <button
-        onClick={() => {
-          if (typeof window !== 'undefined' && window.history.length > 1) {
-            router.back();
-          } else {
-            router.push('/home/employer');
-          }
-        }}
-        className="inline-flex items-center px-4 py-2 bg-blue-50 text-navy-800 rounded-full hover:bg-blue-100 hover:shadow-sm transition-all duration-200 mb-6"
-      >
-        <ArrowLeft className="h-4 w-4 mr-2" />
-        Back to Dashboard
-      </button>
-      <h2 className="text-2xl font-bold my-4">Post a Job</h2>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium mb-1" htmlFor="title">Job title</label>
-          <input id="title" type="text" value={title} onChange={(e) => setTitle(e.target.value)} className="w-full px-3 py-2 border rounded" required />
-        </div>
-        <div>
-          <label className="block text-sm font-medium mb-1" htmlFor="description">Description</label>
-          <textarea id="description" value={description} onChange={(e) => setDescription(e.target.value)} className="w-full px-3 py-2 border rounded h-32" required />
-        </div>
-        <div>
-          <label className="block text-sm font-medium mb-1" htmlFor="location">Location</label>
-          <SearchableDropdown
-            label=""
-            options={LOCATIONS}
-            value={location}
-            onChange={setLocation}
-            placeholder="Search for a city..."
-            required={true}
-          />
-        </div>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium mb-1" htmlFor="employment">Job Type</label>
-            <select id="employment" value={employment} onChange={(e) => setEmployment(e.target.value)} className="w-full px-3 py-2 border rounded" required>
-              <option value="FULL_TIME">Full-time</option>
-              <option value="PART_TIME">Part-time</option>
-              <option value="CONTRACT">Contract</option>
-              <option value="INTERNSHIP">Internship</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1" htmlFor="workMode">Work Mode</label>
-            <select id="workMode" value={workMode} onChange={(e) => setWorkMode(e.target.value)} className="w-full px-3 py-2 border rounded" required>
-              <option value="IN_PERSON">In-person</option>
-              <option value="HYBRID">Hybrid</option>
-              <option value="REMOTE">Remote</option>
-            </select>
-          </div>
-        </div>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium mb-1" htmlFor="salaryMin">Salary min</label>
-            <input id="salaryMin" type="number" value={salaryMin} onChange={(e) => setSalaryMin(e.target.value)} className="w-full px-3 py-2 border rounded" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1" htmlFor="salaryMax">Salary max</label>
-            <input id="salaryMax" type="number" value={salaryMax} onChange={(e) => setSalaryMax(e.target.value)} className="w-full px-3 py-2 border rounded" />
-          </div>
-        </div>
-        <div>
-          <label className="block text-sm font-medium mb-1" htmlFor="tags">Tags (comma separated)</label>
-          <input id="tags" type="text" value={tags} onChange={(e) => setTags(e.target.value)} className="w-full px-3 py-2 border rounded" />
-        </div>
 
-        {/* Candidate Requirements */}
-        <div className="border-t pt-6 mt-6">
-          <h3 className="text-lg font-semibold mb-4">Candidate Requirements</h3>
-          <p className="text-sm text-gray-600 mb-4">Specify requirements for candidates. These will be used for filtering and matching.</p>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-1" htmlFor="requiredGpa">Minimum GPA</label>
-              <select 
-                id="requiredGpa" 
-                value={requiredGpa} 
-                onChange={(e) => setRequiredGpa(e.target.value)} 
-                className="w-full px-3 py-2 border rounded"
-              >
-                <option value="">No GPA requirement</option>
-                <option value="3.0">Above 3.0</option>
-                <option value="3.3">Above 3.3</option>
-                <option value="3.5">Above 3.5</option>
-                <option value="3.7">Above 3.7</option>
-                <option value="3.8">Above 3.8</option>
-              </select>
+  return (
+    <main style={{background: 'linear-gradient(180deg, #E6F0FF 0%, #F8FAFC 100%)'}} className="min-h-screen">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        {/* Breadcrumb */}
+        <section className="mb-8">
+          <button
+            onClick={() => {
+              if (typeof window !== 'undefined' && window.history.length > 1) {
+                router.back();
+              } else {
+                router.push('/home/employer');
+              }
+            }}
+            className="flex items-center text-navy font-semibold hover:text-blue-900 transition-colors duration-200 bg-light-blue/10 hover:bg-light-blue/20 px-4 py-2 rounded-full w-fit"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Dashboard
+          </button>
+        </section>
+
+        {/* Page Header */}
+        <section className="mb-10">
+          <h1 className="text-4xl font-bold text-navy">Post a Job</h1>
+        </section>
+
+        <form onSubmit={handleSubmit} className="space-y-8">
+          {/* Job Details Card */}
+          <section className="bg-white/90 backdrop-blur-sm p-8 rounded-2xl shadow-sm border border-light-gray">
+            <div className="space-y-6">
+              {/* Job Title */}
+              <div className="relative">
+                <input 
+                  id="title" 
+                  type="text" 
+                  value={title} 
+                  onChange={(e) => setTitle(e.target.value)} 
+                  className="form-input w-full px-4 py-3 border border-gray-300 rounded-lg bg-white focus:outline-none focus:border-navy focus:ring-4 focus:ring-navy/10 transition-all duration-200" 
+                  placeholder="e.g. Software Engineer" 
+                  required 
+                />
+                <label htmlFor="title" className="absolute left-4 -top-2 text-sm text-navy bg-white px-1">Job Title *</label>
+              </div>
+
+              {/* Description */}
+              <div className="relative">
+                <textarea 
+                  id="description" 
+                  value={description} 
+                  onChange={(e) => setDescription(e.target.value)} 
+                  className="form-input w-full px-4 py-3 border border-gray-300 rounded-lg bg-white focus:outline-none focus:border-navy focus:ring-4 focus:ring-navy/10 transition-all duration-200 resize-none" 
+                  rows={5}
+                  placeholder="Describe the role, responsibilities, and what you're looking for..." 
+                  required 
+                />
+                <label htmlFor="description" className="absolute left-4 -top-2 text-sm text-navy bg-white px-1">Description *</label>
+              </div>
+
+              {/* Location */}
+              <div className="relative">
+                <SearchableDropdown
+                  label="Location"
+                  options={LOCATIONS}
+                  value={location}
+                  onChange={setLocation}
+                  placeholder="Search for a city..."
+                  required={true}
+                />
+              </div>
+
+              {/* Job Type & Work Mode */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="relative">
+                  <select 
+                    id="employment" 
+                    value={employment} 
+                    onChange={(e) => setEmployment(e.target.value)} 
+                    className="form-input w-full px-4 py-3 border border-gray-300 rounded-lg bg-white focus:outline-none focus:border-navy focus:ring-4 focus:ring-navy/10 transition-all duration-200 appearance-none" 
+                    required
+                  >
+                    <option value="FULL_TIME">Full-time</option>
+                    <option value="PART_TIME">Part-time</option>
+                    <option value="CONTRACT">Contract</option>
+                    <option value="INTERNSHIP">Internship</option>
+                  </select>
+                  <label htmlFor="employment" className="absolute left-4 -top-2 text-sm text-navy bg-white px-1">Job Type *</label>
+                  <i className="fa-solid fa-chevron-down absolute right-4 top-4 text-gray-400 pointer-events-none"></i>
+                </div>
+
+                <div className="relative">
+                  <select 
+                    id="workMode" 
+                    value={workMode} 
+                    onChange={(e) => setWorkMode(e.target.value)} 
+                    className="form-input w-full px-4 py-3 border border-gray-300 rounded-lg bg-white focus:outline-none focus:border-navy focus:ring-4 focus:ring-navy/10 transition-all duration-200 appearance-none" 
+                    required
+                  >
+                    <option value="IN_PERSON">In-person</option>
+                    <option value="HYBRID">Hybrid</option>
+                    <option value="REMOTE">Remote</option>
+                  </select>
+                  <label htmlFor="workMode" className="absolute left-4 -top-2 text-sm text-navy bg-white px-1">Work Mode *</label>
+                  <i className="fa-solid fa-chevron-down absolute right-4 top-4 text-gray-400 pointer-events-none"></i>
+                </div>
+              </div>
+
+              {/* Salary Range */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="relative">
+                  <input 
+                    id="salaryMin" 
+                    type="number" 
+                    value={salaryMin} 
+                    onChange={(e) => setSalaryMin(e.target.value)} 
+                    className="form-input w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg bg-white focus:outline-none focus:border-navy focus:ring-4 focus:ring-navy/10 transition-all duration-200" 
+                    placeholder="50000" 
+                    min="0" 
+                  />
+                  <span className="absolute left-4 top-3 text-gray-500 pointer-events-none">$</span>
+                  <label htmlFor="salaryMin" className="absolute left-12 -top-2 text-sm text-gray-600 bg-white px-1">Salary Min (optional)</label>
+                </div>
+
+                <div className="relative">
+                  <input 
+                    id="salaryMax" 
+                    type="number" 
+                    value={salaryMax} 
+                    onChange={(e) => setSalaryMax(e.target.value)} 
+                    className="form-input w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg bg-white focus:outline-none focus:border-navy focus:ring-4 focus:ring-navy/10 transition-all duration-200" 
+                    placeholder="80000" 
+                    min="0" 
+                  />
+                  <span className="absolute left-4 top-3 text-gray-500 pointer-events-none">$</span>
+                  <label htmlFor="salaryMax" className="absolute left-12 -top-2 text-sm text-gray-600 bg-white px-1">Salary Max (optional)</label>
+                </div>
+              </div>
+
+              {/* Tags */}
+              <div className="relative">
+                <input 
+                  id="tags" 
+                  type="text" 
+                  value={tags} 
+                  onChange={(e) => setTags(e.target.value)} 
+                  className="form-input w-full px-4 py-3 border border-gray-300 rounded-lg bg-white focus:outline-none focus:border-navy focus:ring-4 focus:ring-navy/10 transition-all duration-200" 
+                  placeholder="Enter tags separated by commas (e.g. React, JavaScript, Remote)" 
+                />
+                <label htmlFor="tags" className="absolute left-4 -top-2 text-sm text-gray-600 bg-white px-1">Tags</label>
+              </div>
             </div>
-            
-            <div>
-              <label className="block text-sm font-medium mb-2">Required Career Interests</label>
-              <MultiSelectDropdown
-                options={CAREER_INTERESTS}
-                values={requiredCareerInterests}
-                onChange={setRequiredCareerInterests}
-                placeholder="Select career interests"
-                label=""
-                allowCustom={false}
-                maxSelections={5}
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                Select up to 5 career interests that candidates should have
-              </p>
+          </section>
+
+          {/* Candidate Requirements Card */}
+          <section className="bg-white/90 backdrop-blur-sm p-8 rounded-2xl shadow-sm border border-light-gray">
+            <h3 className="text-xl font-bold text-navy mb-2">Candidate Requirements</h3>
+            <p className="text-gray-600 text-sm mb-6">These are used for filtering and matching.</p>
+
+            <div className="space-y-6">
+              {/* Minimum GPA */}
+              <div className="relative">
+                <select 
+                  id="requiredGpa" 
+                  value={requiredGpa} 
+                  onChange={(e) => setRequiredGpa(e.target.value)} 
+                  className="form-input w-full px-4 py-3 border border-gray-300 rounded-lg bg-white focus:outline-none focus:border-navy focus:ring-4 focus:ring-navy/10 transition-all duration-200 appearance-none"
+                >
+                  <option value="">No GPA requirement</option>
+                  <option value="2.5">2.5+</option>
+                  <option value="3.0">3.0+</option>
+                  <option value="3.5">3.5+</option>
+                  <option value="3.8">3.8+</option>
+                </select>
+                <label htmlFor="requiredGpa" className="absolute left-4 -top-2 text-sm text-gray-600 bg-white px-1">Minimum GPA</label>
+                <i className="fa-solid fa-chevron-down absolute right-4 top-4 text-gray-400 pointer-events-none"></i>
+              </div>
+
+              {/* Required Career Interests */}
+              <div className="relative">
+                <MultiSelectDropdown
+                  options={CAREER_INTERESTS}
+                  values={requiredCareerInterests}
+                  onChange={setRequiredCareerInterests}
+                  placeholder="Select career interests"
+                  label={`Required Career Interests (${requiredCareerInterests.length}/5)`}
+                  allowCustom={false}
+                  maxSelections={5}
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Select up to 5 career interests that candidates should have
+                </p>
+              </div>
             </div>
-          </div>
-        </div>
-        <button type="submit" disabled={loading} className="px-4 py-2 bg-blue-600 text-white rounded disabled:opacity-50">
-          {loading ? 'Posting...' : 'Post job'}
-        </button>
-      </form>
-    </div>
+          </section>
+
+          {/* Form Actions */}
+          <section className="pt-6">
+            <button 
+              type="submit" 
+              disabled={loading} 
+              className="bg-navy text-white font-semibold py-3 px-8 rounded-lg hover:bg-blue-900 hover:shadow-md transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+            >
+              <span>{loading ? 'Posting...' : 'Post Job'}</span>
+              <i className={`fa-solid ${loading ? 'fa-spinner animate-spin' : 'fa-plus'}`}></i>
+            </button>
+          </section>
+        </form>
+      </div>
+    </main>
   );
 }

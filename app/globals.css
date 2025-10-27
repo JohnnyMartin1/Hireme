@@ -253,20 +253,7 @@ body {
 
 .btn-hover:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-.card-enter {
-  animation: cardEnter 0.22s ease forwards;
-  opacity: 0;
-  transform: translateY(12px);
-}
-
-@keyframes cardEnter {
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  transition: all 0.2s ease;
 }
 
 .btn-navy:hover {
@@ -481,4 +468,116 @@ body {
 
 .animate-spin {
   animation: spin 1s linear infinite;
+}
+
+/* Candidate Profile Page Styles */
+.sticky-actions {
+  position: sticky;
+  top: 80px;
+  z-index: 30;
+  backdrop-filter: blur(10px);
+  transform: translateY(-100px);
+  opacity: 0;
+  transition: all 0.18s ease;
+}
+
+.sticky-actions.visible {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.expand-content {
+  max-height: 8rem;
+  overflow: hidden;
+  transition: max-height 0.22s ease;
+}
+
+.expand-content.expanded {
+  max-height: 50rem;
+}
+
+.save-btn {
+  transition: all 0.15s ease;
+}
+
+.save-btn.saved {
+  color: #16A34A;
+  background-color: rgba(22, 163, 74, 0.1);
+  transform: scale(1.05);
+}
+
+.save-btn.saved svg {
+  animation: saveHeartbeat 0.3s ease;
+}
+
+@keyframes saveHeartbeat {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+}
+
+.toast {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  z-index: 50;
+  transform: translateX(400px);
+  transition: transform 0.3s ease;
+}
+
+.toast.show {
+  transform: translateX(0);
+}
+
+.stagger-enter {
+  animation: staggerEnter 0.22s ease forwards;
+  opacity: 0;
+  transform: translateY(12px);
+}
+
+@keyframes staggerEnter {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.timeline-item {
+  position: relative;
+  padding-left: 2rem;
+}
+
+.timeline-item:before {
+  content: '';
+  position: absolute;
+  left: 0.5rem;
+  top: 0.5rem;
+  width: 0.5rem;
+  height: 0.5rem;
+  background: #ADD8E6;
+  border-radius: 50%;
+}
+
+.timeline-item:not(:last-child):after {
+  content: '';
+  position: absolute;
+  left: 0.75rem;
+  top: 1rem;
+  width: 1px;
+  height: calc(100% - 0.5rem);
+  background: #E5E7EB;
+}
+
+.skill-chip {
+  background: linear-gradient(135deg, #ADD8E6 0%, rgba(173, 216, 230, 0.7) 100%);
+  transition: all 0.12s ease;
+}
+
+.skill-chip:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(173, 216, 230, 0.3);
+}
+
+.preference-chip {
+  background: linear-gradient(135deg, rgba(0, 0, 128, 0.1) 0%, rgba(173, 216, 230, 0.1) 100%);
+  border: 1px solid rgba(173, 216, 230, 0.3);
 }
