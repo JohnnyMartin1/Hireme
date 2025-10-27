@@ -253,7 +253,20 @@ body {
 
 .btn-hover:hover {
   transform: translateY(-1px);
-  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.card-enter {
+  animation: cardEnter 0.22s ease forwards;
+  opacity: 0;
+  transform: translateY(12px);
+}
+
+@keyframes cardEnter {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .btn-navy:hover {
