@@ -12,12 +12,7 @@ function HomeContent() {
         <div className="container mx-auto max-w-4xl text-center relative z-10">
           <div className="mb-6 sm:mb-8">
             <div className="w-16 h-16 sm:w-24 sm:h-24 flex items-center justify-center mx-auto mb-4 sm:mb-6">
-              <svg width="269" height="274" viewBox="0 0 269 274" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full" preserveAspectRatio="xMidYMid meet" role="img" aria-label="HireMe magnifying glass logo">
-                <path d="M111.028 0C172.347 0.000238791 222.055 51.647 222.055 115.356C222.055 140.617 214.238 163.98 200.983 182.981L258.517 242.758L238.036 264.036L181.077 204.857C161.97 221.02 137.589 230.713 111.028 230.713C49.7092 230.713 2.76862e-05 179.066 0 115.356C0 51.6468 49.7092 0 111.028 0Z" fill="#0B1F4B"/>
-                <path d="M205.69 115.392C205.69 170.42 163.308 215.029 111.028 215.029C58.748 215.029 16.3666 170.42 16.3666 115.392C16.3666 60.3646 58.748 15.7559 111.028 15.7559C163.308 15.7559 205.69 60.3646 205.69 115.392Z" fill="#4F86F7"/>
-                <path d="M166.528 188.213C166.528 211.685 141.68 230.713 111.028 230.713C80.3763 230.713 55.5282 211.685 55.5282 188.213C55.5282 164.741 80.3763 145.713 111.028 145.713C141.68 145.713 166.528 164.741 166.528 188.213Z" fill="#0B1F4B"/>
-                <path d="M147.022 97.5C147.022 119.315 130.233 137 109.522 137C88.8116 137 72.0222 119.315 72.0222 97.5C72.0222 75.6848 88.8116 60.5 109.522 60.5C130.233 60.5 147.022 75.6848 147.022 97.5Z" fill="#0B1F4B"/>
-              </svg>
+              <HireMeLogo variant="mark" className="h-full w-full" />
             </div>
           </div>
           
