@@ -66,7 +66,7 @@ interface ProfileFormData {
 }
 
 export default function EditProfilePage() {
-  const { user, profile, loading } = useFirebaseAuth();
+  const { user, profile, loading, refreshProfile } = useFirebaseAuth();
   const { completion, updateCompletion } = useProfileCompletion();
   const router = useRouter();
   const toast = useToast();
@@ -246,6 +246,9 @@ export default function EditProfilePage() {
         // Update the shared completion state with the saved data
         updateCompletion(formData);
         
+        // Refresh the profile data in the auth context
+        await refreshProfile();
+        
         // Redirect to appropriate dashboard based on role
         // Dashboard will show the updated completion immediately
         if (profile.role === 'JOB_SEEKER') {
@@ -296,9 +299,9 @@ export default function EditProfilePage() {
                     router.push('/home');
                   }
                 }}
-                className="flex items-center space-x-2 text-navy hover:text-navy/80 transition-colors"
+                className="flex items-center space-x-2 text-navy hover:text-navy/80 transition-all duration-300 group px-4 py-2 rounded-full hover:bg-light-blue/10 hover:shadow-md hover:scale-105"
               >
-                <ArrowLeft className="h-4 w-4" />
+                <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform duration-300" />
                 <span className="font-semibold">Back to Dashboard</span>
               </button>
             </div>

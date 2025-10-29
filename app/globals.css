@@ -581,3 +581,17 @@ body {
   background: linear-gradient(135deg, rgba(0, 0, 128, 0.1) 0%, rgba(173, 216, 230, 0.1) 100%);
   border: 1px solid rgba(173, 216, 230, 0.3);
 }
+
+/* Back Button Hover Effect */
+.back-button-hover {
+  transition: all 0.3s ease;
+}
+
+.back-button-hover:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.back-button-hover:hover .back-arrow {
+  transform: translateX(-4px);
+}

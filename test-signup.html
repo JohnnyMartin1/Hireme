@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script> window.FontAwesomeConfig = { autoReplaceSvg: 'nest'};</script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        ::-webkit-scrollbar { display: none;}
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'navy': '#000080',
+                        'light-blue': '#ADD8E6',
+                        'light-gray': '#D3D3D3',
+                        'brand-gray': '#F8FAFC',
+                        'subtle-gray': '#F1F5F9',
+                        'text-primary': '#111827',
+                        'text-secondary': '#6B7280',
+                        'accent-blue': '#2563EB',
+                        'accent-cyan': '#14B8A6',
+                        'success-green': '#10B981',
+                        'error-red': '#EF4444',
+                    },
+                    keyframes: {
+                        'fade-in': {
+                            '0%': { opacity: '0', transform: 'translateY(10px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                        'pop-in': {
+                           '0%': { opacity: '0', transform: 'scale(0.95)' },
+                           '100%': { opacity: '1', transform: 'scale(1)' },
+                        },
+                        'spin': {
+                            '0%': { transform: 'rotate(0deg)' },
+                            '100%': { transform: 'rotate(360deg)' }
+                        }
+                    },
+                    animation: {
+                        'fade-in': 'fade-in 0.5s ease-out forwards',
+                        'pop-in': 'pop-in 0.3s ease-out forwards',
+                        'spin': 'spin 1s linear infinite',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-brand-gray overflow-hidden">
+
+<main id="profile-focus-final" class="h-screen flex">
+    <!-- Left Column - Content & Form -->
+    <div id="left-column-final" class="w-[48%] flex flex-col justify-between p-12 bg-white relative">
+        <header id="header" class="flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+                <svg class="h-8 w-8 text-navy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8"/>
+                    <path d="m21 21-4.35-4.35"/>
+                    <circle cx="11" cy="8" r="2"/>
+                    <path d="M11 12a3 3 0 0 0-3 3h6a3 3 0 0 0-3-3z"/>
+                </svg>
+                <span class="font-bold text-2xl text-navy">HireMe</span>
+            </div>
+            <nav class="flex items-center space-x-6 text-text-primary font-medium">
+                <span class="hover:text-navy transition-colors cursor-pointer">Explore</span>
+                <span class="px-5 py-2 bg-navy text-white font-semibold rounded-lg hover:bg-opacity-90 transition-all duration-200 cursor-pointer">Get Started</span>
+            </nav>
+        </header>
+
+        <div id="signup-content-final" class="flex-grow flex flex-col justify-center">
+            <div id="progress-stepper-final" class="flex items-center space-x-4 text-sm text-text-secondary mb-8">
+                <div id="step-1" class="flex items-center text-navy font-semibold">
+                    <span class="flex items-center justify-center w-8 h-8 bg-navy text-white rounded-full mr-3 text-xs">
+                        <i class="fa-solid fa-envelope"></i>
+                    </span>
+                    Search
+                </div>
+                <i class="fa-solid fa-chevron-right text-light-gray text-xs"></i>
+                <div id="step-2" class="flex items-center">
+                    <span class="flex items-center justify-center w-8 h-8 bg-light-gray text-text-secondary rounded-full mr-3 text-xs">
+                        <i class="fa-solid fa-user-plus"></i>
+                    </span>
+                    Create Account
+                </div>
+                <i class="fa-solid fa-chevron-right text-light-gray text-xs"></i>
+                <div id="step-3" class="flex items-center">
+                    <span class="flex items-center justify-center w-8 h-8 bg-light-gray text-text-secondary rounded-full mr-3 text-xs">
+                        <i class="fa-solid fa-smile"></i>
+                    </span>
+                    Personalize
+                </div>
+            </div>
+
+            <div class="w-full bg-light-gray rounded-full h-2 mb-12">
+                <div id="progress-bar" class="bg-navy h-2 rounded-full transition-all duration-300" style="width: 33.33%"></div>
+            </div>
+
+            <!-- Step 3: Welcome -->
+            <div id="step-3-content" class="step-content text-center">
+                <div class="space-y-6">
+                    <h1 id="welcome-title" class="text-4xl font-bold text-text-primary">
+                        Welcome, <span id="user-first-name">User</span> — ready to get hired?
+                    </h1>
+                    <p id="welcome-subtitle" class="text-lg text-text-secondary">
+                        Let's finish setting up your profile so employers can discover your amazing potential.
+                    </p>
+                    <button id="start-profile-btn" class="bg-navy text-white px-8 py-4 rounded-lg font-semibold hover:bg-opacity-90 transition-all duration-200">
+                        Start profile setup
+                        <i class="fa-solid fa-arrow-right ml-2"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <footer id="footer" class="text-center text-xs text-text-secondary">
+            <p>&copy; 2025 HireMe Inc. &nbsp;&bull;&nbsp; <span class="hover:underline cursor-pointer">Privacy</span> &nbsp;&bull;&nbsp; <span class="hover:underline cursor-pointer">Terms</span></p>
+        </footer>
+    </div>
+
+    <!-- Right Column - Profile Gallery -->
+    <div id="right-column-final" class="w-[52%] bg-brand-gray p-8 overflow-hidden relative">
+        <div id="gallery-background" class="absolute inset-0 bg-gradient-to-br from-brand-gray via-subtle-gray to-brand-gray"></div>
+        
+        <div id="profile-gallery-container" class="h-full w-full relative">
+            <div id="profile-grid-final" class="grid grid-cols-4 gap-4 h-full content-start">
+                <!-- Profile cards generated by JavaScript -->
+            </div>
+            
+            <!-- Focused Card Overlay -->
+            <div id="focused-card-overlay" class="absolute opacity-0 pointer-events-none transition-opacity duration-200 z-10" style="left: 50%; top: 50%; transform: translate(-50%, -50%);">
+                <div id="focused-card" class="bg-white rounded-2xl shadow-lg p-8 flex flex-col items-center justify-center space-y-6 border border-navy/10 transition-all duration-320" style="transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);">
+                    <div class="w-20 h-20 bg-light-gray rounded-full flex items-center justify-center transition-colors duration-200">
+                        <svg class="w-12 h-12 text-text-secondary" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path>
+                        </svg>
+                    </div>
+                    <div class="text-center">
+                        <div id="preview-fullname" class="text-2xl font-bold text-text-primary">Full Name</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const grid = document.getElementById('profile-grid-final');
+    
+    // Generate Profile Cards
+    for (let i = 0; i < 32; i++) {
+        const card = document.createElement('div');
+        card.className = 'profile-card bg-white rounded-xl p-4 shadow-sm border border-gray-200/50 aspect-[3/4] flex flex-col items-center justify-center space-y-3 transition-all duration-300 hover:shadow-md hover:-translate-y-1 opacity-0 animate-fade-in';
+        card.style.animationDelay = `${i * 30}ms`;
+        
+        card.innerHTML = `
+            <div class="w-12 h-12 bg-light-gray rounded-full flex items-center justify-center">
+                <svg class="w-7 h-7 text-text-secondary" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path>
+                </svg>
+            </div>
+            <div class="w-3/4 h-2 bg-light-gray rounded-full"></div>
+            <div class="w-1/2 h-2 bg-light-gray rounded-full"></div>
+        `;
+        
+        grid.appendChild(card);
+    }
+
+    // Init block: Check localStorage for stored names and show popup
+    const storedFirst = localStorage.getItem('firstName');
+    const storedLast  = localStorage.getItem('lastName');
+    if (storedFirst || storedLast) {
+      // set preview name & show overlay without requiring form submit
+      const previewName = document.getElementById('preview-fullname');
+      if (previewName) {
+        previewName.textContent = `${storedFirst || ''} ${storedLast || ''}`.trim() || 'Welcome';
+      }
+      const overlay = document.getElementById('focused-card-overlay');
+      if (overlay) {
+        overlay.style.opacity = '1';
+        overlay.style.pointerEvents = 'auto';
+      }
+    }
+});
+</script>
+
+</body>
+</html>

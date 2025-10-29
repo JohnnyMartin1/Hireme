@@ -76,25 +76,31 @@ export default function CandidateProfilePage() {
 
       setIsLoading(true);
       try {
-        const { data, error } = await getDocument('users', params.id as string);
+        // Use profile from auth context if viewing own profile, otherwise fetch
+        if (user && user.uid === params.id && profile) {
+          console.log('Using profile from auth context for own profile');
+          setCandidate(profile as any);
+        } else {
+          const { data, error } = await getDocument('users', params.id as string);
 
-        if (error) {
-          setError(error);
-          return;
+          if (error) {
+            setError(error);
+            return;
+          }
+
+          if (!data) {
+            setError('Candidate not found');
+            return;
+          }
+
+          // Check if this is actually a job seeker
+          if ((data as any).role !== 'JOB_SEEKER') {
+            setError('Profile not found');
+            return;
+          }
+
+          setCandidate(data);
         }
-
-        if (!data) {
-          setError('Candidate not found');
-          return;
-        }
-
-        // Check if this is actually a job seeker
-        if ((data as any).role !== 'JOB_SEEKER') {
-          setError('Profile not found');
-          return;
-        }
-
-        setCandidate(data);
 
         // Track profile view if user is logged in and viewing someone else's profile
         if (user && user.uid !== params.id) {
@@ -122,7 +128,7 @@ export default function CandidateProfilePage() {
     };
 
     fetchCandidateProfile();
-  }, [params.id, user]);
+  }, [params.id, user, profile]);
 
   // Handle sticky bar visibility
   useEffect(() => {
@@ -386,15 +392,15 @@ export default function CandidateProfilePage() {
         <section className="mb-8">
           <Link 
             href={user?.uid === candidate.id ? "/home/seeker" : "/search/candidates"}
-            className="flex items-center text-navy font-semibold hover:text-blue-900 transition-colors duration-200 bg-light-blue/10 hover:bg-light-blue/20 px-4 py-2 rounded-full w-fit"
+            className="flex items-center text-navy font-semibold hover:text-blue-900 transition-all duration-300 bg-light-blue/10 hover:bg-light-blue/30 hover:shadow-md hover:scale-105 px-4 py-2 rounded-full w-fit group"
           >
-            <ArrowLeft className="h-4 w-4 mr-2" />
+            <ArrowLeft className="h-4 w-4 mr-2 group-hover:-translate-x-1 transition-transform duration-300" />
             {user?.uid === candidate.id ? "Back to Dashboard" : "Back to candidate search"}
           </Link>
         </section>
 
         {/* Hero Summary Card */}
-        <section ref={heroCardRef} className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 mb-8 animate-[cardEnter_0.22s_ease_forwards] opacity-0">
+        <section ref={heroCardRef} className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 mb-8">
           <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
             <div className="flex items-start space-x-6">
               {candidate.profileImageUrl ? (
@@ -407,6 +413,9 @@ export default function CandidateProfilePage() {
               <div className="flex-1">
                 <h1 className="text-3xl font-bold text-navy mb-2">{candidateName}</h1>
                 <p className="text-xl text-gray-600 mb-4">{candidate.headline || 'Job Seeker'}</p>
+                {candidate.bio && (
+                  <p className="text-gray-700 mb-4 leading-relaxed">{candidate.bio}</p>
+                )}
                 <div className="flex flex-wrap items-center gap-4 text-sm text-gray-700">
                   {candidate.school && (
                     <div className="flex items-center space-x-2">
@@ -464,9 +473,28 @@ export default function CandidateProfilePage() {
           </div>
         </section>
 
+        {/* Video Section */}
+        {candidate.videoUrl && (
+          <section className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 mb-8">
+            <h2 className="text-2xl font-bold text-navy mb-6 flex items-center space-x-3">
+              <Video className="h-6 w-6 text-light-blue" />
+              <span>Profile Video</span>
+            </h2>
+            <div className="aspect-video rounded-lg overflow-hidden">
+              <video 
+                src={candidate.videoUrl} 
+                controls 
+                className="w-full h-full"
+              >
+                Your browser does not support the video tag.
+              </video>
+            </div>
+          </section>
+        )}
+
         {/* Education Card */}
         {(candidate.education && candidate.education.length > 0) || candidate.graduationYear || candidate.gpa ? (
-          <section className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 mb-8 animate-[staggerEnter_0.22s_ease_forwards] opacity-0" style={{animationDelay: '100ms'}}>
+          <section className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 mb-8 ">
             <h2 className="text-2xl font-bold text-navy mb-6 flex items-center space-x-3">
               <GraduationCap className="h-6 w-6 text-light-blue" />
               <span>Education</span>
@@ -505,9 +533,39 @@ export default function CandidateProfilePage() {
           </section>
         ) : null}
 
+        {/* Resume Card */}
+        {candidate.resumeUrl && (
+          <section className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 mb-8 ">
+            <h2 className="text-2xl font-bold text-navy mb-6 flex items-center space-x-3">
+              <FileText className="h-6 w-6 text-light-blue" />
+              <span>Resume</span>
+            </h2>
+            <div className="flex items-center justify-between p-6 bg-light-blue/10 rounded-xl border border-light-blue/30">
+              <div className="flex items-center space-x-4">
+                <FileText className="h-8 w-8 text-navy" />
+                <div>
+                  <p className="font-semibold text-navy">Resume available</p>
+                  <p className="text-sm text-gray-600">Click to view or download</p>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  setShowResumeModal(true);
+                  setResumePreviewError(false);
+                  setUseGoogleViewer(false);
+                }}
+                className="bg-navy text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-900 transition-all duration-200 flex items-center space-x-2"
+              >
+                <FileText className="h-5 w-5" />
+                <span>View Resume</span>
+              </button>
+            </div>
+          </section>
+        )}
+
         {/* Skills Card */}
         {candidate.skills && candidate.skills.length > 0 && (
-          <section className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 mb-8 animate-[staggerEnter_0.22s_ease_forwards] opacity-0" style={{animationDelay: '200ms'}}>
+          <section className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 mb-8 ">
             <h2 className="text-2xl font-bold text-navy mb-6 flex items-center space-x-3">
               <Code className="h-6 w-6 text-light-blue" />
               <span>Skills</span>
@@ -528,7 +586,7 @@ export default function CandidateProfilePage() {
 
         {/* Work Preferences Card */}
         {candidate.workPreferences && candidate.workPreferences.length > 0 && (
-          <section className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 mb-8 animate-[staggerEnter_0.22s_ease_forwards] opacity-0" style={{animationDelay: '300ms'}}>
+          <section className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 mb-8 ">
             <h2 className="text-2xl font-bold text-navy mb-6 flex items-center space-x-3">
               <Briefcase className="h-6 w-6 text-light-blue" />
               <span>Work Preferences</span>
@@ -549,7 +607,7 @@ export default function CandidateProfilePage() {
 
         {/* Preferred Job Types Card */}
         {candidate.jobTypes && candidate.jobTypes.length > 0 && (
-          <section className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 mb-8 animate-[staggerEnter_0.22s_ease_forwards] opacity-0" style={{animationDelay: '400ms'}}>
+          <section className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 mb-8 ">
             <h2 className="text-2xl font-bold text-navy mb-6 flex items-center space-x-3">
               <UserCircle className="h-6 w-6 text-light-blue" />
               <span>Preferred Job Types</span>
@@ -570,7 +628,7 @@ export default function CandidateProfilePage() {
 
         {/* Relevant Experience Card */}
         {candidate.experience && (
-          <section className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 mb-8 animate-[staggerEnter_0.22s_ease_forwards] opacity-0" style={{animationDelay: '500ms'}}>
+          <section className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 mb-8 ">
             <h2 className="text-2xl font-bold text-navy mb-6 flex items-center space-x-3">
               <Star className="h-6 w-6 text-light-blue" />
               <span>Relevant Experience</span>
@@ -594,7 +652,7 @@ export default function CandidateProfilePage() {
 
         {/* Preferred Work Locations Card */}
         {candidate.locations && candidate.locations.length > 0 && (
-          <section className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 mb-8 animate-[staggerEnter_0.22s_ease_forwards] opacity-0" style={{animationDelay: '600ms'}}>
+          <section className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 mb-8 ">
             <h2 className="text-2xl font-bold text-navy mb-6 flex items-center space-x-3">
               <MapPin className="h-6 w-6 text-light-blue" />
               <span>Preferred Work Locations</span>
@@ -616,7 +674,7 @@ export default function CandidateProfilePage() {
 
         {/* Get in Touch Card */}
         {user?.uid !== candidate.id && (
-          <section className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 animate-[staggerEnter_0.22s_ease_forwards] opacity-0" style={{animationDelay: '700ms'}}>
+          <section className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 ">
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-6">
               <div>
                 <h2 className="text-2xl font-bold text-navy mb-2">Get in Touch</h2>

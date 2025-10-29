@@ -228,6 +228,17 @@ export default function CandidateMessagesPage() {
   return (
     <main className="min-h-screen" style={{background: 'linear-gradient(180deg, #E6F0FF 0%, #F0F8FF 100%)'}}>
       <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-4">
+        {/* Back to Dashboard Button */}
+        <div className="mb-6">
+          <Link 
+            href="/home/seeker"
+            className="inline-flex items-center text-navy font-semibold hover:text-blue-900 transition-all duration-300 bg-light-blue/10 hover:bg-light-blue/30 hover:shadow-md hover:scale-105 px-4 py-2 rounded-full group"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2 group-hover:-translate-x-1 transition-transform duration-300" />
+            Back to Dashboard
+          </Link>
+        </div>
+        
         <div className="grid grid-cols-12 gap-6 h-[calc(100vh-120px)]">
           
           {/* Thread List Sidebar */}
@@ -235,14 +246,9 @@ export default function CandidateMessagesPage() {
             
             {/* Thread List Header */}
             <div className="p-6 border-b border-slate-200/60">
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h1 className="text-2xl font-bold text-slate-900">Messages</h1>
-                  <p className="text-sm text-slate-500">Your conversations with employers.</p>
-                </div>
-                <button className="bg-navy text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-900 transition-colors">
-                  New Message
-                </button>
+              <div className="mb-4">
+                <h1 className="text-2xl font-bold text-slate-900">Messages</h1>
+                <p className="text-sm text-slate-500">Your conversations with employers.</p>
               </div>
               
               {/* Search Bar */}

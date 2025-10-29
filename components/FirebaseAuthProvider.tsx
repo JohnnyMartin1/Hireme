@@ -12,6 +12,7 @@ interface AuthContextType {
   profile: UserProfile | null;
   loading: boolean;
   signOut: () => Promise<void>;
+  refreshProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -111,11 +112,45 @@ export function FirebaseAuthProvider({ children }: { children: React.ReactNode }
     }
   };
 
+  const refreshProfile = async () => {
+    if (!user) return;
+    
+    try {
+      console.log('Refreshing profile data...');
+      const { data: profileData, error: profileError } = await getDocument('users', user.uid);
+      
+      if (profileError) {
+        console.error('Error refreshing profile:', profileError);
+        return;
+      }
+      
+      if (profileData) {
+        const profile = profileData as any;
+        const createdAt = profile.createdAt?.toDate
+          ? profile.createdAt.toDate()
+          : (profile.createdAt ? new Date(profile.createdAt) : new Date());
+
+        setProfile({
+          id: user.uid,
+          email: user.email || '',
+          role: profile.role || 'JOB_SEEKER',
+          ...profile,
+          createdAt,
+        } as any);
+        
+        console.log('Profile refreshed successfully');
+      }
+    } catch (error) {
+      console.error('Error refreshing profile:', error);
+    }
+  };
+
   const value = {
     user,
     profile,
     loading,
     signOut,
+    refreshProfile,
   };
 
   return (

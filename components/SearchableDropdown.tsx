@@ -1,5 +1,6 @@
 "use client";
 import { useState, useRef, useEffect, memo, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { ChevronDown, Search, X } from 'lucide-react';
 
 interface SearchableDropdownProps {
@@ -26,11 +27,25 @@ const SearchableDropdown = memo(function SearchableDropdown({
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredOptions, setFilteredOptions] = useState(options);
+  const [position, setPosition] = useState({ top: 0, left: 0, width: 0 });
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (isOpen && triggerRef.current) {
+      const rect = triggerRef.current.getBoundingClientRect();
+      setPosition({
+        top: rect.bottom + window.scrollY + 4,
+        left: rect.left + window.scrollX,
+        width: rect.width
+      });
+    }
+  }, [isOpen]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node) &&
+          triggerRef.current && !triggerRef.current.contains(event.target as Node)) {
         setIsOpen(false);
         setSearchTerm('');
       }
@@ -85,8 +100,8 @@ const SearchableDropdown = memo(function SearchableDropdown({
   };
 
   return (
-    <div className={`relative ${className}`} ref={dropdownRef}>
-      <div className="relative">
+    <div className={`relative ${className}`}>
+      <div className="relative" ref={triggerRef}>
         <div
           className="w-full px-4 py-3 bg-white border border-light-gray rounded-xl text-navy placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-navy focus:border-navy transition-all duration-200 cursor-pointer"
           onClick={() => setIsOpen(!isOpen)}
@@ -113,8 +128,16 @@ const SearchableDropdown = memo(function SearchableDropdown({
           </div>
         </div>
 
-        {isOpen && (
-          <div className="absolute z-50 w-full mt-1 bg-white border border-light-gray rounded-xl shadow-lg max-h-60 overflow-hidden">
+        {isOpen && typeof window !== 'undefined' && createPortal(
+          <div 
+            ref={dropdownRef}
+            className="fixed z-[9999] bg-white border border-light-gray rounded-xl shadow-lg max-h-60 overflow-hidden"
+            style={{ 
+              top: `${position.top}px`, 
+              left: `${position.left}px`, 
+              width: `${position.width}px` 
+            }}
+          >
             <div className="p-2 border-b border-light-gray">
               <div className="relative">
                 <i className="fa-solid fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
@@ -162,7 +185,8 @@ const SearchableDropdown = memo(function SearchableDropdown({
                 </div>
               )}
             </div>
-          </div>
+          </div>,
+          document.body
         )}
       </div>
     </div>

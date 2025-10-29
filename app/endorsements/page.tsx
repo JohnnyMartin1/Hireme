@@ -71,9 +71,9 @@ export default function EndorsementsPage() {
         <div className="mb-10">
           <Link 
             href="/home/seeker"
-            className="text-navy font-semibold hover:underline decoration-2 underline-offset-4 transition-all cursor-pointer"
+            className="inline-flex items-center text-navy font-semibold hover:text-blue-900 transition-all duration-300 bg-light-blue/10 hover:bg-light-blue/30 hover:shadow-md hover:scale-105 px-4 py-2 rounded-full group"
           >
-            <ArrowLeft className="h-4 w-4 inline mr-2" />
+            <ArrowLeft className="h-4 w-4 mr-2 group-hover:-translate-x-1 transition-transform duration-300" />
             Back to Dashboard
           </Link>
         </div>
