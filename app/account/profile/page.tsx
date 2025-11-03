@@ -392,11 +392,6 @@ export default function EditProfilePage() {
                 placeholder="e.g., Computer Science Student | Full-Stack Developer"
               />
             </div>
-            
-            <div className="flex space-x-3">
-              <button type="button" className="bg-navy text-white font-semibold py-3 px-6 rounded-xl hover:bg-blue-900 transition-all duration-200">Save</button>
-              <button type="button" className="bg-light-blue/10 text-navy font-semibold py-3 px-6 rounded-xl border border-light-blue/40 hover:bg-light-blue/15 transition-all duration-200">Cancel</button>
-            </div>
           </div>
 
           {/* Education */}
@@ -550,11 +545,6 @@ export default function EditProfilePage() {
                 <p className="text-sm">Click "Add Education" to get started</p>
               </div>
             )}
-            
-            <div className="flex space-x-3 mt-6">
-              <button type="button" className="bg-navy text-white font-semibold py-3 px-6 rounded-xl hover:bg-blue-900 transition-all duration-200">Save</button>
-              <button type="button" className="bg-light-blue/10 text-navy font-semibold py-3 px-6 rounded-xl border border-light-blue/40 hover:bg-light-blue/15 transition-all duration-200">Cancel</button>
-            </div>
           </div>
 
           {/* Location & Preferences */}
@@ -608,11 +598,6 @@ export default function EditProfilePage() {
                 allowCustom
               />
             </div>
-            
-            <div className="flex space-x-3 mt-6">
-              <button type="button" className="bg-navy text-white font-semibold py-3 px-6 rounded-xl hover:bg-blue-900 transition-all duration-200">Save</button>
-              <button type="button" className="bg-light-blue/10 text-navy font-semibold py-3 px-6 rounded-xl border border-light-blue/40 hover:bg-light-blue/15 transition-all duration-200">Cancel</button>
-            </div>
           </div>
 
           {/* Skills */}
@@ -644,11 +629,6 @@ export default function EditProfilePage() {
               allowCustom
               maxSelections={20}
             />
-            
-            <div className="flex space-x-3 mt-6">
-              <button type="button" className="bg-navy text-white font-semibold py-3 px-6 rounded-xl hover:bg-blue-900 transition-all duration-200">Save</button>
-              <button type="button" className="bg-light-blue/10 text-navy font-semibold py-3 px-6 rounded-xl border border-light-blue/40 hover:bg-light-blue/15 transition-all duration-200">Cancel</button>
-            </div>
           </div>
 
           {/* Experience & Activities */}
@@ -710,11 +690,6 @@ export default function EditProfilePage() {
                 allowCustom
               />
             </div>
-            
-            <div className="flex space-x-3 mt-6">
-              <button type="button" className="bg-navy text-white font-semibold py-3 px-6 rounded-xl hover:bg-blue-900 transition-all duration-200">Save</button>
-              <button type="button" className="bg-light-blue/10 text-navy font-semibold py-3 px-6 rounded-xl border border-light-blue/40 hover:bg-light-blue/15 transition-all duration-200">Cancel</button>
-            </div>
           </div>
 
           {/* Career Interests */}
@@ -750,11 +725,6 @@ export default function EditProfilePage() {
               <p className="text-sm text-gray-500 mt-2">
                 Select up to 5 industries you're most interested in pursuing for your career.
               </p>
-            </div>
-            
-            <div className="flex space-x-3 mt-6">
-              <button type="button" className="bg-navy text-white font-semibold py-3 px-6 rounded-xl hover:bg-blue-900 transition-all duration-200">Save</button>
-              <button type="button" className="bg-light-blue/10 text-navy font-semibold py-3 px-6 rounded-xl border border-light-blue/40 hover:bg-light-blue/15 transition-all duration-200">Cancel</button>
             </div>
           </div>
 
@@ -847,11 +817,6 @@ export default function EditProfilePage() {
                 </div>
               </div>
             </div>
-            
-            <div className="flex space-x-3">
-              <button type="button" className="bg-navy text-white font-semibold py-3 px-6 rounded-xl hover:bg-blue-900 transition-all duration-200">Save</button>
-              <button type="button" className="bg-light-blue/10 text-navy font-semibold py-3 px-6 rounded-xl border border-light-blue/40 hover:bg-light-blue/15 transition-all duration-200">Cancel</button>
-            </div>
           </div>
 
           {/* Personal & Links */}
@@ -911,11 +876,6 @@ export default function EditProfilePage() {
                 />
               </div>
             </div>
-            
-            <div className="flex space-x-3 mt-6">
-              <button type="button" className="bg-navy text-white font-semibold py-3 px-6 rounded-xl hover:bg-blue-900 transition-all duration-200">Save</button>
-              <button type="button" className="bg-light-blue/10 text-navy font-semibold py-3 px-6 rounded-xl border border-light-blue/40 hover:bg-light-blue/15 transition-all duration-200">Cancel</button>
-            </div>
           </div>
 
           {/* Profile Picture & Resume */}
@@ -964,11 +924,6 @@ export default function EditProfilePage() {
                 />
               </div>
             </div>
-            
-            <div className="flex space-x-3 mt-6">
-              <button type="button" className="bg-navy text-white font-semibold py-3 px-6 rounded-xl hover:bg-blue-900 transition-all duration-200">Save</button>
-              <button type="button" className="bg-light-blue/10 text-navy font-semibold py-3 px-6 rounded-xl border border-light-blue/40 hover:bg-light-blue/15 transition-all duration-200">Cancel</button>
-            </div>
           </div>
 
           {/* Profile Video */}
@@ -999,11 +954,6 @@ export default function EditProfilePage() {
                 userId={user.uid}
               />
             </div>
-            
-            <div className="flex space-x-3 mt-6">
-              <button type="button" className="bg-navy text-white font-semibold py-3 px-6 rounded-xl hover:bg-blue-900 transition-all duration-200">Save</button>
-              <button type="button" className="bg-light-blue/10 text-navy font-semibold py-3 px-6 rounded-xl border border-light-blue/40 hover:bg-light-blue/15 transition-all duration-200">Cancel</button>
-            </div>
           </div>
 
           {/* Endorsements */}
@@ -1031,11 +981,6 @@ export default function EditProfilePage() {
             </div>
             <p className="text-gray-600 mb-2">Send this link to colleagues, managers or peers so they can vouch for your skills.</p>
             <Link href={`/endorse/${user.uid}`} className="text-blue-600 hover:underline text-sm">Open endorsement form</Link>
-            
-            <div className="flex space-x-3 mt-6">
-              <button type="button" className="bg-navy text-white font-semibold py-3 px-6 rounded-xl hover:bg-blue-900 transition-all duration-200">Save</button>
-              <button type="button" className="bg-light-blue/10 text-navy font-semibold py-3 px-6 rounded-xl border border-light-blue/40 hover:bg-light-blue/15 transition-all duration-200">Cancel</button>
-            </div>
           </div>
 
           {/* Save All Changes */}

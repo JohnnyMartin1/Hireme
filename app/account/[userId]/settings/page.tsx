@@ -1,12 +1,14 @@
 "use client";
 import { useFirebaseAuth } from "@/components/FirebaseAuthProvider";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 
-export default function SettingsPage() {
+export default function UserSettingsPage() {
   const { user, profile, loading } = useFirebaseAuth();
   const router = useRouter();
+  const params = useParams();
+  const userId = params.userId as string;
   const [activeTab, setActiveTab] = useState('account');
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
@@ -16,7 +18,14 @@ export default function SettingsPage() {
       router.push("/auth/login");
       return;
     }
-  }, [user, loading, router]);
+
+    // Verify the userId matches the current user
+    if (!loading && user && user.uid !== userId) {
+      const dashboardRoute = profile?.role === 'JOB_SEEKER' ? '/home/seeker' : '/home/employer';
+      router.push(dashboardRoute);
+      return;
+    }
+  }, [user, profile, loading, router, userId]);
 
   useEffect(() => {
     // Handle URL hash on page load
@@ -37,7 +46,7 @@ export default function SettingsPage() {
     );
   }
 
-  if (!user || !profile) {
+  if (!user || !profile || user.uid !== userId) {
     return null;
   }
 
@@ -218,12 +227,6 @@ export default function SettingsPage() {
                 <span className="font-semibold">Back to Dashboard</span>
               </Link>
             </div>
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-[#000080] rounded-xl flex items-center justify-center">
-                <i className="fa-solid fa-magnifying-glass text-white text-lg"></i>
-              </div>
-              <span className="text-2xl font-bold text-[#000080]">HireMe</span>
-            </div>
           </div>
         </div>
       </header>
@@ -237,8 +240,18 @@ export default function SettingsPage() {
           <aside className="lg:w-80 shrink-0">
             <div className="bg-white rounded-2xl shadow-sm border border-[#D3D3D3] p-6 sticky top-28">
               <nav className="space-y-2">
-                {[
+                {(profile.role === 'JOB_SEEKER' ? [
                   { id: 'account', icon: 'user', label: 'Account' },
+                  { id: 'information', icon: 'circle-info', label: 'Information' },
+                  { id: 'security', icon: 'shield-halved', label: 'Security' },
+                  { id: 'privacy', icon: 'eye', label: 'Privacy & Visibility' },
+                  { id: 'notifications', icon: 'bell', label: 'Notifications' },
+                  { id: 'accessibility', icon: 'universal-access', label: 'Accessibility' },
+                  { id: 'legal', icon: 'gavel', label: 'Legal' },
+                  { id: 'danger', icon: 'triangle-exclamation', label: 'Danger Zone' },
+                ] : [
+                  { id: 'account', icon: 'user', label: 'Account' },
+                  { id: 'information', icon: 'circle-info', label: 'Information' },
                   { id: 'security', icon: 'shield-halved', label: 'Security' },
                   { id: 'privacy', icon: 'eye', label: 'Privacy & Visibility' },
                   { id: 'notifications', icon: 'bell', label: 'Notifications' },
@@ -250,7 +263,7 @@ export default function SettingsPage() {
                   { id: 'accessibility', icon: 'universal-access', label: 'Accessibility' },
                   { id: 'legal', icon: 'gavel', label: 'Legal' },
                   { id: 'danger', icon: 'triangle-exclamation', label: 'Danger Zone' },
-                ].map((tab) => (
+                ]).map((tab) => (
                   <button
                     key={tab.id}
                     onClick={() => handleTabClick(tab.id)}
@@ -268,14 +281,15 @@ export default function SettingsPage() {
           {/* Content Area */}
           <div className="flex-1">
             {activeTab === 'account' && <AccountSection toast={toast} />}
+            {activeTab === 'information' && <InformationSection />}
             {activeTab === 'security' && <SecuritySection toast={toast} />}
             {activeTab === 'privacy' && <PrivacySection toast={toast} />}
             {activeTab === 'notifications' && <NotificationsSection toast={toast} />}
-            {activeTab === 'billing' && <BillingSection />}
-            {activeTab === 'team' && <TeamSection toast={toast} />}
-            {activeTab === 'company' && <CompanySection toast={toast} />}
-            {activeTab === 'integrations' && <IntegrationsSection toast={toast} />}
-            {activeTab === 'data' && <DataSection />}
+            {activeTab === 'billing' && (profile.role === 'EMPLOYER' || profile.role === 'RECRUITER') && <BillingSection />}
+            {activeTab === 'team' && (profile.role === 'EMPLOYER' || profile.role === 'RECRUITER') && <TeamSection toast={toast} />}
+            {activeTab === 'company' && (profile.role === 'EMPLOYER' || profile.role === 'RECRUITER') && <CompanySection toast={toast} />}
+            {activeTab === 'integrations' && (profile.role === 'EMPLOYER' || profile.role === 'RECRUITER') && <IntegrationsSection toast={toast} />}
+            {activeTab === 'data' && (profile.role === 'EMPLOYER' || profile.role === 'RECRUITER') && <DataSection />}
             {activeTab === 'accessibility' && <AccessibilitySection toast={toast} />}
             {activeTab === 'legal' && <LegalSection />}
             {activeTab === 'danger' && <DangerSection />}
@@ -641,7 +655,491 @@ function NotificationsSection({ toast }: { toast: (msg: string) => void }) {
   );
 }
 
-// Billing Section Component
+// Information Section Component (Employer)
+function InformationSection() {
+  return (
+    <section className="space-y-14 fade-in">
+      {/* Welcome Hero */}
+      <div className="bg-gradient-to-r from-[#000080] to-[#ADD8E6] text-white p-10 rounded-3xl shadow-lg">
+        <div className="flex items-center space-x-6">
+          <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center">
+            <i className="fa-solid fa-building text-3xl text-white"></i>
+          </div>
+          <div>
+            <h1 className="text-4xl font-bold mb-3">Welcome, Employers</h1>
+            <p className="text-blue-100 text-lg leading-relaxed max-w-2xl">
+              HireMe connects you with talented early-career professionals through our streamlined, 
+              transparent hiring process. Here's everything you need to know to get started.
+            </p>
+            <div className="mt-4">
+              <span className="text-blue-200 font-semibold">Learn more below →</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* How It Works */}
+      <div className="space-y-8">
+        <h2 className="text-3xl font-bold text-[#000080] text-center mb-10">How HireMe Works</h2>
+        
+        <div className="space-y-6">
+          {/* Step 1 */}
+          <div className="bg-white p-8 rounded-2xl shadow-sm border border-[#D3D3D3]">
+            <div className="flex items-start space-x-6">
+              <div className="w-12 h-12 bg-[#000080] text-white rounded-full flex items-center justify-center font-bold text-lg">1</div>
+              <div className="flex-1">
+                <h3 className="text-xl font-bold text-[#000080] mb-3">Set Up Your Company Profile</h3>
+                <ul className="space-y-2 text-gray-700">
+                  <li className="flex items-center space-x-3">
+                    <i className="fa-solid fa-check text-[#ADD8E6] text-sm"></i>
+                    <span>Create your <strong>company profile</strong> with detailed information</span>
+                  </li>
+                  <li className="flex items-center space-x-3">
+                    <i className="fa-solid fa-check text-[#ADD8E6] text-sm"></i>
+                    <span>Upload <strong>company branding</strong> and culture photos</span>
+                  </li>
+                  <li className="flex items-center space-x-3">
+                    <i className="fa-solid fa-check text-[#ADD8E6] text-sm"></i>
+                    <span>Define your <strong>hiring criteria</strong> and job requirements</span>
+                  </li>
+                </ul>
+                <div className="mt-4 p-3 bg-[#ADD8E6]/20 rounded-lg border-l-4 border-[#000080]">
+                  <span className="text-sm font-semibold text-[#000080]">💡 Pro Tip: Complete profiles receive 3x more candidate responses</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Step 2 */}
+          <div className="bg-white p-8 rounded-2xl shadow-sm border border-[#D3D3D3]">
+            <div className="flex items-start space-x-6">
+              <div className="w-12 h-12 bg-[#ADD8E6] text-white rounded-full flex items-center justify-center font-bold text-lg">2</div>
+              <div className="flex-1">
+                <h3 className="text-xl font-bold text-[#000080] mb-3">Search Verified Candidate Database</h3>
+                <ul className="space-y-2 text-gray-700">
+                  <li className="flex items-center space-x-3">
+                    <i className="fa-solid fa-check text-[#ADD8E6] text-sm"></i>
+                    <span>Browse <strong>verified and standardized profiles</strong> from our database</span>
+                  </li>
+                  <li className="flex items-center space-x-3">
+                    <i className="fa-solid fa-check text-[#ADD8E6] text-sm"></i>
+                    <span>Use <strong>advanced filters</strong> for skills, education, and experience</span>
+                  </li>
+                  <li className="flex items-center space-x-3">
+                    <i className="fa-solid fa-check text-[#ADD8E6] text-sm"></i>
+                    <span>Access <strong>AI-powered matching</strong> for optimal candidate recommendations</span>
+                  </li>
+                </ul>
+                <div className="mt-4 p-3 bg-[#ADD8E6]/20 rounded-lg border-l-4 border-[#ADD8E6]">
+                  <span className="text-sm font-semibold text-[#000080]">✨ Pro Tip: Our verification process ensures you connect with serious, qualified candidates</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Step 3 */}
+          <div className="bg-white p-8 rounded-2xl shadow-sm border border-[#D3D3D3]">
+            <div className="flex items-start space-x-6">
+              <div className="w-12 h-12 bg-[#000080] text-white rounded-full flex items-center justify-center font-bold text-lg">3</div>
+              <div className="flex-1">
+                <h3 className="text-xl font-bold text-[#000080] mb-3">Direct Messaging & Timeline Tracking</h3>
+                <ul className="space-y-2 text-gray-700">
+                  <li className="flex items-center space-x-3">
+                    <i className="fa-solid fa-check text-[#ADD8E6] text-sm"></i>
+                    <span>Send <strong>direct messages</strong> to candidates through our secure platform</span>
+                  </li>
+                  <li className="flex items-center space-x-3">
+                    <i className="fa-solid fa-check text-[#ADD8E6] text-sm"></i>
+                    <span>Track your <strong>hiring timeline</strong> and application progress in real-time</span>
+                  </li>
+                  <li className="flex items-center space-x-3">
+                    <i className="fa-solid fa-check text-[#ADD8E6] text-sm"></i>
+                    <span>Maintain <strong>transparent communication</strong> throughout the process</span>
+                  </li>
+                </ul>
+                <div className="mt-4 p-3 bg-[#ADD8E6]/20 rounded-lg border-l-4 border-[#ADD8E6]">
+                  <span className="text-sm font-semibold text-[#000080]">🚀 Pro Tip: Fast, transparent communication leads to better hiring outcomes</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Step 4 */}
+          <div className="bg-white p-8 rounded-2xl shadow-sm border border-[#D3D3D3]">
+            <div className="flex items-start space-x-6">
+              <div className="w-12 h-12 bg-[#ADD8E6] text-white rounded-full flex items-center justify-center font-bold text-lg">4</div>
+              <div className="flex-1">
+                <h3 className="text-xl font-bold text-[#000080] mb-3">Efficient & Balanced Hiring Process</h3>
+                <ul className="space-y-2 text-gray-700">
+                  <li className="flex items-center space-x-3">
+                    <i className="fa-solid fa-check text-[#ADD8E6] text-sm"></i>
+                    <span>Experience a <strong>fast and efficient</strong> hiring process</span>
+                  </li>
+                  <li className="flex items-center space-x-3">
+                    <i className="fa-solid fa-check text-[#ADD8E6] text-sm"></i>
+                    <span>Benefit from <strong>balanced and fair</strong> experiences for both parties</span>
+                  </li>
+                  <li className="flex items-center space-x-3">
+                    <i className="fa-solid fa-check text-[#ADD8E6] text-sm"></i>
+                    <span>Build <strong>long-term professional relationships</strong> with top talent</span>
+                  </li>
+                </ul>
+                <div className="mt-4 p-3 bg-[#000080]/10 rounded-lg border-l-4 border-[#000080]">
+                  <span className="text-sm font-semibold text-[#000080]">🎯 Pro Tip: Our platform revolutionizes hiring by putting employers in control of candidate discovery</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Quality & Accountability */}
+      <div>
+        <h2 className="text-3xl font-bold text-[#000080] text-center mb-10">Quality & Accountability</h2>
+        
+        <div className="bg-white p-10 rounded-2xl shadow-sm border border-[#D3D3D3]">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+            <div className="space-y-4">
+              <div className="w-12 h-12 bg-[#ADD8E6]/30 rounded-xl flex items-center justify-center mb-4">
+                <i className="fa-solid fa-star text-[#000080] text-xl"></i>
+              </div>
+              <h3 className="text-xl font-bold text-[#000080]">Employer Ratings</h3>
+              <p className="text-gray-700 leading-relaxed">
+                Candidates can rate their experience with your company, helping you build a strong 
+                employer brand and attract top talent through authentic feedback and transparency.
+              </p>
+              <div className="p-4 bg-[#ADD8E6]/20 rounded-lg border border-[#ADD8E6]/30">
+                <p className="text-sm font-semibold text-[#000080] flex items-center space-x-2">
+                  <span>✨</span>
+                  <span>This means you'll build trust and credibility with future candidates</span>
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div className="w-12 h-12 bg-[#ADD8E6]/30 rounded-xl flex items-center justify-center mb-4">
+                <i className="fa-solid fa-shield-check text-[#000080] text-xl"></i>
+              </div>
+              <h3 className="text-xl font-bold text-[#000080]">Candidate Quality</h3>
+              <p className="text-gray-700 leading-relaxed">
+                All candidates go through our verification process, including education confirmation 
+                and skill assessments, ensuring you connect with qualified, serious job seekers.
+              </p>
+              <div className="p-4 bg-[#ADD8E6]/20 rounded-lg border border-[#ADD8E6]/30">
+                <p className="text-sm font-semibold text-[#000080] flex items-center space-x-2">
+                  <span>✨</span>
+                  <span>This means less time screening and more time finding the right fit</span>
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Subscription & Fees */}
+      <div>
+        <h2 className="text-3xl font-bold text-[#000080] text-center mb-10">Subscription & Fees</h2>
+        
+        <div className="bg-gradient-to-r from-[#000080] to-[#ADD8E6] p-10 rounded-2xl shadow-lg">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="bg-white/10 backdrop-blur-sm p-8 rounded-xl border border-white/20">
+              <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mb-6">
+                <i className="fa-solid fa-calendar-days text-white text-xl"></i>
+              </div>
+              <h3 className="text-2xl font-bold text-white mb-4">Monthly Subscription</h3>
+              <p className="text-4xl font-bold text-white mb-2">$199<span className="text-lg font-normal">/month</span></p>
+              <p className="text-blue-100">Unlimited access to our candidate database and messaging platform.</p>
+            </div>
+
+            <div className="bg-white/10 backdrop-blur-sm p-8 rounded-xl border border-white/20">
+              <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mb-6">
+                <i className="fa-solid fa-handshake text-white text-xl"></i>
+              </div>
+              <h3 className="text-2xl font-bold text-white mb-4">Finder's Fee</h3>
+              <p className="text-4xl font-bold text-white mb-2">15%<span className="text-lg font-normal"> of salary</span></p>
+              <p className="text-blue-100">Only pay when you successfully hire a candidate through our platform.</p>
+            </div>
+          </div>
+
+          <div className="mt-8 p-6 bg-[#ADD8E6]/20 rounded-xl border border-[#ADD8E6]/30">
+            <p className="text-white font-semibold flex items-center space-x-3">
+              <i className="fa-solid fa-check text-white"></i>
+              <span>Success-Based Pricing: Choose the model that works best for your hiring needs</span>
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Ready to Start */}
+      <div>
+        <div className="text-center mb-10">
+          <h2 className="text-3xl font-bold text-[#000080] mb-4">You're Ready to Start! ❤️</h2>
+          <p className="text-gray-600 text-lg">Complete these steps to begin finding your next great hire</p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-[#D3D3D3] cursor-pointer hover:shadow-md transition-all">
+            <div className="w-12 h-12 bg-[#ADD8E6]/30 rounded-xl flex items-center justify-center mb-4">
+              <i className="fa-solid fa-building text-[#000080] text-xl"></i>
+            </div>
+            <h3 className="font-bold text-[#000080] mb-2">Set up your Company Profile</h3>
+            <p className="text-gray-600 text-sm">Add your company details and culture information</p>
+          </div>
+
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-[#D3D3D3] cursor-pointer hover:shadow-md transition-all">
+            <div className="w-12 h-12 bg-[#ADD8E6]/30 rounded-xl flex items-center justify-center mb-4">
+              <i className="fa-solid fa-users text-[#000080] text-xl"></i>
+            </div>
+            <h3 className="font-bold text-[#000080] mb-2">Invite your Recruiters</h3>
+            <p className="text-gray-600 text-sm">Add team members to collaborate on hiring</p>
+          </div>
+
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-[#D3D3D3] cursor-pointer hover:shadow-md transition-all">
+            <div className="w-12 h-12 bg-[#ADD8E6]/30 rounded-xl flex items-center justify-center mb-4">
+              <i className="fa-solid fa-briefcase text-[#000080] text-xl"></i>
+            </div>
+            <h3 className="font-bold text-[#000080] mb-2">Post your first job</h3>
+            <p className="text-gray-600 text-sm">Create a job listing to attract candidates</p>
+          </div>
+
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-[#D3D3D3] cursor-pointer hover:shadow-md transition-all">
+            <div className="w-12 h-12 bg-[#ADD8E6]/30 rounded-xl flex items-center justify-center mb-4">
+              <i className="fa-solid fa-comments text-[#000080] text-xl"></i>
+            </div>
+            <h3 className="font-bold text-[#000080] mb-2">Start connecting with candidates</h3>
+            <p className="text-gray-600 text-sm">Browse profiles and send messages</p>
+          </div>
+        </div>
+
+        <div className="text-center">
+          <div className="inline-flex items-center space-x-3 bg-[#ADD8E6]/30 px-8 py-4 rounded-full border border-[#ADD8E6]/50">
+            <i className="fa-solid fa-heart text-[#000080]"></i>
+            <span className="font-semibold text-[#000080]">HireMe gives you everything you need to hire with confidence</span>
+          </div>
+        </div>
+      </div>
+
+      {/* About Platform */}
+      <div>
+        <div className="text-center mb-10">
+          <h2 className="text-3xl font-bold text-[#000080] mb-4">About HireMe Platform 🚀</h2>
+          <p className="text-gray-600 text-lg">Understanding our comprehensive hiring ecosystem</p>
+        </div>
+
+        <div className="space-y-8">
+          {/* Revolutionary Process */}
+          <div className="bg-white p-10 rounded-2xl shadow-sm border border-[#D3D3D3]">
+            <div className="flex items-start space-x-6">
+              <div className="w-16 h-16 bg-[#ADD8E6]/30 rounded-2xl flex items-center justify-center">
+                <i className="fa-solid fa-rocket text-[#000080] text-2xl"></i>
+              </div>
+              <div className="flex-1">
+                <h3 className="text-2xl font-bold text-[#000080] mb-4">Revolutionary Hiring Process</h3>
+                <p className="text-gray-700 leading-relaxed mb-6">
+                  HireMe revolutionizes traditional hiring by empowering employers to discover talent from our database of verified, standardized profiles. Instead of candidates seeking employers, we enable you to find the perfect match through direct search and AI-powered recommendations. Our platform ensures fast, transparent communication while providing a balanced experience for both parties.
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="p-4 bg-[#ADD8E6]/20 rounded-lg border-l-4 border-[#000080]">
+                    <p className="text-sm font-semibold text-[#000080]">✅ Direct messaging capabilities</p>
+                  </div>
+                  <div className="p-4 bg-[#ADD8E6]/20 rounded-lg border-l-4 border-[#ADD8E6]">
+                    <p className="text-sm font-semibold text-[#000080]">📈 Hiring timeline tracking</p>
+                  </div>
+                  <div className="p-4 bg-[#ADD8E6]/20 rounded-lg border-l-4 border-[#000080]">
+                    <p className="text-sm font-semibold text-[#000080]">🔒 Safe and efficient process</p>
+                  </div>
+                  <div className="p-4 bg-[#ADD8E6]/20 rounded-lg border-l-4 border-[#ADD8E6]">
+                    <p className="text-sm font-semibold text-[#000080]">⚖️ Balanced experience for all</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Platform Navigation */}
+          <div className="bg-white p-10 rounded-2xl shadow-sm border border-[#D3D3D3]">
+            <div className="mb-8">
+              <h3 className="text-2xl font-bold text-[#000080] mb-4 flex items-center space-x-3">
+                <i className="fa-solid fa-compass text-[#000080]"></i>
+                <span>Platform Navigation</span>
+              </h3>
+              <p className="text-gray-700">Explore all areas of the HireMe ecosystem designed for seamless hiring</p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="p-4 bg-[#ADD8E6]/20 rounded-xl border border-[#D3D3D3] cursor-pointer hover:bg-[#ADD8E6]/30 transition-all">
+                <div className="w-10 h-10 bg-[#000080] rounded-lg flex items-center justify-center mb-3">
+                  <i className="fa-solid fa-home text-white"></i>
+                </div>
+                <h4 className="font-bold text-[#000080] text-sm">Landing Page</h4>
+                <p className="text-xs text-gray-600 mt-1">Your starting point</p>
+              </div>
+
+              <div className="p-4 bg-[#ADD8E6]/20 rounded-xl border border-[#D3D3D3] cursor-pointer hover:bg-[#ADD8E6]/30 transition-all">
+                <div className="w-10 h-10 bg-[#ADD8E6] rounded-lg flex items-center justify-center mb-3">
+                  <i className="fa-solid fa-user text-white"></i>
+                </div>
+                <h4 className="font-bold text-[#000080] text-sm">Candidate Dashboard</h4>
+                <p className="text-xs text-gray-600 mt-1">Job seeker hub</p>
+              </div>
+
+              <div className="p-4 bg-[#ADD8E6]/20 rounded-xl border border-[#D3D3D3] cursor-pointer hover:bg-[#ADD8E6]/30 transition-all">
+                <div className="w-10 h-10 bg-[#000080] rounded-lg flex items-center justify-center mb-3">
+                  <i className="fa-solid fa-building text-white"></i>
+                </div>
+                <h4 className="font-bold text-[#000080] text-sm">Employer Dashboard</h4>
+                <p className="text-xs text-gray-600 mt-1">Hiring command center</p>
+              </div>
+
+              <div className="p-4 bg-[#ADD8E6]/20 rounded-xl border border-[#D3D3D3] cursor-pointer hover:bg-[#ADD8E6]/30 transition-all">
+                <div className="w-10 h-10 bg-[#ADD8E6] rounded-lg flex items-center justify-center mb-3">
+                  <i className="fa-solid fa-id-card text-white"></i>
+                </div>
+                <h4 className="font-bold text-[#000080] text-sm">Candidate Profile</h4>
+                <p className="text-xs text-gray-600 mt-1">Detailed profiles</p>
+              </div>
+
+              <div className="p-4 bg-[#ADD8E6]/20 rounded-xl border border-[#D3D3D3] cursor-pointer hover:bg-[#ADD8E6]/30 transition-all">
+                <div className="w-10 h-10 bg-[#000080] rounded-lg flex items-center justify-center mb-3">
+                  <i className="fa-solid fa-search text-white"></i>
+                </div>
+                <h4 className="font-bold text-[#000080] text-sm">Search Results</h4>
+                <p className="text-xs text-gray-600 mt-1">Find candidates</p>
+              </div>
+
+              <div className="p-4 bg-[#ADD8E6]/20 rounded-xl border border-[#D3D3D3] cursor-pointer hover:bg-[#ADD8E6]/30 transition-all">
+                <div className="w-10 h-10 bg-[#ADD8E6] rounded-lg flex items-center justify-center mb-3">
+                  <i className="fa-solid fa-comments text-white"></i>
+                </div>
+                <h4 className="font-bold text-[#000080] text-sm">Messaging</h4>
+                <p className="text-xs text-gray-600 mt-1">Direct communication</p>
+              </div>
+
+              <div className="p-4 bg-[#ADD8E6]/20 rounded-xl border border-[#D3D3D3] cursor-pointer hover:bg-[#ADD8E6]/30 transition-all">
+                <div className="w-10 h-10 bg-[#000080] rounded-lg flex items-center justify-center mb-3">
+                  <i className="fa-solid fa-timeline text-white"></i>
+                </div>
+                <h4 className="font-bold text-[#000080] text-sm">Timeline/Progress</h4>
+                <p className="text-xs text-gray-600 mt-1">Track hiring stages</p>
+              </div>
+
+              <div className="p-4 bg-[#ADD8E6]/20 rounded-xl border border-[#D3D3D3] cursor-pointer hover:bg-[#ADD8E6]/30 transition-all">
+                <div className="w-10 h-10 bg-[#ADD8E6] rounded-lg flex items-center justify-center mb-3">
+                  <i className="fa-solid fa-cog text-white"></i>
+                </div>
+                <h4 className="font-bold text-[#000080] text-sm">Settings</h4>
+                <p className="text-xs text-gray-600 mt-1">Customize experience</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Design & Accessibility */}
+          <div className="bg-white p-10 rounded-2xl shadow-sm border border-[#D3D3D3]">
+            <div className="mb-8">
+              <h3 className="text-2xl font-bold text-[#000080] mb-4 flex items-center space-x-3">
+                <i className="fa-solid fa-palette text-[#000080]"></i>
+                <span>Design & Accessibility Standards</span>
+              </h3>
+              <p className="text-gray-700">Built with professional reliability and user-friendly clarity in mind</p>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div className="space-y-6">
+                <div className="p-6 bg-[#ADD8E6]/20 rounded-xl border border-[#D3D3D3]">
+                  <h4 className="font-bold text-[#000080] mb-3 flex items-center space-x-2">
+                    <i className="fa-solid fa-swatchbook text-[#000080]"></i>
+                    <span>Color System</span>
+                  </h4>
+                  <div className="space-y-3">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-6 h-6 bg-[#000080] rounded-full border-2 border-white shadow-sm"></div>
+                      <span className="text-sm"><strong>Navy Blue:</strong> Reliability & professionalism</span>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <div className="w-6 h-6 bg-[#ADD8E6] rounded-full border-2 border-white shadow-sm"></div>
+                      <span className="text-sm"><strong>Light Blue:</strong> Clarity & ease-of-use</span>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <div className="w-6 h-6 bg-white rounded-full border-2 border-[#D3D3D3] shadow-sm"></div>
+                      <span className="text-sm"><strong>White:</strong> Clean text & backgrounds</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-6 bg-[#ADD8E6]/20 rounded-xl border border-[#D3D3D3]">
+                  <h4 className="font-bold text-[#000080] mb-3 flex items-center space-x-2">
+                    <i className="fa-solid fa-universal-access text-[#000080]"></i>
+                    <span>Accessibility Features</span>
+                  </h4>
+                  <ul className="space-y-2 text-sm text-gray-700">
+                    <li className="flex items-center space-x-2">
+                      <i className="fa-solid fa-check text-[#ADD8E6] text-xs"></i>
+                      <span>High contrast ratios for readability</span>
+                    </li>
+                    <li className="flex items-center space-x-2">
+                      <i className="fa-solid fa-check text-[#ADD8E6] text-xs"></i>
+                      <span>Consistent 20px padding for touch targets</span>
+                    </li>
+                    <li className="flex items-center space-x-2">
+                      <i className="fa-solid fa-check text-[#ADD8E6] text-xs"></i>
+                      <span>Modern sans-serif typography</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+
+              <div className="space-y-6">
+                <div className="p-6 bg-[#ADD8E6]/20 rounded-xl border border-[#D3D3D3]">
+                  <h4 className="font-bold text-[#000080] mb-3 flex items-center space-x-2">
+                    <i className="fa-solid fa-mobile-alt text-[#000080]"></i>
+                    <span>Responsive Design</span>
+                  </h4>
+                  <ul className="space-y-2 text-sm text-gray-700">
+                    <li className="flex items-center space-x-2">
+                      <i className="fa-solid fa-check text-[#ADD8E6] text-xs"></i>
+                      <span>Light and dark mode compatibility</span>
+                    </li>
+                    <li className="flex items-center space-x-2">
+                      <i className="fa-solid fa-check text-[#ADD8E6] text-xs"></i>
+                      <span>Optimized for all screen sizes</span>
+                    </li>
+                    <li className="flex items-center space-x-2">
+                      <i className="fa-solid fa-check text-[#ADD8E6] text-xs"></i>
+                      <span>Intuitive navigation elements</span>
+                    </li>
+                  </ul>
+                </div>
+
+                <div className="p-6 bg-[#ADD8E6]/20 rounded-xl border border-[#D3D3D3]">
+                  <h4 className="font-bold text-[#000080] mb-3 flex items-center space-x-2">
+                    <i className="fa-solid fa-shield-check text-[#000080]"></i>
+                    <span>Quality Standards</span>
+                  </h4>
+                  <ul className="space-y-2 text-sm text-gray-700">
+                    <li className="flex items-center space-x-2">
+                      <i className="fa-solid fa-check text-[#ADD8E6] text-xs"></i>
+                      <span>No technical jargon in user interface</span>
+                    </li>
+                    <li className="flex items-center space-x-2">
+                      <i className="fa-solid fa-check text-[#ADD8E6] text-xs"></i>
+                      <span>Clear visual hierarchy and content flow</span>
+                    </li>
+                    <li className="flex items-center space-x-2">
+                      <i className="fa-solid fa-check text-[#ADD8E6] text-xs"></i>
+                      <span>Purposeful design enhancements only</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// Billing Section Component (Employer Only)
 function BillingSection() {
   return (
     <section className="space-y-6 fade-in">
@@ -725,7 +1223,7 @@ function BillingSection() {
   );
 }
 
-// Team Section Component
+// Team Section Component (Employer Only)
 function TeamSection({ toast }: { toast: (msg: string) => void }) {
   return (
     <section className="space-y-6 fade-in">
@@ -810,7 +1308,7 @@ function TeamSection({ toast }: { toast: (msg: string) => void }) {
   );
 }
 
-// Company Section Component
+// Company Section Component (Employer Only)
 function CompanySection({ toast }: { toast: (msg: string) => void }) {
   return (
     <section className="space-y-6 fade-in">
@@ -878,7 +1376,7 @@ function CompanySection({ toast }: { toast: (msg: string) => void }) {
   );
 }
 
-// Integrations Section Component
+// Integrations Section Component (Employer Only)
 function IntegrationsSection({ toast }: { toast: (msg: string) => void }) {
   return (
     <section className="space-y-6 fade-in">
@@ -966,7 +1464,7 @@ function IntegrationsSection({ toast }: { toast: (msg: string) => void }) {
   );
 }
 
-// Data Section Component
+// Data Section Component (Employer Only)
 function DataSection() {
   return (
     <section className="space-y-6 fade-in">

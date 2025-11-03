@@ -48,24 +48,8 @@ export default function SiteHeader() {
             >
               Dashboard
             </Link>
-            {profile?.role === 'JOB_SEEKER' && (
-              <Link 
-                href="/info" 
-                className="text-xs sm:text-sm text-[var(--muted)] hover:text-[var(--text)] transition-all duration-200 hover:-translate-y-1 hover:shadow-md px-2 sm:px-3 py-2 rounded-lg whitespace-nowrap"
-              >
-                Information
-              </Link>
-            )}
-            {profile?.role === 'EMPLOYER' && (
-              <Link 
-                href="/info/employer" 
-                className="text-xs sm:text-sm text-[var(--muted)] hover:text-[var(--text)] transition-all duration-200 hover:-translate-y-1 hover:shadow-md px-2 sm:px-3 py-2 rounded-lg whitespace-nowrap"
-              >
-                Information
-              </Link>
-            )}
             <Link 
-              href="/settings" 
+              href={`/account/${user?.uid}/settings`}
               className="text-xs sm:text-sm text-[var(--muted)] hover:text-[var(--text)] transition-all duration-200 hover:-translate-y-1 hover:shadow-md px-2 sm:px-3 py-2 rounded-lg whitespace-nowrap"
             >
               Settings
