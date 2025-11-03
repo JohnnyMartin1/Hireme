@@ -244,7 +244,6 @@ export default function UserSettingsPage() {
                   { id: 'account', icon: 'user', label: 'Account' },
                   { id: 'information', icon: 'circle-info', label: 'Information' },
                   { id: 'security', icon: 'shield-halved', label: 'Security' },
-                  { id: 'privacy', icon: 'eye', label: 'Privacy & Visibility' },
                   { id: 'notifications', icon: 'bell', label: 'Notifications' },
                   { id: 'accessibility', icon: 'universal-access', label: 'Accessibility' },
                   { id: 'legal', icon: 'gavel', label: 'Legal' },
@@ -280,11 +279,11 @@ export default function UserSettingsPage() {
 
           {/* Content Area */}
           <div className="flex-1">
-            {activeTab === 'account' && <AccountSection toast={toast} />}
+            {activeTab === 'account' && <AccountSection toast={toast} profile={profile} />}
             {activeTab === 'information' && <InformationSection />}
-            {activeTab === 'security' && <SecuritySection toast={toast} />}
-            {activeTab === 'privacy' && <PrivacySection toast={toast} />}
-            {activeTab === 'notifications' && <NotificationsSection toast={toast} />}
+            {activeTab === 'security' && <SecuritySection toast={toast} profile={profile} />}
+            {activeTab === 'privacy' && (profile.role === 'EMPLOYER' || profile.role === 'RECRUITER') && <PrivacySection toast={toast} />}
+            {activeTab === 'notifications' && <NotificationsSection toast={toast} profile={profile} />}
             {activeTab === 'billing' && (profile.role === 'EMPLOYER' || profile.role === 'RECRUITER') && <BillingSection />}
             {activeTab === 'team' && (profile.role === 'EMPLOYER' || profile.role === 'RECRUITER') && <TeamSection toast={toast} />}
             {activeTab === 'company' && (profile.role === 'EMPLOYER' || profile.role === 'RECRUITER') && <CompanySection toast={toast} />}
@@ -301,7 +300,7 @@ export default function UserSettingsPage() {
 }
 
 // Account Section Component
-function AccountSection({ toast }: { toast: (msg: string) => void }) {
+function AccountSection({ toast, profile }: { toast: (msg: string) => void; profile: any }) {
   return (
     <section className="space-y-6 fade-in">
       <div className="bg-white rounded-2xl shadow-sm border border-[#D3D3D3] p-8">
@@ -347,39 +346,44 @@ function AccountSection({ toast }: { toast: (msg: string) => void }) {
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-[#D3D3D3] p-8">
-        <h3 className="text-xl font-bold text-[#000080] mb-6">Login Settings</h3>
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-semibold text-[#000080] mb-2">Username</label>
-            <input type="text" defaultValue="johnsmith" className="w-full px-4 py-3 border border-[#D3D3D3] rounded-xl input-focus" />
-          </div>
-          <div>
-            <h4 className="font-semibold text-[#000080] mb-3">Connected Accounts</h4>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between p-3 border border-[#D3D3D3] rounded-xl">
-                <div className="flex items-center space-x-3">
-                  <i className="fa-brands fa-google text-xl text-red-500"></i>
-                  <span className="font-medium text-[#000080]">Google</span>
-                </div>
-                <button className="text-red-500 hover:text-red-600 font-semibold">Disconnect</button>
+      {/* Only show Login Settings and Session Management for employers */}
+      {(profile.role === 'EMPLOYER' || profile.role === 'RECRUITER') && (
+        <>
+          <div className="bg-white rounded-2xl shadow-sm border border-[#D3D3D3] p-8">
+            <h3 className="text-xl font-bold text-[#000080] mb-6">Login Settings</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-semibold text-[#000080] mb-2">Username</label>
+                <input type="text" defaultValue="johnsmith" className="w-full px-4 py-3 border border-[#D3D3D3] rounded-xl input-focus" />
               </div>
-              <div className="flex items-center justify-between p-3 border border-[#D3D3D3] rounded-xl">
-                <div className="flex items-center space-x-3">
-                  <i className="fa-brands fa-linkedin text-xl text-blue-600"></i>
-                  <span className="font-medium text-[#000080]">LinkedIn</span>
+              <div>
+                <h4 className="font-semibold text-[#000080] mb-3">Connected Accounts</h4>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between p-3 border border-[#D3D3D3] rounded-xl">
+                    <div className="flex items-center space-x-3">
+                      <i className="fa-brands fa-google text-xl text-red-500"></i>
+                      <span className="font-medium text-[#000080]">Google</span>
+                    </div>
+                    <button className="text-red-500 hover:text-red-600 font-semibold">Disconnect</button>
+                  </div>
+                  <div className="flex items-center justify-between p-3 border border-[#D3D3D3] rounded-xl">
+                    <div className="flex items-center space-x-3">
+                      <i className="fa-brands fa-linkedin text-xl text-blue-600"></i>
+                      <span className="font-medium text-[#000080]">LinkedIn</span>
+                    </div>
+                    <button className="text-[#ADD8E6] hover:text-[#000080] font-semibold">Connect</button>
+                  </div>
                 </div>
-                <button className="text-[#ADD8E6] hover:text-[#000080] font-semibold">Connect</button>
               </div>
             </div>
           </div>
-        </div>
-      </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-[#D3D3D3] p-8">
-        <h3 className="text-xl font-bold text-[#000080] mb-6">Session Management</h3>
-        <button className="btn-secondary px-6 py-3 rounded-xl font-semibold">Sign out of other devices</button>
-      </div>
+          <div className="bg-white rounded-2xl shadow-sm border border-[#D3D3D3] p-8">
+            <h3 className="text-xl font-bold text-[#000080] mb-6">Session Management</h3>
+            <button className="btn-secondary px-6 py-3 rounded-xl font-semibold">Sign out of other devices</button>
+          </div>
+        </>
+      )}
 
       <div className="flex justify-end">
         <button onClick={() => toast('Changes saved successfully')} className="btn-primary px-8 py-3 rounded-xl font-semibold">Save Changes</button>
@@ -389,7 +393,131 @@ function AccountSection({ toast }: { toast: (msg: string) => void }) {
 }
 
 // Security Section Component
-function SecuritySection({ toast }: { toast: (msg: string) => void }) {
+function SecuritySection({ toast, profile }: { toast: (msg: string) => void; profile: any }) {
+  const { user } = useFirebaseAuth();
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordStrength, setPasswordStrength] = useState('Weak');
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  // Calculate password strength
+  const calculatePasswordStrength = (password: string) => {
+    if (password.length === 0) return 'Weak';
+    if (password.length < 6) return 'Weak';
+    if (password.length < 8) return 'Fair';
+    
+    let strength = 0;
+    if (password.length >= 8) strength++;
+    if (/[a-z]/.test(password)) strength++;
+    if (/[A-Z]/.test(password)) strength++;
+    if (/[0-9]/.test(password)) strength++;
+    if (/[^a-zA-Z0-9]/.test(password)) strength++;
+
+    if (strength <= 2) return 'Weak';
+    if (strength <= 3) return 'Fair';
+    if (strength <= 4) return 'Good';
+    return 'Strong';
+  };
+
+  const handleNewPasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const pwd = e.target.value;
+    setNewPassword(pwd);
+    setPasswordStrength(calculatePasswordStrength(pwd));
+  };
+
+  const getStrengthBars = () => {
+    const bars = ['bg-[#D3D3D3]', 'bg-[#D3D3D3]', 'bg-[#D3D3D3]', 'bg-[#D3D3D3]'];
+    if (passwordStrength === 'Weak') {
+      bars[0] = 'bg-red-500';
+    } else if (passwordStrength === 'Fair') {
+      bars[0] = 'bg-yellow-500';
+      bars[1] = 'bg-yellow-500';
+    } else if (passwordStrength === 'Good') {
+      bars[0] = 'bg-blue-500';
+      bars[1] = 'bg-blue-500';
+      bars[2] = 'bg-blue-500';
+    } else if (passwordStrength === 'Strong') {
+      bars[0] = 'bg-green-500';
+      bars[1] = 'bg-green-500';
+      bars[2] = 'bg-green-500';
+      bars[3] = 'bg-green-500';
+    }
+    return bars;
+  };
+
+  const handleUpdatePassword = async () => {
+    if (!user) {
+      toast('You must be logged in to change your password');
+      return;
+    }
+
+    // Validation
+    if (!currentPassword) {
+      toast('Please enter your current password');
+      return;
+    }
+
+    if (!newPassword) {
+      toast('Please enter a new password');
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      toast('Password must be at least 6 characters long');
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      toast('New passwords do not match');
+      return;
+    }
+
+    if (currentPassword === newPassword) {
+      toast('New password must be different from current password');
+      return;
+    }
+
+    setIsUpdating(true);
+
+    try {
+      const { EmailAuthProvider, reauthenticateWithCredential, updatePassword } = await import('firebase/auth');
+      
+      // Reauthenticate user with current password
+      const credential = EmailAuthProvider.credential(
+        user.email!,
+        currentPassword
+      );
+
+      await reauthenticateWithCredential(user, credential);
+
+      // Update password
+      await updatePassword(user, newPassword);
+
+      // Clear form
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+      setPasswordStrength('Weak');
+
+      toast('Password updated successfully');
+    } catch (error: any) {
+      console.error('Password update error:', error);
+      
+      if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+        toast('Current password is incorrect');
+      } else if (error.code === 'auth/weak-password') {
+        toast('Password is too weak');
+      } else if (error.code === 'auth/requires-recent-login') {
+        toast('Please sign out and sign in again before changing your password');
+      } else {
+        toast('Failed to update password. Please try again.');
+      }
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
   return (
     <section className="space-y-6 fade-in">
       <div className="bg-white rounded-2xl shadow-sm border border-[#D3D3D3] p-8">
@@ -403,85 +531,110 @@ function SecuritySection({ toast }: { toast: (msg: string) => void }) {
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-semibold text-[#000080] mb-2">Current Password</label>
-                <input type="password" className="w-full px-4 py-3 border border-[#D3D3D3] rounded-xl input-focus" />
+                <input 
+                  type="password" 
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  className="w-full px-4 py-3 border border-[#D3D3D3] rounded-xl input-focus" 
+                />
               </div>
               <div>
                 <label className="block text-sm font-semibold text-[#000080] mb-2">New Password</label>
-                <input type="password" className="w-full px-4 py-3 border border-[#D3D3D3] rounded-xl input-focus" />
+                <input 
+                  type="password" 
+                  value={newPassword}
+                  onChange={handleNewPasswordChange}
+                  className="w-full px-4 py-3 border border-[#D3D3D3] rounded-xl input-focus" 
+                />
                 <div className="mt-2 flex space-x-1">
-                  <div className="h-1 w-full bg-[#D3D3D3] rounded"></div>
-                  <div className="h-1 w-full bg-[#D3D3D3] rounded"></div>
-                  <div className="h-1 w-full bg-[#D3D3D3] rounded"></div>
-                  <div className="h-1 w-full bg-[#D3D3D3] rounded"></div>
+                  {getStrengthBars().map((bg, index) => (
+                    <div key={index} className={`h-1 w-full ${bg} rounded`}></div>
+                  ))}
                 </div>
-                <p className="text-xs text-gray-600 mt-1">Password strength: Weak</p>
+                <p className="text-xs text-gray-600 mt-1">Password strength: {passwordStrength}</p>
               </div>
               <div>
                 <label className="block text-sm font-semibold text-[#000080] mb-2">Confirm New Password</label>
-                <input type="password" className="w-full px-4 py-3 border border-[#D3D3D3] rounded-xl input-focus" />
+                <input 
+                  type="password" 
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="w-full px-4 py-3 border border-[#D3D3D3] rounded-xl input-focus" 
+                />
               </div>
             </div>
-            <button onClick={() => toast('Password updated')} className="btn-primary px-6 py-3 rounded-xl font-semibold mt-4">Update Password</button>
+            <button 
+              onClick={handleUpdatePassword} 
+              disabled={isUpdating}
+              className="btn-primary px-6 py-3 rounded-xl font-semibold mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isUpdating ? 'Updating...' : 'Update Password'}
+            </button>
           </div>
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-[#D3D3D3] p-8">
-        <h3 className="text-xl font-bold text-[#000080] mb-6">Two-Factor Authentication</h3>
-        <div className="flex items-center justify-between p-4 border border-[#D3D3D3] rounded-xl">
-          <div>
-            <h4 className="font-semibold text-[#000080]">Authenticator App</h4>
-            <p className="text-sm text-gray-600">Use an authenticator app to generate codes</p>
+      {/* Only show Two-Factor Authentication and Active Sessions for employers */}
+      {(profile.role === 'EMPLOYER' || profile.role === 'RECRUITER') && (
+        <>
+          <div className="bg-white rounded-2xl shadow-sm border border-[#D3D3D3] p-8">
+            <h3 className="text-xl font-bold text-[#000080] mb-6">Two-Factor Authentication</h3>
+            <div className="flex items-center justify-between p-4 border border-[#D3D3D3] rounded-xl">
+              <div>
+                <h4 className="font-semibold text-[#000080]">Authenticator App</h4>
+                <p className="text-sm text-gray-600">Use an authenticator app to generate codes</p>
+              </div>
+              <div className="flex items-center space-x-3">
+                <span className="px-3 py-1 bg-red-100 text-red-800 rounded-full text-xs font-semibold">Disabled</span>
+                <button onClick={() => toast('2FA enabled')} className="btn-primary px-4 py-2 rounded-xl font-semibold">Enable</button>
+              </div>
+            </div>
           </div>
-          <div className="flex items-center space-x-3">
-            <span className="px-3 py-1 bg-red-100 text-red-800 rounded-full text-xs font-semibold">Disabled</span>
-            <button onClick={() => toast('2FA enabled')} className="btn-primary px-4 py-2 rounded-xl font-semibold">Enable</button>
-          </div>
-        </div>
-      </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-[#D3D3D3] p-8">
-        <h3 className="text-xl font-bold text-[#000080] mb-6">Active Sessions</h3>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-[#D3D3D3]">
-                <th className="text-left py-3 font-semibold text-[#000080]">Device</th>
-                <th className="text-left py-3 font-semibold text-[#000080]">Location</th>
-                <th className="text-left py-3 font-semibold text-[#000080]">Last Active</th>
-                <th className="text-left py-3 font-semibold text-[#000080]">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr className="border-b border-[#D3D3D3]">
-                <td className="py-3">
-                  <div className="flex items-center space-x-2">
-                    <i className="fa-solid fa-desktop text-[#ADD8E6]"></i>
-                    <span>Chrome on MacOS</span>
-                    <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">Current</span>
-                  </div>
-                </td>
-                <td className="py-3 text-gray-600">New York, NY</td>
-                <td className="py-3 text-gray-600">Now</td>
-                <td className="py-3">-</td>
-              </tr>
-              <tr className="border-b border-[#D3D3D3]">
-                <td className="py-3">
-                  <div className="flex items-center space-x-2">
-                    <i className="fa-solid fa-mobile text-[#ADD8E6]"></i>
-                    <span>Safari on iPhone</span>
-                  </div>
-                </td>
-                <td className="py-3 text-gray-600">New York, NY</td>
-                <td className="py-3 text-gray-600">2 hours ago</td>
-                <td className="py-3">
-                  <button onClick={() => toast('Session revoked')} className="text-red-500 hover:text-red-600 font-semibold">Revoke</button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
+          <div className="bg-white rounded-2xl shadow-sm border border-[#D3D3D3] p-8">
+            <h3 className="text-xl font-bold text-[#000080] mb-6">Active Sessions</h3>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-[#D3D3D3]">
+                    <th className="text-left py-3 font-semibold text-[#000080]">Device</th>
+                    <th className="text-left py-3 font-semibold text-[#000080]">Location</th>
+                    <th className="text-left py-3 font-semibold text-[#000080]">Last Active</th>
+                    <th className="text-left py-3 font-semibold text-[#000080]">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className="border-b border-[#D3D3D3]">
+                    <td className="py-3">
+                      <div className="flex items-center space-x-2">
+                        <i className="fa-solid fa-desktop text-[#ADD8E6]"></i>
+                        <span>Chrome on MacOS</span>
+                        <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">Current</span>
+                      </div>
+                    </td>
+                    <td className="py-3 text-gray-600">New York, NY</td>
+                    <td className="py-3 text-gray-600">Now</td>
+                    <td className="py-3">-</td>
+                  </tr>
+                  <tr className="border-b border-[#D3D3D3]">
+                    <td className="py-3">
+                      <div className="flex items-center space-x-2">
+                        <i className="fa-solid fa-mobile text-[#ADD8E6]"></i>
+                        <span>Safari on iPhone</span>
+                      </div>
+                    </td>
+                    <td className="py-3 text-gray-600">New York, NY</td>
+                    <td className="py-3 text-gray-600">2 hours ago</td>
+                    <td className="py-3">
+                      <button onClick={() => toast('Session revoked')} className="text-red-500 hover:text-red-600 font-semibold">Revoke</button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
+      )}
     </section>
   );
 }
@@ -580,9 +733,110 @@ function PrivacySection({ toast }: { toast: (msg: string) => void }) {
 }
 
 // Notifications Section Component  
-function NotificationsSection({ toast }: { toast: (msg: string) => void }) {
-  const [emailNotifs, setEmailNotifs] = useState([true, true, false, true]);
+function NotificationsSection({ toast, profile }: { toast: (msg: string) => void; profile: any }) {
+  const { user } = useFirebaseAuth();
+  const [emailNotifs, setEmailNotifs] = useState([true, true, true, true]);
   const [inAppNotifs, setInAppNotifs] = useState([true, true, true, true]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Different notification labels based on role
+  const candidateNotifications = [
+    { label: 'New recruiter message', description: 'Get notified when a recruiter reaches out to you for the first time', key: 'new_recruiter_message' },
+    { label: 'Recruiter follow-up message', description: 'Be alerted when a recruiter follows up or replies to your message thread', key: 'recruiter_followup' },
+    { label: 'New endorsement received', description: 'Receive a notification when someone endorses your skills or experience', key: 'new_endorsement' },
+    { label: 'Profile viewed by recruiter', description: 'Know when your profile has been viewed by a recruiter or company', key: 'profile_viewed' },
+  ];
+
+  const employerNotifications = [
+    { label: 'New candidate messages', description: '', key: 'new_candidate_messages' },
+    { label: 'Candidate applied/saved', description: '', key: 'candidate_applied' },
+    { label: 'Weekly talent digest', description: '', key: 'weekly_digest' },
+    { label: 'Account/billing alerts', description: '', key: 'billing_alerts' },
+  ];
+
+  const notifications = profile.role === 'JOB_SEEKER' ? candidateNotifications : employerNotifications;
+
+  // Load notification preferences from Firestore
+  useEffect(() => {
+    const loadPreferences = async () => {
+      if (!user) return;
+      
+      try {
+        const { getDocument } = await import('@/lib/firebase-firestore');
+        const { data } = await getDocument('users', user.uid);
+        
+        if (data && (data as any).notificationPreferences) {
+          const prefs = (data as any).notificationPreferences;
+          
+          if (profile.role === 'JOB_SEEKER') {
+            setEmailNotifs([
+              prefs.new_recruiter_message ?? true,
+              prefs.recruiter_followup ?? true,
+              prefs.new_endorsement ?? true,
+              prefs.profile_viewed ?? true,
+            ]);
+          } else {
+            setEmailNotifs([
+              prefs.new_candidate_messages ?? true,
+              prefs.candidate_applied ?? true,
+              prefs.weekly_digest ?? false,
+              prefs.billing_alerts ?? true,
+            ]);
+            setInAppNotifs([
+              prefs.new_candidate_messages ?? true,
+              prefs.candidate_applied ?? true,
+              prefs.weekly_digest ?? true,
+              prefs.billing_alerts ?? true,
+            ]);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading notification preferences:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    loadPreferences();
+  }, [user, profile.role]);
+
+  // Save notification preference to Firestore
+  const savePreference = async (key: string, value: boolean) => {
+    if (!user) {
+      console.error('No user found');
+      toast('You must be logged in to save preferences');
+      return;
+    }
+    
+    try {
+      console.log('Saving preference:', { key, value, userId: user.uid });
+      
+      const response = await fetch('/api/notifications/update-preferences', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user.uid,
+          preferences: { [key]: value },
+        }),
+      });
+      
+      console.log('Response status:', response.status);
+      
+      const data = await response.json();
+      console.log('Response data:', data);
+      
+      if (data.success) {
+        toast('Notification preference saved');
+      } else {
+        const errorMsg = data.error || 'Unknown error';
+        toast(`Failed to save: ${errorMsg}`);
+        console.error('Error saving preference:', errorMsg);
+      }
+    } catch (error) {
+      console.error('Error saving notification preference:', error);
+      toast('Failed to save preference - network error');
+    }
+  };
 
   return (
     <section className="space-y-6 fade-in">
@@ -591,65 +845,66 @@ function NotificationsSection({ toast }: { toast: (msg: string) => void }) {
           <i className="fa-solid fa-bell text-[#ADD8E6] mr-3"></i>
           Notification Preferences
         </h2>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <div>
-            <h3 className="text-lg font-bold text-[#000080] mb-4">Email Notifications</h3>
-            <div className="space-y-4">
-              {['New candidate messages', 'Candidate applied/saved', 'Weekly talent digest', 'Account/billing alerts'].map((label, i) => (
-                <div key={i} className="flex items-center justify-between">
-                  <span className="text-[#000080]">{label}</span>
-                  <div 
-                    className={`toggle-switch ${emailNotifs[i] ? 'active' : ''} ${i === 3 ? 'opacity-50 cursor-not-allowed' : ''}`}
-                    onClick={() => {
-                      if (i !== 3) {
-                        const newNotifs = [...emailNotifs];
-                        newNotifs[i] = !newNotifs[i];
-                        setEmailNotifs(newNotifs);
-                        toast('Setting saved');
-                      }
-                    }}
-                  ></div>
-                </div>
-              ))}
+        {isLoading ? (
+          <div className="text-center py-8 text-gray-600">Loading preferences...</div>
+        ) : (
+          <div className={`grid grid-cols-1 ${profile.role === 'EMPLOYER' || profile.role === 'RECRUITER' ? 'lg:grid-cols-2' : ''} gap-8`}>
+            <div>
+              <h3 className="text-lg font-bold text-[#000080] mb-4">Email Notifications</h3>
+              <div className="space-y-4">
+                {notifications.map((notif, i) => (
+                  <div key={i} className="flex items-center justify-between">
+                    <div className="flex-1 mr-4">
+                      <div className="text-[#000080] font-medium">{notif.label}</div>
+                      {notif.description && (
+                        <div className="text-sm text-gray-600 mt-1">{notif.description}</div>
+                      )}
+                    </div>
+                    <div 
+                      className={`toggle-switch ${emailNotifs[i] ? 'active' : ''} ${i === 3 && profile.role !== 'JOB_SEEKER' ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      onClick={async () => {
+                        if (i !== 3 || profile.role === 'JOB_SEEKER') {
+                          const newValue = !emailNotifs[i];
+                          const newNotifs = [...emailNotifs];
+                          newNotifs[i] = newValue;
+                          setEmailNotifs(newNotifs);
+                          await savePreference(notif.key, newValue);
+                        }
+                      }}
+                    ></div>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
-          <div>
-            <h3 className="text-lg font-bold text-[#000080] mb-4">In-App Notifications</h3>
-            <div className="space-y-4">
-              {['New candidate messages', 'Candidate applied/saved', 'Weekly talent digest', 'Account/billing alerts'].map((label, i) => (
-                <div key={i} className="flex items-center justify-between">
-                  <span className="text-[#000080]">{label}</span>
-                  <div 
-                    className={`toggle-switch ${inAppNotifs[i] ? 'active' : ''} ${i === 3 ? 'opacity-50 cursor-not-allowed' : ''}`}
-                    onClick={() => {
-                      if (i !== 3) {
-                        const newNotifs = [...inAppNotifs];
-                        newNotifs[i] = !newNotifs[i];
-                        setInAppNotifs(newNotifs);
-                        toast('Setting saved');
-                      }
-                    }}
-                  ></div>
+            {/* Only show In-App Notifications for employers */}
+            {(profile.role === 'EMPLOYER' || profile.role === 'RECRUITER') && (
+              <div>
+                <h3 className="text-lg font-bold text-[#000080] mb-4">In-App Notifications</h3>
+                <div className="space-y-4">
+                  {notifications.map((notif, i) => (
+                    <div key={i} className="flex items-center justify-between">
+                      <div className="flex-1 mr-4">
+                        <div className="text-[#000080] font-medium">{notif.label}</div>
+                      </div>
+                      <div 
+                        className={`toggle-switch ${inAppNotifs[i] ? 'active' : ''} ${i === 3 ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        onClick={async () => {
+                          if (i !== 3) {
+                            const newValue = !inAppNotifs[i];
+                            const newNotifs = [...inAppNotifs];
+                            newNotifs[i] = newValue;
+                            setInAppNotifs(newNotifs);
+                            await savePreference(`${notif.key}_inapp`, newValue);
+                          }
+                        }}
+                      ></div>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
+              </div>
+            )}
           </div>
-        </div>
-      </div>
-
-      <div className="bg-white rounded-2xl shadow-sm border border-[#D3D3D3] p-8">
-        <h3 className="text-xl font-bold text-[#000080] mb-6">Digest Settings</h3>
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-semibold text-[#000080] mb-2">Digest Frequency</label>
-            <select className="w-full px-4 py-3 border border-[#D3D3D3] rounded-xl input-focus">
-              <option>Daily</option>
-              <option>Weekly</option>
-              <option>Off</option>
-            </select>
-          </div>
-          <button onClick={() => toast('Test notification sent')} className="btn-secondary px-6 py-3 rounded-xl font-semibold">Send Test Notification</button>
-        </div>
+        )}
       </div>
     </section>
   );

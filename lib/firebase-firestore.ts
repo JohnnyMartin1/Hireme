@@ -301,6 +301,21 @@ export const sendMessage = async (threadId: string, messageData: {
       lastMessageAt: serverTimestamp()
     });
     
+    // Trigger notification via API route (non-blocking)
+    try {
+      fetch('/api/notifications/message-sent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          threadId,
+          senderId: messageData.senderId,
+          messageContent: messageData.content.substring(0, 150)
+        })
+      }).catch(err => console.error('Error triggering message notification:', err));
+    } catch (e) {
+      // Silent fail - don't block message sending
+    }
+    
     return { id: messageRef.id, error: null };
   } catch (error: any) {
     return { id: null, error: error.message };
@@ -390,6 +405,21 @@ export const trackProfileView = async (candidateId: string, viewerId: string) =>
     };
     
     await addDoc(collection(db, 'profileViews'), viewData);
+    
+    // Trigger notification via API route (non-blocking)
+    try {
+      fetch('/api/notifications/profile-viewed', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          candidateId,
+          viewerId
+        })
+      }).catch(err => console.error('Error triggering profile view notification:', err));
+    } catch (e) {
+      // Silent fail
+    }
+    
     return { error: null };
   } catch (error: any) {
     return { error: error.message };
@@ -762,6 +792,24 @@ export const createEndorsement = async (userId: string, endorsement: {
       userId,
       ...endorsement
     });
+    
+    // Trigger notification via API route (non-blocking)
+    if (!error && id) {
+      try {
+        fetch('/api/notifications/endorsement-received', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId,
+            endorserName: endorsement.endorserName,
+            skill: endorsement.skill
+          })
+        }).catch(err => console.error('Error triggering endorsement notification:', err));
+      } catch (e) {
+        // Silent fail
+      }
+    }
+    
     return { id, error };
   } catch (error: any) {
     return { id: null, error: error.message };
