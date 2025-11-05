@@ -384,6 +384,7 @@ export const createMessageThread = async (participantIds: string[]) => {
   try {
     const threadData = {
       participantIds,
+      acceptedBy: [], // Track who has accepted this thread
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
       lastMessageAt: serverTimestamp()
@@ -393,6 +394,31 @@ export const createMessageThread = async (participantIds: string[]) => {
     return { id: docRef.id, error: null };
   } catch (error: any) {
     return { id: null, error: error.message };
+  }
+};
+
+export const acceptMessageThread = async (threadId: string, userId: string) => {
+  try {
+    const threadRef = doc(db, 'messageThreads', threadId);
+    const threadDoc = await getDoc(threadRef);
+    
+    if (!threadDoc.exists()) {
+      return { error: 'Thread not found' };
+    }
+    
+    const threadData = threadDoc.data();
+    const acceptedBy = threadData.acceptedBy || [];
+    
+    if (!acceptedBy.includes(userId)) {
+      await updateDoc(threadRef, {
+        acceptedBy: [...acceptedBy, userId],
+        updatedAt: serverTimestamp()
+      });
+    }
+    
+    return { error: null };
+  } catch (error: any) {
+    return { error: error.message };
   }
 };
 

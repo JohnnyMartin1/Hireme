@@ -3,7 +3,7 @@ import { useParams } from 'next/navigation';
 import { useFirebaseAuth } from "@/components/FirebaseAuthProvider";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
-import { User, MapPin, GraduationCap, Star, MessageSquare, Heart, Loader2, ArrowLeft, Send, Video, FileText, Download, X, Code, Briefcase, Plane, Calendar, Copy, Check, Building2, UserCircle } from "lucide-react";
+import { User, MapPin, GraduationCap, Star, MessageSquare, Heart, Loader2, ArrowLeft, Send, Video, FileText, Download, X, Code, Briefcase, Plane, Calendar, Copy, Check, Building2, UserCircle, Award, Globe } from "lucide-react";
 import { getDocument, getOrCreateThread, sendMessage, saveCandidate, isCandidateSaved, getEndorsements } from '@/lib/firebase-firestore';
 import Link from 'next/link';
 import { trackProfileView } from '@/lib/firebase-firestore';
@@ -29,6 +29,10 @@ interface CandidateProfile {
   certifications?: string[];
   languages?: string[];
   careerInterests?: string[];
+  workAuthorization?: {
+    authorizedToWork: boolean | null;
+    requiresVisaSponsorship: boolean | null;
+  };
   linkedinUrl?: string;
   portfolioUrl?: string;
   locations?: string[];
@@ -37,6 +41,14 @@ interface CandidateProfile {
   profileImageUrl?: string;
   resumeUrl?: string;
   videoUrl?: string;
+  education?: Array<{
+    school: string;
+    degree: string;
+    majors: string[];
+    minors: string[];
+    graduationYear: string;
+    gpa: string;
+  }>;
   [key: string]: any;
 }
 
@@ -182,6 +194,10 @@ export default function CandidateProfilePage() {
         setError('Failed to create message thread');
         return;
       }
+
+      // Auto-accept the thread for the employer who is initiating contact
+      const { acceptMessageThread } = await import('@/lib/firebase-firestore');
+      await acceptMessageThread(threadId, user.uid);
 
       // Get job details if employer or recruiter
       let jobDetails = null;
@@ -563,6 +579,46 @@ export default function CandidateProfilePage() {
           </section>
         )}
 
+        {/* Professional Links Card */}
+        {(candidate.linkedinUrl || candidate.portfolioUrl) && (
+          <section className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 mb-8 ">
+            <h2 className="text-2xl font-bold text-navy mb-6 flex items-center space-x-3">
+              <Globe className="h-6 w-6 text-light-blue" />
+              <span>Professional Links</span>
+            </h2>
+            <div className="space-y-4">
+              {candidate.linkedinUrl && (
+                <a
+                  href={candidate.linkedinUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center space-x-3 p-4 bg-light-blue/10 rounded-xl border border-light-blue/30 hover:bg-light-blue/20 transition-all duration-200"
+                >
+                  <i className="fa-brands fa-linkedin text-2xl text-[#0077B5]"></i>
+                  <div>
+                    <p className="font-semibold text-navy">LinkedIn Profile</p>
+                    <p className="text-sm text-gray-600">{candidate.linkedinUrl}</p>
+                  </div>
+                </a>
+              )}
+              {candidate.portfolioUrl && (
+                <a
+                  href={candidate.portfolioUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center space-x-3 p-4 bg-light-blue/10 rounded-xl border border-light-blue/30 hover:bg-light-blue/20 transition-all duration-200"
+                >
+                  <Globe className="h-6 w-6 text-navy" />
+                  <div>
+                    <p className="font-semibold text-navy">Portfolio</p>
+                    <p className="text-sm text-gray-600">{candidate.portfolioUrl}</p>
+                  </div>
+                </a>
+              )}
+            </div>
+          </section>
+        )}
+
         {/* Skills Card */}
         {candidate.skills && candidate.skills.length > 0 && (
           <section className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 mb-8 ">
@@ -667,6 +723,192 @@ export default function CandidateProfilePage() {
                   <MapPin className="h-3 w-3" />
                   <span>{location}</span>
                 </span>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Extracurricular Activities Card */}
+        {candidate.extracurriculars && candidate.extracurriculars.length > 0 && (
+          <section className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 mb-8 ">
+            <h2 className="text-2xl font-bold text-navy mb-6 flex items-center space-x-3">
+              <Star className="h-6 w-6 text-light-blue" />
+              <span>Extracurricular Activities</span>
+            </h2>
+            <div className="flex flex-wrap gap-3">
+              {candidate.extracurriculars.map((activity: string, index: number) => (
+                <span
+                  key={index}
+                  className="preference-chip text-navy px-4 py-2 rounded-full text-sm font-semibold border hover:translate-y-[-2px] transition-all duration-200"
+                  style={{background: 'linear-gradient(135deg, rgba(0, 0, 128, 0.1) 0%, rgba(173, 216, 230, 0.1) 100%)', border: '1px solid rgba(173, 216, 230, 0.3)'}}
+                >
+                  {activity}
+                </span>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Certifications Card */}
+        {candidate.certifications && candidate.certifications.length > 0 && (
+          <section className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 mb-8 ">
+            <h2 className="text-2xl font-bold text-navy mb-6 flex items-center space-x-3">
+              <Award className="h-6 w-6 text-light-blue" />
+              <span>Certifications</span>
+            </h2>
+            <div className="flex flex-wrap gap-3">
+              {candidate.certifications.map((cert: string, index: number) => (
+                <span
+                  key={index}
+                  className="preference-chip text-navy px-4 py-2 rounded-full text-sm font-semibold border hover:translate-y-[-2px] transition-all duration-200"
+                  style={{background: 'linear-gradient(135deg, rgba(0, 0, 128, 0.1) 0%, rgba(173, 216, 230, 0.1) 100%)', border: '1px solid rgba(173, 216, 230, 0.3)'}}
+                >
+                  {cert}
+                </span>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Languages Card */}
+        {candidate.languages && candidate.languages.length > 0 && (
+          <section className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 mb-8 ">
+            <h2 className="text-2xl font-bold text-navy mb-6 flex items-center space-x-3">
+              <Globe className="h-6 w-6 text-light-blue" />
+              <span>Languages</span>
+            </h2>
+            <div className="flex flex-wrap gap-3">
+              {candidate.languages.map((language: string, index: number) => (
+                <span
+                  key={index}
+                  className="preference-chip text-navy px-4 py-2 rounded-full text-sm font-semibold border hover:translate-y-[-2px] transition-all duration-200"
+                  style={{background: 'linear-gradient(135deg, rgba(0, 0, 128, 0.1) 0%, rgba(173, 216, 230, 0.1) 100%)', border: '1px solid rgba(173, 216, 230, 0.3)'}}
+                >
+                  {language}
+                </span>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Career Interests Card */}
+        {candidate.careerInterests && candidate.careerInterests.length > 0 && (
+          <section className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 mb-8 ">
+            <h2 className="text-2xl font-bold text-navy mb-6 flex items-center space-x-3">
+              <Briefcase className="h-6 w-6 text-light-blue" />
+              <span>Career Interests</span>
+            </h2>
+            <div className="flex flex-wrap gap-3">
+              {candidate.careerInterests.map((interest: string, index: number) => (
+                <span
+                  key={index}
+                  className="preference-chip text-navy px-4 py-2 rounded-full text-sm font-semibold border hover:translate-y-[-2px] transition-all duration-200"
+                  style={{background: 'linear-gradient(135deg, rgba(0, 0, 128, 0.1) 0%, rgba(173, 216, 230, 0.1) 100%)', border: '1px solid rgba(173, 216, 230, 0.3)'}}
+                >
+                  {interest}
+                </span>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Work Authorization Card */}
+        {candidate.workAuthorization && (candidate.workAuthorization.authorizedToWork !== null || candidate.workAuthorization.requiresVisaSponsorship !== null) && (
+          <section className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 mb-8 ">
+            <h2 className="text-2xl font-bold text-navy mb-6 flex items-center space-x-3">
+              <Plane className="h-6 w-6 text-light-blue" />
+              <span>Work Authorization</span>
+            </h2>
+            <div className="space-y-3">
+              {candidate.workAuthorization.authorizedToWork !== null && (
+                <div className="flex items-center space-x-3">
+                  <div className={`w-2 h-2 rounded-full ${candidate.workAuthorization.authorizedToWork ? 'bg-green-500' : 'bg-orange-500'}`}></div>
+                  <span className="text-gray-700">
+                    <strong>Authorized to work in the US:</strong> {candidate.workAuthorization.authorizedToWork ? 'Yes' : 'No'}
+                  </span>
+                </div>
+              )}
+              {candidate.workAuthorization.requiresVisaSponsorship !== null && (
+                <div className="flex items-center space-x-3">
+                  <div className={`w-2 h-2 rounded-full ${!candidate.workAuthorization.requiresVisaSponsorship ? 'bg-green-500' : 'bg-orange-500'}`}></div>
+                  <span className="text-gray-700">
+                    <strong>Requires visa sponsorship:</strong> {candidate.workAuthorization.requiresVisaSponsorship ? 'Yes' : 'No'}
+                  </span>
+                </div>
+              )}
+            </div>
+          </section>
+        )}
+
+        {/* Endorsements Card */}
+        {endorsements && endorsements.length > 0 && (
+          <section className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 mb-8 ">
+            <h2 className="text-2xl font-bold text-navy mb-6 flex items-center space-x-3">
+              <Star className="h-6 w-6 text-light-blue" />
+              <span>Endorsements</span>
+            </h2>
+            <div className="space-y-6">
+              {endorsements.map((endorsement: any, index: number) => (
+                <div key={index} className="bg-light-blue/10 rounded-xl p-6 border border-light-blue/30">
+                  <div className="flex items-start space-x-4">
+                    {endorsement.endorserProfileImage ? (
+                      <img 
+                        src={endorsement.endorserProfileImage} 
+                        alt={endorsement.endorserName} 
+                        className="w-12 h-12 rounded-full object-cover flex-shrink-0"
+                      />
+                    ) : (
+                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-light-blue to-blue-300 flex items-center justify-center flex-shrink-0">
+                        <span className="font-bold text-navy text-sm">
+                          {endorsement.endorserName?.charAt(0) || 'E'}
+                        </span>
+                      </div>
+                    )}
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between mb-3">
+                        <div>
+                          {endorsement.endorserLinkedIn ? (
+                            <a 
+                              href={endorsement.endorserLinkedIn}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="font-bold text-navy hover:text-blue-600 transition-colors duration-200 flex items-center space-x-2"
+                            >
+                              <span>{endorsement.endorserName || 'Anonymous'}</span>
+                              <i className="fa-brands fa-linkedin text-[#0077B5] text-lg"></i>
+                            </a>
+                          ) : (
+                            <h3 className="font-bold text-navy">{endorsement.endorserName || 'Anonymous'}</h3>
+                          )}
+                          {endorsement.endorserTitle && (
+                            <p className="text-sm text-gray-600 font-medium">{endorsement.endorserTitle}</p>
+                          )}
+                          {endorsement.endorserCompany && (
+                            <p className="text-sm text-gray-600">{endorsement.endorserCompany}</p>
+                          )}
+                        </div>
+                        {endorsement.createdAt && (
+                          <span className="text-sm text-gray-500">
+                            {new Date(endorsement.createdAt.seconds * 1000).toLocaleDateString()}
+                          </span>
+                        )}
+                      </div>
+                      {endorsement.skill && (
+                        <div className="mb-3">
+                          <span className="inline-block px-3 py-1 bg-navy/10 text-navy rounded-full text-sm font-semibold">
+                            <i className="fa-solid fa-star text-yellow-500 mr-1"></i>
+                            {endorsement.skill}
+                          </span>
+                        </div>
+                      )}
+                      {endorsement.message && (
+                        <p className="text-gray-700 leading-relaxed italic border-l-4 border-light-blue pl-4">
+                          "{endorsement.message}"
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
               ))}
             </div>
           </section>

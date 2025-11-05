@@ -5,7 +5,24 @@ export async function POST(request: NextRequest) {
   try {
     // Get the request body
     const body = await request.json();
-    const { title, description, locationCity, locationState, employment, salaryMin, salaryMax, tags, employerId, idToken } = body;
+    const { 
+      title, 
+      description, 
+      locationCity, 
+      locationState, 
+      employment, 
+      workMode,
+      salaryMin, 
+      salaryMax, 
+      tags, 
+      requiredGpa,
+      requiredCareerInterests,
+      employerId, 
+      companyId,
+      companyName,
+      companyWebsite,
+      idToken 
+    } = body;
 
     // Validate required fields
     if (!title || !description || !employerId) {
@@ -29,10 +46,19 @@ export async function POST(request: NextRequest) {
       locationCity: locationCity || '',
       locationState: locationState || '',
       employment: employment || 'FULL_TIME',
+      workMode: workMode || null,
       salaryMin: salaryMin || null,
       salaryMax: salaryMax || null,
       tags: tags || [],
+      skills: tags || [], // Map tags to skills for backward compatibility
+      requiredGpa: requiredGpa || null,
+      requiredCareerInterests: requiredCareerInterests || [],
       employerId,
+      companyId: companyId || null,
+      companyName: companyName || null,
+      companyWebsite: companyWebsite || null,
+      postedDate: new Date().toISOString(),
+      updatedDate: new Date().toISOString(),
       createdAt: new Date(),
       status: 'ACTIVE'
     };

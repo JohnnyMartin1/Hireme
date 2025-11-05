@@ -150,11 +150,20 @@ const handleFileUpload = async (
 
   setIsLoading(true);
   try {
-    const fileName = `${user.uid}_${field}_${Date.now()}`;
-    const { url, error } = await uploadFile(file, `company-${field}`, fileName);
+    const fileName = `${user.uid}_${field}_${Date.now()}_${file.name}`;
+    const folderName = field === 'bannerImageUrl' ? 'company-banners' : 'company-logos';
+    const path = `${folderName}/${fileName}`;
+    
+    const { url, error } = await uploadFile(file, path, {
+      contentType: file.type,
+      customMetadata: {
+        uploadedBy: user.uid,
+        fileType: field
+      }
+    });
 
     if (error) {
-      setMessage({ type: "error", text: `Failed to upload ${field}: ${error}` });
+      setMessage({ type: "error", text: `Failed to upload ${field === "bannerImageUrl" ? "banner" : "logo"}: ${error}` });
       return;
     }
     if (!url) {
@@ -168,7 +177,7 @@ const handleFileUpload = async (
       text: `${field === "bannerImageUrl" ? "Banner" : "Logo"} uploaded successfully!`,
     });
   } catch (err) {
-    setMessage({ type: "error", text: `Failed to upload ${field}` });
+    setMessage({ type: "error", text: `Failed to upload ${field === "bannerImageUrl" ? "banner" : "logo"}` });
   } finally {
     setIsLoading(false);
   }
@@ -252,7 +261,10 @@ const handleFileUpload = async (
             </div>
             <p className="text-gray-500 text-xs sm:text-sm mb-4 sm:mb-6">Recommended: 1200×300px, JPG or PNG.</p>
             
-            <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 sm:p-12 text-center bg-gray-50/50">
+            <div 
+              onClick={() => !formData.bannerImageUrl && bannerUploadRef.current?.click()}
+              className={`border-2 border-dashed border-gray-300 rounded-xl p-8 sm:p-12 text-center bg-gray-50/50 ${!formData.bannerImageUrl ? 'cursor-pointer hover:border-navy hover:bg-blue-50/30 transition-all' : ''}`}
+            >
               {formData.bannerImageUrl ? (
                 <div className="relative w-full h-32 sm:h-48 rounded-lg overflow-hidden mb-4">
                   <img 
@@ -261,7 +273,10 @@ const handleFileUpload = async (
                     className="w-full h-full object-cover"
                   />
                   <button
-                    onClick={() => handleInputChange('bannerImageUrl', null)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleInputChange('bannerImageUrl', null);
+                    }}
                     className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-2 hover:bg-red-600 transition-colors"
                   >
                     ×
@@ -306,7 +321,10 @@ const handleFileUpload = async (
             </div>
             <p className="text-gray-500 text-xs sm:text-sm mb-4 sm:mb-6">Recommended: 400×400px, JPG or PNG.</p>
             
-            <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 sm:p-12 text-center bg-gray-50/50">
+            <div 
+              onClick={() => !formData.logoImageUrl && logoUploadRef.current?.click()}
+              className={`border-2 border-dashed border-gray-300 rounded-xl p-8 sm:p-12 text-center bg-gray-50/50 ${!formData.logoImageUrl ? 'cursor-pointer hover:border-navy hover:bg-blue-50/30 transition-all' : ''}`}
+            >
               {formData.logoImageUrl ? (
                 <div className="flex flex-col items-center">
                   <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden mb-4 border-2 border-gray-300">
@@ -316,14 +334,20 @@ const handleFileUpload = async (
                       className="w-full h-full object-cover"
                     />
                     <button
-                      onClick={() => handleInputChange('logoImageUrl', null)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleInputChange('logoImageUrl', null);
+                      }}
                       className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm hover:bg-red-600 transition-colors"
                     >
                       ×
                     </button>
                   </div>
                   <button
-                    onClick={() => logoUploadRef.current?.click()}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      logoUploadRef.current?.click();
+                    }}
                     className="text-sm text-gray-600 hover:text-navy transition-colors"
                   >
                     Change logo

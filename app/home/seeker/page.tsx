@@ -408,7 +408,7 @@ export default function SeekerHomePage() {
                   {threadDetails.slice(0, 3).map((thread: any, index: number) => (
                     <Link
                       key={thread.id || index}
-                      href={`/messages/${thread.id}`}
+                      href={`/messages/candidate?thread=${thread.id}`}
                       className="flex items-center p-4 bg-slate-50 rounded-lg hover:bg-slate-100 transition-all duration-200 cursor-pointer group"
                     >
                       <div className="w-10 h-10 bg-slate-200 rounded-lg flex items-center justify-center group-hover:bg-blue-100 transition-colors duration-200">

@@ -74,6 +74,7 @@ export default function NewJobPage() {
         employerId: user.uid,
         companyId: profile?.companyId || null,
         companyName: profile?.companyName || null,
+        companyWebsite: profile?.companyWebsite || null,
         status: 'ACTIVE'
       };
 
