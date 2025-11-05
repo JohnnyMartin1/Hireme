@@ -1,7 +1,7 @@
 "use client";
 import { useFirebaseAuth } from "@/components/FirebaseAuthProvider";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, Suspense } from "react";
 import { User, MessageSquare, ArrowRight, Loader2, Bell, CheckCircle, ArrowLeft, Send, Search, MoreHorizontal, Eye, Star } from "lucide-react";
 import { getUserMessageThreads, getDocument, getMessageThread, getThreadMessages, sendMessage, acceptMessageThread } from '@/lib/firebase-firestore';
 import Link from 'next/link';
@@ -37,7 +37,7 @@ interface Message {
   };
 }
 
-export default function CandidateMessagesPage() {
+function CandidateMessagesPageContent() {
   const { user, profile, loading } = useFirebaseAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -707,5 +707,21 @@ export default function CandidateMessagesPage() {
         </div>
       )}
     </main>
+  );
+}
+
+// Wrapper component with Suspense boundary for useSearchParams
+export default function CandidateMessagesPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-b from-[#E6F0FF] to-white flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-12 w-12 text-[#000080] animate-spin mx-auto mb-4" />
+          <p className="text-gray-600">Loading messages...</p>
+        </div>
+      </div>
+    }>
+      <CandidateMessagesPageContent />
+    </Suspense>
   );
 }
