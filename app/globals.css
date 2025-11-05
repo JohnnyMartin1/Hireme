@@ -93,6 +93,38 @@ body {
   }
 }
 
+/* Mobile Utility Classes */
+.mobile-full-width {
+  @apply w-full px-4;
+}
+
+.mobile-sticky-footer {
+  @apply fixed md:relative bottom-0 left-0 right-0 bg-white border-t md:border-0 p-4 md:p-0 z-30;
+}
+
+.mobile-safe-padding {
+  padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+}
+
+.mobile-touch-target {
+  @apply min-h-[48px] min-w-[48px];
+}
+
+/* Hide scrollbar but keep functionality */
+.mobile-scroll {
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.mobile-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+/* Smooth height transitions */
+.mobile-expand {
+  transition: max-height 0.3s ease-in-out;
+}
+
 /* HireMe Design Components */
 .hireme-card {
   @apply bg-white rounded-xl shadow-sm border border-[var(--border)] p-6;

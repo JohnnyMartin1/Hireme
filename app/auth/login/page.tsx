@@ -67,12 +67,12 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center px-4 py-8 mobile-safe-top mobile-safe-bottom" style={{background: 'linear-gradient(170deg, #F3F7FF 0%, #E6F2FF 40%, #F8FAFC 100%)'}}>
+    <main className="min-h-screen flex flex-col items-center justify-center px-4 py-8 sm:py-12 mobile-safe-top mobile-safe-bottom" style={{background: 'linear-gradient(170deg, #F3F7FF 0%, #E6F2FF 40%, #F8FAFC 100%)'}}>
       <div className="w-full max-w-md">
         {/* App Mark & Title */}
         <div className="text-center mb-6 sm:mb-8">
-          <div className="flex justify-center mb-4">
-            <div className="w-12 h-12 sm:w-16 sm:h-16 flex items-center justify-center">
+          <div className="flex justify-center mb-3 sm:mb-4">
+            <div className="w-14 h-14 sm:w-16 sm:h-16 flex items-center justify-center">
               <svg width="269" height="274" viewBox="0 0 269 274" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full" preserveAspectRatio="xMidYMid meet" role="img" aria-label="HireMe magnifying glass logo">
                 <path d="M111.028 0C172.347 0.000238791 222.055 51.647 222.055 115.356C222.055 140.617 214.238 163.98 200.983 182.981L258.517 242.758L238.036 264.036L181.077 204.857C161.97 221.02 137.589 230.713 111.028 230.713C49.7092 230.713 2.76862e-05 179.066 0 115.356C0 51.6468 49.7092 0 111.028 0Z" fill="#0B1F4B"/>
                 <path d="M205.69 115.392C205.69 170.42 163.308 215.029 111.028 215.029C58.748 215.029 16.3666 170.42 16.3666 115.392C16.3666 60.3646 58.748 15.7559 111.028 15.7559C163.308 15.7559 205.69 60.3646 205.69 115.392Z" fill="#4F86F7"/>
@@ -90,7 +90,7 @@ export default function LoginPage() {
           </p>
         </div>
 
-        <div className="bg-white p-4 sm:p-8 rounded-2xl shadow-lg border border-slate-200/60">
+        <div className="bg-white p-5 sm:p-8 rounded-2xl shadow-lg border border-slate-200/60">
           {/* Error Banner */}
           {err && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6" role="alert" aria-live="polite">
@@ -131,7 +131,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-navy text-white font-semibold py-3 sm:py-4 px-4 rounded-xl hover:bg-blue-900 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 min-h-[44px]"
+              className="w-full bg-navy text-white font-semibold py-4 px-4 rounded-xl hover:bg-blue-900 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 min-h-[48px] text-base sm:text-lg shadow-md hover:shadow-lg"
             >
               {isLoading ? (
                 <div className="flex items-center justify-center">

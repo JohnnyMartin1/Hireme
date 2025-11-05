@@ -197,10 +197,10 @@ export default function SeekerSignupPage() {
   };
 
   return (
-    <main className="h-screen flex flex-col sm:flex-row bg-brand-gray overflow-hidden mobile-safe-top mobile-safe-bottom">
+    <main className="min-h-screen sm:h-screen flex flex-col sm:flex-row bg-brand-gray overflow-hidden mobile-safe-top mobile-safe-bottom">
       {/* Left Column - Content & Form */}
-      <div className="w-full sm:w-[48%] flex flex-col justify-center p-4 sm:p-8 bg-white relative">
-        <div className="flex-grow flex flex-col justify-center max-w-full">
+      <div className="w-full sm:w-[48%] flex flex-col justify-center p-4 sm:p-6 md:p-8 bg-white relative overflow-y-auto">
+        <div className="flex-grow flex flex-col justify-center max-w-full py-6 sm:py-0">
           {/* Progress Stepper */}
           <div className="flex items-center space-x-2 sm:space-x-4 text-xs sm:text-sm mb-6 sm:mb-8 overflow-x-auto">
             <div className={`flex items-center ${currentStep >= 1 ? 'text-navy font-semibold' : 'text-text-secondary'} whitespace-nowrap`}>

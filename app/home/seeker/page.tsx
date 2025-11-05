@@ -306,8 +306,8 @@ export default function SeekerHomePage() {
           <div className="lg:col-span-2 space-y-4 sm:space-y-8">
             
             {/* Welcome Banner */}
-            <section className="bg-gradient-to-r from-navy to-blue-900 text-white p-4 sm:p-8 rounded-2xl flex flex-col sm:flex-row items-center justify-between shadow-lg">
-              <div className="flex items-center space-x-4 sm:space-x-6">
+            <section className="bg-gradient-to-r from-navy to-blue-900 text-white p-5 sm:p-6 md:p-8 rounded-xl sm:rounded-2xl flex flex-col sm:flex-row items-center justify-between shadow-lg">
+              <div className="flex items-center space-x-3 sm:space-x-4 md:space-x-6 w-full sm:w-auto">
                 {(() => {
                   console.log('Rendering profile image:', userProfile?.profileImageUrl);
                   return userProfile?.profileImageUrl ? (
@@ -316,84 +316,84 @@ export default function SeekerHomePage() {
                       alt={`${profile?.firstName || 'User'}'s avatar`}
                       width={80}
                       height={80}
-                      className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-4 border-white/30 shadow-lg"
+                      className="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-full border-4 border-white/30 shadow-lg flex-shrink-0"
                     />
                   ) : (
-                    <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-4 border-white/30 shadow-lg bg-white/20 flex items-center justify-center">
-                      <User className="h-8 w-8 sm:h-10 sm:w-10 text-white" />
+                    <div className="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-full border-4 border-white/30 shadow-lg bg-white/20 flex items-center justify-center flex-shrink-0">
+                      <User className="h-7 w-7 sm:h-8 sm:w-8 md:h-10 md:w-10 text-white" />
                     </div>
                   );
                 })()}
-                <div className="text-center sm:text-left">
-                  <h1 className="text-xl sm:text-3xl font-bold">Welcome back, {profile?.firstName || 'Job Seeker'}! 👋</h1>
-                  <p className="text-blue-200 mt-1 text-sm sm:text-base">Here's your dashboard overview for today.</p>
+                <div className="text-center sm:text-left flex-1 min-w-0">
+                  <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold break-words">Welcome back, {profile?.firstName || 'Job Seeker'}! 👋</h1>
+                  <p className="text-blue-200 mt-1 text-xs sm:text-sm md:text-base">Here's your dashboard overview for today.</p>
                 </div>
               </div>
             </section>
 
             {/* Profile Completion Card */}
-            <div className="bg-white/90 backdrop-blur-sm p-4 sm:p-8 rounded-2xl shadow-sm border border-light-gray hover:shadow-lg transition-all duration-200">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-lg sm:text-xl font-bold text-navy">Profile Completion</h2>
-                <span className="text-xl sm:text-2xl font-bold text-navy bg-light-blue/30 px-3 sm:px-4 py-1.5 rounded-full">{completion}%</span>
+            <div className="bg-white/90 backdrop-blur-sm p-4 sm:p-6 md:p-8 rounded-xl sm:rounded-2xl shadow-sm border border-light-gray hover:shadow-lg transition-all duration-200">
+              <div className="flex justify-between items-center mb-3 sm:mb-4 gap-2">
+                <h2 className="text-base sm:text-lg md:text-xl font-bold text-navy">Profile Completion</h2>
+                <span className="text-lg sm:text-xl md:text-2xl font-bold text-navy bg-light-blue/30 px-3 sm:px-4 py-1 sm:py-1.5 rounded-full flex-shrink-0">{completion}%</span>
               </div>
-              <div className="w-full bg-light-gray/50 rounded-full h-3 mb-3 shadow-inner">
+              <div className="w-full bg-light-gray/50 rounded-full h-2.5 sm:h-3 mb-3 shadow-inner">
                 <div 
-                  className="bg-gradient-to-r from-navy to-light-blue h-3 rounded-full transition-all duration-500 ease-out" 
+                  className="bg-gradient-to-r from-navy to-light-blue h-2.5 sm:h-3 rounded-full transition-all duration-500 ease-out" 
                   style={{ width: `${completion}%` }}
                 />
               </div>
-              <p className="text-gray-600 text-sm break-words">
+              <p className="text-gray-600 text-xs sm:text-sm break-words">
                 Complete your profile to increase your visibility to top employers.{' '}
                 <a href="/account/profile" className="font-semibold text-navy hover:underline decoration-2 underline-offset-2 cursor-pointer">Finish profile →</a>
               </p>
             </div>
 
             {/* Stats Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-8">
-              <Link href="/messages/candidate" className="bg-white/90 backdrop-blur-sm p-4 sm:p-6 rounded-2xl shadow-sm border border-light-gray hover:shadow-lg transition-all duration-200 text-center group">
-                <div className="w-14 h-14 mx-auto rounded-full bg-light-blue/30 flex items-center justify-center mb-3">
-                  <MessageSquare className="h-6 w-6 text-navy" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6 lg:gap-8">
+              <Link href="/messages/candidate" className="bg-white/90 backdrop-blur-sm p-5 sm:p-6 rounded-xl sm:rounded-2xl shadow-sm border border-light-gray hover:shadow-lg transition-all duration-200 text-center group min-h-[120px] sm:min-h-[140px] flex flex-col justify-center">
+                <div className="w-12 h-12 sm:w-14 sm:h-14 mx-auto rounded-full bg-light-blue/30 flex items-center justify-center mb-3">
+                  <MessageSquare className="h-5 w-5 sm:h-6 sm:w-6 text-navy" />
                 </div>
-                <p className="text-4xl font-extrabold text-navy">{isLoadingStats ? '...' : threads.length}</p>
-                <p className="text-gray-500 font-medium mt-1">Messages</p>
+                <p className="text-3xl sm:text-4xl font-extrabold text-navy">{isLoadingStats ? '...' : threads.length}</p>
+                <p className="text-sm sm:text-base text-gray-500 font-medium mt-1">Messages</p>
               </Link>
 
-              <button onClick={routerToViews} className="bg-white/90 backdrop-blur-sm p-6 rounded-2xl shadow-sm border border-light-gray hover:shadow-lg transition-all duration-200 text-center group w-full">
-                <div className="w-14 h-14 mx-auto rounded-full bg-light-blue/30 flex items-center justify-center mb-3">
-                  <Eye className="h-6 w-6 text-navy" />
+              <button onClick={routerToViews} className="bg-white/90 backdrop-blur-sm p-5 sm:p-6 rounded-xl sm:rounded-2xl shadow-sm border border-light-gray hover:shadow-lg transition-all duration-200 text-center group w-full min-h-[120px] sm:min-h-[140px] flex flex-col justify-center">
+                <div className="w-12 h-12 sm:w-14 sm:h-14 mx-auto rounded-full bg-light-blue/30 flex items-center justify-center mb-3">
+                  <Eye className="h-5 w-5 sm:h-6 sm:w-6 text-navy" />
                 </div>
-                <p className="text-4xl font-extrabold text-navy">{isLoadingStats ? '...' : profileViews}</p>
-                <p className="text-gray-500 font-medium mt-1">Companies Viewed You</p>
+                <p className="text-3xl sm:text-4xl font-extrabold text-navy">{isLoadingStats ? '...' : profileViews}</p>
+                <p className="text-sm sm:text-base text-gray-500 font-medium mt-1">Companies Viewed You</p>
               </button>
 
-              <Link href="/endorsements" className="bg-white/90 backdrop-blur-sm p-6 rounded-2xl shadow-sm border border-light-gray hover:shadow-lg transition-all duration-200 text-center group relative">
-                <div className="w-14 h-14 mx-auto rounded-full bg-light-blue/30 flex items-center justify-center mb-3 relative">
-                  <Star className="h-6 w-6 text-navy" />
-                  {endorsements.length === 0 && (
+              <Link href="/endorsements" className="bg-white/90 backdrop-blur-sm p-5 sm:p-6 rounded-xl sm:rounded-2xl shadow-sm border border-light-gray hover:shadow-lg transition-all duration-200 text-center group relative min-h-[120px] sm:min-h-[140px] flex flex-col justify-center">
+                <div className="w-12 h-12 sm:w-14 sm:h-14 mx-auto rounded-full bg-light-blue/30 flex items-center justify-center mb-3 relative">
+                  <Star className="h-5 w-5 sm:h-6 sm:w-6 text-navy" />
+                  {!isLoadingStats && endorsements.length === 0 && (
                     <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">NEW</span>
                   )}
                 </div>
-                <p className="text-4xl font-extrabold text-navy">{isLoadingStats ? '...' : endorsements.length}</p>
-                <p className="text-gray-500 font-medium mt-1">Endorsements</p>
+                <p className="text-3xl sm:text-4xl font-extrabold text-navy">{isLoadingStats ? '...' : endorsements.length}</p>
+                <p className="text-sm sm:text-base text-gray-500 font-medium mt-1">Endorsements</p>
               </Link>
             </div>
 
             {/* Endorsement Promo Card */}
-            {endorsements.length === 0 && (
-              <div className="bg-light-blue/20 backdrop-blur-sm p-8 rounded-2xl shadow-sm border border-light-blue/30 hover:shadow-lg transition-all duration-200 flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-md">
-                    <Star className="h-6 w-6 text-navy" />
+            {!isLoadingStats && endorsements.length === 0 && (
+              <div className="bg-light-blue/20 backdrop-blur-sm p-5 sm:p-8 rounded-xl sm:rounded-2xl shadow-sm border border-light-blue/30 hover:shadow-lg transition-all duration-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-center space-x-3 sm:space-x-4">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white rounded-full flex items-center justify-center shadow-md flex-shrink-0">
+                    <Star className="h-5 w-5 sm:h-6 sm:w-6 text-navy" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold text-navy">Get Your First Endorsement!</h3>
-                    <p className="text-navy/80">Boost your profile credibility and stand out from the crowd.</p>
+                    <h3 className="text-base sm:text-lg font-bold text-navy">Get Your First Endorsement!</h3>
+                    <p className="text-sm sm:text-base text-navy/80">Boost your profile credibility and stand out from the crowd.</p>
                   </div>
                 </div>
                 <Link
                   href="/endorsements"
-                  className="bg-navy text-white font-semibold py-3 px-6 rounded-lg hover:bg-blue-900 transition-colors duration-200 shadow-md hover:shadow-lg"
+                  className="bg-navy text-white font-semibold py-2.5 sm:py-3 px-5 sm:px-6 rounded-lg hover:bg-blue-900 transition-colors duration-200 shadow-md hover:shadow-lg text-center min-h-[44px] flex items-center justify-center w-full sm:w-auto"
                 >
                   Get Endorsements
                 </Link>
@@ -401,21 +401,21 @@ export default function SeekerHomePage() {
             )}
 
             {/* Recent Activity Card */}
-            <div className="bg-white/90 backdrop-blur-sm p-8 rounded-2xl shadow-sm border border-light-gray hover:shadow-lg transition-all duration-200">
-              <h2 className="text-xl font-bold text-navy mb-6">Recent Activity</h2>
+            <div className="bg-white/90 backdrop-blur-sm p-5 sm:p-6 md:p-8 rounded-xl sm:rounded-2xl shadow-sm border border-light-gray hover:shadow-lg transition-all duration-200">
+              <h2 className="text-lg sm:text-xl font-bold text-navy mb-4 sm:mb-6">Recent Activity</h2>
               {threadDetails.length > 0 ? (
-                <div className="space-y-3">
+                <div className="space-y-2 sm:space-y-3">
                   {threadDetails.slice(0, 3).map((thread: any, index: number) => (
                     <Link
                       key={thread.id || index}
                       href={`/messages/candidate?thread=${thread.id}`}
-                      className="flex items-center p-4 bg-slate-50 rounded-lg hover:bg-slate-100 transition-all duration-200 cursor-pointer group"
+                      className="flex items-center p-3 sm:p-4 bg-slate-50 rounded-lg hover:bg-slate-100 active:bg-slate-200 transition-all duration-200 cursor-pointer group min-h-[64px]"
                     >
-                      <div className="w-10 h-10 bg-slate-200 rounded-lg flex items-center justify-center group-hover:bg-blue-100 transition-colors duration-200">
+                      <div className="w-10 h-10 bg-slate-200 rounded-lg flex items-center justify-center group-hover:bg-blue-100 transition-colors duration-200 flex-shrink-0">
                         <MessageSquare className="h-5 w-5 text-slate-400 group-hover:text-blue-600 transition-colors duration-200" />
                       </div>
-                      <div className="flex-1 ml-4">
-                        <span className="text-slate-700 group-hover:text-slate-900 transition-colors duration-200">
+                      <div className="flex-1 ml-3 sm:ml-4 min-w-0">
+                        <span className="text-sm sm:text-base text-slate-700 group-hover:text-slate-900 transition-colors duration-200 break-words">
                           New message from{' '}
                           <span className="font-medium group-hover:text-blue-600 transition-colors duration-200">
                             {thread.otherParticipant?.companyName || 
@@ -424,19 +424,19 @@ export default function SeekerHomePage() {
                           </span>
                         </span>
                       </div>
-                      <span className="text-sm text-slate-500 group-hover:text-slate-700 transition-colors duration-200">
+                      <span className="text-xs sm:text-sm text-slate-500 group-hover:text-slate-700 transition-colors duration-200 ml-2 flex-shrink-0">
                         {formatTimeAgo(thread.lastMessageAt)}
                       </span>
                     </Link>
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-12">
-                  <div className="w-20 h-20 mx-auto bg-slate-100 rounded-full flex items-center justify-center mb-6">
-                    <MessageSquare className="h-8 w-8 text-slate-400" />
+                <div className="text-center py-8 sm:py-12">
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto bg-slate-100 rounded-full flex items-center justify-center mb-4 sm:mb-6">
+                    <MessageSquare className="h-6 w-6 sm:h-8 sm:w-8 text-slate-400" />
                   </div>
-                  <h3 className="text-xl font-bold text-gray-700">No recent activity</h3>
-                  <p className="text-gray-500 mt-2 max-w-sm mx-auto">Your activity, such as profile views and new messages, will appear here.</p>
+                  <h3 className="text-lg sm:text-xl font-bold text-gray-700">No recent activity</h3>
+                  <p className="text-sm sm:text-base text-gray-500 mt-2 max-w-sm mx-auto px-4">Your activity, such as profile views and new messages, will appear here.</p>
                 </div>
               )}
             </div>
@@ -444,51 +444,51 @@ export default function SeekerHomePage() {
           </div>
 
           {/* Quick Actions Sidebar */}
-          <div className="lg:col-span-1">
-            <div className="bg-white/90 backdrop-blur-sm p-6 rounded-2xl shadow-sm border border-light-gray hover:shadow-lg transition-all duration-200 sticky top-28">
-              <h2 className="text-xl font-bold text-navy mb-5 px-2">Quick Actions</h2>
+          <div className="col-span-12 lg:col-span-1">
+            <div className="bg-white/90 backdrop-blur-sm p-5 sm:p-6 rounded-xl sm:rounded-2xl shadow-sm border border-light-gray hover:shadow-lg transition-all duration-200 lg:sticky lg:top-28">
+              <h2 className="text-lg sm:text-xl font-bold text-navy mb-4 sm:mb-5 px-2">Quick Actions</h2>
               <div className="space-y-2">
-                <Link href="/account/profile" className="flex items-center p-4 rounded-lg hover:bg-light-blue/20 transition-all duration-200 cursor-pointer group">
-                  <div className="w-10 h-10 bg-light-blue/30 rounded-lg flex items-center justify-center mr-4">
+                <Link href="/account/profile" className="flex items-center p-3 sm:p-4 rounded-lg hover:bg-light-blue/20 active:bg-light-blue/30 transition-all duration-200 cursor-pointer group min-h-[56px]">
+                  <div className="w-10 h-10 bg-light-blue/30 rounded-lg flex items-center justify-center mr-3 sm:mr-4 flex-shrink-0">
                     <User className="h-5 w-5 text-navy" />
                   </div>
-                  <span className="font-semibold text-gray-700">Edit Profile</span>
+                  <span className="font-semibold text-sm sm:text-base text-gray-700">Edit Profile</span>
                   <div className="ml-auto">
                     <div className="w-4 h-4 border-r-2 border-b-2 border-gray-400 rotate-45"></div>
                   </div>
                 </Link>
-                <Link href={`/candidate/${user?.uid}`} className="flex items-center p-4 rounded-lg hover:bg-light-blue/20 transition-all duration-200 cursor-pointer group">
-                  <div className="w-10 h-10 bg-light-blue/30 rounded-lg flex items-center justify-center mr-4">
+                <Link href={`/candidate/${user?.uid}`} className="flex items-center p-3 sm:p-4 rounded-lg hover:bg-light-blue/20 active:bg-light-blue/30 transition-all duration-200 cursor-pointer group min-h-[56px]">
+                  <div className="w-10 h-10 bg-light-blue/30 rounded-lg flex items-center justify-center mr-3 sm:mr-4 flex-shrink-0">
                     <Eye className="h-5 w-5 text-navy" />
                   </div>
-                  <span className="font-semibold text-gray-700">Preview Profile</span>
+                  <span className="font-semibold text-sm sm:text-base text-gray-700">Preview Profile</span>
                   <div className="ml-auto">
                     <div className="w-4 h-4 border-r-2 border-b-2 border-gray-400 rotate-45"></div>
                   </div>
                 </Link>
-                <Link href="/messages/candidate" className="flex items-center p-4 rounded-lg hover:bg-light-blue/20 transition-all duration-200 cursor-pointer group">
-                  <div className="w-10 h-10 bg-light-blue/30 rounded-lg flex items-center justify-center mr-4">
+                <Link href="/messages/candidate" className="flex items-center p-3 sm:p-4 rounded-lg hover:bg-light-blue/20 active:bg-light-blue/30 transition-all duration-200 cursor-pointer group min-h-[56px]">
+                  <div className="w-10 h-10 bg-light-blue/30 rounded-lg flex items-center justify-center mr-3 sm:mr-4 flex-shrink-0">
                     <MessageSquare className="h-5 w-5 text-navy" />
                   </div>
-                  <span className="font-semibold text-gray-700">View Messages</span>
+                  <span className="font-semibold text-sm sm:text-base text-gray-700">View Messages</span>
                   <div className="ml-auto">
                     <div className="w-4 h-4 border-r-2 border-b-2 border-gray-400 rotate-45"></div>
                   </div>
                 </Link>
-                {endorsements.length === 0 && (
-                  <Link href="/endorsements" className="flex items-center p-4 rounded-lg hover:bg-light-blue/20 transition-all duration-200 cursor-pointer group">
-                    <div className="w-10 h-10 bg-light-blue/30 rounded-lg flex items-center justify-center mr-4">
-                      <Star className="h-5 w-5 text-navy" />
-                    </div>
-                    <div className="flex-grow">
-                      <span className="font-semibold text-gray-700">Get Endorsements</span>
+                <Link href="/endorsements" className="flex items-center p-3 sm:p-4 rounded-lg hover:bg-light-blue/20 active:bg-light-blue/30 transition-all duration-200 cursor-pointer group min-h-[56px]">
+                  <div className="w-10 h-10 bg-light-blue/30 rounded-lg flex items-center justify-center mr-3 sm:mr-4 flex-shrink-0">
+                    <Star className="h-5 w-5 text-navy" />
+                  </div>
+                  <div className="flex-grow">
+                    <span className="font-semibold text-sm sm:text-base text-gray-700">Endorsements</span>
+                    {!isLoadingStats && endorsements.length === 0 && (
                       <span className="block text-xs bg-yellow-100 text-yellow-800 font-bold px-2 py-0.5 rounded-full w-fit mt-1">Recommended</span>
-                    </div>
-                    <div className="ml-auto">
-                      <div className="w-4 h-4 border-r-2 border-b-2 border-gray-400 rotate-45"></div>
-                    </div>
-                  </Link>
-                )}
+                    )}
+                  </div>
+                  <div className="ml-auto">
+                    <div className="w-4 h-4 border-r-2 border-b-2 border-gray-400 rotate-45"></div>
+                  </div>
+                </Link>
               </div>
             </div>
           </div>
