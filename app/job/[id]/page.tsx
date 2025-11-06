@@ -137,30 +137,31 @@ export default function JobDetailPage() {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-[#F0F8FF] to-[#E6F0FF] py-12 px-6">
-        <div className="container mx-auto max-w-4xl">
+    <main className="min-h-screen mobile-safe-top mobile-safe-bottom overflow-x-hidden w-full bg-gradient-to-b from-[#F0F8FF] to-[#E6F0FF] py-4 sm:py-6 md:py-12 px-0 sm:px-3 md:px-6">
+        <div className="w-full md:max-w-4xl md:mx-auto min-w-0">
           
           {/* Page Header */}
-          <header className="mb-8">
+          <header className="mb-4 sm:mb-6 md:mb-8 px-2 sm:px-0">
             <button
               onClick={() => router.back()}
-              className="inline-flex items-center text-[#000080] font-semibold hover:text-blue-900 transition-all duration-300 bg-[#ADD8E6]/10 hover:bg-[#ADD8E6]/30 hover:shadow-md hover:scale-105 px-4 py-2 rounded-full group mb-4"
+              className="inline-flex items-center text-[#000080] font-semibold hover:text-blue-900 transition-all duration-300 bg-[#ADD8E6]/10 hover:bg-[#ADD8E6]/30 hover:shadow-md hover:scale-105 px-3 sm:px-4 py-2 rounded-full group mb-3 sm:mb-4 min-h-[44px] text-sm sm:text-base"
             >
               <i className="fa-solid fa-arrow-left mr-2 group-hover:-translate-x-1 transition-transform duration-300"></i>
-              Back to Messages
+              <span className="hidden sm:inline">Back to Messages</span>
+              <span className="sm:hidden">Back</span>
             </button>
-            <h1 className="text-4xl font-bold text-[#000080] mt-4">{job.title}</h1>
-            <p className="text-gray-500 mt-1">Job Details</p>
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-[#000080] mt-3 sm:mt-4 break-words">{job.title}</h1>
+            <p className="text-sm sm:text-base text-gray-500 mt-1">Job Details</p>
           </header>
 
           {/* Job Details Card */}
-          <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
-            <div className="p-8 md:p-10 space-y-8">
+          <div className="w-full min-w-0 bg-white rounded-none sm:rounded-xl md:rounded-2xl shadow-lg overflow-hidden">
+            <div className="p-4 sm:p-6 md:p-8 lg:p-10 space-y-4 sm:space-y-6 md:space-y-8">
               
               {/* Job Summary */}
               <section className="flex flex-col md:flex-row items-start justify-between gap-6">
                 <div className="flex-grow">
-                  <h2 className="text-2xl font-bold text-[#000080]">{job.title}</h2>
+                  <h2 className="text-xl sm:text-2xl font-bold text-[#000080] break-words">{job.title}</h2>
                   
                   {/* Company Name and Website */}
                   {(job.companyName || job.companyWebsite || job.website) && (

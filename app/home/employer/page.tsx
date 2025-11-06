@@ -131,25 +131,25 @@ export default function EmployerHomePage() {
   const isVerified = profile?.status === 'verified' || profile?.role === 'RECRUITER';
 
   return (
-    <main className="min-h-screen mobile-safe-top mobile-safe-bottom" style={{background: 'linear-gradient(180deg, #E6F0FF 0%, #F8FAFC 100%)'}}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
+    <main className="min-h-screen mobile-safe-top mobile-safe-bottom overflow-x-hidden w-full" style={{background: 'linear-gradient(180deg, #E6F0FF 0%, #F8FAFC 100%)'}}>
+      <div className="w-full md:max-w-7xl md:mx-auto px-0 sm:px-3 md:px-6 lg:px-8 py-4 sm:py-6 md:py-10 min-w-0">
         
         {/* Welcome Banner */}
-        <section className="bg-gradient-to-r from-navy to-blue-900 text-white p-4 sm:p-8 rounded-2xl flex items-center justify-between mb-6 sm:mb-8 shadow-lg">
-          <div className="flex items-center space-x-4 sm:space-x-6">
-            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-light-blue/20 flex items-center justify-center border-4 border-white/30 shadow-lg">
-              <span className="text-2xl sm:text-3xl font-bold text-white">{companyInitial}</span>
+        <section className="w-full min-w-0 bg-gradient-to-r from-navy to-blue-900 text-white p-4 sm:p-5 md:p-6 lg:p-8 rounded-none sm:rounded-xl md:rounded-2xl flex flex-col sm:flex-row items-center justify-between mb-3 sm:mb-6 md:mb-8 shadow-lg">
+          <div className="flex items-center space-x-3 sm:space-x-4 md:space-x-6 w-full sm:w-auto">
+            <div className="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-full bg-light-blue/20 flex items-center justify-center border-4 border-white/30 shadow-lg flex-shrink-0">
+              <span className="text-xl sm:text-2xl md:text-3xl font-bold text-white">{companyInitial}</span>
             </div>
-            <div>
-              <h1 className="text-xl sm:text-3xl font-bold">Welcome back, {companyName}! 👋</h1>
-              <p className="text-blue-200 mt-1 text-sm sm:text-base">Ready to find your next talented candidate?</p>
+            <div className="text-center sm:text-left flex-1 min-w-0">
+              <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold break-words">Welcome back, {companyName}! 👋</h1>
+              <p className="text-blue-200 mt-1 text-xs sm:text-sm md:text-base">Ready to find your next talented candidate?</p>
             </div>
           </div>
         </section>
         
         {/* Verification Banner */}
         {profile?.status === 'pending_verification' && (
-          <section className="bg-orange-100/60 border border-orange-200 text-orange-800 p-4 sm:p-6 rounded-2xl flex items-start space-x-3 sm:space-x-4 mb-6 sm:mb-8">
+          <section className="w-full min-w-0 bg-orange-100/60 border-x-0 sm:border border-orange-200 text-orange-800 p-4 sm:p-6 rounded-none sm:rounded-xl md:rounded-2xl flex items-start space-x-3 sm:space-x-4 mb-3 sm:mb-6 md:mb-8">
             <div className="text-orange-500 text-lg sm:text-xl mt-1">
               ⚠️
             </div>
@@ -161,11 +161,11 @@ export default function EmployerHomePage() {
         )}
         
         {/* KPI Cards */}
-        <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-8 mb-6 sm:mb-8">
+        <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-0 sm:gap-3 md:gap-6 lg:gap-8 mb-3 sm:mb-6 md:mb-8 w-full min-w-0">
           {/* Candidates Card */}
           {isVerified ? (
-            <Link href="/employer/candidates-by-job" className="block">
-              <div className="bg-white/90 backdrop-blur-sm p-4 sm:p-6 rounded-2xl shadow-sm border border-light-gray card-hover text-center">
+            <Link href="/employer/candidates-by-job" className="block mb-3 sm:mb-0">
+              <div className="bg-white/90 backdrop-blur-sm p-4 sm:p-5 md:p-6 rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-light-gray card-hover text-center min-h-[120px] sm:min-h-[140px] flex flex-col justify-center">
                 <div className="w-12 h-12 sm:w-14 sm:h-14 mx-auto rounded-full bg-light-blue/30 flex items-center justify-center mb-3">
                   <Users className="h-5 w-5 sm:h-7 sm:w-7 text-navy" />
                 </div>
@@ -174,19 +174,19 @@ export default function EmployerHomePage() {
               </div>
             </Link>
           ) : (
-            <div className="bg-white/90 backdrop-blur-sm p-4 sm:p-6 rounded-2xl shadow-sm border border-light-gray text-center opacity-60 cursor-not-allowed" title="Available after verification">
+            <div className="bg-white/90 backdrop-blur-sm p-4 sm:p-5 md:p-6 rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-light-gray text-center opacity-60 cursor-not-allowed mb-3 sm:mb-0 min-h-[120px] sm:min-h-[140px] flex flex-col justify-center" title="Available after verification">
               <div className="w-12 h-12 sm:w-14 sm:h-14 mx-auto rounded-full bg-slate-200 flex items-center justify-center mb-3">
                 <Users className="h-5 w-5 sm:h-7 sm:w-7 text-slate-500" />
               </div>
-              <p className="text-3xl sm:text-4xl font-extrabold text-slate-600">0</p>
+              <p className="text-3xl sm:text-4xl font-extrabold text-slate-600">{isLoadingStats ? '...' : '0'}</p>
               <p className="text-slate-500 font-medium mt-1 text-sm sm:text-base">Candidates</p>
               <p className="text-xs text-slate-400 mt-1">Available after verification</p>
             </div>
           )}
 
           {/* Messages Card */}
-          <Link href="/messages" className="block">
-            <div className="bg-white/90 backdrop-blur-sm p-4 sm:p-6 rounded-2xl shadow-sm border border-light-gray card-hover text-center">
+          <Link href="/messages" className="block mb-3 sm:mb-0">
+            <div className="bg-white/90 backdrop-blur-sm p-4 sm:p-5 md:p-6 rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-light-gray card-hover text-center min-h-[120px] sm:min-h-[140px] flex flex-col justify-center">
               <div className="w-12 h-12 sm:w-14 sm:h-14 mx-auto rounded-full bg-light-blue/30 flex items-center justify-center mb-3">
                 <MessageSquare className="h-5 w-5 sm:h-7 sm:w-7 text-navy" />
               </div>
@@ -196,8 +196,8 @@ export default function EmployerHomePage() {
           </Link>
 
           {/* Active Jobs Card */}
-          <Link href="/employer/jobs" className="block">
-            <div className="bg-white/90 backdrop-blur-sm p-4 sm:p-6 rounded-2xl shadow-sm border border-light-gray card-hover text-center">
+          <Link href="/employer/jobs" className="block mb-3 sm:mb-0">
+            <div className="bg-white/90 backdrop-blur-sm p-4 sm:p-5 md:p-6 rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-light-gray card-hover text-center min-h-[120px] sm:min-h-[140px] flex flex-col justify-center">
               <div className="w-12 h-12 sm:w-14 sm:h-14 mx-auto rounded-full bg-light-blue/30 flex items-center justify-center mb-3">
                 <TrendingUp className="h-5 w-5 sm:h-7 sm:w-7 text-navy" />
               </div>
@@ -208,16 +208,16 @@ export default function EmployerHomePage() {
         </section>
 
         {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-8">
+        <div className="grid grid-cols-12 lg:grid-cols-3 gap-0 sm:gap-3 md:gap-4 lg:gap-6 xl:gap-8 w-full max-w-full min-w-0">
           {/* Left Column - Main Content */}
-          <div className="lg:col-span-2 space-y-4 sm:space-y-8">
+          <div className="col-span-12 lg:col-span-2 space-y-0 sm:space-y-3 md:space-y-4 lg:space-y-6 xl:space-y-8 w-full max-w-full min-w-0 px-0">
             {/* Manage Jobs Card */}
-            <div className="bg-white/90 backdrop-blur-sm p-4 sm:p-8 rounded-2xl shadow-sm border border-light-gray card-hover">
-              <div className="flex justify-between items-center mb-4 sm:mb-6">
-                <h2 className="text-lg sm:text-xl font-bold text-navy">Manage Jobs</h2>
+            <div className="w-full min-w-0 bg-white/90 backdrop-blur-sm p-4 sm:p-6 md:p-8 rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-light-gray card-hover mb-3 sm:mb-0">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0 mb-4 sm:mb-6">
+                <h2 className="text-base sm:text-lg md:text-xl font-bold text-navy">Manage Jobs</h2>
                 <Link
                   href="/employer/job/new"
-                  className="bg-navy text-white font-semibold py-2 sm:py-2.5 px-4 sm:px-5 rounded-lg hover:bg-blue-900 transition-colors duration-200 shadow-md hover:shadow-lg flex items-center space-x-2 text-sm sm:text-base"
+                  className="bg-navy text-white font-semibold py-2.5 sm:py-2.5 px-4 sm:px-5 rounded-lg hover:bg-blue-900 transition-colors duration-200 shadow-md hover:shadow-lg flex items-center justify-center space-x-2 text-sm sm:text-base min-h-[44px] w-full sm:w-auto"
                 >
                   <Building className="h-4 w-4" />
                   <span>Post New Job</span>
@@ -227,25 +227,25 @@ export default function EmployerHomePage() {
             </div>
 
             {/* Company Ratings Card */}
-            <div className="bg-white/90 backdrop-blur-sm p-4 sm:p-8 rounded-2xl shadow-sm border border-light-gray card-hover">
-              <h2 className="text-lg sm:text-xl font-bold text-navy mb-4 sm:mb-6">Company Ratings</h2>
+            <div className="w-full min-w-0 bg-white/90 backdrop-blur-sm p-4 sm:p-6 md:p-8 rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-light-gray card-hover mb-3 sm:mb-0">
+              <h2 className="text-base sm:text-lg md:text-xl font-bold text-navy mb-4 sm:mb-6">Company Ratings</h2>
               <CompanyRatingDisplay employerId={user.uid} showDetails={true} />
             </div>
           </div>
 
           {/* Right Column - Sidebar */}
-          <div className="lg:col-span-1 space-y-4 sm:space-y-8">
+          <div className="col-span-12 lg:col-span-1 w-full max-w-full px-0">
             {/* Quick Actions Card */}
-            <div className="bg-white/90 backdrop-blur-sm p-4 sm:p-6 rounded-2xl shadow-sm border border-light-gray card-hover">
+            <div className="w-full bg-white/90 backdrop-blur-sm p-4 sm:p-5 md:p-6 rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-light-gray card-hover mb-3 sm:mb-0 lg:sticky lg:top-28">
               <h2 className="text-lg sm:text-xl font-bold text-navy mb-4 sm:mb-5 px-2">Quick Actions</h2>
               <div className="space-y-2">
                 {/* Search Candidates */}
                 {isVerified ? (
                   <Link
                     href="/search/candidates"
-                    className="flex items-center p-3 sm:p-4 rounded-lg action-row-hover"
+                    className="flex items-center p-3 sm:p-4 rounded-lg action-row-hover min-h-[56px] active:bg-light-blue/30 transition-colors"
                   >
-                    <div className="w-8 h-8 sm:w-10 sm:h-10 bg-light-blue/30 rounded-lg flex items-center justify-center mr-3 sm:mr-4">
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 bg-light-blue/30 rounded-lg flex items-center justify-center mr-3 sm:mr-4 flex-shrink-0">
                       <Search className="h-4 w-4 sm:h-5 sm:w-5 text-navy" />
                     </div>
                     <span className="font-semibold text-gray-700 text-sm sm:text-base">Search Candidates</span>
@@ -254,11 +254,11 @@ export default function EmployerHomePage() {
                     </div>
                   </Link>
                 ) : (
-                  <div className="flex items-center p-3 sm:p-4 rounded-lg cursor-not-allowed opacity-50" title="Available after company verification">
-                    <div className="w-8 h-8 sm:w-10 sm:h-10 bg-slate-200 rounded-lg flex items-center justify-center mr-3 sm:mr-4">
+                  <div className="flex items-center p-3 sm:p-4 rounded-lg cursor-not-allowed opacity-50 min-h-[56px]" title="Available after company verification">
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 bg-slate-200 rounded-lg flex items-center justify-center mr-3 sm:mr-4 flex-shrink-0">
                       <Search className="h-4 w-4 sm:h-5 sm:w-5 text-slate-500" />
                     </div>
-                    <div className="flex-grow">
+                    <div className="flex-grow min-w-0">
                       <span className="font-semibold text-gray-500 text-sm sm:text-base">Search Candidates</span>
                       <span className="text-xs text-gray-400 block">Available after verification</span>
                     </div>
@@ -271,9 +271,9 @@ export default function EmployerHomePage() {
                 {/* View Messages */}
                 <Link
                   href="/messages"
-                  className="flex items-center p-3 sm:p-4 rounded-lg action-row-hover"
+                  className="flex items-center p-3 sm:p-4 rounded-lg action-row-hover min-h-[56px] active:bg-light-blue/30 transition-colors"
                 >
-                  <div className="w-8 h-8 sm:w-10 sm:h-10 bg-light-blue/30 rounded-lg flex items-center justify-center mr-3 sm:mr-4">
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 bg-light-blue/30 rounded-lg flex items-center justify-center mr-3 sm:mr-4 flex-shrink-0">
                     <MessageSquare className="h-4 w-4 sm:h-5 sm:w-5 text-navy" />
                   </div>
                   <span className="font-semibold text-gray-700 text-sm sm:text-base">View Messages</span>
@@ -285,9 +285,9 @@ export default function EmployerHomePage() {
                 {/* Post New Job */}
                 <Link
                   href="/employer/job/new"
-                  className="flex items-center p-3 sm:p-4 rounded-lg action-row-hover"
+                  className="flex items-center p-3 sm:p-4 rounded-lg action-row-hover min-h-[56px] active:bg-light-blue/30 transition-colors"
                 >
-                  <div className="w-8 h-8 sm:w-10 sm:h-10 bg-light-blue/30 rounded-lg flex items-center justify-center mr-3 sm:mr-4">
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 bg-light-blue/30 rounded-lg flex items-center justify-center mr-3 sm:mr-4 flex-shrink-0">
                     <Building className="h-4 w-4 sm:h-5 sm:w-5 text-navy" />
                   </div>
                   <span className="font-semibold text-gray-700 text-sm sm:text-base">Post New Job</span>
@@ -300,9 +300,9 @@ export default function EmployerHomePage() {
                 {profile?.status === 'pending_verification' && (
                   <Link
                     href="/account/company"
-                    className="flex items-center p-3 sm:p-4 rounded-lg bg-yellow-100/60 hover:bg-yellow-100"
+                    className="flex items-center p-3 sm:p-4 rounded-lg bg-yellow-100/60 hover:bg-yellow-100 active:bg-yellow-200 min-h-[56px] transition-colors"
                   >
-                    <div className="w-8 h-8 sm:w-10 sm:h-10 bg-yellow-200/80 rounded-lg flex items-center justify-center mr-3 sm:mr-4">
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 bg-yellow-200/80 rounded-lg flex items-center justify-center mr-3 sm:mr-4 flex-shrink-0">
                       <Star className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-700" />
                     </div>
                     <span className="font-semibold text-yellow-800 text-sm sm:text-base">Get Verified</span>
@@ -315,7 +315,7 @@ export default function EmployerHomePage() {
             </div>
 
             {/* Company Profile Card */}
-            <div className="bg-white/90 backdrop-blur-sm p-4 sm:p-6 rounded-2xl shadow-sm border border-light-gray card-hover">
+            <div className="w-full bg-white/90 backdrop-blur-sm p-4 sm:p-5 md:p-6 rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-light-gray card-hover">
               <h2 className="text-lg sm:text-xl font-bold text-navy mb-4 sm:mb-5 px-2">Company Profile</h2>
               <div className="space-y-4">
                 <div className="px-2">
@@ -332,9 +332,9 @@ export default function EmployerHomePage() {
                 {profile?.isCompanyOwner ? (
                   <Link
                     href="/account/company"
-                    className="flex items-center p-3 sm:p-4 rounded-lg action-row-hover"
+                    className="flex items-center p-3 sm:p-4 rounded-lg action-row-hover min-h-[56px] active:bg-light-blue/30 transition-colors"
                   >
-                    <div className="w-8 h-8 sm:w-10 sm:h-10 bg-light-blue/30 rounded-lg flex items-center justify-center mr-3 sm:mr-4">
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 bg-light-blue/30 rounded-lg flex items-center justify-center mr-3 sm:mr-4 flex-shrink-0">
                       <Building className="h-4 w-4 sm:h-5 sm:w-5 text-navy" />
                     </div>
                     <span className="font-semibold text-gray-700 text-sm sm:text-base">Edit Company Profile</span>
@@ -345,9 +345,9 @@ export default function EmployerHomePage() {
                 ) : (
                   <Link
                     href="/company/view"
-                    className="flex items-center p-3 sm:p-4 rounded-lg action-row-hover"
+                    className="flex items-center p-3 sm:p-4 rounded-lg action-row-hover min-h-[56px] active:bg-light-blue/30 transition-colors"
                   >
-                    <div className="w-8 h-8 sm:w-10 sm:h-10 bg-light-blue/30 rounded-lg flex items-center justify-center mr-3 sm:mr-4">
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 bg-light-blue/30 rounded-lg flex items-center justify-center mr-3 sm:mr-4 flex-shrink-0">
                       <Building className="h-4 w-4 sm:h-5 sm:w-5 text-navy" />
                     </div>
                     <span className="font-semibold text-gray-700 text-sm sm:text-base">View Company Profile</span>
@@ -361,9 +361,9 @@ export default function EmployerHomePage() {
                 {profile?.isCompanyOwner && (
                   <Link
                     href="/company/manage/recruiters"
-                    className="flex items-center p-3 sm:p-4 rounded-lg action-row-hover"
+                    className="flex items-center p-3 sm:p-4 rounded-lg action-row-hover min-h-[56px] active:bg-light-blue/30 transition-colors"
                   >
-                    <div className="w-8 h-8 sm:w-10 sm:h-10 bg-light-blue/30 rounded-lg flex items-center justify-center mr-3 sm:mr-4">
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 bg-light-blue/30 rounded-lg flex items-center justify-center mr-3 sm:mr-4 flex-shrink-0">
                       <Users className="h-4 w-4 sm:h-5 sm:w-5 text-navy" />
                     </div>
                     <span className="font-semibold text-gray-700 text-sm sm:text-base">Manage Recruiters</span>

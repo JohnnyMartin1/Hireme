@@ -97,49 +97,50 @@ export default function SavedCandidatesPage() {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50">
-      <div className="max-w-6xl mx-auto p-6">
+    <main className="min-h-screen mobile-safe-top mobile-safe-bottom overflow-x-hidden w-full bg-gradient-to-br from-green-50 via-white to-emerald-50">
+      <div className="w-full md:max-w-6xl md:mx-auto px-0 sm:px-3 md:p-6 py-4 sm:py-6 min-w-0">
         {/* Header */}
-        <div className="mb-8">
+        <div className="mb-4 sm:mb-6 md:mb-8 px-2 sm:px-0">
           <Link 
             href="/home/employer"
-            className="inline-flex items-center text-green-600 hover:text-green-800 transition-colors mb-4"
+            className="inline-flex items-center text-green-600 hover:text-green-800 transition-colors mb-3 sm:mb-4 min-h-[44px] text-sm sm:text-base"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Dashboard
+            <span className="hidden sm:inline">Back to Dashboard</span>
+            <span className="sm:hidden">Back</span>
           </Link>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Saved Candidates</h1>
-          <p className="text-gray-600">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2 break-words">Saved Candidates</h1>
+          <p className="text-sm sm:text-base text-gray-600 break-words">
             {savedCandidates.length} candidate{savedCandidates.length !== 1 ? 's' : ''} saved
           </p>
         </div>
 
         {/* Error Message */}
         {error && (
-          <div className="mb-6 p-4 bg-red-50 text-red-800 rounded-lg">
+          <div className="mb-3 sm:mb-4 md:mb-6 p-3 sm:p-4 bg-red-50 text-red-800 rounded-lg text-sm sm:text-base px-2 sm:px-0">
             {error}
           </div>
         )}
 
         {/* Saved Candidates */}
         {savedCandidates.length === 0 ? (
-          <div className="bg-white rounded-xl shadow-lg p-12 text-center">
-            <Heart className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">No saved candidates yet</h2>
-            <p className="text-gray-600 mb-6">
+          <div className="w-full min-w-0 bg-white rounded-none sm:rounded-xl shadow-lg p-8 sm:p-10 md:p-12 text-center">
+            <Heart className="h-12 w-12 sm:h-14 sm:w-14 md:h-16 md:w-16 text-gray-300 mx-auto mb-4" />
+            <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2 px-4">No saved candidates yet</h2>
+            <p className="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6 px-4 break-words">
               When you find candidates you're interested in, click the "Save" button to add them here.
             </p>
             <Link
               href="/search/candidates"
-              className="inline-flex items-center px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+              className="inline-flex items-center px-4 sm:px-6 py-2.5 sm:py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors min-h-[44px] text-sm sm:text-base"
             >
               Search Candidates
             </Link>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
             {savedCandidates.map((candidate) => (
-              <div key={candidate.id} className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow">
+              <div key={candidate.id} className="w-full min-w-0 bg-white rounded-none sm:rounded-xl shadow-lg p-4 sm:p-5 md:p-6 hover:shadow-xl transition-shadow">
                 <div className="flex items-start justify-between mb-4">
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900">

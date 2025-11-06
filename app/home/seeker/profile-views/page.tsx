@@ -213,28 +213,28 @@ export default function ProfileViewersPage() {
           </div>
         </header>
 
-        <main className="min-h-screen">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <main className="min-h-screen mobile-safe-top mobile-safe-bottom overflow-x-hidden w-full">
+          <div className="w-full md:max-w-6xl md:mx-auto px-0 sm:px-3 md:px-6 lg:px-8 py-4 sm:py-6 md:py-12 min-w-0">
             {/* Page Header */}
-            <section className="mb-10 fade-up">
-              <div className="text-center mb-8">
-                <h1 className="text-4xl font-bold text-navy mb-4">Companies that viewed your profile</h1>
-                <p className="text-lg text-gray-600 mb-4">See who's interested in you and follow up confidently.</p>
-                <div className="inline-flex items-center space-x-2 bg-light-blue/20 px-4 py-2 rounded-full border border-light-blue/30">
-                  <i className="fa-solid fa-lock text-navy text-sm"></i>
-                  <span className="text-sm font-semibold text-navy">Private to you</span>
+            <section className="mb-4 sm:mb-6 md:mb-10 fade-up px-2 sm:px-0">
+              <div className="text-center mb-4 sm:mb-6 md:mb-8">
+                <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-navy mb-3 sm:mb-4 px-4 break-words">Companies that viewed your profile</h1>
+                <p className="text-sm sm:text-base md:text-lg text-gray-600 mb-3 sm:mb-4 px-4 break-words">See who's interested in you and follow up confidently.</p>
+                <div className="inline-flex items-center space-x-2 bg-light-blue/20 px-3 sm:px-4 py-2 rounded-full border border-light-blue/30">
+                  <i className="fa-solid fa-lock text-navy text-xs sm:text-sm"></i>
+                  <span className="text-xs sm:text-sm font-semibold text-navy">Private to you</span>
                 </div>
               </div>
-              <div className="text-center mb-6">
-                <p className="text-sm text-gray-500">Only you can see this list. Employers are not notified when you view this page.</p>
-                <button className="text-light-blue hover:text-navy text-sm font-semibold underline decoration-2 underline-offset-4 mt-2">
+              <div className="text-center mb-4 sm:mb-6 px-2">
+                <p className="text-xs sm:text-sm text-gray-500 break-words">Only you can see this list. Employers are not notified when you view this page.</p>
+                <button className="text-light-blue hover:text-navy text-xs sm:text-sm font-semibold underline decoration-2 underline-offset-4 mt-2 min-h-[44px]">
                   How to turn views into interviews →
                 </button>
               </div>
             </section>
 
             {/* Toolbar */}
-            <section className="sticky top-24 z-40 bg-white/90 backdrop-blur-md p-6 rounded-2xl shadow-sm border border-light-gray mb-8 fade-up fade-up-delay-1">
+            <section className="sticky top-16 sm:top-20 md:top-24 z-40 bg-white/90 backdrop-blur-md p-4 sm:p-5 md:p-6 rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-light-gray mb-3 sm:mb-6 md:mb-8 fade-up fade-up-delay-1 mobile-safe-top">
               <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
                 <div className="flex-1 w-full lg:w-auto">
                   <div className="relative">
@@ -244,13 +244,13 @@ export default function ProfileViewersPage() {
                       placeholder="Search by company name or domain..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full pl-12 pr-4 py-3 border border-light-gray rounded-xl focus:outline-none focus:ring-2 focus:ring-light-blue focus:border-transparent"
+                      className="w-full pl-10 sm:pl-12 pr-4 py-3 text-base border border-light-gray rounded-xl focus:outline-none focus:ring-2 focus:ring-light-blue focus:border-transparent min-h-[44px]"
                     />
                   </div>
                 </div>
                 
-                <div className="flex items-center space-x-4">
-                  <button className="flex items-center space-x-2 px-4 py-3 border border-light-gray rounded-xl hover:bg-light-blue/10 transition-colors">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4 w-full sm:w-auto">
+                  <button className="flex items-center justify-center space-x-2 px-4 py-3 border border-light-gray rounded-xl hover:bg-light-blue/10 transition-colors min-h-[44px] text-sm sm:text-base w-full sm:w-auto">
                     <i className="fa-solid fa-filter text-navy"></i>
                     <span className="font-semibold text-navy">Filters</span>
                   </button>
@@ -258,7 +258,7 @@ export default function ProfileViewersPage() {
                   <select 
                     value={sortOption}
                     onChange={(e) => setSortOption(e.target.value)}
-                    className="px-4 py-3 border border-light-gray rounded-xl focus:outline-none focus:ring-2 focus:ring-light-blue font-semibold text-navy"
+                    className="px-4 py-3 text-base border border-light-gray rounded-xl focus:outline-none focus:ring-2 focus:ring-light-blue font-semibold text-navy min-h-[44px] w-full sm:w-auto"
                   >
                     <option>Most recent</option>
                     <option>Most views</option>
@@ -288,28 +288,28 @@ export default function ProfileViewersPage() {
             {/* Company Results */}
             <section className="space-y-6">
               {isLoading ? (
-                <div className="text-center py-12">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-navy mx-auto mb-4"></div>
-                  <p className="text-gray-600">Loading companies...</p>
+                <div className="w-full min-w-0 text-center py-12 px-2 sm:px-0">
+                  <div className="animate-spin rounded-full h-10 w-10 sm:h-12 sm:w-12 border-b-2 border-navy mx-auto mb-4"></div>
+                  <p className="text-sm sm:text-base text-gray-600">Loading companies...</p>
                 </div>
               ) : companies.length === 0 ? (
-                <div className="text-center py-16 bg-white/90 backdrop-blur-sm rounded-2xl border border-light-gray">
-                  <div className="w-20 h-20 mx-auto mb-6 bg-light-blue/20 rounded-full flex items-center justify-center">
-                    <i className="fa-solid fa-building text-navy text-3xl"></i>
+                <div className="w-full min-w-0 text-center py-12 sm:py-16 bg-white/90 backdrop-blur-sm rounded-none sm:rounded-xl md:rounded-2xl border-x-0 sm:border border-light-gray px-4">
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-4 sm:mb-6 bg-light-blue/20 rounded-full flex items-center justify-center">
+                    <i className="fa-solid fa-building text-navy text-2xl sm:text-3xl"></i>
                   </div>
-                  <h3 className="text-2xl font-bold text-navy mb-3">No companies yet</h3>
-                  <p className="text-gray-600 max-w-md mx-auto">
+                  <h3 className="text-xl sm:text-2xl font-bold text-navy mb-3 break-words">No companies yet</h3>
+                  <p className="text-sm sm:text-base text-gray-600 max-w-md mx-auto break-words">
                     No companies have viewed your profile yet. Keep your profile updated and complete to attract more employers.
                   </p>
                 </div>
               ) : (
                 <>
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
                     {companies.map((company, index) => (
                   <div 
                     key={company.id}
                     onClick={() => openDrawer(company)}
-                    className={`bg-white/90 backdrop-blur-sm p-6 rounded-2xl shadow-sm border border-light-gray card-hover cursor-pointer fade-up fade-up-delay-${index + 2}`}
+                    className={`w-full min-w-0 bg-white/90 backdrop-blur-sm p-4 sm:p-5 md:p-6 rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-light-gray card-hover cursor-pointer fade-up fade-up-delay-${index + 2} mb-3 sm:mb-0`}
                     tabIndex={0}
                   >
                     <div className="flex items-start space-x-4">

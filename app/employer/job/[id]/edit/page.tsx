@@ -145,16 +145,16 @@ export default function EditJobPage({ params }: { params: { id: string } }) {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
-      <div className="max-w-4xl mx-auto p-6">
-        <div className="mb-6">
+    <div className="min-h-screen mobile-safe-top mobile-safe-bottom overflow-x-hidden w-full bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+      <div className="w-full md:max-w-4xl md:mx-auto px-0 sm:px-3 md:p-6 py-4 sm:py-6 min-w-0">
+        <div className="mb-4 sm:mb-6 px-2 sm:px-0">
           <BackButton />
-          <h1 className="text-3xl font-bold text-gray-900 mt-4">Edit Job</h1>
-          <p className="text-gray-600 mt-2">Update your job posting details</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mt-3 sm:mt-4 break-words">Edit Job</h1>
+          <p className="text-sm sm:text-base text-gray-600 mt-2 break-words">Update your job posting details</p>
         </div>
 
-        <div className="bg-white rounded-xl shadow-lg p-8">
-          <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="w-full min-w-0 bg-white rounded-none sm:rounded-xl shadow-lg p-4 sm:p-6 md:p-8">
+          <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
             {/* Job Title */}
             <div>
               <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
@@ -165,7 +165,7 @@ export default function EditJobPage({ params }: { params: { id: string } }) {
                 id="title"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[44px]"
                 placeholder="e.g., Senior Software Engineer"
                 required
               />
@@ -181,7 +181,7 @@ export default function EditJobPage({ params }: { params: { id: string } }) {
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={6}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none min-h-[120px]"
                 placeholder="Describe the role, responsibilities, and requirements..."
                 required
               />
@@ -211,7 +211,7 @@ export default function EditJobPage({ params }: { params: { id: string } }) {
                   id="employment"
                   value={employment}
                   onChange={(e) => setEmployment(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[44px]"
                 >
                   <option value="FULL_TIME">Full-time</option>
                   <option value="PART_TIME">Part-time</option>
@@ -227,7 +227,7 @@ export default function EditJobPage({ params }: { params: { id: string } }) {
                   id="workMode"
                   value={workMode}
                   onChange={(e) => setWorkMode(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[44px]"
                 >
                   <option value="IN_PERSON">In-person</option>
                   <option value="HYBRID">Hybrid</option>
@@ -247,7 +247,7 @@ export default function EditJobPage({ params }: { params: { id: string } }) {
                   id="salaryMin"
                   value={salaryMin}
                   onChange={(e) => setSalaryMin(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[44px]"
                   placeholder="e.g., 80000"
                   min="0"
                 />
@@ -261,7 +261,7 @@ export default function EditJobPage({ params }: { params: { id: string } }) {
                   id="salaryMax"
                   value={salaryMax}
                   onChange={(e) => setSalaryMax(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[44px]"
                   placeholder="e.g., 120000"
                   min="0"
                 />
@@ -278,7 +278,7 @@ export default function EditJobPage({ params }: { params: { id: string } }) {
                 id="tags"
                 value={tags}
                 onChange={(e) => setTags(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[44px]"
                 placeholder="e.g., React, TypeScript, Node.js"
               />
             </div>
@@ -302,7 +302,7 @@ export default function EditJobPage({ params }: { params: { id: string } }) {
               <button
                 type="submit"
                 disabled={isSaving || !title.trim() || !description.trim()}
-                className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
+                className="flex-1 px-4 sm:px-6 py-2.5 sm:py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center min-h-[44px] text-sm sm:text-base w-full sm:w-auto"
               >
                 {isSaving ? (
                   <>

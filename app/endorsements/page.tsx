@@ -64,40 +64,41 @@ export default function EndorsementsPage() {
   }
 
   return (
-    <main className="min-h-screen" style={{background: 'linear-gradient(180deg, #E6F0FF 0%, #F0F8FF 40%, #F8FAFC 100%)'}}>
-      <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-6 space-y-6">
+    <main className="min-h-screen mobile-safe-top mobile-safe-bottom overflow-x-hidden w-full" style={{background: 'linear-gradient(180deg, #E6F0FF 0%, #F0F8FF 40%, #F8FAFC 100%)'}}>
+      <div className="w-full md:max-w-7xl md:mx-auto px-0 sm:px-3 md:px-6 lg:px-8 py-4 sm:py-6 space-y-3 sm:space-y-4 md:space-y-6 min-w-0">
         
         {/* Back to Dashboard Link */}
-        <div className="mb-10">
+        <div className="mb-4 sm:mb-6 md:mb-10 px-2 sm:px-0">
           <Link 
             href="/home/seeker"
-            className="inline-flex items-center text-navy font-semibold hover:text-blue-900 transition-all duration-300 bg-light-blue/10 hover:bg-light-blue/30 hover:shadow-md hover:scale-105 px-4 py-2 rounded-full group"
+            className="inline-flex items-center text-navy font-semibold hover:text-blue-900 transition-all duration-300 bg-light-blue/10 hover:bg-light-blue/30 hover:shadow-md hover:scale-105 px-3 sm:px-4 py-2 rounded-full group min-h-[44px] text-sm sm:text-base"
           >
             <ArrowLeft className="h-4 w-4 mr-2 group-hover:-translate-x-1 transition-transform duration-300" />
-            Back to Dashboard
+            <span className="hidden sm:inline">Back to Dashboard</span>
+            <span className="sm:hidden">Back</span>
           </Link>
         </div>
 
         {/* Page Header */}
-        <header className="mb-10">
-          <div className="flex items-center space-x-4">
-            <Star className="h-12 w-12 text-yellow-400" />
-            <div>
-              <h1 className="text-4xl font-extrabold text-navy">Your Endorsements</h1>
-              <p className="text-gray-500 mt-1 text-lg">Professional recommendations from colleagues, managers, and peers.</p>
+        <header className="mb-4 sm:mb-6 md:mb-10 px-2 sm:px-0">
+          <div className="flex items-center space-x-3 sm:space-x-4">
+            <Star className="h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 text-yellow-400 flex-shrink-0" />
+            <div className="min-w-0">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-navy break-words">Your Endorsements</h1>
+              <p className="text-sm sm:text-base md:text-lg text-gray-500 mt-1 break-words">Professional recommendations from colleagues, managers, and peers.</p>
             </div>
           </div>
         </header>
 
         {/* Endorsement Summary Card */}
-        <section className="bg-white/90 backdrop-blur-sm p-8 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between mb-8 hover:shadow-lg transition-all duration-200">
-          <div>
-            <h2 className="text-xl font-bold text-navy">Endorsement Summary</h2>
-            <p className="text-gray-600 mt-1">You have received <span className="font-bold text-navy">{endorsements.length}</span> endorsements.</p>
+        <section className="w-full min-w-0 bg-white/90 backdrop-blur-sm p-4 sm:p-6 md:p-8 rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-slate-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-0 mb-3 sm:mb-6 md:mb-8 hover:shadow-lg transition-all duration-200">
+          <div className="min-w-0 flex-1">
+            <h2 className="text-base sm:text-lg md:text-xl font-bold text-navy">Endorsement Summary</h2>
+            <p className="text-sm sm:text-base text-gray-600 mt-1 break-words">You have received <span className="font-bold text-navy">{endorsements.length}</span> endorsements.</p>
           </div>
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
             <div className="text-right">
-              <p className="text-5xl font-extrabold text-yellow-500">{endorsements.length}</p>
+              <p className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-yellow-500">{endorsements.length}</p>
               <p className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Total Endorsements</p>
             </div>
           </div>
@@ -151,12 +152,12 @@ export default function EndorsementsPage() {
 
         {/* Empty State Card */}
         {endorsements.length === 0 ? (
-          <section className="bg-white/90 backdrop-blur-sm p-8 rounded-2xl shadow-sm border border-slate-200 text-center hover:shadow-lg transition-all duration-200">
-            <div className="w-24 h-24 mx-auto bg-slate-100 rounded-full flex items-center justify-center mb-6">
-              <Star className="h-12 w-12 text-slate-400" />
+          <section className="w-full min-w-0 bg-white/90 backdrop-blur-sm p-6 sm:p-8 rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-slate-200 text-center hover:shadow-lg transition-all duration-200">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 mx-auto bg-slate-100 rounded-full flex items-center justify-center mb-4 sm:mb-6">
+              <Star className="h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 text-slate-400" />
             </div>
-            <h2 className="text-2xl font-bold text-navy">No endorsements yet</h2>
-            <p className="text-gray-500 mt-2 max-w-md mx-auto">Start building your professional reputation by sharing your endorsement link with colleagues and mentors.</p>
+            <h2 className="text-xl sm:text-2xl font-bold text-navy px-4">No endorsements yet</h2>
+            <p className="text-sm sm:text-base text-gray-500 mt-2 max-w-md mx-auto px-4 break-words">Start building your professional reputation by sharing your endorsement link with colleagues and mentors.</p>
             <div className="mt-8 bg-light-blue/20 border border-light-blue/50 rounded-xl p-6 max-w-sm mx-auto text-left">
               <h3 className="font-bold text-navy mb-4">Share your link with:</h3>
               <ul className="space-y-3 text-gray-700">
@@ -181,12 +182,12 @@ export default function EndorsementsPage() {
           </section>
         ) : (
           /* Endorsements List */
-          <div className="space-y-6">
+          <div className="space-y-3 sm:space-y-4 md:space-y-6">
             {endorsements.map((endorsement: any, index: number) => (
-              <div key={index} className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-sm border border-slate-200 p-6 hover:shadow-lg transition-all duration-200">
+              <div key={index} className="w-full min-w-0 bg-white/90 backdrop-blur-sm rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-slate-200 p-4 sm:p-5 md:p-6 hover:shadow-lg transition-all duration-200 mb-3 sm:mb-0">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex-1">
-                    <h4 className="text-lg font-semibold text-gray-900 mb-2">{endorsement.skill}</h4>
+                    <h4 className="text-base sm:text-lg font-semibold text-gray-900 mb-2 break-words">{endorsement.skill}</h4>
                     <div className="flex items-center text-gray-600 mb-2">
                       <User className="h-4 w-4 mr-2" />
                       <span className="font-medium">{endorsement.endorserName}</span>

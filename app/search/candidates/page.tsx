@@ -392,27 +392,28 @@ export default function SearchCandidatesPage() {
   const filterCount = [selectedUniversities.length > 0 ? 1 : 0, isTop25Selected ? 1 : 0, selectedMajors.length, selectedLocations.length, selectedSkills.length, hasVideo, hasResume, hasProfileImage, hasBio, searchTerm.trim() ? 1 : 0, selectedJobId ? 1 : 0].filter(Boolean).length;
 
   return (
-    <div className="min-h-screen" style={{background: 'linear-gradient(180deg, #E6F0FF 0%, #F8FAFC 100%)'}}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <div className="min-h-screen mobile-safe-top mobile-safe-bottom overflow-x-hidden w-full" style={{background: 'linear-gradient(180deg, #E6F0FF 0%, #F8FAFC 100%)'}}>
+      <div className="w-full md:max-w-7xl md:mx-auto px-0 sm:px-3 md:px-6 lg:px-8 py-4 sm:py-6 md:py-10 min-w-0">
         {/* Breadcrumb */}
-        <section className="mb-8">
+        <section className="mb-4 sm:mb-6 md:mb-8 px-2 sm:px-0">
           <Link 
             href="/home/employer"
-            className="flex items-center text-navy font-semibold hover:text-blue-900 transition-colors duration-200 bg-light-blue/10 hover:bg-light-blue/20 px-4 py-2 rounded-full w-fit"
+            className="flex items-center text-navy font-semibold hover:text-blue-900 transition-colors duration-200 bg-light-blue/10 hover:bg-light-blue/20 px-3 sm:px-4 py-2 rounded-full w-fit min-h-[44px] text-sm sm:text-base"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Dashboard
+            <span className="hidden sm:inline">Back to Dashboard</span>
+            <span className="sm:hidden">Back</span>
           </Link>
         </section>
 
         {/* Page Header */}
-        <section className="mb-10">
-          <h1 className="text-4xl font-bold text-navy mb-2">Find Your Perfect Candidate</h1>
-          <p className="text-gray-600 text-lg">Search through talented job seekers to find the right fit for your company.</p>
+        <section className="mb-4 sm:mb-6 md:mb-10 px-2 sm:px-0">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-navy mb-2 break-words">Find Your Perfect Candidate</h1>
+          <p className="text-sm sm:text-base md:text-lg text-gray-600 break-words">Search through talented job seekers to find the right fit for your company.</p>
         </section>
 
         {/* Search Toolbar */}
-        <section className="sticky top-20 z-30 bg-white/90 backdrop-blur-sm p-6 rounded-2xl shadow-sm border border-light-gray mb-8">
+        <section className="sticky top-16 sm:top-20 z-30 bg-white/90 backdrop-blur-sm p-4 sm:p-5 md:p-6 rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-light-gray mb-3 sm:mb-6 md:mb-8 mobile-safe-top">
           <div className="flex flex-col lg:flex-row gap-4 items-stretch lg:items-center">
             <div className="flex-1 relative">
               <input 
@@ -425,20 +426,20 @@ export default function SearchCandidatesPage() {
                     handleSearch();
                   }
                 }}
-                className="w-full px-4 py-3 pl-12 border border-gray-300 rounded-lg bg-white focus:outline-none focus:border-navy focus:ring-4 focus:ring-navy/10 transition-all duration-200"
+                className="w-full px-4 py-3 pl-10 sm:pl-12 text-base border border-gray-300 rounded-lg bg-white focus:outline-none focus:border-navy focus:ring-2 sm:focus:ring-4 focus:ring-navy/10 transition-all duration-200 min-h-[44px]"
                 aria-label="Search candidates"
               />
-              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <Search className="absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 text-gray-400" />
             </div>
-            <div className="flex gap-3">
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
               <button 
                 onClick={() => setShowFilters(!showFilters)}
-                className="relative bg-white border border-gray-300 text-gray-700 font-semibold py-3 px-6 rounded-lg hover:bg-gray-50 hover:shadow-sm transition-all duration-200 flex items-center space-x-2"
+                className="relative bg-white border border-gray-300 text-gray-700 font-semibold py-2.5 sm:py-3 px-4 sm:px-6 rounded-lg hover:bg-gray-50 hover:shadow-sm transition-all duration-200 flex items-center justify-center space-x-2 min-h-[44px] text-sm sm:text-base"
               >
                 <Filter className="h-4 w-4" />
                 <span>Filters</span>
                 {hasActiveFilters && (
-                  <div className="absolute -top-2 -right-2 bg-navy text-white text-xs rounded-full w-6 h-6 flex items-center justify-center">
+                  <div className="absolute -top-2 -right-2 bg-navy text-white text-xs rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center">
                     {filterCount}
                   </div>
                 )}
@@ -446,7 +447,7 @@ export default function SearchCandidatesPage() {
               <button 
                 onClick={handleSearch}
                 disabled={isLoading}
-                className="bg-navy text-white font-semibold py-3 px-8 rounded-lg hover:bg-blue-900 hover:shadow-md transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+                className="bg-navy text-white font-semibold py-2.5 sm:py-3 px-4 sm:px-6 md:px-8 rounded-lg hover:bg-blue-900 hover:shadow-md transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 min-h-[44px] text-sm sm:text-base w-full sm:w-auto"
               >
                 {isLoading ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -656,37 +657,37 @@ export default function SearchCandidatesPage() {
 
         {/* Results Grid */}
         {isInitialLoad && !isLoading ? (
-          <div className="text-center py-16 bg-white rounded-2xl shadow-sm border border-gray-200">
-            <Search className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-500">Use the search bar above to find candidates</p>
+          <div className="w-full min-w-0 text-center py-12 sm:py-16 bg-white rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-gray-200">
+            <Search className="h-10 w-10 sm:h-12 sm:w-12 text-gray-300 mx-auto mb-4" />
+            <p className="text-sm sm:text-base text-gray-500 px-4">Use the search bar above to find candidates</p>
           </div>
         ) : isLoading ? (
-          <div className="text-center py-16 bg-white rounded-2xl shadow-sm border border-gray-200">
+          <div className="w-full min-w-0 text-center py-12 sm:py-16 bg-white rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-gray-200">
             <Loader2 className="h-8 w-8 animate-spin text-navy mx-auto mb-4" />
-            <p className="text-gray-600">Searching for candidates...</p>
+            <p className="text-sm sm:text-base text-gray-600">Searching for candidates...</p>
           </div>
         ) : candidates.length === 0 ? (
-          <div className="text-center py-16 bg-white rounded-2xl shadow-sm border border-gray-200">
-            <User className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-500">No candidates found matching your criteria</p>
-            <p className="text-sm text-gray-400 mt-2">Try adjusting your search terms or filters</p>
+          <div className="w-full min-w-0 text-center py-12 sm:py-16 bg-white rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-gray-200">
+            <User className="h-10 w-10 sm:h-12 sm:w-12 text-gray-300 mx-auto mb-4" />
+            <p className="text-sm sm:text-base text-gray-500 px-4">No candidates found matching your criteria</p>
+            <p className="text-xs sm:text-sm text-gray-400 mt-2 px-4">Try adjusting your search terms or filters</p>
             <button
               onClick={clearFilters}
-              className="mt-4 bg-navy text-white font-semibold py-2 px-5 rounded-lg hover:bg-blue-900 transition-colors"
+              className="mt-4 bg-navy text-white font-semibold py-2.5 px-5 rounded-lg hover:bg-blue-900 transition-colors min-h-[44px] text-sm sm:text-base"
             >
               Clear filters
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
             {candidates.map((candidate) => (
-              <div key={candidate.id} className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200">
+              <div key={candidate.id} className="w-full min-w-0 bg-white p-4 sm:p-5 md:p-6 rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-gray-200 hover:shadow-md transition-all duration-200">
                 <div className="flex justify-between items-start mb-4">
                   <div>
-                    <h3 className="text-lg font-bold text-navy">
+                    <h3 className="text-base sm:text-lg font-bold text-navy break-words">
                       {candidate.firstName} {candidate.lastName}
                     </h3>
-                    <p className="text-sm text-gray-500">{candidate.headline || 'No headline'}</p>
+                    <p className="text-xs sm:text-sm text-gray-500 break-words">{candidate.headline || 'No headline'}</p>
                   </div>
                   <div className="w-10 h-10 rounded-full flex items-center justify-center bg-green-100">
                     <span className="font-bold text-green-700">{getInitials(candidate.firstName, candidate.lastName)}</span>

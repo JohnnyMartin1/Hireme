@@ -283,12 +283,12 @@ export default function EditProfilePage() {
   }
 
   return (
-    <div className="min-h-screen" style={{background: 'linear-gradient(180deg, #E6F0FF 0%, #F0F8FF 100%)'}}>
+    <div className="min-h-screen mobile-safe-top mobile-safe-bottom overflow-x-hidden w-full" style={{background: 'linear-gradient(180deg, #E6F0FF 0%, #F0F8FF 100%)'}}>
       {/* Header */}
-      <header className="bg-white/80 backdrop-blur-md sticky top-0 z-40 border-b border-light-gray/30">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-20">
-            <div className="flex items-center space-x-6">
+      <header className="bg-white/80 backdrop-blur-md sticky top-0 z-40 border-b border-light-gray/30 mobile-safe-top">
+        <div className="w-full md:max-w-7xl md:mx-auto px-0 sm:px-3 md:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16 sm:h-20 px-4 sm:px-0">
+            <div className="flex items-center space-x-2 sm:space-x-4 md:space-x-6">
               <button
                 onClick={() => {
                   if (profile?.role === 'JOB_SEEKER') {
@@ -299,36 +299,37 @@ export default function EditProfilePage() {
                     router.push('/home');
                   }
                 }}
-                className="flex items-center space-x-2 text-navy hover:text-navy/80 transition-all duration-300 group px-4 py-2 rounded-full hover:bg-light-blue/10 hover:shadow-md hover:scale-105"
+                className="flex items-center space-x-1 sm:space-x-2 text-navy hover:text-navy/80 transition-all duration-300 group px-2 sm:px-4 py-2 rounded-full hover:bg-light-blue/10 hover:shadow-md hover:scale-105 min-h-[44px]"
               >
                 <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform duration-300" />
-                <span className="font-semibold">Back to Dashboard</span>
+                <span className="font-semibold text-sm sm:text-base hidden sm:inline">Back to Dashboard</span>
+                <span className="font-semibold text-sm sm:hidden">Back</span>
               </button>
             </div>
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-navy rounded-xl flex items-center justify-center">
-                <i className="fa-solid fa-magnifying-glass text-white text-lg"></i>
+            <div className="flex items-center space-x-2 sm:space-x-3">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-navy rounded-xl flex items-center justify-center flex-shrink-0">
+                <i className="fa-solid fa-magnifying-glass text-white text-sm sm:text-lg"></i>
               </div>
-              <span className="text-2xl font-bold text-navy">HireMe</span>
+              <span className="text-lg sm:text-xl md:text-2xl font-bold text-navy">HireMe</span>
             </div>
           </div>
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex gap-8">
-          <div className="flex-1">
+      <main className="w-full md:max-w-7xl md:mx-auto px-0 sm:px-3 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8 min-w-0">
+        <div className="flex flex-col lg:flex-row gap-0 sm:gap-4 md:gap-6 lg:gap-8">
+          <div className="flex-1 w-full min-w-0">
             {/* Page Header */}
-            <div className="mb-8">
-              <h1 className="text-3xl font-bold text-navy mb-2">Edit Profile</h1>
-              <p className="text-gray-600">Complete your profile to increase visibility and connect with top employers.</p>
+            <div className="mb-4 sm:mb-6 md:mb-8 px-2 sm:px-0">
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-navy mb-2">Edit Profile</h1>
+              <p className="text-sm sm:text-base text-gray-600">Complete your profile to increase visibility and connect with top employers.</p>
             </div>
           
             {/* Profile Completion Card */}
-            <div className="bg-white/90 backdrop-blur-sm p-6 rounded-2xl shadow-sm border border-light-gray/30 mb-8">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-bold text-navy">Profile Completion</h2>
-                <span className="text-2xl font-bold text-navy bg-light-blue/30 px-4 py-1.5 rounded-full">{completion}%</span>
+            <div className="w-full min-w-0 bg-white/90 backdrop-blur-sm p-4 sm:p-5 md:p-6 rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-light-gray/30 mb-3 sm:mb-6 md:mb-8">
+              <div className="flex justify-between items-center mb-3 sm:mb-4 gap-2">
+                <h2 className="text-base sm:text-lg md:text-xl font-bold text-navy">Profile Completion</h2>
+                <span className="text-lg sm:text-xl md:text-2xl font-bold text-navy bg-light-blue/30 px-3 sm:px-4 py-1 sm:py-1.5 rounded-full flex-shrink-0">{completion}%</span>
               </div>
               <div className="w-full bg-light-gray/30 rounded-full h-3 mb-3">
                 <div className="bg-gradient-to-r from-navy to-light-blue h-3 rounded-full transition-all duration-500" style={{ width: `${completion}%` }}></div>
@@ -339,13 +340,13 @@ export default function EditProfilePage() {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Basic Information */}
-          <div className="bg-white/90 backdrop-blur-sm p-8 rounded-2xl shadow-sm border border-light-gray/30">
-            <div className="flex items-center mb-6">
-              <div className="w-12 h-12 bg-light-blue/30 rounded-xl flex items-center justify-center mr-4">
+          <div className="w-full min-w-0 bg-white/90 backdrop-blur-sm p-4 sm:p-6 md:p-8 rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-light-gray/30 mb-3 sm:mb-6 md:mb-8">
+            <div className="flex items-center mb-4 sm:mb-5 md:mb-6">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-light-blue/30 rounded-xl flex items-center justify-center mr-3 sm:mr-4 flex-shrink-0">
                 <User className="text-navy text-lg" />
               </div>
               <div className="flex-1">
-                <h3 className="text-xl font-bold text-navy">Basic Information</h3>
+                <h3 className="text-base sm:text-lg md:text-xl font-bold text-navy">Basic Information</h3>
                 <p className="text-gray-600 text-sm">Your core personal details</p>
               </div>
               {isBasicInfoComplete() && (
@@ -395,13 +396,13 @@ export default function EditProfilePage() {
           </div>
 
           {/* Education */}
-          <div className="bg-white/90 backdrop-blur-sm p-8 rounded-2xl shadow-sm border border-light-gray/30">
-            <div className="flex items-center mb-6">
-              <div className="w-12 h-12 bg-light-blue/30 rounded-xl flex items-center justify-center mr-4">
+          <div className="w-full min-w-0 bg-white/90 backdrop-blur-sm p-4 sm:p-6 md:p-8 rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-light-gray/30 mb-3 sm:mb-6 md:mb-8">
+            <div className="flex items-center mb-4 sm:mb-5 md:mb-6">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-light-blue/30 rounded-xl flex items-center justify-center mr-3 sm:mr-4 flex-shrink-0">
                 <GraduationCap className="text-navy text-lg" />
               </div>
               <div className="flex-1">
-                <h3 className="text-xl font-bold text-navy">Education</h3>
+                <h3 className="text-base sm:text-lg md:text-xl font-bold text-navy">Education</h3>
                 <p className="text-gray-600 text-sm">Your academic background and achievements</p>
               </div>
               {isEducationComplete() && (
@@ -548,13 +549,13 @@ export default function EditProfilePage() {
           </div>
 
           {/* Location & Preferences */}
-          <div className="bg-white/90 backdrop-blur-sm p-8 rounded-2xl shadow-sm border border-light-gray/30">
-            <div className="flex items-center mb-6">
-              <div className="w-12 h-12 bg-light-blue/30 rounded-xl flex items-center justify-center mr-4">
+          <div className="w-full min-w-0 bg-white/90 backdrop-blur-sm p-4 sm:p-6 md:p-8 rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-light-gray/30 mb-3 sm:mb-6 md:mb-8">
+            <div className="flex items-center mb-4 sm:mb-5 md:mb-6">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-light-blue/30 rounded-xl flex items-center justify-center mr-3 sm:mr-4 flex-shrink-0">
                 <MapPin className="text-navy text-lg" />
               </div>
               <div className="flex-1">
-                <h3 className="text-xl font-bold text-navy">Location & Work Preferences</h3>
+                <h3 className="text-base sm:text-lg md:text-xl font-bold text-navy">Location & Work Preferences</h3>
                 <p className="text-gray-600 text-sm">Where and how you'd like to work</p>
               </div>
               {!isLocationComplete() && (
@@ -601,13 +602,13 @@ export default function EditProfilePage() {
           </div>
 
           {/* Skills */}
-          <div className="bg-white/90 backdrop-blur-sm p-8 rounded-2xl shadow-sm border border-light-gray/30">
-            <div className="flex items-center mb-6">
-              <div className="w-12 h-12 bg-light-blue/30 rounded-xl flex items-center justify-center mr-4">
+          <div className="w-full min-w-0 bg-white/90 backdrop-blur-sm p-4 sm:p-6 md:p-8 rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-light-gray/30 mb-3 sm:mb-6 md:mb-8">
+            <div className="flex items-center mb-4 sm:mb-5 md:mb-6">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-light-blue/30 rounded-xl flex items-center justify-center mr-3 sm:mr-4 flex-shrink-0">
                 <Award className="text-navy text-lg" />
               </div>
               <div className="flex-1">
-                <h3 className="text-xl font-bold text-navy">Skills & Expertise</h3>
+                <h3 className="text-base sm:text-lg md:text-xl font-bold text-navy">Skills & Expertise</h3>
                 <p className="text-gray-600 text-sm">Technical and professional skills (up to 20)</p>
               </div>
               {!isSkillsComplete() && (
@@ -632,13 +633,13 @@ export default function EditProfilePage() {
           </div>
 
           {/* Experience & Activities */}
-          <div className="bg-white/90 backdrop-blur-sm p-8 rounded-2xl shadow-sm border border-light-gray/30">
-            <div className="flex items-center mb-6">
-              <div className="w-12 h-12 bg-light-blue/30 rounded-xl flex items-center justify-center mr-4">
+          <div className="w-full min-w-0 bg-white/90 backdrop-blur-sm p-4 sm:p-6 md:p-8 rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-light-gray/30 mb-3 sm:mb-6 md:mb-8">
+            <div className="flex items-center mb-4 sm:mb-5 md:mb-6">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-light-blue/30 rounded-xl flex items-center justify-center mr-3 sm:mr-4 flex-shrink-0">
                 <Briefcase className="text-navy text-lg" />
               </div>
               <div className="flex-1">
-                <h3 className="text-xl font-bold text-navy">Experience & Activities</h3>
+                <h3 className="text-base sm:text-lg md:text-xl font-bold text-navy">Experience & Activities</h3>
                 <p className="text-gray-600 text-sm">Your professional and academic experiences</p>
               </div>
               {!isExperienceComplete() && (
@@ -693,13 +694,13 @@ export default function EditProfilePage() {
           </div>
 
           {/* Career Interests */}
-          <div className="bg-white/90 backdrop-blur-sm p-8 rounded-2xl shadow-sm border border-light-gray/30">
-            <div className="flex items-center mb-6">
-              <div className="w-12 h-12 bg-light-blue/30 rounded-xl flex items-center justify-center mr-4">
+          <div className="w-full min-w-0 bg-white/90 backdrop-blur-sm p-4 sm:p-6 md:p-8 rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-light-gray/30 mb-3 sm:mb-6 md:mb-8">
+            <div className="flex items-center mb-4 sm:mb-5 md:mb-6">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-light-blue/30 rounded-xl flex items-center justify-center mr-3 sm:mr-4 flex-shrink-0">
                 <Briefcase className="text-navy text-lg" />
               </div>
               <div className="flex-1">
-                <h3 className="text-xl font-bold text-navy">Career Interests</h3>
+                <h3 className="text-base sm:text-lg md:text-xl font-bold text-navy">Career Interests</h3>
                 <p className="text-gray-600 text-sm">Industries and roles you're interested in (up to 5)</p>
               </div>
               {!isCareerInterestsComplete() && (
@@ -729,13 +730,13 @@ export default function EditProfilePage() {
           </div>
 
           {/* Work Authorization */}
-          <div className="bg-white/90 backdrop-blur-sm p-8 rounded-2xl shadow-sm border border-light-gray/30">
-            <div className="flex items-center mb-6">
-              <div className="w-12 h-12 bg-light-blue/30 rounded-xl flex items-center justify-center mr-4">
+          <div className="w-full min-w-0 bg-white/90 backdrop-blur-sm p-4 sm:p-6 md:p-8 rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-light-gray/30 mb-3 sm:mb-6 md:mb-8">
+            <div className="flex items-center mb-4 sm:mb-5 md:mb-6">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-light-blue/30 rounded-xl flex items-center justify-center mr-3 sm:mr-4 flex-shrink-0">
                 <HelpCircle className="text-navy text-lg" />
               </div>
               <div className="flex-1">
-                <h3 className="text-xl font-bold text-navy">Work Authorization</h3>
+                <h3 className="text-base sm:text-lg md:text-xl font-bold text-navy">Work Authorization</h3>
                 <p className="text-gray-600 text-sm">Your work eligibility status</p>
               </div>
               {!isWorkAuthComplete() && (
@@ -820,13 +821,13 @@ export default function EditProfilePage() {
           </div>
 
           {/* Personal & Links */}
-          <div className="bg-white/90 backdrop-blur-sm p-8 rounded-2xl shadow-sm border border-light-gray/30">
-            <div className="flex items-center mb-6">
-              <div className="w-12 h-12 bg-light-blue/30 rounded-xl flex items-center justify-center mr-4">
+          <div className="w-full min-w-0 bg-white/90 backdrop-blur-sm p-4 sm:p-6 md:p-8 rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-light-gray/30 mb-3 sm:mb-6 md:mb-8">
+            <div className="flex items-center mb-4 sm:mb-5 md:mb-6">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-light-blue/30 rounded-xl flex items-center justify-center mr-3 sm:mr-4 flex-shrink-0">
                 <BookOpen className="text-navy text-lg" />
               </div>
               <div className="flex-1">
-                <h3 className="text-xl font-bold text-navy">Personal & Links</h3>
+                <h3 className="text-base sm:text-lg md:text-xl font-bold text-navy">Personal & Links</h3>
                 <p className="text-gray-600 text-sm">Tell employers about yourself and share your work</p>
               </div>
               {isPersonalComplete() && (
@@ -879,13 +880,13 @@ export default function EditProfilePage() {
           </div>
 
           {/* Profile Picture & Resume */}
-          <div className="bg-white/90 backdrop-blur-sm p-8 rounded-2xl shadow-sm border border-light-gray/30">
-            <div className="flex items-center mb-6">
-              <div className="w-12 h-12 bg-light-blue/30 rounded-xl flex items-center justify-center mr-4">
+          <div className="w-full min-w-0 bg-white/90 backdrop-blur-sm p-4 sm:p-6 md:p-8 rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-light-gray/30 mb-3 sm:mb-6 md:mb-8">
+            <div className="flex items-center mb-4 sm:mb-5 md:mb-6">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-light-blue/30 rounded-xl flex items-center justify-center mr-3 sm:mr-4 flex-shrink-0">
                 <User className="text-navy text-lg" />
               </div>
               <div className="flex-1">
-                <h3 className="text-xl font-bold text-navy">Profile Picture & Resume</h3>
+                <h3 className="text-base sm:text-lg md:text-xl font-bold text-navy">Profile Picture & Resume</h3>
                 <p className="text-gray-600 text-sm">Upload your photo and resume to stand out</p>
               </div>
               {isFilesComplete() && (
@@ -927,13 +928,13 @@ export default function EditProfilePage() {
           </div>
 
           {/* Profile Video */}
-          <div className="bg-white/90 backdrop-blur-sm p-8 rounded-2xl shadow-sm border border-light-gray/30">
-            <div className="flex items-center mb-6">
-              <div className="w-12 h-12 bg-light-blue/30 rounded-xl flex items-center justify-center mr-4">
+          <div className="w-full min-w-0 bg-white/90 backdrop-blur-sm p-4 sm:p-6 md:p-8 rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-light-gray/30 mb-3 sm:mb-6 md:mb-8">
+            <div className="flex items-center mb-4 sm:mb-5 md:mb-6">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-light-blue/30 rounded-xl flex items-center justify-center mr-3 sm:mr-4 flex-shrink-0">
                 <Video className="text-navy text-lg" />
               </div>
               <div className="flex-1">
-                <h3 className="text-xl font-bold text-navy">Profile Video</h3>
+                <h3 className="text-base sm:text-lg md:text-xl font-bold text-navy">Profile Video</h3>
                 <p className="text-gray-600 text-sm">Record a short video to introduce yourself</p>
               </div>
               {isVideoComplete() && (
@@ -957,13 +958,13 @@ export default function EditProfilePage() {
           </div>
 
           {/* Endorsements */}
-          <div className="bg-white/90 backdrop-blur-sm p-8 rounded-2xl shadow-sm border border-light-gray/30">
-            <div className="flex items-center mb-6">
-              <div className="w-12 h-12 bg-light-blue/30 rounded-xl flex items-center justify-center mr-4">
+          <div className="w-full min-w-0 bg-white/90 backdrop-blur-sm p-4 sm:p-6 md:p-8 rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-light-gray/30 mb-3 sm:mb-6 md:mb-8">
+            <div className="flex items-center mb-4 sm:mb-5 md:mb-6">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-light-blue/30 rounded-xl flex items-center justify-center mr-3 sm:mr-4 flex-shrink-0">
                 <Award className="text-navy text-lg" />
               </div>
               <div className="flex-1">
-                <h3 className="text-xl font-bold text-navy">Endorsements</h3>
+                <h3 className="text-base sm:text-lg md:text-xl font-bold text-navy">Endorsements</h3>
                 <p className="text-gray-600 text-sm">Share your profile to get endorsements</p>
               </div>
               {isEndorsementsComplete() && (
@@ -984,26 +985,27 @@ export default function EditProfilePage() {
           </div>
 
           {/* Save All Changes */}
-          <div className="sticky bottom-0 bg-white/95 backdrop-blur-md border-t border-light-gray/30 p-6 rounded-t-2xl shadow-lg">
-            <div className="max-w-7xl mx-auto flex justify-between items-center">
-              <div>
-                <h3 className="text-lg font-semibold text-navy">Save All Changes</h3>
-                <p className="text-gray-600 text-sm">Review and save your profile updates</p>
+          <div className="sticky bottom-0 bg-white/95 backdrop-blur-md border-t border-light-gray/30 p-4 sm:p-6 rounded-t-xl sm:rounded-t-2xl shadow-lg mobile-safe-bottom">
+            <div className="w-full md:max-w-7xl md:mx-auto flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0">
+              <div className="hidden sm:block">
+                <h3 className="text-base sm:text-lg font-semibold text-navy">Save All Changes</h3>
+                <p className="text-gray-600 text-xs sm:text-sm">Review and save your profile updates</p>
               </div>
-              <div className="flex space-x-3">
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
                 <button
                   type="button"
-                  className="bg-light-blue/10 text-navy font-semibold py-3 px-6 rounded-xl border border-light-blue/40 hover:bg-light-blue/15 transition-all duration-200"
+                  className="bg-light-blue/10 text-navy font-semibold py-2.5 sm:py-3 px-4 sm:px-6 rounded-xl border border-light-blue/40 hover:bg-light-blue/15 transition-all duration-200 min-h-[44px] w-full sm:w-auto text-sm sm:text-base"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="bg-navy text-white font-semibold py-3 px-8 rounded-xl hover:bg-blue-900 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                  className="bg-navy text-white font-semibold py-2.5 sm:py-3 px-4 sm:px-6 md:px-8 rounded-xl hover:bg-blue-900 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center min-h-[44px] w-full sm:w-auto text-sm sm:text-base"
                 >
-                  <Save className="h-5 w-5 mr-2" />
-                  {isSubmitting ? 'Saving...' : 'Save All Changes'}
+                  <Save className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
+                  <span className="hidden sm:inline">{isSubmitting ? 'Saving...' : 'Save All Changes'}</span>
+                  <span className="sm:hidden">{isSubmitting ? 'Saving...' : 'Save'}</span>
                 </button>
               </div>
             </div>

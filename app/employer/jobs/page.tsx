@@ -37,45 +37,46 @@ export default function EmployerJobsPage() {
   if (!user || !profile) return null;
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50">
-      <div className="max-w-6xl mx-auto p-6">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <Link href="/home/employer" className="text-green-700 hover:underline flex items-center">
-              <ArrowLeft className="h-4 w-4 mr-1" /> Back
+    <main className="min-h-screen mobile-safe-top mobile-safe-bottom overflow-x-hidden w-full bg-gradient-to-br from-green-50 via-white to-emerald-50">
+      <div className="w-full md:max-w-6xl md:mx-auto px-0 sm:px-3 md:p-6 py-4 sm:py-6 min-w-0">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0 mb-4 sm:mb-6 px-2 sm:px-0">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+            <Link href="/home/employer" className="text-green-700 hover:underline flex items-center min-h-[44px] text-sm sm:text-base flex-shrink-0">
+              <ArrowLeft className="h-4 w-4 mr-1" /> <span className="hidden sm:inline">Back</span>
             </Link>
-            <h1 className="text-2xl font-bold text-gray-900">Your Active Jobs</h1>
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 break-words">Your Active Jobs</h1>
           </div>
           <Link
             href="/employer/job/new"
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center"
+            className="px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center min-h-[44px] text-sm sm:text-base w-full sm:w-auto"
           >
             <Building className="h-4 w-4 mr-2" />
-            Post New Job
+            <span className="hidden sm:inline">Post New Job</span>
+            <span className="sm:hidden">Post Job</span>
           </Link>
         </div>
 
         {isLoading ? (
-          <div className="text-center py-16 text-gray-600">Loading jobs…</div>
+          <div className="w-full min-w-0 text-center py-12 sm:py-16 text-sm sm:text-base text-gray-600 px-2 sm:px-0">Loading jobs…</div>
         ) : jobs.length === 0 ? (
-          <div className="text-center py-16 text-gray-600">You have no active jobs.</div>
+          <div className="w-full min-w-0 text-center py-12 sm:py-16 text-sm sm:text-base text-gray-600 px-2 sm:px-0">You have no active jobs.</div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-3 sm:space-y-4">
             {jobs.map((job) => (
-              <div key={job.id} className="bg-white rounded-xl shadow p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900">{job.title}</h3>
-                    <p className="text-sm text-gray-600">
+              <div key={job.id} className="w-full min-w-0 bg-white rounded-none sm:rounded-xl shadow p-4 sm:p-5 md:p-6">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
+                  <div className="min-w-0 flex-1">
+                    <h3 className="text-base sm:text-lg font-semibold text-gray-900 break-words">{job.title}</h3>
+                    <p className="text-xs sm:text-sm text-gray-600 break-words">
                       {job.locationCity && job.locationState
                         ? `${job.locationCity}, ${job.locationState}`
                         : "Remote"}
                       {" • "}{job.employment}
                     </p>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Link href={`/employer/job/${job.id}`} className="text-green-700 hover:underline">View</Link>
-                    <Link href={`/employer/job/${job.id}/edit`} className="text-blue-700 hover:underline">Edit</Link>
+                  <div className="flex items-center gap-2 sm:gap-2 w-full sm:w-auto">
+                    <Link href={`/employer/job/${job.id}`} className="text-green-700 hover:underline text-sm sm:text-base min-h-[44px] flex items-center px-3 sm:px-0">View</Link>
+                    <Link href={`/employer/job/${job.id}/edit`} className="text-blue-700 hover:underline text-sm sm:text-base min-h-[44px] flex items-center px-3 sm:px-0">Edit</Link>
                   </div>
                 </div>
               </div>

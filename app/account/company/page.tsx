@@ -224,29 +224,30 @@ const handleFileUpload = async (
   }
 
   return (
-    <main className="min-h-screen mobile-safe-top mobile-safe-bottom" style={{background: 'linear-gradient(180deg, #E6F0FF 0%, #F8FAFC 100%)'}}>
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
+    <main className="min-h-screen mobile-safe-top mobile-safe-bottom overflow-x-hidden w-full" style={{background: 'linear-gradient(180deg, #E6F0FF 0%, #F8FAFC 100%)'}}>
+      <div className="w-full md:max-w-4xl md:mx-auto px-0 sm:px-3 md:px-6 lg:px-8 py-4 sm:py-6 md:py-10 min-w-0">
         
         {/* Breadcrumb */}
-        <section className="mb-6 sm:mb-8">
+        <section className="mb-4 sm:mb-6 md:mb-8 px-2 sm:px-0">
           <Link 
             href="/home/employer"
-            className="flex items-center text-navy font-semibold hover:text-blue-900 transition-colors duration-200 text-sm sm:text-base"
+            className="flex items-center text-navy font-semibold hover:text-blue-900 transition-colors duration-200 text-sm sm:text-base min-h-[44px]"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Dashboard
+            <span className="hidden sm:inline">Back to Dashboard</span>
+            <span className="sm:hidden">Back</span>
           </Link>
         </section>
 
         {/* Page Header */}
-        <section className="mb-8 sm:mb-10">
-          <h1 className="text-3xl sm:text-4xl font-bold text-navy mb-2">Company Profile</h1>
-          <p className="text-gray-600 text-base sm:text-lg">Customize how your company appears to candidates.</p>
+        <section className="mb-4 sm:mb-6 md:mb-8 lg:mb-10 px-2 sm:px-0">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-navy mb-2 break-words">Company Profile</h1>
+          <p className="text-sm sm:text-base md:text-lg text-gray-600 break-words">Customize how your company appears to candidates.</p>
         </section>
 
-        <div className="space-y-6 sm:space-y-8">
+        <div className="space-y-3 sm:space-y-4 md:space-y-6 lg:space-y-8">
           {/* Banner Image Card */}
-          <section className="bg-white/90 backdrop-blur-sm p-4 sm:p-8 rounded-2xl shadow-sm border border-light-gray card-hover card-enter" style={{animationDelay: '0.1s'}}>
+          <section className="w-full min-w-0 bg-white/90 backdrop-blur-sm p-4 sm:p-6 md:p-8 rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-light-gray card-hover card-enter mb-3 sm:mb-0" style={{animationDelay: '0.1s'}}>
             <div className="flex justify-between items-center mb-4 sm:mb-6">
               <h2 className="text-lg sm:text-xl font-bold text-navy">Banner Image</h2>
               <button 
@@ -306,7 +307,7 @@ const handleFileUpload = async (
           </section>
 
           {/* Company Logo Card */}
-          <section className="bg-white/90 backdrop-blur-sm p-4 sm:p-8 rounded-2xl shadow-sm border border-light-gray card-hover card-enter" style={{animationDelay: '0.2s'}}>
+          <section className="w-full min-w-0 bg-white/90 backdrop-blur-sm p-4 sm:p-6 md:p-8 rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-light-gray card-hover card-enter mb-3 sm:mb-0" style={{animationDelay: '0.2s'}}>
             <div className="flex justify-between items-center mb-4 sm:mb-6">
               <h2 className="text-lg sm:text-xl font-bold text-navy">Company Logo</h2>
               <button 
@@ -378,7 +379,7 @@ const handleFileUpload = async (
 
           {/* Company Information Card */}
           <form onSubmit={handleSubmit}>
-            <section className="bg-white/90 backdrop-blur-sm p-4 sm:p-8 rounded-2xl shadow-sm border border-light-gray card-hover card-enter" style={{animationDelay: '0.3s'}}>
+            <section className="w-full min-w-0 bg-white/90 backdrop-blur-sm p-4 sm:p-6 md:p-8 rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-light-gray card-hover card-enter mb-3 sm:mb-0" style={{animationDelay: '0.3s'}}>
               <h2 className="text-lg sm:text-xl font-bold text-navy mb-4 sm:mb-6">Company Information</h2>
               
               <div className="space-y-4 sm:space-y-6">
@@ -526,7 +527,7 @@ const handleFileUpload = async (
                   <button
                     type="submit"
                     disabled={isSaving}
-                    className="bg-green-600 text-white font-semibold py-3 px-6 sm:px-8 rounded-lg btn-hover flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="bg-green-600 text-white font-semibold py-2.5 sm:py-3 px-4 sm:px-6 md:px-8 rounded-lg btn-hover flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px] w-full sm:w-auto text-sm sm:text-base"
                   >
                     {isSaving ? (
                       <>
@@ -536,7 +537,8 @@ const handleFileUpload = async (
                     ) : (
                       <>
                         <Save className="h-4 w-4" />
-                        <span>Save Changes</span>
+                        <span className="hidden sm:inline">Save Changes</span>
+                        <span className="sm:hidden">Save</span>
                       </>
                     )}
                   </button>

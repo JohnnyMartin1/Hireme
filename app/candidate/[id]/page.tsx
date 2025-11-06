@@ -346,29 +346,29 @@ export default function CandidateProfilePage() {
   const candidateName = `${candidate.firstName || 'First'} ${candidate.lastName || 'Last'}`;
 
   return (
-    <main className="min-h-screen" style={{background: 'linear-gradient(180deg, #E6F0FF 0%, #F8FAFC 100%)'}}>
+    <main className="min-h-screen mobile-safe-top mobile-safe-bottom overflow-x-hidden w-full" style={{background: 'linear-gradient(180deg, #E6F0FF 0%, #F8FAFC 100%)'}}>
       {/* Sticky Action Bar */}
       {user?.uid !== candidate.id && (
-        <div className={`fixed top-20 left-0 right-0 bg-white/90 backdrop-blur-sm border-b border-light-gray/50 z-30 transition-all duration-200 ${stickyBarVisible ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'}`}>
-          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center h-16">
-              <div className="flex items-center space-x-4">
+        <div className={`fixed top-20 left-0 right-0 bg-white/90 backdrop-blur-sm border-b border-light-gray/50 z-30 transition-all duration-200 mobile-safe-top ${stickyBarVisible ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'}`}>
+          <div className="w-full md:max-w-5xl md:mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0 py-3 sm:py-0 sm:h-16">
+              <div className="flex items-center space-x-3 sm:space-x-4 min-w-0 flex-1">
                 {candidate.profileImageUrl ? (
-                  <img src={candidate.profileImageUrl} alt={candidateName} className="w-10 h-10 rounded-full object-cover" />
+                  <img src={candidate.profileImageUrl} alt={candidateName} className="w-10 h-10 rounded-full object-cover flex-shrink-0" />
                 ) : (
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-light-blue to-blue-300 flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-light-blue to-blue-300 flex items-center justify-center flex-shrink-0">
                     <span className="font-bold text-navy text-sm">{getInitials(candidate.firstName, candidate.lastName)}</span>
                   </div>
                 )}
-                <div>
-                  <h3 className="font-bold text-navy">{candidateName}</h3>
-                  <p className="text-sm text-gray-600">{candidate.headline || 'Job Seeker'}</p>
+                <div className="min-w-0 flex-1">
+                  <h3 className="font-bold text-navy text-sm sm:text-base truncate">{candidateName}</h3>
+                  <p className="text-xs sm:text-sm text-gray-600 truncate">{candidate.headline || 'Job Seeker'}</p>
                 </div>
               </div>
-              <div className="flex items-center space-x-3">
+              <div className="flex items-center space-x-2 sm:space-x-3 w-full sm:w-auto">
                 <button
                   onClick={handleOpenMessageDialog}
-                  className="bg-navy text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-900 transition-all duration-200 flex items-center space-x-2"
+                  className="bg-navy text-white px-4 sm:px-6 py-2 rounded-lg font-semibold hover:bg-blue-900 transition-all duration-200 flex items-center justify-center space-x-2 text-sm sm:text-base min-h-[44px] flex-1 sm:flex-initial"
                 >
                   <MessageSquare className="h-4 w-4" />
                   <span>Message</span>
@@ -376,7 +376,7 @@ export default function CandidateProfilePage() {
                 <button
                   onClick={handleSaveCandidate}
                   disabled={isSaving}
-                  className={`save-btn p-2 rounded-lg transition-all duration-200 w-10 h-10 flex items-center justify-center ${
+                  className={`save-btn p-2 rounded-lg transition-all duration-200 w-10 h-10 sm:w-10 sm:h-10 flex items-center justify-center min-h-[44px] min-w-[44px] ${
                     isSaved 
                       ? 'bg-green-50 text-green-600 border-2 border-green-600' 
                       : 'bg-white border border-gray-300 text-gray-700 hover:border-navy hover:text-navy'
@@ -391,7 +391,7 @@ export default function CandidateProfilePage() {
                       setResumePreviewError(false);
                       setUseGoogleViewer(false);
                     }}
-                    className="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg font-semibold hover:border-navy hover:text-navy transition-all duration-200 flex items-center space-x-2"
+                    className="bg-white border border-gray-300 text-gray-700 px-3 sm:px-4 py-2 rounded-lg font-semibold hover:border-navy hover:text-navy transition-all duration-200 flex items-center justify-center space-x-2 text-sm min-h-[44px]"
                   >
                     <FileText className="h-4 w-4" />
                     <span className="hidden sm:inline">Resume</span>
@@ -403,72 +403,73 @@ export default function CandidateProfilePage() {
         </div>
       )}
 
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="w-full md:max-w-5xl md:mx-auto px-0 sm:px-3 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8 min-w-0">
         {/* Breadcrumb */}
-        <section className="mb-8">
+        <section className="mb-4 sm:mb-6 md:mb-8 px-2 sm:px-0">
           <Link 
             href={user?.uid === candidate.id ? "/home/seeker" : "/search/candidates"}
-            className="flex items-center text-navy font-semibold hover:text-blue-900 transition-all duration-300 bg-light-blue/10 hover:bg-light-blue/30 hover:shadow-md hover:scale-105 px-4 py-2 rounded-full w-fit group"
+            className="flex items-center text-navy font-semibold hover:text-blue-900 transition-all duration-300 bg-light-blue/10 hover:bg-light-blue/30 hover:shadow-md hover:scale-105 px-3 sm:px-4 py-2 rounded-full w-fit group text-sm sm:text-base min-h-[44px]"
           >
             <ArrowLeft className="h-4 w-4 mr-2 group-hover:-translate-x-1 transition-transform duration-300" />
-            {user?.uid === candidate.id ? "Back to Dashboard" : "Back to candidate search"}
+            <span className="hidden sm:inline">{user?.uid === candidate.id ? "Back to Dashboard" : "Back to candidate search"}</span>
+            <span className="sm:hidden">Back</span>
           </Link>
         </section>
 
         {/* Hero Summary Card */}
-        <section ref={heroCardRef} className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 mb-8">
-          <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
-            <div className="flex items-start space-x-6">
+        <section ref={heroCardRef} className="w-full min-w-0 bg-white rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-gray-200 p-4 sm:p-6 md:p-8 mb-3 sm:mb-6 md:mb-8">
+          <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4 sm:gap-6">
+            <div className="flex items-start space-x-3 sm:space-x-4 md:space-x-6 w-full lg:w-auto">
               {candidate.profileImageUrl ? (
-                <img src={candidate.profileImageUrl} alt={candidateName} className="w-20 h-20 rounded-full object-cover flex-shrink-0" />
+                <img src={candidate.profileImageUrl} alt={candidateName} className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover flex-shrink-0" />
               ) : (
-                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-light-blue to-blue-300 flex items-center justify-center flex-shrink-0">
-                  <span className="font-bold text-navy text-2xl">{getInitials(candidate.firstName, candidate.lastName)}</span>
+                <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-br from-light-blue to-blue-300 flex items-center justify-center flex-shrink-0">
+                  <span className="font-bold text-navy text-xl sm:text-2xl">{getInitials(candidate.firstName, candidate.lastName)}</span>
                 </div>
               )}
-              <div className="flex-1">
-                <h1 className="text-3xl font-bold text-navy mb-2">{candidateName}</h1>
-                <p className="text-xl text-gray-600 mb-4">{candidate.headline || 'Job Seeker'}</p>
+              <div className="flex-1 min-w-0">
+                <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-navy mb-2 break-words">{candidateName}</h1>
+                <p className="text-base sm:text-lg md:text-xl text-gray-600 mb-3 sm:mb-4 break-words">{candidate.headline || 'Job Seeker'}</p>
                 {candidate.bio && (
-                  <p className="text-gray-700 mb-4 leading-relaxed">{candidate.bio}</p>
+                  <p className="text-sm sm:text-base text-gray-700 mb-3 sm:mb-4 leading-relaxed break-words">{candidate.bio}</p>
                 )}
-                <div className="flex flex-wrap items-center gap-4 text-sm text-gray-700">
+                <div className="flex flex-wrap items-center gap-2 sm:gap-3 md:gap-4 text-xs sm:text-sm text-gray-700">
                   {candidate.school && (
-                    <div className="flex items-center space-x-2">
-                      <GraduationCap className="h-4 w-4 text-gray-400" />
-                      <span>{candidate.school}{candidate.major ? ` • ${candidate.major}` : ''}</span>
+                    <div className="flex items-center space-x-1 sm:space-x-2">
+                      <GraduationCap className="h-3 w-3 sm:h-4 sm:w-4 text-gray-400 flex-shrink-0" />
+                      <span className="break-words">{candidate.school}{candidate.major ? ` • ${candidate.major}` : ''}</span>
                     </div>
                   )}
                   {candidate.location && (
-                    <div className="flex items-center space-x-2">
-                      <MapPin className="h-4 w-4 text-gray-400" />
-                      <span>{candidate.location}</span>
+                    <div className="flex items-center space-x-1 sm:space-x-2">
+                      <MapPin className="h-3 w-3 sm:h-4 sm:w-4 text-gray-400 flex-shrink-0" />
+                      <span className="break-words">{candidate.location}</span>
                     </div>
                   )}
-                  <div className="flex items-center space-x-2">
-                    <Code className="h-4 w-4 text-gray-400" />
+                  <div className="flex items-center space-x-1 sm:space-x-2">
+                    <Code className="h-3 w-3 sm:h-4 sm:w-4 text-gray-400 flex-shrink-0" />
                     <span>{candidate.skills?.length || 0} skills</span>
                   </div>
                 </div>
               </div>
             </div>
             {user?.uid !== candidate.id && (
-              <div className="flex flex-col sm:flex-row gap-3 lg:flex-shrink-0">
+              <div className="flex flex-col gap-2 sm:gap-3 lg:flex-shrink-0 w-full lg:w-auto">
                 <button
                   onClick={handleOpenMessageDialog}
-                  className="bg-navy text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-900 transition-all duration-200 flex items-center justify-center space-x-2"
+                  className="bg-navy text-white px-4 sm:px-6 md:px-8 py-2.5 sm:py-3 rounded-lg font-semibold hover:bg-blue-900 transition-all duration-200 flex items-center justify-center space-x-2 text-sm sm:text-base min-h-[44px] w-full lg:w-auto"
                 >
-                  <MessageSquare className="h-5 w-5" />
+                  <MessageSquare className="h-4 w-4 sm:h-5 sm:w-5" />
                   <span>Message {candidate.firstName || 'Candidate'}</span>
                 </button>
                 <button
                   onClick={handleSaveCandidate}
                   disabled={isSaving}
-                  className={`save-btn bg-white border border-gray-300 text-gray-700 px-6 py-3 rounded-lg font-semibold hover:border-navy hover:text-navy transition-all duration-200 flex items-center justify-center space-x-2 ${
+                  className={`save-btn bg-white border border-gray-300 text-gray-700 px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg font-semibold hover:border-navy hover:text-navy transition-all duration-200 flex items-center justify-center space-x-2 text-sm sm:text-base min-h-[44px] w-full lg:w-auto ${
                     isSaved ? '!text-green-600 !border-green-600 bg-green-50' : ''
                   }`}
                 >
-                  <Heart className={`h-5 w-5 ${isSaved ? 'fill-current' : ''}`} />
+                  <Heart className={`h-4 w-4 sm:h-5 sm:w-5 ${isSaved ? 'fill-current' : ''}`} />
                   <span>Save Candidate</span>
                 </button>
                 {candidate.resumeUrl && (
@@ -478,9 +479,9 @@ export default function CandidateProfilePage() {
                       setResumePreviewError(false);
                       setUseGoogleViewer(false);
                     }}
-                    className="bg-light-blue/20 border border-light-blue text-navy px-6 py-3 rounded-lg font-semibold hover:bg-light-blue/30 transition-all duration-200 flex items-center justify-center space-x-2"
+                    className="bg-light-blue/20 border border-light-blue text-navy px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg font-semibold hover:bg-light-blue/30 transition-all duration-200 flex items-center justify-center space-x-2 text-sm sm:text-base min-h-[44px] w-full lg:w-auto"
                   >
-                    <FileText className="h-5 w-5" />
+                    <FileText className="h-4 w-4 sm:h-5 sm:w-5" />
                     <span>View Resume</span>
                   </button>
                 )}
@@ -491,9 +492,9 @@ export default function CandidateProfilePage() {
 
         {/* Video Section */}
         {candidate.videoUrl && (
-          <section className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 mb-8">
-            <h2 className="text-2xl font-bold text-navy mb-6 flex items-center space-x-3">
-              <Video className="h-6 w-6 text-light-blue" />
+          <section className="w-full min-w-0 bg-white rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-gray-200 p-4 sm:p-6 md:p-8 mb-3 sm:mb-6 md:mb-8">
+            <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-navy mb-4 sm:mb-5 md:mb-6 flex items-center space-x-2 sm:space-x-3">
+              <Video className="h-5 w-5 sm:h-6 sm:w-6 text-light-blue" />
               <span>Profile Video</span>
             </h2>
             <div className="aspect-video rounded-lg overflow-hidden">
@@ -511,8 +512,8 @@ export default function CandidateProfilePage() {
         {/* Education Card */}
         {(candidate.education && candidate.education.length > 0) || candidate.graduationYear || candidate.gpa ? (
           <section className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 mb-8 ">
-            <h2 className="text-2xl font-bold text-navy mb-6 flex items-center space-x-3">
-              <GraduationCap className="h-6 w-6 text-light-blue" />
+            <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-navy mb-4 sm:mb-5 md:mb-6 flex items-center space-x-2 sm:space-x-3">
+              <GraduationCap className="h-5 w-5 sm:h-6 sm:w-6 text-light-blue" />
               <span>Education</span>
             </h2>
             <div className="space-y-6">
@@ -552,8 +553,8 @@ export default function CandidateProfilePage() {
         {/* Resume Card */}
         {candidate.resumeUrl && (
           <section className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 mb-8 ">
-            <h2 className="text-2xl font-bold text-navy mb-6 flex items-center space-x-3">
-              <FileText className="h-6 w-6 text-light-blue" />
+            <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-navy mb-4 sm:mb-5 md:mb-6 flex items-center space-x-2 sm:space-x-3">
+              <FileText className="h-5 w-5 sm:h-6 sm:w-6 text-light-blue" />
               <span>Resume</span>
             </h2>
             <div className="flex items-center justify-between p-6 bg-light-blue/10 rounded-xl border border-light-blue/30">
@@ -582,8 +583,8 @@ export default function CandidateProfilePage() {
         {/* Professional Links Card */}
         {(candidate.linkedinUrl || candidate.portfolioUrl) && (
           <section className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 mb-8 ">
-            <h2 className="text-2xl font-bold text-navy mb-6 flex items-center space-x-3">
-              <Globe className="h-6 w-6 text-light-blue" />
+            <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-navy mb-4 sm:mb-5 md:mb-6 flex items-center space-x-2 sm:space-x-3">
+              <Globe className="h-5 w-5 sm:h-6 sm:w-6 text-light-blue" />
               <span>Professional Links</span>
             </h2>
             <div className="space-y-4">
@@ -622,8 +623,8 @@ export default function CandidateProfilePage() {
         {/* Skills Card */}
         {candidate.skills && candidate.skills.length > 0 && (
           <section className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 mb-8 ">
-            <h2 className="text-2xl font-bold text-navy mb-6 flex items-center space-x-3">
-              <Code className="h-6 w-6 text-light-blue" />
+            <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-navy mb-4 sm:mb-5 md:mb-6 flex items-center space-x-2 sm:space-x-3">
+              <Code className="h-5 w-5 sm:h-6 sm:w-6 text-light-blue" />
               <span>Skills</span>
             </h2>
             <div className="flex flex-wrap gap-3">
@@ -643,8 +644,8 @@ export default function CandidateProfilePage() {
         {/* Work Preferences Card */}
         {candidate.workPreferences && candidate.workPreferences.length > 0 && (
           <section className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 mb-8 ">
-            <h2 className="text-2xl font-bold text-navy mb-6 flex items-center space-x-3">
-              <Briefcase className="h-6 w-6 text-light-blue" />
+            <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-navy mb-4 sm:mb-5 md:mb-6 flex items-center space-x-2 sm:space-x-3">
+              <Briefcase className="h-5 w-5 sm:h-6 sm:w-6 text-light-blue" />
               <span>Work Preferences</span>
             </h2>
             <div className="flex flex-wrap gap-3">
@@ -664,8 +665,8 @@ export default function CandidateProfilePage() {
         {/* Preferred Job Types Card */}
         {candidate.jobTypes && candidate.jobTypes.length > 0 && (
           <section className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 mb-8 ">
-            <h2 className="text-2xl font-bold text-navy mb-6 flex items-center space-x-3">
-              <UserCircle className="h-6 w-6 text-light-blue" />
+            <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-navy mb-4 sm:mb-5 md:mb-6 flex items-center space-x-2 sm:space-x-3">
+              <UserCircle className="h-5 w-5 sm:h-6 sm:w-6 text-light-blue" />
               <span>Preferred Job Types</span>
             </h2>
             <div className="flex flex-wrap gap-3">
@@ -685,8 +686,8 @@ export default function CandidateProfilePage() {
         {/* Relevant Experience Card */}
         {candidate.experience && (
           <section className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 mb-8 ">
-            <h2 className="text-2xl font-bold text-navy mb-6 flex items-center space-x-3">
-              <Star className="h-6 w-6 text-light-blue" />
+            <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-navy mb-4 sm:mb-5 md:mb-6 flex items-center space-x-2 sm:space-x-3">
+              <Star className="h-5 w-5 sm:h-6 sm:w-6 text-light-blue" />
               <span>Relevant Experience</span>
             </h2>
             <div className={`expand-content text-gray-700 leading-relaxed ${experienceExpanded ? 'expanded' : ''}`} style={{maxHeight: experienceExpanded ? '50rem' : '8rem', overflow: 'hidden', transition: 'max-height 0.22s ease'}}>
@@ -709,8 +710,8 @@ export default function CandidateProfilePage() {
         {/* Preferred Work Locations Card */}
         {candidate.locations && candidate.locations.length > 0 && (
           <section className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 mb-8 ">
-            <h2 className="text-2xl font-bold text-navy mb-6 flex items-center space-x-3">
-              <MapPin className="h-6 w-6 text-light-blue" />
+            <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-navy mb-4 sm:mb-5 md:mb-6 flex items-center space-x-2 sm:space-x-3">
+              <MapPin className="h-5 w-5 sm:h-6 sm:w-6 text-light-blue" />
               <span>Preferred Work Locations</span>
             </h2>
             <div className="flex flex-wrap gap-3">
@@ -731,8 +732,8 @@ export default function CandidateProfilePage() {
         {/* Extracurricular Activities Card */}
         {candidate.extracurriculars && candidate.extracurriculars.length > 0 && (
           <section className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 mb-8 ">
-            <h2 className="text-2xl font-bold text-navy mb-6 flex items-center space-x-3">
-              <Star className="h-6 w-6 text-light-blue" />
+            <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-navy mb-4 sm:mb-5 md:mb-6 flex items-center space-x-2 sm:space-x-3">
+              <Star className="h-5 w-5 sm:h-6 sm:w-6 text-light-blue" />
               <span>Extracurricular Activities</span>
             </h2>
             <div className="flex flex-wrap gap-3">
@@ -752,8 +753,8 @@ export default function CandidateProfilePage() {
         {/* Certifications Card */}
         {candidate.certifications && candidate.certifications.length > 0 && (
           <section className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 mb-8 ">
-            <h2 className="text-2xl font-bold text-navy mb-6 flex items-center space-x-3">
-              <Award className="h-6 w-6 text-light-blue" />
+            <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-navy mb-4 sm:mb-5 md:mb-6 flex items-center space-x-2 sm:space-x-3">
+              <Award className="h-5 w-5 sm:h-6 sm:w-6 text-light-blue" />
               <span>Certifications</span>
             </h2>
             <div className="flex flex-wrap gap-3">
@@ -773,8 +774,8 @@ export default function CandidateProfilePage() {
         {/* Languages Card */}
         {candidate.languages && candidate.languages.length > 0 && (
           <section className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 mb-8 ">
-            <h2 className="text-2xl font-bold text-navy mb-6 flex items-center space-x-3">
-              <Globe className="h-6 w-6 text-light-blue" />
+            <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-navy mb-4 sm:mb-5 md:mb-6 flex items-center space-x-2 sm:space-x-3">
+              <Globe className="h-5 w-5 sm:h-6 sm:w-6 text-light-blue" />
               <span>Languages</span>
             </h2>
             <div className="flex flex-wrap gap-3">
@@ -794,8 +795,8 @@ export default function CandidateProfilePage() {
         {/* Career Interests Card */}
         {candidate.careerInterests && candidate.careerInterests.length > 0 && (
           <section className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 mb-8 ">
-            <h2 className="text-2xl font-bold text-navy mb-6 flex items-center space-x-3">
-              <Briefcase className="h-6 w-6 text-light-blue" />
+            <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-navy mb-4 sm:mb-5 md:mb-6 flex items-center space-x-2 sm:space-x-3">
+              <Briefcase className="h-5 w-5 sm:h-6 sm:w-6 text-light-blue" />
               <span>Career Interests</span>
             </h2>
             <div className="flex flex-wrap gap-3">
@@ -815,8 +816,8 @@ export default function CandidateProfilePage() {
         {/* Work Authorization Card */}
         {candidate.workAuthorization && (candidate.workAuthorization.authorizedToWork !== null || candidate.workAuthorization.requiresVisaSponsorship !== null) && (
           <section className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 mb-8 ">
-            <h2 className="text-2xl font-bold text-navy mb-6 flex items-center space-x-3">
-              <Plane className="h-6 w-6 text-light-blue" />
+            <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-navy mb-4 sm:mb-5 md:mb-6 flex items-center space-x-2 sm:space-x-3">
+              <Plane className="h-5 w-5 sm:h-6 sm:w-6 text-light-blue" />
               <span>Work Authorization</span>
             </h2>
             <div className="space-y-3">
@@ -843,8 +844,8 @@ export default function CandidateProfilePage() {
         {/* Endorsements Card */}
         {endorsements && endorsements.length > 0 && (
           <section className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 mb-8 ">
-            <h2 className="text-2xl font-bold text-navy mb-6 flex items-center space-x-3">
-              <Star className="h-6 w-6 text-light-blue" />
+            <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-navy mb-4 sm:mb-5 md:mb-6 flex items-center space-x-2 sm:space-x-3">
+              <Star className="h-5 w-5 sm:h-6 sm:w-6 text-light-blue" />
               <span>Endorsements</span>
             </h2>
             <div className="space-y-6">
@@ -916,7 +917,7 @@ export default function CandidateProfilePage() {
 
         {/* Get in Touch Card */}
         {user?.uid !== candidate.id && (
-          <section className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 ">
+          <section className="w-full min-w-0 bg-white rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-gray-200 p-4 sm:p-6 md:p-8 mb-3 sm:mb-6 md:mb-8">
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-6">
               <div>
                 <h2 className="text-2xl font-bold text-navy mb-2">Get in Touch</h2>

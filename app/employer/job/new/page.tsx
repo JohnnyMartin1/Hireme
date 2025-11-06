@@ -111,10 +111,10 @@ export default function NewJobPage() {
   };
 
   return (
-    <main style={{background: 'linear-gradient(180deg, #E6F0FF 0%, #F8FAFC 100%)'}} className="min-h-screen">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <main style={{background: 'linear-gradient(180deg, #E6F0FF 0%, #F8FAFC 100%)'}} className="min-h-screen mobile-safe-top mobile-safe-bottom overflow-x-hidden w-full">
+      <div className="w-full md:max-w-4xl md:mx-auto px-0 sm:px-3 md:px-6 lg:px-8 py-4 sm:py-6 md:py-10 min-w-0">
         {/* Breadcrumb */}
-        <section className="mb-8">
+        <section className="mb-4 sm:mb-6 md:mb-8 px-2 sm:px-0">
           <button
             onClick={() => {
               if (typeof window !== 'undefined' && window.history.length > 1) {
@@ -123,21 +123,22 @@ export default function NewJobPage() {
                 router.push('/home/employer');
               }
             }}
-            className="flex items-center text-navy font-semibold hover:text-blue-900 transition-colors duration-200 bg-light-blue/10 hover:bg-light-blue/20 px-4 py-2 rounded-full w-fit"
+            className="flex items-center text-navy font-semibold hover:text-blue-900 transition-colors duration-200 bg-light-blue/10 hover:bg-light-blue/20 px-3 sm:px-4 py-2 rounded-full w-fit min-h-[44px] text-sm sm:text-base"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Dashboard
+            <span className="hidden sm:inline">Back to Dashboard</span>
+            <span className="sm:hidden">Back</span>
           </button>
         </section>
 
         {/* Page Header */}
-        <section className="mb-10">
-          <h1 className="text-4xl font-bold text-navy">Post a Job</h1>
+        <section className="mb-4 sm:mb-6 md:mb-10 px-2 sm:px-0">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-navy break-words">Post a Job</h1>
         </section>
 
-        <form onSubmit={handleSubmit} className="space-y-8">
+        <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4 md:space-y-6 lg:space-y-8">
           {/* Job Details Card */}
-          <section className="bg-white/90 backdrop-blur-sm p-8 rounded-2xl shadow-sm border border-light-gray">
+          <section className="w-full min-w-0 bg-white/90 backdrop-blur-sm p-4 sm:p-6 md:p-8 rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-light-gray mb-3 sm:mb-0">
             <div className="space-y-6">
               {/* Job Title */}
               <div className="relative">
@@ -146,7 +147,7 @@ export default function NewJobPage() {
                   type="text" 
                   value={title} 
                   onChange={(e) => setTitle(e.target.value)} 
-                  className="form-input w-full px-4 py-3 border border-gray-300 rounded-lg bg-white focus:outline-none focus:border-navy focus:ring-4 focus:ring-navy/10 transition-all duration-200" 
+                  className="form-input w-full px-4 py-3 text-base border border-gray-300 rounded-lg bg-white focus:outline-none focus:border-navy focus:ring-2 sm:focus:ring-4 focus:ring-navy/10 transition-all duration-200 min-h-[44px]" 
                   placeholder="e.g. Software Engineer" 
                   required 
                 />
@@ -159,7 +160,7 @@ export default function NewJobPage() {
                   id="description" 
                   value={description} 
                   onChange={(e) => setDescription(e.target.value)} 
-                  className="form-input w-full px-4 py-3 border border-gray-300 rounded-lg bg-white focus:outline-none focus:border-navy focus:ring-4 focus:ring-navy/10 transition-all duration-200 resize-none" 
+                  className="form-input w-full px-4 py-3 text-base border border-gray-300 rounded-lg bg-white focus:outline-none focus:border-navy focus:ring-2 sm:focus:ring-4 focus:ring-navy/10 transition-all duration-200 resize-none min-h-[120px]" 
                   rows={5}
                   placeholder="Describe the role, responsibilities, and what you're looking for..." 
                   required 
@@ -253,7 +254,7 @@ export default function NewJobPage() {
                   type="text" 
                   value={tags} 
                   onChange={(e) => setTags(e.target.value)} 
-                  className="form-input w-full px-4 py-3 border border-gray-300 rounded-lg bg-white focus:outline-none focus:border-navy focus:ring-4 focus:ring-navy/10 transition-all duration-200" 
+                  className="form-input w-full px-4 py-3 text-base border border-gray-300 rounded-lg bg-white focus:outline-none focus:border-navy focus:ring-2 sm:focus:ring-4 focus:ring-navy/10 transition-all duration-200 min-h-[44px]" 
                   placeholder="Enter tags separated by commas (e.g. React, JavaScript, Remote)" 
                 />
                 <label htmlFor="tags" className="absolute left-4 -top-2 text-sm text-gray-600 bg-white px-1">Tags</label>
@@ -262,9 +263,9 @@ export default function NewJobPage() {
           </section>
 
           {/* Candidate Requirements Card */}
-          <section className="bg-white/90 backdrop-blur-sm p-8 rounded-2xl shadow-sm border border-light-gray">
-            <h3 className="text-xl font-bold text-navy mb-2">Candidate Requirements</h3>
-            <p className="text-gray-600 text-sm mb-6">These are used for filtering and matching.</p>
+          <section className="w-full min-w-0 bg-white/90 backdrop-blur-sm p-4 sm:p-6 md:p-8 rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-light-gray mb-3 sm:mb-0">
+            <h3 className="text-base sm:text-lg md:text-xl font-bold text-navy mb-2">Candidate Requirements</h3>
+            <p className="text-xs sm:text-sm text-gray-600 mb-4 sm:mb-6">These are used for filtering and matching.</p>
 
             <div className="space-y-6">
               {/* Minimum GPA */}
@@ -308,7 +309,7 @@ export default function NewJobPage() {
             <button 
               type="submit" 
               disabled={loading} 
-              className="bg-navy text-white font-semibold py-3 px-8 rounded-lg hover:bg-blue-900 hover:shadow-md transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+              className="bg-navy text-white font-semibold py-2.5 sm:py-3 px-4 sm:px-6 md:px-8 rounded-lg hover:bg-blue-900 hover:shadow-md transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 min-h-[44px] w-full sm:w-auto text-sm sm:text-base"
             >
               <span>{loading ? 'Posting...' : 'Post Job'}</span>
               <i className={`fa-solid ${loading ? 'fa-spinner animate-spin' : 'fa-plus'}`}></i>

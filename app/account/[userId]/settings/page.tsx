@@ -68,7 +68,7 @@ export default function UserSettingsPage() {
   };
 
   return (
-    <div style={{background: 'linear-gradient(180deg, #E6F0FF 0%, #F0F8FF 100%)', minHeight: '100vh', fontFamily: "'Inter', sans-serif"}}>
+    <div className="mobile-safe-top mobile-safe-bottom overflow-x-hidden w-full" style={{background: 'linear-gradient(180deg, #E6F0FF 0%, #F0F8FF 100%)', minHeight: '100vh', fontFamily: "'Inter', sans-serif"}}>
       <style jsx global>{`
         ::-webkit-scrollbar { display: none; }
         
@@ -218,13 +218,14 @@ export default function UserSettingsPage() {
       )}
 
       {/* Header */}
-      <header className="bg-white/80 backdrop-blur-md sticky top-0 z-40 border-b border-[#D3D3D3]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-20">
-            <div className="flex items-center space-x-6">
-              <Link href={dashboardUrl} className="flex items-center space-x-2 text-[#000080] hover:text-[#ADD8E6] transition-colors duration-200 bg-white px-4 py-2 rounded-full border border-[#D3D3D3] hover:border-[#ADD8E6]">
-                <i className="fa-solid fa-arrow-left"></i>
-                <span className="font-semibold">Back to Dashboard</span>
+      <header className="bg-white/80 backdrop-blur-md sticky top-0 z-40 border-b border-[#D3D3D3] mobile-safe-top">
+        <div className="w-full md:max-w-7xl md:mx-auto px-0 sm:px-3 md:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16 sm:h-20 px-4 sm:px-0">
+            <div className="flex items-center space-x-2 sm:space-x-4 md:space-x-6">
+              <Link href={dashboardUrl} className="flex items-center space-x-1 sm:space-x-2 text-[#000080] hover:text-[#ADD8E6] transition-colors duration-200 bg-white px-2 sm:px-4 py-2 rounded-full border border-[#D3D3D3] hover:border-[#ADD8E6] min-h-[44px]">
+                <i className="fa-solid fa-arrow-left text-sm sm:text-base"></i>
+                <span className="font-semibold text-sm sm:text-base hidden sm:inline">Back to Dashboard</span>
+                <span className="font-semibold text-sm sm:hidden">Back</span>
               </Link>
             </div>
           </div>
@@ -232,13 +233,13 @@ export default function UserSettingsPage() {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <h1 className="text-4xl font-bold text-[#000080] mb-8">Settings</h1>
+      <main className="w-full md:max-w-7xl md:mx-auto px-0 sm:px-3 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8 min-w-0">
+        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-[#000080] mb-4 sm:mb-6 md:mb-8 px-2 sm:px-0">Settings</h1>
 
-        <div className="flex flex-col lg:flex-row gap-8">
+        <div className="flex flex-col lg:flex-row gap-0 sm:gap-4 md:gap-6 lg:gap-8">
           {/* Sidebar */}
-          <aside className="lg:w-80 shrink-0">
-            <div className="bg-white rounded-2xl shadow-sm border border-[#D3D3D3] p-6 sticky top-28">
+          <aside className="lg:w-80 shrink-0 w-full lg:block">
+            <div className="bg-white rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-[#D3D3D3] p-4 sm:p-5 md:p-6 lg:sticky lg:top-28 mb-3 sm:mb-0">
               <nav className="space-y-2">
                 {(profile.role === 'JOB_SEEKER' ? [
                   { id: 'account', icon: 'user', label: 'Account' },
@@ -305,8 +306,8 @@ function AccountSection({ toast, profile }: { toast: (msg: string) => void; prof
 
   return (
     <section className="space-y-6 fade-in">
-      <div className="bg-white rounded-2xl shadow-sm border border-[#D3D3D3] p-8">
-        <h2 className="text-2xl font-bold text-[#000080] mb-6 flex items-center">
+      <div className="w-full min-w-0 bg-white rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-[#D3D3D3] p-4 sm:p-6 md:p-8 mb-3 sm:mb-6">
+        <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-[#000080] mb-4 sm:mb-5 md:mb-6 flex items-center">
           <i className="fa-solid fa-user text-[#ADD8E6] mr-3"></i>
           Profile Information
         </h2>
@@ -349,7 +350,7 @@ function AccountSection({ toast, profile }: { toast: (msg: string) => void; prof
       {/* Only show Login Settings and Session Management for employers */}
       {(profile.role === 'EMPLOYER' || profile.role === 'RECRUITER') && (
         <>
-          <div className="bg-white rounded-2xl shadow-sm border border-[#D3D3D3] p-8">
+          <div className="w-full min-w-0 bg-white rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-[#D3D3D3] p-4 sm:p-6 md:p-8 mb-3 sm:mb-6">
             <h3 className="text-xl font-bold text-[#000080] mb-6">Login Settings</h3>
             <div className="space-y-4">
               <div>
@@ -378,7 +379,7 @@ function AccountSection({ toast, profile }: { toast: (msg: string) => void; prof
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl shadow-sm border border-[#D3D3D3] p-8">
+          <div className="w-full min-w-0 bg-white rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-[#D3D3D3] p-4 sm:p-6 md:p-8 mb-3 sm:mb-6">
             <h3 className="text-xl font-bold text-[#000080] mb-6">Session Management</h3>
             <button className="btn-secondary px-6 py-3 rounded-xl font-semibold">Sign out of other devices</button>
           </div>
@@ -520,8 +521,8 @@ function SecuritySection({ toast, profile }: { toast: (msg: string) => void; pro
 
   return (
     <section className="space-y-6 fade-in">
-      <div className="bg-white rounded-2xl shadow-sm border border-[#D3D3D3] p-8">
-        <h2 className="text-2xl font-bold text-[#000080] mb-6 flex items-center">
+      <div className="w-full min-w-0 bg-white rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-[#D3D3D3] p-4 sm:p-6 md:p-8 mb-3 sm:mb-6">
+        <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-[#000080] mb-4 sm:mb-5 md:mb-6 flex items-center">
           <i className="fa-solid fa-shield-halved text-[#ADD8E6] mr-3"></i>
           Password & Authentication
         </h2>
@@ -577,7 +578,7 @@ function SecuritySection({ toast, profile }: { toast: (msg: string) => void; pro
       {/* Only show Two-Factor Authentication and Active Sessions for employers */}
       {(profile.role === 'EMPLOYER' || profile.role === 'RECRUITER') && (
         <>
-          <div className="bg-white rounded-2xl shadow-sm border border-[#D3D3D3] p-8">
+          <div className="w-full min-w-0 bg-white rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-[#D3D3D3] p-4 sm:p-6 md:p-8 mb-3 sm:mb-6">
             <h3 className="text-xl font-bold text-[#000080] mb-6">Two-Factor Authentication</h3>
             <div className="flex items-center justify-between p-4 border border-[#D3D3D3] rounded-xl">
               <div>
@@ -591,7 +592,7 @@ function SecuritySection({ toast, profile }: { toast: (msg: string) => void; pro
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl shadow-sm border border-[#D3D3D3] p-8">
+          <div className="w-full min-w-0 bg-white rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-[#D3D3D3] p-4 sm:p-6 md:p-8 mb-3 sm:mb-6">
             <h3 className="text-xl font-bold text-[#000080] mb-6">Active Sessions</h3>
             <div className="overflow-x-auto">
               <table className="w-full">
@@ -654,8 +655,8 @@ function PrivacySection({ toast }: { toast: (msg: string) => void }) {
 
   return (
     <section className="space-y-6 fade-in">
-      <div className="bg-white rounded-2xl shadow-sm border border-[#D3D3D3] p-8">
-        <h2 className="text-2xl font-bold text-[#000080] mb-6 flex items-center">
+      <div className="w-full min-w-0 bg-white rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-[#D3D3D3] p-4 sm:p-6 md:p-8 mb-3 sm:mb-6">
+        <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-[#000080] mb-4 sm:mb-5 md:mb-6 flex items-center">
           <i className="fa-solid fa-eye text-[#ADD8E6] mr-3"></i>
           Privacy & Visibility Settings
         </h2>
@@ -684,7 +685,7 @@ function PrivacySection({ toast }: { toast: (msg: string) => void }) {
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-[#D3D3D3] p-8">
+      <div className="w-full min-w-0 bg-white rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-[#D3D3D3] p-4 sm:p-6 md:p-8 mb-3 sm:mb-6">
         <h3 className="text-xl font-bold text-[#000080] mb-6">Do-Not-Contact List</h3>
         <div className="space-y-4">
           <div>
@@ -711,7 +712,7 @@ function PrivacySection({ toast }: { toast: (msg: string) => void }) {
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-[#D3D3D3] p-8">
+      <div className="w-full min-w-0 bg-white rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-[#D3D3D3] p-4 sm:p-6 md:p-8 mb-3 sm:mb-6">
         <h3 className="text-xl font-bold text-[#000080] mb-6">Compliance</h3>
         <div className="space-y-3">
           <a href="#" className="flex items-center justify-between p-3 border border-[#D3D3D3] rounded-xl hover:bg-gray-50">
@@ -840,8 +841,8 @@ function NotificationsSection({ toast, profile }: { toast: (msg: string) => void
 
   return (
     <section className="space-y-6 fade-in">
-      <div className="bg-white rounded-2xl shadow-sm border border-[#D3D3D3] p-8">
-        <h2 className="text-2xl font-bold text-[#000080] mb-6 flex items-center">
+      <div className="w-full min-w-0 bg-white rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-[#D3D3D3] p-4 sm:p-6 md:p-8 mb-3 sm:mb-6">
+        <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-[#000080] mb-4 sm:mb-5 md:mb-6 flex items-center">
           <i className="fa-solid fa-bell text-[#ADD8E6] mr-3"></i>
           Notification Preferences
         </h2>
@@ -1112,8 +1113,8 @@ function InformationSection({ profile }: { profile: any }) {
 function BillingSection() {
   return (
     <section className="space-y-6 fade-in">
-      <div className="bg-white rounded-2xl shadow-sm border border-[#D3D3D3] p-8">
-        <h2 className="text-2xl font-bold text-[#000080] mb-6 flex items-center">
+      <div className="w-full min-w-0 bg-white rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-[#D3D3D3] p-4 sm:p-6 md:p-8 mb-3 sm:mb-6">
+        <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-[#000080] mb-4 sm:mb-5 md:mb-6 flex items-center">
           <i className="fa-solid fa-credit-card text-[#ADD8E6] mr-3"></i>
           Billing & Subscription
         </h2>
@@ -1133,7 +1134,7 @@ function BillingSection() {
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-[#D3D3D3] p-8">
+      <div className="w-full min-w-0 bg-white rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-[#D3D3D3] p-4 sm:p-6 md:p-8 mb-3 sm:mb-6">
         <h3 className="text-xl font-bold text-[#000080] mb-6">Payment Method</h3>
         <div className="flex items-center justify-between p-4 border border-[#D3D3D3] rounded-xl">
           <div className="flex items-center space-x-4">
@@ -1147,7 +1148,7 @@ function BillingSection() {
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-[#D3D3D3] p-8">
+      <div className="w-full min-w-0 bg-white rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-[#D3D3D3] p-4 sm:p-6 md:p-8 mb-3 sm:mb-6">
         <h3 className="text-xl font-bold text-[#000080] mb-6">Invoice History</h3>
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -1196,8 +1197,8 @@ function BillingSection() {
 function TeamSection({ toast }: { toast: (msg: string) => void }) {
   return (
     <section className="space-y-6 fade-in">
-      <div className="bg-white rounded-2xl shadow-sm border border-[#D3D3D3] p-8">
-        <h2 className="text-2xl font-bold text-[#000080] mb-6 flex items-center">
+      <div className="w-full min-w-0 bg-white rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-[#D3D3D3] p-4 sm:p-6 md:p-8 mb-3 sm:mb-6">
+        <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-[#000080] mb-4 sm:mb-5 md:mb-6 flex items-center">
           <i className="fa-solid fa-users text-[#ADD8E6] mr-3"></i>
           Team Members & Recruiters
         </h2>
@@ -1256,7 +1257,7 @@ function TeamSection({ toast }: { toast: (msg: string) => void }) {
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-[#D3D3D3] p-8">
+      <div className="w-full min-w-0 bg-white rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-[#D3D3D3] p-4 sm:p-6 md:p-8 mb-3 sm:mb-6">
         <h3 className="text-xl font-bold text-[#000080] mb-6">Role Descriptions</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="p-4 border border-[#D3D3D3] rounded-xl">
@@ -1281,8 +1282,8 @@ function TeamSection({ toast }: { toast: (msg: string) => void }) {
 function CompanySection({ toast }: { toast: (msg: string) => void }) {
   return (
     <section className="space-y-6 fade-in">
-      <div className="bg-white rounded-2xl shadow-sm border border-[#D3D3D3] p-8">
-        <h2 className="text-2xl font-bold text-[#000080] mb-6 flex items-center">
+      <div className="w-full min-w-0 bg-white rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-[#D3D3D3] p-4 sm:p-6 md:p-8 mb-3 sm:mb-6">
+        <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-[#000080] mb-4 sm:mb-5 md:mb-6 flex items-center">
           <i className="fa-solid fa-building text-[#ADD8E6] mr-3"></i>
           Company Profile
         </h2>
@@ -1349,8 +1350,8 @@ function CompanySection({ toast }: { toast: (msg: string) => void }) {
 function IntegrationsSection({ toast }: { toast: (msg: string) => void }) {
   return (
     <section className="space-y-6 fade-in">
-      <div className="bg-white rounded-2xl shadow-sm border border-[#D3D3D3] p-8">
-        <h2 className="text-2xl font-bold text-[#000080] mb-6 flex items-center">
+      <div className="w-full min-w-0 bg-white rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-[#D3D3D3] p-4 sm:p-6 md:p-8 mb-3 sm:mb-6">
+        <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-[#000080] mb-4 sm:mb-5 md:mb-6 flex items-center">
           <i className="fa-solid fa-plug text-[#ADD8E6] mr-3"></i>
           Integrations & Connections
         </h2>
@@ -1437,8 +1438,8 @@ function IntegrationsSection({ toast }: { toast: (msg: string) => void }) {
 function DataSection() {
   return (
     <section className="space-y-6 fade-in">
-      <div className="bg-white rounded-2xl shadow-sm border border-[#D3D3D3] p-8">
-        <h2 className="text-2xl font-bold text-[#000080] mb-6 flex items-center">
+      <div className="w-full min-w-0 bg-white rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-[#D3D3D3] p-4 sm:p-6 md:p-8 mb-3 sm:mb-6">
+        <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-[#000080] mb-4 sm:mb-5 md:mb-6 flex items-center">
           <i className="fa-solid fa-database text-[#ADD8E6] mr-3"></i>
           Data Management & Export
         </h2>
@@ -1480,7 +1481,7 @@ function DataSection() {
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-[#D3D3D3] p-8">
+      <div className="w-full min-w-0 bg-white rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-[#D3D3D3] p-4 sm:p-6 md:p-8 mb-3 sm:mb-6">
         <h3 className="text-xl font-bold text-[#000080] mb-6">Data Retention</h3>
         <div className="p-4 border border-[#D3D3D3] rounded-xl">
           <div className="flex items-center justify-between">
@@ -1508,8 +1509,8 @@ function AccessibilitySection({ toast }: { toast: (msg: string) => void }) {
 
   return (
     <section className="space-y-6 fade-in">
-      <div className="bg-white rounded-2xl shadow-sm border border-[#D3D3D3] p-8">
-        <h2 className="text-2xl font-bold text-[#000080] mb-6 flex items-center">
+      <div className="w-full min-w-0 bg-white rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-[#D3D3D3] p-4 sm:p-6 md:p-8 mb-3 sm:mb-6">
+        <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-[#000080] mb-4 sm:mb-5 md:mb-6 flex items-center">
           <i className="fa-solid fa-universal-access text-[#ADD8E6] mr-3"></i>
           Accessibility & Preferences
         </h2>
@@ -1576,7 +1577,7 @@ function AccessibilitySection({ toast }: { toast: (msg: string) => void }) {
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-[#D3D3D3] p-8">
+      <div className="w-full min-w-0 bg-white rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-[#D3D3D3] p-4 sm:p-6 md:p-8 mb-3 sm:mb-6">
         <h3 className="text-xl font-bold text-[#000080] mb-6">Keyboard Shortcuts</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="p-3 bg-gray-50 rounded-lg">
@@ -1601,8 +1602,8 @@ function AccessibilitySection({ toast }: { toast: (msg: string) => void }) {
 function LegalSection() {
   return (
     <section className="space-y-6 fade-in">
-      <div className="bg-white rounded-2xl shadow-sm border border-[#D3D3D3] p-8">
-        <h2 className="text-2xl font-bold text-[#000080] mb-6 flex items-center">
+      <div className="w-full min-w-0 bg-white rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-[#D3D3D3] p-4 sm:p-6 md:p-8 mb-3 sm:mb-6">
+        <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-[#000080] mb-4 sm:mb-5 md:mb-6 flex items-center">
           <i className="fa-solid fa-gavel text-[#ADD8E6] mr-3"></i>
           Legal & Compliance
         </h2>
@@ -1659,8 +1660,8 @@ function LegalSection() {
 function DangerSection() {
   return (
     <section className="space-y-6 fade-in">
-      <div className="danger-zone rounded-2xl shadow-sm p-8">
-        <h2 className="text-2xl font-bold text-red-800 mb-6 flex items-center">
+      <div className="danger-zone rounded-none sm:rounded-xl md:rounded-2xl shadow-sm p-4 sm:p-6 md:p-8 mb-3 sm:mb-6">
+        <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-red-800 mb-4 sm:mb-5 md:mb-6 flex items-center">
           <i className="fa-solid fa-trash text-red-600 mr-3"></i>
           Delete Account
         </h2>
