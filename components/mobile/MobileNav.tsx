@@ -1,7 +1,5 @@
 "use client";
-import { X } from "lucide-react";
-import Link from "next/link";
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface MobileNavProps {
   isOpen: boolean;
@@ -10,6 +8,23 @@ interface MobileNavProps {
 }
 
 export default function MobileNav({ isOpen, onClose, children }: MobileNavProps) {
+  const menuRef = useRef<HTMLDivElement>(null);
+  const [headerHeight, setHeaderHeight] = useState(73);
+
+  // Get header height dynamically
+  useEffect(() => {
+    const updateHeaderHeight = () => {
+      const header = document.querySelector('header');
+      if (header) {
+        setHeaderHeight(header.offsetHeight);
+      }
+    };
+
+    updateHeaderHeight();
+    window.addEventListener('resize', updateHeaderHeight);
+    return () => window.removeEventListener('resize', updateHeaderHeight);
+  }, []);
+
   // Prevent body scroll when menu is open
   useEffect(() => {
     if (isOpen) {
@@ -22,33 +37,56 @@ export default function MobileNav({ isOpen, onClose, children }: MobileNavProps)
     };
   }, [isOpen]);
 
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        const target = event.target as HTMLElement;
+        // Don't close if clicking the hamburger button
+        if (!target.closest('button[aria-label="Open menu"]')) {
+          onClose();
+        }
+      }
+    };
+
+    if (isOpen) {
+      // Small delay to prevent immediate close on open
+      setTimeout(() => {
+        document.addEventListener('mousedown', handleClickOutside);
+        document.addEventListener('touchstart', handleClickOutside);
+      }, 100);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   return (
     <>
-      {/* Backdrop */}
+      {/* Backdrop - Full screen to allow clicking outside to close */}
       <div 
-        className="fixed inset-0 bg-black/50 z-50 md:hidden transition-opacity duration-300"
+        className="fixed inset-0 bg-black/30 z-[100] md:hidden transition-opacity duration-200"
         onClick={onClose}
         aria-hidden="true"
+        style={{ 
+          top: `${headerHeight}px`,
+        }}
       />
       
-      {/* Slide-out Menu */}
-      <div className="fixed top-0 right-0 bottom-0 w-72 max-w-[85vw] bg-white shadow-2xl z-50 md:hidden transform transition-transform duration-300 ease-out overflow-y-auto">
-        {/* Close Button */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-200">
-          <h2 className="text-lg font-bold text-navy">Menu</h2>
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-            aria-label="Close menu"
-          >
-            <X className="h-6 w-6 text-gray-600" />
-          </button>
-        </div>
-
-        {/* Menu Content */}
-        <div className="p-4">
+      {/* Dropdown Menu - Appears below header, half width, auto height */}
+      <div 
+        ref={menuRef}
+        className="fixed right-0 w-1/2 bg-white shadow-lg z-[101] md:hidden transform transition-all duration-200 ease-out border-b border-gray-200"
+        style={{
+          top: `${headerHeight}px`,
+        }}
+      >
+        {/* Menu Content - Only takes height needed for items */}
+        <div className="w-full" onClick={(e) => e.stopPropagation()}>
           {children}
         </div>
       </div>

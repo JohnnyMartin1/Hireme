@@ -39,10 +39,25 @@
 html, body, #__next {
   height: 100%;
   overflow-x: hidden;
+  width: 100%;
+  max-width: 100vw;
+}
+
+/* Ensure media elements don't overflow */
+img, video, iframe, embed, object {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Prevent text overflow on mobile */
+p, span, div, h1, h2, h3, h4, h5, h6 {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 body {
   @apply bg-[var(--bg)] text-[var(--text)] font-inter;
+  position: relative;
 }
 
 /* Mobile Optimization for iPhone */
@@ -108,6 +123,11 @@ body {
 
 .mobile-touch-target {
   @apply min-h-[48px] min-w-[48px];
+}
+
+.touch-manipulation {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
 /* Hide scrollbar but keep functionality */

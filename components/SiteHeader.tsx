@@ -17,7 +17,7 @@ export default function SiteHeader() {
     : '/';
 
   return (
-    <header className="bg-white/80 backdrop-blur-sm py-4 px-4 sm:px-6 sticky top-0 z-50 shadow-sm mobile-safe-top">
+    <header className="bg-white/80 backdrop-blur-sm py-4 px-4 sm:px-6 sticky top-0 z-40 shadow-sm mobile-safe-top">
       <div className="container mx-auto flex items-center justify-between max-w-full">
         <Link href="/" className="shrink-0" aria-label="HireMe home">
           <HireMeLogo variant="full" className="h-6 sm:h-8 w-auto" />
@@ -89,27 +89,36 @@ export default function SiteHeader() {
 
             {/* Mobile Hamburger Button - Logged In */}
             <button
-              onClick={() => setMobileMenuOpen(true)}
-              className="md:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setMobileMenuOpen(true);
+              }}
+              onTouchStart={(e) => {
+                e.stopPropagation();
+              }}
+              className="md:hidden p-2.5 hover:bg-gray-100 active:bg-gray-200 rounded-lg transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center z-50 relative touch-manipulation"
               aria-label="Open menu"
+              aria-expanded={mobileMenuOpen}
+              type="button"
             >
-              <Menu className="h-6 w-6 text-gray-700" />
+              <Menu className="h-6 w-6 text-gray-700 pointer-events-none" />
             </button>
 
             {/* Mobile Menu - Logged In */}
             <MobileNav isOpen={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)}>
-              <nav className="flex flex-col space-y-2">
+              <nav className="flex flex-col w-full">
                 <Link 
                   href={dashboardLink}
                   onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center px-4 py-3 text-base font-medium text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
+                  className="flex items-center justify-center px-4 py-4 text-base font-medium text-gray-700 hover:bg-gray-50 active:bg-gray-100 transition-colors border-b border-gray-100 min-h-[56px] w-full text-center"
                 >
                   Dashboard
                 </Link>
                 <Link 
                   href={`/account/${user?.uid}/settings`}
                   onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center px-4 py-3 text-base font-medium text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
+                  className="flex items-center justify-center px-4 py-4 text-base font-medium text-gray-700 hover:bg-gray-50 active:bg-gray-100 transition-colors border-b border-gray-100 min-h-[56px] w-full text-center"
                 >
                   Settings
                 </Link>
@@ -118,7 +127,7 @@ export default function SiteHeader() {
                     setMobileMenuOpen(false);
                     signOut();
                   }}
-                  className="flex items-center px-4 py-3 text-base font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors text-left w-full"
+                  className="flex items-center justify-center px-4 py-4 text-base font-medium text-red-600 hover:bg-red-50 active:bg-red-100 transition-colors w-full min-h-[56px] text-center"
                 >
                   Sign out
                 </button>

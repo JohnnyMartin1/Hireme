@@ -300,13 +300,13 @@ export default function SeekerHomePage() {
   }
 
   return (
-    <main className="min-h-screen mobile-safe-top mobile-safe-bottom" style={{background: 'linear-gradient(180deg, #E6F0FF 0%, #F0F8FF 100%)'}}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-8">
-          <div className="lg:col-span-2 space-y-4 sm:space-y-8">
+    <main className="min-h-screen mobile-safe-top mobile-safe-bottom overflow-x-hidden w-full" style={{background: 'linear-gradient(180deg, #E6F0FF 0%, #F0F8FF 100%)'}}>
+      <div className="w-full md:max-w-7xl md:mx-auto px-0 sm:px-3 md:px-6 lg:px-8 py-4 sm:py-6 md:py-10 min-w-0">
+        <div className="grid grid-cols-12 lg:grid-cols-3 gap-0 sm:gap-3 md:gap-4 lg:gap-6 xl:gap-8 w-full max-w-full min-w-0">
+          <div className="col-span-12 lg:col-span-2 space-y-0 sm:space-y-3 md:space-y-4 lg:space-y-6 xl:space-y-8 w-full max-w-full min-w-0 px-0">
             
             {/* Welcome Banner */}
-            <section className="bg-gradient-to-r from-navy to-blue-900 text-white p-5 sm:p-6 md:p-8 rounded-xl sm:rounded-2xl flex flex-col sm:flex-row items-center justify-between shadow-lg">
+            <section className="w-full min-w-0 bg-gradient-to-r from-navy to-blue-900 text-white p-4 sm:p-5 md:p-6 lg:p-8 rounded-none sm:rounded-xl md:rounded-2xl flex flex-col sm:flex-row items-center justify-between shadow-lg mb-3 sm:mb-0">
               <div className="flex items-center space-x-3 sm:space-x-4 md:space-x-6 w-full sm:w-auto">
                 {(() => {
                   console.log('Rendering profile image:', userProfile?.profileImageUrl);
@@ -332,7 +332,7 @@ export default function SeekerHomePage() {
             </section>
 
             {/* Profile Completion Card */}
-            <div className="bg-white/90 backdrop-blur-sm p-4 sm:p-6 md:p-8 rounded-xl sm:rounded-2xl shadow-sm border border-light-gray hover:shadow-lg transition-all duration-200">
+            <div className="w-full min-w-0 bg-white/90 backdrop-blur-sm p-4 sm:p-6 md:p-8 rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-light-gray hover:shadow-lg transition-all duration-200 mb-3 sm:mb-0">
               <div className="flex justify-between items-center mb-3 sm:mb-4 gap-2">
                 <h2 className="text-base sm:text-lg md:text-xl font-bold text-navy">Profile Completion</h2>
                 <span className="text-lg sm:text-xl md:text-2xl font-bold text-navy bg-light-blue/30 px-3 sm:px-4 py-1 sm:py-1.5 rounded-full flex-shrink-0">{completion}%</span>
@@ -350,8 +350,8 @@ export default function SeekerHomePage() {
             </div>
 
             {/* Stats Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6 lg:gap-8">
-              <Link href="/messages/candidate" className="bg-white/90 backdrop-blur-sm p-5 sm:p-6 rounded-xl sm:rounded-2xl shadow-sm border border-light-gray hover:shadow-lg transition-all duration-200 text-center group min-h-[120px] sm:min-h-[140px] flex flex-col justify-center">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-0 sm:gap-3 md:gap-6 lg:gap-8 mb-3 sm:mb-0 w-full min-w-0">
+              <Link href="/messages/candidate" className="bg-white/90 backdrop-blur-sm p-5 sm:p-6 rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-light-gray hover:shadow-lg transition-all duration-200 text-center group min-h-[120px] sm:min-h-[140px] flex flex-col justify-center mb-3 sm:mb-0">
                 <div className="w-12 h-12 sm:w-14 sm:h-14 mx-auto rounded-full bg-light-blue/30 flex items-center justify-center mb-3">
                   <MessageSquare className="h-5 w-5 sm:h-6 sm:w-6 text-navy" />
                 </div>
@@ -359,7 +359,7 @@ export default function SeekerHomePage() {
                 <p className="text-sm sm:text-base text-gray-500 font-medium mt-1">Messages</p>
               </Link>
 
-              <button onClick={routerToViews} className="bg-white/90 backdrop-blur-sm p-5 sm:p-6 rounded-xl sm:rounded-2xl shadow-sm border border-light-gray hover:shadow-lg transition-all duration-200 text-center group w-full min-h-[120px] sm:min-h-[140px] flex flex-col justify-center">
+              <button onClick={routerToViews} className="bg-white/90 backdrop-blur-sm p-5 sm:p-6 rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-light-gray hover:shadow-lg transition-all duration-200 text-center group w-full min-h-[120px] sm:min-h-[140px] flex flex-col justify-center mb-3 sm:mb-0">
                 <div className="w-12 h-12 sm:w-14 sm:h-14 mx-auto rounded-full bg-light-blue/30 flex items-center justify-center mb-3">
                   <Eye className="h-5 w-5 sm:h-6 sm:w-6 text-navy" />
                 </div>
@@ -367,7 +367,7 @@ export default function SeekerHomePage() {
                 <p className="text-sm sm:text-base text-gray-500 font-medium mt-1">Companies Viewed You</p>
               </button>
 
-              <Link href="/endorsements" className="bg-white/90 backdrop-blur-sm p-5 sm:p-6 rounded-xl sm:rounded-2xl shadow-sm border border-light-gray hover:shadow-lg transition-all duration-200 text-center group relative min-h-[120px] sm:min-h-[140px] flex flex-col justify-center">
+              <Link href="/endorsements" className="bg-white/90 backdrop-blur-sm p-5 sm:p-6 rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-light-gray hover:shadow-lg transition-all duration-200 text-center group relative min-h-[120px] sm:min-h-[140px] flex flex-col justify-center mb-3 sm:mb-0">
                 <div className="w-12 h-12 sm:w-14 sm:h-14 mx-auto rounded-full bg-light-blue/30 flex items-center justify-center mb-3 relative">
                   <Star className="h-5 w-5 sm:h-6 sm:w-6 text-navy" />
                   {!isLoadingStats && endorsements.length === 0 && (
@@ -381,7 +381,7 @@ export default function SeekerHomePage() {
 
             {/* Endorsement Promo Card */}
             {!isLoadingStats && endorsements.length === 0 && (
-              <div className="bg-light-blue/20 backdrop-blur-sm p-5 sm:p-8 rounded-xl sm:rounded-2xl shadow-sm border border-light-blue/30 hover:shadow-lg transition-all duration-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="w-full min-w-0 bg-light-blue/20 backdrop-blur-sm p-5 sm:p-8 rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-light-blue/30 hover:shadow-lg transition-all duration-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-3 sm:mb-0">
                 <div className="flex items-center space-x-3 sm:space-x-4">
                   <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white rounded-full flex items-center justify-center shadow-md flex-shrink-0">
                     <Star className="h-5 w-5 sm:h-6 sm:w-6 text-navy" />
@@ -400,8 +400,8 @@ export default function SeekerHomePage() {
               </div>
             )}
 
-            {/* Recent Activity Card */}
-            <div className="bg-white/90 backdrop-blur-sm p-5 sm:p-6 md:p-8 rounded-xl sm:rounded-2xl shadow-sm border border-light-gray hover:shadow-lg transition-all duration-200">
+                {/* Recent Activity Card */}
+                <div className="w-full min-w-0 bg-white/90 backdrop-blur-sm p-5 sm:p-6 md:p-8 rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-light-gray hover:shadow-lg transition-all duration-200 mb-3 sm:mb-0">
               <h2 className="text-lg sm:text-xl font-bold text-navy mb-4 sm:mb-6">Recent Activity</h2>
               {threadDetails.length > 0 ? (
                 <div className="space-y-2 sm:space-y-3">
@@ -444,8 +444,8 @@ export default function SeekerHomePage() {
           </div>
 
           {/* Quick Actions Sidebar */}
-          <div className="col-span-12 lg:col-span-1">
-            <div className="bg-white/90 backdrop-blur-sm p-5 sm:p-6 rounded-xl sm:rounded-2xl shadow-sm border border-light-gray hover:shadow-lg transition-all duration-200 lg:sticky lg:top-28">
+          <div className="col-span-12 lg:col-span-1 w-full max-w-full px-0">
+            <div className="w-full bg-white/90 backdrop-blur-sm p-5 sm:p-6 rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-light-gray hover:shadow-lg transition-all duration-200 lg:sticky lg:top-28">
               <h2 className="text-lg sm:text-xl font-bold text-navy mb-4 sm:mb-5 px-2">Quick Actions</h2>
               <div className="space-y-2">
                 <Link href="/account/profile" className="flex items-center p-3 sm:p-4 rounded-lg hover:bg-light-blue/20 active:bg-light-blue/30 transition-all duration-200 cursor-pointer group min-h-[56px]">
