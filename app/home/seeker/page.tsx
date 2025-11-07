@@ -400,7 +400,7 @@ export default function SeekerHomePage() {
 
             {/* Stats Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-0 sm:gap-3 md:gap-6 lg:gap-8 mb-3 sm:mb-0 w-full min-w-0">
-              <Link href="/messages/candidate" className="bg-white/90 backdrop-blur-sm p-5 sm:p-6 rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-light-gray hover:shadow-lg transition-all duration-200 text-center group min-h-[120px] sm:min-h-[140px] flex flex-col justify-center mb-3 sm:mb-0">
+              <Link href="/messages/candidate" className="bg-white/90 backdrop-blur-sm p-5 sm:p-6 rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-light-gray hover:shadow-lg transition-all duration-200 text-center group min-h-[120px] sm:min-h-[140px] flex flex-col items-center justify-center mb-3 sm:mb-0">
                 <div className="w-12 h-12 sm:w-14 sm:h-14 mx-auto rounded-full bg-light-blue/30 flex items-center justify-center mb-3">
                   <MessageSquare className="h-5 w-5 sm:h-6 sm:w-6 text-navy" />
                 </div>
@@ -408,7 +408,7 @@ export default function SeekerHomePage() {
                 <p className="text-sm sm:text-base text-gray-500 font-medium mt-1">Messages</p>
               </Link>
 
-              <button onClick={routerToViews} className="bg-white/90 backdrop-blur-sm p-5 sm:p-6 rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-light-gray hover:shadow-lg transition-all duration-200 text-center group w-full min-h-[120px] sm:min-h-[140px] flex flex-col justify-center mb-3 sm:mb-0">
+              <button onClick={routerToViews} className="bg-white/90 backdrop-blur-sm p-5 sm:p-6 rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-light-gray hover:shadow-lg transition-all duration-200 text-center group w-full min-h-[120px] sm:min-h-[140px] flex flex-col items-center justify-center mb-3 sm:mb-0">
                 <div className="w-12 h-12 sm:w-14 sm:h-14 mx-auto rounded-full bg-light-blue/30 flex items-center justify-center mb-3">
                   <Eye className="h-5 w-5 sm:h-6 sm:w-6 text-navy" />
                 </div>
@@ -416,7 +416,7 @@ export default function SeekerHomePage() {
                 <p className="text-sm sm:text-base text-gray-500 font-medium mt-1">Companies Viewed You</p>
               </button>
 
-              <Link href="/endorsements" className="bg-white/90 backdrop-blur-sm p-5 sm:p-6 rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-light-gray hover:shadow-lg transition-all duration-200 text-center group relative min-h-[120px] sm:min-h-[140px] flex flex-col justify-center mb-3 sm:mb-0">
+              <Link href="/endorsements" className="bg-white/90 backdrop-blur-sm p-5 sm:p-6 rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-light-gray hover:shadow-lg transition-all duration-200 text-center group relative min-h-[120px] sm:min-h-[140px] flex flex-col items-center justify-center mb-3 sm:mb-0">
                 <div className="w-12 h-12 sm:w-14 sm:h-14 mx-auto rounded-full bg-light-blue/30 flex items-center justify-center mb-3 relative">
                   <Star className="h-5 w-5 sm:h-6 sm:w-6 text-navy" />
                   {!isLoadingStats && endorsements.length === 0 && (
