@@ -246,18 +246,19 @@ export default function EditProfilePage() {
         // Update the shared completion state with the saved data
         updateCompletion(formData);
         
-        // Refresh the profile data in the auth context
-        await refreshProfile();
+        // Refresh the profile data in the auth context (non-blocking)
+        refreshProfile().catch((err) => {
+          console.error('Failed to refresh profile after save:', err);
+        });
         
         // Redirect to appropriate dashboard based on role
-        // Dashboard will show the updated completion immediately
-        if (profile.role === 'JOB_SEEKER') {
-          router.push('/home/seeker');
-        } else if (profile.role === 'EMPLOYER' || profile.role === 'RECRUITER') {
-          router.push('/home/employer');
-        } else {
-          router.push('/home');
-        }
+        const dashboardRoute = profile.role === 'JOB_SEEKER'
+          ? '/home/seeker'
+          : (profile.role === 'EMPLOYER' || profile.role === 'RECRUITER')
+          ? '/home/employer'
+          : '/home';
+
+        router.push(dashboardRoute);
       }
     } catch (error: any) {
       console.error('Error updating profile:', error);
@@ -383,10 +384,9 @@ export default function EditProfilePage() {
             </div>
 
             <div className="mb-6">
-              <label className="block text-sm font-semibold text-navy mb-2">Professional Headline *</label>
+              <label className="block text-sm font-semibold text-navy mb-2">Professional Headline</label>
               <input
                 type="text"
-                required
                 value={formData.headline}
                 onChange={(e) => handleInputChange('headline', e.target.value)}
                 className="w-full h-12 px-4 rounded-xl bg-light-blue/8 border border-light-blue/20 text-gray-800 focus:outline-none focus:ring-2 focus:ring-navy/30 focus:border-navy focus:bg-light-blue/12 transition-all duration-200"

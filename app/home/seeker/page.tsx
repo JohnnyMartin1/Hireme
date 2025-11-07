@@ -299,6 +299,55 @@ export default function SeekerHomePage() {
     return null; // Will redirect to appropriate dashboard
   }
 
+  const QuickActionsCard = ({ className = "" }: { className?: string }) => (
+    <div className={`w-full bg-white/90 backdrop-blur-sm p-5 sm:p-6 rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-light-gray hover:shadow-lg transition-all duration-200 ${className}`}>
+      <h2 className="text-lg sm:text-xl font-bold text-navy mb-4 sm:mb-5 px-2">Quick Actions</h2>
+      <div className="space-y-2">
+        <Link href="/account/profile" className="flex items-center p-3 sm:p-4 rounded-lg hover:bg-light-blue/20 active:bg-light-blue/30 transition-all duration-200 cursor-pointer group min-h-[56px]">
+          <div className="w-10 h-10 bg-light-blue/30 rounded-lg flex items-center justify-center mr-3 sm:mr-4 flex-shrink-0">
+            <User className="h-5 w-5 text-navy" />
+          </div>
+          <span className="font-semibold text-sm sm:text-base text-gray-700">Edit Profile</span>
+          <div className="ml-auto">
+            <div className="w-4 h-4 border-r-2 border-b-2 border-gray-400 rotate-45"></div>
+          </div>
+        </Link>
+        <Link href={`/candidate/${user?.uid}`} className="flex items-center p-3 sm:p-4 rounded-lg hover:bg-light-blue/20 active:bg-light-blue/30 transition-all duration-200 cursor-pointer group min-h-[56px]">
+          <div className="w-10 h-10 bg-light-blue/30 rounded-lg flex items-center justify-center mr-3 sm:mr-4 flex-shrink-0">
+            <Eye className="h-5 w-5 text-navy" />
+          </div>
+          <span className="font-semibold text-sm sm:text-base text-gray-700">Preview Profile</span>
+          <div className="ml-auto">
+            <div className="w-4 h-4 border-r-2 border-b-2 border-gray-400 rotate-45"></div>
+          </div>
+        </Link>
+        <Link href="/messages/candidate" className="flex items-center p-3 sm:p-4 rounded-lg hover:bg-light-blue/20 active:bg-light-blue/30 transition-all duration-200 cursor-pointer group min-h-[56px]">
+          <div className="w-10 h-10 bg-light-blue/30 rounded-lg flex items-center justify-center mr-3 sm:mr-4 flex-shrink-0">
+            <MessageSquare className="h-5 w-5 text-navy" />
+          </div>
+          <span className="font-semibold text-sm sm:text-base text-gray-700">View Messages</span>
+          <div className="ml-auto">
+            <div className="w-4 h-4 border-r-2 border-b-2 border-gray-400 rotate-45"></div>
+          </div>
+        </Link>
+        <Link href="/endorsements" className="flex items-center p-3 sm:p-4 rounded-lg hover:bg-light-blue/20 active:bg-light-blue/30 transition-all duration-200 cursor-pointer group min-h-[56px]">
+          <div className="w-10 h-10 bg-light-blue/30 rounded-lg flex items-center justify-center mr-3 sm:mr-4 flex-shrink-0">
+            <Star className="h-5 w-5 text-navy" />
+          </div>
+          <div className="flex-grow">
+            <span className="font-semibold text-sm sm:text-base text-gray-700">Endorsements</span>
+            {!isLoadingStats && endorsements.length === 0 && (
+              <span className="block text-xs bg-yellow-100 text-yellow-800 font-bold px-2 py-0.5 rounded-full w-fit mt-1">Recommended</span>
+            )}
+          </div>
+          <div className="ml-auto">
+            <div className="w-4 h-4 border-r-2 border-b-2 border-gray-400 rotate-45"></div>
+          </div>
+        </Link>
+      </div>
+    </div>
+  );
+
   return (
     <main className="min-h-screen mobile-safe-top mobile-safe-bottom overflow-x-hidden w-full" style={{background: 'linear-gradient(180deg, #E6F0FF 0%, #F0F8FF 100%)'}}>
       <div className="w-full md:max-w-7xl md:mx-auto px-0 sm:px-3 md:px-6 lg:px-8 py-4 sm:py-6 md:py-10 min-w-0">
@@ -400,6 +449,11 @@ export default function SeekerHomePage() {
               </div>
             )}
 
+            {/* Mobile Quick Actions */}
+            <div className="block lg:hidden mb-3 sm:mb-0">
+              <QuickActionsCard />
+            </div>
+
                 {/* Recent Activity Card */}
                 <div className="w-full min-w-0 bg-white/90 backdrop-blur-sm p-5 sm:p-6 md:p-8 rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-light-gray hover:shadow-lg transition-all duration-200 mb-3 sm:mb-0">
               <h2 className="text-lg sm:text-xl font-bold text-navy mb-4 sm:mb-6">Recent Activity</h2>
@@ -444,53 +498,8 @@ export default function SeekerHomePage() {
           </div>
 
           {/* Quick Actions Sidebar */}
-          <div className="col-span-12 lg:col-span-1 w-full max-w-full px-0">
-            <div className="w-full bg-white/90 backdrop-blur-sm p-5 sm:p-6 rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-light-gray hover:shadow-lg transition-all duration-200 lg:sticky lg:top-28">
-              <h2 className="text-lg sm:text-xl font-bold text-navy mb-4 sm:mb-5 px-2">Quick Actions</h2>
-              <div className="space-y-2">
-                <Link href="/account/profile" className="flex items-center p-3 sm:p-4 rounded-lg hover:bg-light-blue/20 active:bg-light-blue/30 transition-all duration-200 cursor-pointer group min-h-[56px]">
-                  <div className="w-10 h-10 bg-light-blue/30 rounded-lg flex items-center justify-center mr-3 sm:mr-4 flex-shrink-0">
-                    <User className="h-5 w-5 text-navy" />
-                  </div>
-                  <span className="font-semibold text-sm sm:text-base text-gray-700">Edit Profile</span>
-                  <div className="ml-auto">
-                    <div className="w-4 h-4 border-r-2 border-b-2 border-gray-400 rotate-45"></div>
-                  </div>
-                </Link>
-                <Link href={`/candidate/${user?.uid}`} className="flex items-center p-3 sm:p-4 rounded-lg hover:bg-light-blue/20 active:bg-light-blue/30 transition-all duration-200 cursor-pointer group min-h-[56px]">
-                  <div className="w-10 h-10 bg-light-blue/30 rounded-lg flex items-center justify-center mr-3 sm:mr-4 flex-shrink-0">
-                    <Eye className="h-5 w-5 text-navy" />
-                  </div>
-                  <span className="font-semibold text-sm sm:text-base text-gray-700">Preview Profile</span>
-                  <div className="ml-auto">
-                    <div className="w-4 h-4 border-r-2 border-b-2 border-gray-400 rotate-45"></div>
-                  </div>
-                </Link>
-                <Link href="/messages/candidate" className="flex items-center p-3 sm:p-4 rounded-lg hover:bg-light-blue/20 active:bg-light-blue/30 transition-all duration-200 cursor-pointer group min-h-[56px]">
-                  <div className="w-10 h-10 bg-light-blue/30 rounded-lg flex items-center justify-center mr-3 sm:mr-4 flex-shrink-0">
-                    <MessageSquare className="h-5 w-5 text-navy" />
-                  </div>
-                  <span className="font-semibold text-sm sm:text-base text-gray-700">View Messages</span>
-                  <div className="ml-auto">
-                    <div className="w-4 h-4 border-r-2 border-b-2 border-gray-400 rotate-45"></div>
-                  </div>
-                </Link>
-                <Link href="/endorsements" className="flex items-center p-3 sm:p-4 rounded-lg hover:bg-light-blue/20 active:bg-light-blue/30 transition-all duration-200 cursor-pointer group min-h-[56px]">
-                  <div className="w-10 h-10 bg-light-blue/30 rounded-lg flex items-center justify-center mr-3 sm:mr-4 flex-shrink-0">
-                    <Star className="h-5 w-5 text-navy" />
-                  </div>
-                  <div className="flex-grow">
-                    <span className="font-semibold text-sm sm:text-base text-gray-700">Endorsements</span>
-                    {!isLoadingStats && endorsements.length === 0 && (
-                      <span className="block text-xs bg-yellow-100 text-yellow-800 font-bold px-2 py-0.5 rounded-full w-fit mt-1">Recommended</span>
-                    )}
-                  </div>
-                  <div className="ml-auto">
-                    <div className="w-4 h-4 border-r-2 border-b-2 border-gray-400 rotate-45"></div>
-                  </div>
-                </Link>
-              </div>
-            </div>
+          <div className="col-span-12 lg:col-span-1 w-full max-w-full px-0 hidden lg:block">
+            <QuickActionsCard className="lg:sticky lg:top-28" />
           </div>
         </div>
       </div>

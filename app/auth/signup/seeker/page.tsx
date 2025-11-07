@@ -197,32 +197,32 @@ export default function SeekerSignupPage() {
   };
 
   return (
-    <main className="min-h-screen sm:h-screen flex flex-col sm:flex-row bg-brand-gray overflow-hidden mobile-safe-top mobile-safe-bottom">
+    <main className="min-h-screen sm:h-screen flex flex-col lg:flex-row bg-brand-gray overflow-hidden mobile-safe-top mobile-safe-bottom">
       {/* Left Column - Content & Form */}
-      <div className="w-full sm:w-[48%] flex flex-col justify-center p-4 sm:p-6 md:p-8 bg-white relative overflow-y-auto">
-        <div className="flex-grow flex flex-col justify-center max-w-full py-6 sm:py-0">
+      <div className="w-full lg:w-[48%] flex flex-col justify-center p-4 sm:p-6 md:p-8 bg-white relative overflow-y-auto">
+        <div className="flex-grow flex flex-col justify-center w-full max-w-[560px] mx-auto py-6 sm:py-0">
           {/* Progress Stepper */}
-          <div className="flex items-center space-x-2 sm:space-x-4 text-xs sm:text-sm mb-6 sm:mb-8 overflow-x-auto">
-            <div className={`flex items-center ${currentStep >= 1 ? 'text-navy font-semibold' : 'text-text-secondary'} whitespace-nowrap`}>
-              <span className={`flex items-center justify-center w-6 h-6 sm:w-8 sm:h-8 rounded-full mr-2 sm:mr-3 text-xs ${
+          <div className="flex flex-wrap items-center gap-2 sm:flex-nowrap sm:gap-4 text-xs sm:text-sm mb-6 sm:mb-8">
+            <div className={`flex items-center ${currentStep >= 1 ? 'text-navy font-semibold' : 'text-text-secondary'} whitespace-nowrap gap-2`}>
+              <span className={`flex items-center justify-center w-6 h-6 sm:w-8 sm:h-8 rounded-full text-xs ${
                 currentStep > 1 ? 'bg-success-green text-white' : currentStep === 1 ? 'bg-navy text-white' : 'bg-light-gray text-text-secondary'
               }`}>
                 {currentStep > 1 ? <i className="fa-solid fa-check"></i> : <i className="fa-solid fa-envelope"></i>}
               </span>
               Search
             </div>
-            <i className="fa-solid fa-chevron-right text-light-gray text-xs"></i>
-            <div className={`flex items-center ${currentStep >= 2 ? 'text-navy font-semibold' : 'text-text-secondary'} whitespace-nowrap`}>
-              <span className={`flex items-center justify-center w-6 h-6 sm:w-8 sm:h-8 rounded-full mr-2 sm:mr-3 text-xs ${
+            <i className="fa-solid fa-chevron-right text-light-gray text-xs hidden sm:block"></i>
+            <div className={`flex items-center ${currentStep >= 2 ? 'text-navy font-semibold' : 'text-text-secondary'} whitespace-nowrap gap-2`}>
+              <span className={`flex items-center justify-center w-6 h-6 sm:w-8 sm:h-8 rounded-full text-xs ${
                 currentStep > 2 ? 'bg-success-green text-white' : currentStep === 2 ? 'bg-navy text-white' : 'bg-light-gray text-text-secondary'
               }`}>
                 {currentStep > 2 ? <i className="fa-solid fa-check"></i> : <i className="fa-solid fa-user-plus"></i>}
               </span>
               Create Account
             </div>
-            <i className="fa-solid fa-chevron-right text-light-gray text-xs"></i>
-            <div className={`flex items-center ${currentStep >= 3 ? 'text-navy font-semibold' : 'text-text-secondary'} whitespace-nowrap`}>
-              <span className={`flex items-center justify-center w-6 h-6 sm:w-8 sm:h-8 rounded-full mr-2 sm:mr-3 text-xs ${
+            <i className="fa-solid fa-chevron-right text-light-gray text-xs hidden sm:block"></i>
+            <div className={`flex items-center ${currentStep >= 3 ? 'text-navy font-semibold' : 'text-text-secondary'} whitespace-nowrap gap-2`}>
+              <span className={`flex items-center justify-center w-6 h-6 sm:w-8 sm:h-8 rounded-full text-xs ${
                 currentStep === 3 ? 'bg-navy text-white' : 'bg-light-gray text-text-secondary'
               }`}>
                 <i className="fa-solid fa-smile"></i>
@@ -278,7 +278,7 @@ export default function SeekerSignupPage() {
                 {emailSent && (
                   <div className="space-y-6">
                     <div className="text-sm text-success-green">Code sent to {formData.email}</div>
-                    <div className="flex space-x-3">
+                    <div className="grid grid-cols-6 gap-2 sm:gap-3">
                       {[1, 2, 3, 4, 5, 6].map((digit) => (
                         <input 
                           key={digit}
@@ -325,7 +325,7 @@ export default function SeekerSignupPage() {
                             }
                           }}
                           data-digit={digit}
-                          className="w-14 h-14 text-center text-xl font-bold border border-light-gray rounded-xl focus:border-navy focus:outline-none transition-all duration-200"
+                          className="w-10 h-12 sm:w-12 sm:h-14 text-center text-lg sm:text-xl font-bold border border-light-gray rounded-xl focus:border-navy focus:outline-none transition-all duration-200"
                         />
                       ))}
                     </div>
@@ -508,7 +508,7 @@ export default function SeekerSignupPage() {
       </div>
 
       {/* Right Column - Profile Gallery */}
-      <div className="w-[52%] bg-brand-gray p-8 overflow-hidden relative">
+      <div className="hidden lg:block w-[52%] bg-brand-gray p-8 overflow-hidden relative">
         <div className="absolute inset-0 bg-gradient-to-br from-brand-gray via-subtle-gray to-brand-gray"></div>
         
         <div className="h-full w-full relative">
