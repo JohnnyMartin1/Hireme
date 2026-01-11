@@ -1,196 +1,831 @@
 "use client";
+import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import HireMeLogo from "@/components/brand/HireMeLogo";
-import InteractiveWheel from "@/components/InteractiveWheel";
-import ErrorBoundary from "@/components/ErrorBoundary";
-
-function HomeContent() {
-  return (
-    <div className="bg-white">
-      {/* Hero Section */}
-      <section className="relative skyline-bg py-16 sm:py-20 md:py-24 px-4 sm:px-6 min-h-[500px] sm:min-h-[600px] md:h-[700px] flex items-center mobile-safe-top">
-        <div className="container mx-auto max-w-4xl text-center relative z-10">
-          <div className="mb-6 sm:mb-8">
-            <div className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 flex items-center justify-center mx-auto mb-4 sm:mb-6">
-              <HireMeLogo variant="mark" className="h-full w-full" />
-            </div>
-          </div>
-          
-          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-navy leading-tight mb-4 sm:mb-6 px-4">
-            Welcome to HireMe
-          </h1>
-          
-          <p className="text-base sm:text-lg md:text-xl text-gray-600 mb-8 sm:mb-10 md:mb-12 max-w-2xl mx-auto leading-relaxed px-4">
-            Connect employers with early-career talent. Find your next opportunity or discover the perfect candidate.
-          </p>
-          
-          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-stretch sm:items-center px-4 max-w-md sm:max-w-none mx-auto">
-            <Link 
-              href="/auth/signup"
-              className="w-full sm:w-auto bg-navy text-white px-8 py-4 rounded-full font-semibold text-base md:text-lg hover:bg-blue-900 transition btn-hover shadow-lg min-h-[48px] flex items-center justify-center"
-            >
-              Get Started
-            </Link>
-            <Link 
-              href="/auth/login"
-              className="w-full sm:w-auto bg-white/80 backdrop-blur-sm text-navy border-2 border-gray-300 px-8 py-4 rounded-full font-semibold text-base md:text-lg hover:bg-light-blue/50 hover:border-light-blue transition btn-hover shadow-sm min-h-[48px] flex items-center justify-center"
-            >
-              Sign In
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* Feature Cards Section */}
-      <section className="py-12 sm:py-16 md:py-20 px-4 sm:px-6 bg-gray-50">
-        <div className="container mx-auto max-w-6xl">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
-            
-            {/* For Job Seekers Card */}
-            <div className="bg-white rounded-xl sm:rounded-2xl p-6 sm:p-8 text-center card-glow hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2">
-              <div className="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-light-blue to-blue-200 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
-                <i className="fa-solid fa-bullseye text-navy text-lg sm:text-xl"></i>
-              </div>
-              <h3 className="text-xl sm:text-2xl font-bold text-navy mb-3 sm:mb-4">For Job Seekers</h3>
-              <p className="text-sm sm:text-base text-gray-600 leading-relaxed">
-                Create a comprehensive profile and let employers find you. Showcase your skills and let opportunities come to you.
-              </p>
-            </div>
-            
-            {/* For Employers Card */}
-            <div className="bg-white rounded-xl sm:rounded-2xl p-6 sm:p-8 text-center card-glow hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2">
-              <div className="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-light-blue to-blue-200 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
-                <i className="fa-solid fa-building text-navy text-lg sm:text-xl"></i>
-              </div>
-              <h3 className="text-xl sm:text-2xl font-bold text-navy mb-3 sm:mb-4">For Employers</h3>
-              <p className="text-sm sm:text-base text-gray-600 leading-relaxed">
-                Find talented candidates that match your company's needs. Access a curated pool of verified professionals.
-              </p>
-            </div>
-            
-            {/* Smart Matching Card */}
-            <div className="bg-white rounded-xl sm:rounded-2xl p-6 sm:p-8 text-center card-glow hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 sm:col-span-2 lg:col-span-1">
-              <div className="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-light-blue to-blue-200 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
-                <i className="fa-solid fa-rocket text-navy text-lg sm:text-xl"></i>
-              </div>
-              <h3 className="text-xl sm:text-2xl font-bold text-navy mb-3 sm:mb-4">Smart Matching</h3>
-              <p className="text-sm sm:text-base text-gray-600 leading-relaxed">
-                AI-powered candidate–employer matching for better connections. Experience the future of recruitment.
-              </p>
-            </div>
-            
-          </div>
-        </div>
-      </section>
-
-      {/* Interactive Wheel Section */}
-      <section className="py-12 sm:py-16 md:py-20 px-4 sm:px-6 bg-white overflow-hidden">
-        <div className="container mx-auto max-w-7xl">
-          <div className="grid md:grid-cols-2 gap-8 md:gap-16 items-center">
-            <div className="text-center md:text-left">
-              <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-navy leading-tight mb-4 sm:mb-6">
-                Simplifying Hiring Processes
-              </h2>
-              <p className="text-base sm:text-lg text-gray-600 mb-6 sm:mb-8 md:mb-10 max-w-md mx-auto md:mx-0">
-                Providing efficiency, transparency and standardization.
-              </p>
-              <Link 
-                href="/info"
-                className="bg-navy text-white px-6 sm:px-8 py-3 sm:py-4 rounded-full font-semibold text-base sm:text-lg hover:bg-blue-900 transition btn-hover shadow-lg inline-flex items-center gap-2 w-full sm:w-auto justify-center"
-              >
-                Learn More
-                <i className="fa-solid fa-arrow-right"></i>
-              </Link>
-            </div>
-            
-            {/* Desktop: Show Interactive Wheel */}
-            <div className="hidden md:flex min-h-[480px] items-center justify-center">
-              <ErrorBoundary>
-                <InteractiveWheel />
-              </ErrorBoundary>
-            </div>
-            
-            {/* Mobile: Show Simple Benefits List */}
-            <div className="md:hidden grid grid-cols-2 gap-4">
-              <div className="bg-gray-50 rounded-xl p-4 text-center">
-                <div className="w-12 h-12 bg-light-blue/30 rounded-full flex items-center justify-center mx-auto mb-3">
-                  <i className="fa-solid fa-bolt text-navy"></i>
-                </div>
-                <h4 className="font-bold text-navy text-sm mb-1">Fast</h4>
-                <p className="text-xs text-gray-600">Quick hiring process</p>
-              </div>
-              <div className="bg-gray-50 rounded-xl p-4 text-center">
-                <div className="w-12 h-12 bg-light-blue/30 rounded-full flex items-center justify-center mx-auto mb-3">
-                  <i className="fa-solid fa-eye text-navy"></i>
-                </div>
-                <h4 className="font-bold text-navy text-sm mb-1">Transparent</h4>
-                <p className="text-xs text-gray-600">Clear communication</p>
-              </div>
-              <div className="bg-gray-50 rounded-xl p-4 text-center">
-                <div className="w-12 h-12 bg-light-blue/30 rounded-full flex items-center justify-center mx-auto mb-3">
-                  <i className="fa-solid fa-check-circle text-navy"></i>
-                </div>
-                <h4 className="font-bold text-navy text-sm mb-1">Verified</h4>
-                <p className="text-xs text-gray-600">Qualified candidates</p>
-              </div>
-              <div className="bg-gray-50 rounded-xl p-4 text-center">
-                <div className="w-12 h-12 bg-light-blue/30 rounded-full flex items-center justify-center mx-auto mb-3">
-                  <i className="fa-solid fa-handshake text-navy"></i>
-                </div>
-                <h4 className="font-bold text-navy text-sm mb-1">Fair</h4>
-                <p className="text-xs text-gray-600">Balanced for all</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="bg-gray-900 text-white py-8 sm:py-12 px-4 sm:px-6">
-        <div className="container mx-auto max-w-6xl">
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8">
-            <div className="col-span-1 sm:col-span-2 md:col-span-1">
-              <div className="mb-4">
-                <HireMeLogo variant="full" className="h-6 w-auto" />
-              </div>
-              <p className="text-sm sm:text-base text-gray-400">
-                Connecting talent with opportunity through intelligent matching.
-              </p>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-3 sm:mb-4 text-base">For Job Seekers</h4>
-              <ul className="space-y-2 text-sm sm:text-base text-gray-400">
-                <li><span className="hover:text-white transition cursor-pointer">Create Profile</span></li>
-                <li><span className="hover:text-white transition cursor-pointer">Browse Jobs</span></li>
-                <li><span className="hover:text-white transition cursor-pointer">Career Resources</span></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-3 sm:mb-4 text-base">For Employers</h4>
-              <ul className="space-y-2 text-sm sm:text-base text-gray-400">
-                <li><span className="hover:text-white transition cursor-pointer">Post Jobs</span></li>
-                <li><span className="hover:text-white transition cursor-pointer">Search Candidates</span></li>
-                <li><span className="hover:text-white transition cursor-pointer">Pricing</span></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-3 sm:mb-4 text-base">Support</h4>
-              <ul className="space-y-2 text-sm sm:text-base text-gray-400">
-                <li><span className="hover:text-white transition cursor-pointer">Help Center</span></li>
-                <li><span className="hover:text-white transition cursor-pointer">Contact Us</span></li>
-                <li><span className="hover:text-white transition cursor-pointer">Privacy Policy</span></li>
-              </ul>
-            </div>
-          </div>
-          <div className="border-t border-gray-800 mt-6 sm:mt-8 pt-6 sm:pt-8 text-center text-sm sm:text-base text-gray-400">
-            <p>© 2024 HireMe. All rights reserved.</p>
-          </div>
-        </div>
-      </footer>
-    </div>
-  );
-}
 
 export default function Home() {
-  return <HomeContent />;
+  // Comparison table state
+  const [comparisonView, setComparisonView] = useState<'employer' | 'candidate'>('employer');
+  
+  // FAQ state
+  const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
+  
+  // Workflow hover state
+  const [hoveredWorkflowIndex, setHoveredWorkflowIndex] = useState<number | null>(null);
+
+  // Position workflow nodes on mount
+  useEffect(() => {
+    const nodes = ['source', 'screen', 'interview', 'decide', 'onboard', 'measure'];
+    const radius = 158;
+    const angleStep = 360 / 6;
+
+    nodes.forEach((node, i) => {
+      const element = document.getElementById(`node-${node}`);
+      if (element) {
+        const baseAngle = i * angleStep;
+        const angleRad = (baseAngle - 90) * (Math.PI / 180);
+        const x = Math.cos(angleRad) * radius;
+        const y = Math.sin(angleRad) * radius;
+
+        element.style.position = 'absolute';
+        element.style.top = '50%';
+        element.style.left = '50%';
+        element.style.transform = `translate(-50%, -50%) translate(${x}px, ${y}px)`;
+      }
+    });
+  }, []);
+
+  const workflowSteps = [
+    { id: 'source', icon: 'fa-search', title: 'Source Candidates', description: 'Discover talent from multiple channels. AI-powered matching ensures you find the right people fast.' },
+    { id: 'screen', icon: 'fa-filter', title: 'Screen & Qualify', description: 'Automated resume parsing and skills assessment filter out unqualified candidates.' },
+    { id: 'interview', icon: 'fa-calendar-check', title: 'Interview & Evaluate', description: 'Structured interview guides and shared scorecards keep everyone aligned.' },
+    { id: 'decide', icon: 'fa-check-circle', title: 'Make Decisions', description: 'Collaborative decision-making with transparent scoring. Compare candidates side-by-side.' },
+    { id: 'onboard', icon: 'fa-rocket', title: 'Onboard & Engage', description: 'Send digital offer letters, automate paperwork, and create personalized onboarding experiences.' },
+    { id: 'measure', icon: 'fa-chart-bar', title: 'Measure & Improve', description: 'Track hiring metrics and feedback to continuously improve sourcing, screening, and interview quality.' }
+  ];
+
+  const comparisonData = {
+    employer: [
+      {
+        group: 'Differentiators',
+        rows: [
+          { key: 'timeline', label: 'Transparent timelines + status updates', description: "Set clear stages + expected response windows so candidates always know what's next.", hireme: true, linkedin: false, handshake: false, indeed: false, highlight: true },
+          { key: 'verified', label: 'Verified intent + outreach controls', description: 'Outreach stays high-signal: verified roles, guardrails, reduced spam.', hireme: true, linkedin: false, handshake: false, indeed: false, highlight: true },
+          { key: 'screening', label: 'Structured screening + interview signals', description: 'Standardized screening criteria + interview scorecards keep teams aligned.', hireme: true, linkedin: false, handshake: false, indeed: true, highlight: true },
+          { key: 'workflow', label: 'Closed-loop workflow + insights', description: 'Connect steps end-to-end and learn what drives successful hires.', hireme: true, linkedin: true, handshake: false, indeed: true, highlight: true }
+        ]
+      },
+      {
+        group: 'Core capabilities',
+        rows: [
+          { key: 'search', label: 'Candidate search + filters', description: 'Search and filter candidates by role-relevant criteria.', hireme: true, linkedin: true, handshake: true, indeed: true, highlight: false },
+          { key: 'outreach', label: 'Outreach messaging', description: 'Message candidates directly and manage conversations.', hireme: true, linkedin: true, handshake: true, indeed: true, highlight: false },
+          { key: 'pipeline', label: 'Pipeline / tracking', description: 'Move candidates through stages and track decisions.', hireme: true, linkedin: true, handshake: true, indeed: true, highlight: false },
+          { key: 'profile', label: 'Candidate profile + artifacts', description: 'Structured profile with artifacts (resume, transcript/portfolio) in a consistent format.', hireme: true, linkedin: true, handshake: true, indeed: true, highlight: false }
+        ]
+      }
+    ],
+    candidate: [
+      {
+        group: 'Differentiators',
+        rows: [
+          { key: 'timeline', label: 'Transparent timelines + status updates', description: "See your stage, what's next, and when to expect updates — fewer dead ends.", hireme: true, linkedin: false, handshake: false, indeed: false, highlight: true },
+          { key: 'verified', label: 'Verified intent + outreach controls', description: 'Fewer spammy messages — outreach tied to real roles and clearer intent.', hireme: true, linkedin: false, handshake: false, indeed: false, highlight: true },
+          { key: 'screening', label: 'Structured screening + interview signals', description: 'More consistent evaluation — clearer expectations and fairer comparison.', hireme: true, linkedin: false, handshake: false, indeed: true, highlight: true },
+          { key: 'workflow', label: 'Closed-loop workflow + insights', description: 'A smoother connected process with fewer handoffs and surprises.', hireme: true, linkedin: true, handshake: false, indeed: true, highlight: true }
+        ]
+      },
+      {
+        group: 'Core capabilities',
+        rows: [
+          { key: 'search', label: 'Candidate search + filters', description: 'Get discovered based on skills, interests, and fit signals.', hireme: true, linkedin: true, handshake: true, indeed: true, highlight: false },
+          { key: 'outreach', label: 'Outreach messaging', description: 'Communicate with employers in one place.', hireme: true, linkedin: true, handshake: true, indeed: true, highlight: false },
+          { key: 'pipeline', label: 'Pipeline / tracking', description: 'Know where you stand as you move through the process.', hireme: true, linkedin: true, handshake: true, indeed: true, highlight: false },
+          { key: 'profile', label: 'Candidate profile + artifacts', description: 'One clean profile you can reuse — attach artifacts once, update anytime.', hireme: true, linkedin: true, handshake: true, indeed: true, highlight: false }
+        ]
+      }
+    ]
+  };
+
+  const faqItems = [
+    {
+      question: "What do I need to set up an applicant account?",
+      answer: "Setting up an applicant account is quick and straightforward. At a minimum, you'll upload your resume, and you can optionally include a transcript to help employers better understand your background. From there, you can enhance your profile with skills, interests, and availability — all designed to help employers find you faster without lengthy applications."
+    },
+    {
+      question: "How do employers start searching for candidates?",
+      answer: "Employers create a verified account and define what they're looking for — role type, skills, availability, and hiring timeline. From there, HireMe surfaces qualified, early-career candidates automatically, allowing employers to search, filter, and connect without posting a job or waiting weeks for applications."
+    },
+    {
+      question: "How is HireMe different from LinkedIn or Handshake?",
+      answer: "HireMe flips the traditional job search. Instead of candidates applying endlessly, verified employers actively search for early-career talent. This reduces ghosting, speeds up hiring, and creates more transparent, intentional connections on both sides."
+    },
+    {
+      question: "Are employers on HireMe verified?",
+      answer: "Yes. Employers must complete a verification process before searching or contacting candidates. This helps ensure legitimate opportunities and more meaningful conversations."
+    },
+    {
+      question: "Is HireMe only for students or recent graduates?",
+      answer: "HireMe is built for early-career talent — including students, recent graduates, and individuals exploring entry-level or rotational roles."
+    },
+    {
+      question: "What happens after an employer reaches out?",
+      answer: "Once an employer initiates contact, both parties can communicate directly, schedule interviews, and move forward — all without unnecessary steps or intermediaries."
+    }
+  ];
+
+  const toggleFaq = (index: number) => {
+    setOpenFaqIndex(openFaqIndex === index ? null : index);
+  };
+
+  return (
+    <>
+      <style jsx global>{`
+        @keyframes float {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-20px); }
+        }
+
+        @keyframes slideLeft {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-50%); }
+        }
+
+        @keyframes slideRight {
+          0% { transform: translateX(-50%); }
+          100% { transform: translateX(0); }
+        }
+
+        @keyframes workflowPulse {
+          0%, 100% {
+            transform: scale(1);
+            box-shadow: 0 0 20px rgba(186, 230, 253, 0.4);
+          }
+          50% {
+            transform: scale(1.12);
+            box-shadow: 0 0 40px rgba(186, 230, 253, 0.8);
+          }
+        }
+
+        @keyframes pulseRing {
+          0% {
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 0.8;
+          }
+          100% {
+            transform: translate(-50%, -50%) scale(1.6);
+            opacity: 0;
+          }
+        }
+
+        @keyframes pulse {
+          0%, 100% {
+            box-shadow: 0 0 20px rgba(186, 230, 253, 0.6);
+          }
+          50% {
+            box-shadow: 0 0 40px rgba(186, 230, 253, 1);
+          }
+        }
+
+        @keyframes iconPulse {
+          0%, 100% {
+            box-shadow: 0 4px 12px rgba(30, 58, 138, 0.3);
+          }
+          50% {
+            box-shadow: 0 4px 20px rgba(30, 58, 138, 0.5), 0 0 30px rgba(186, 230, 253, 0.4);
+          }
+        }
+
+        @keyframes nodePop {
+          0% {
+            filter: brightness(1);
+          }
+          50% {
+            filter: brightness(1.3);
+          }
+          100% {
+            filter: brightness(1.15);
+          }
+        }
+
+        @keyframes nodeGlow {
+          0%, 100% {
+            box-shadow: 0 0 40px rgba(56, 189, 248, 0.7), 0 0 60px rgba(186, 230, 253, 0.5), 0 8px 32px rgba(0, 0, 0, 0.25);
+          }
+          50% {
+            box-shadow: 0 0 60px rgba(56, 189, 248, 0.9), 0 0 100px rgba(186, 230, 253, 0.7), 0 12px 48px rgba(0, 0, 0, 0.3);
+          }
+        }
+
+        .skyline-scroll {
+          animation: slideLeft 60s linear infinite;
+          will-change: transform;
+        }
+
+        .skyline-scroll-reverse {
+          animation: slideRight 120s linear infinite;
+          will-change: transform;
+        }
+
+        .card-hover {
+          transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .card-hover:hover {
+          transform: translateY(-10px);
+          box-shadow: 0 24px 48px rgba(16, 42, 67, 0.12);
+        }
+
+        html {
+          scroll-behavior: smooth;
+        }
+
+        a:focus, button:focus {
+          outline: 2px solid #bae6fd;
+          outline-offset: 2px;
+          border-radius: 4px;
+        }
+      `}</style>
+
+      <div className="bg-slate-50">
+        {/* Header */}
+        <header className="fixed top-0 left-0 right-0 bg-white/95 backdrop-blur-md shadow-sm z-50 border-b border-slate-100">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <div className="w-8 h-8 bg-navy-800 rounded-lg flex items-center justify-center shadow-md">
+                <i className="fa-solid fa-users text-white text-lg"></i>
+              </div>
+              <span className="text-xl font-bold text-navy-900">HireMe</span>
+            </div>
+            <nav className="hidden md:flex items-center space-x-5 lg:space-x-6">
+              <a href="#personas" className="text-sm text-slate-600 hover:text-navy-700 font-medium transition-colors duration-200">For Teams</a>
+              <a href="#workflows" className="text-sm text-slate-600 hover:text-navy-700 font-medium transition-colors duration-200">Workflows</a>
+              <a href="#comparison" className="text-sm text-slate-600 hover:text-navy-700 font-medium transition-colors duration-200">Comparison</a>
+              <a href="#features" className="text-sm text-slate-600 hover:text-navy-700 font-medium transition-colors duration-200">Features</a>
+              <a href="#faq" className="text-sm text-slate-600 hover:text-navy-700 font-medium transition-colors duration-200">FAQ</a>
+            </nav>
+            <div className="flex items-center space-x-3">
+              <Link href="/auth/login" className="text-sm text-slate-700 hover:text-navy-700 font-medium transition-colors duration-200">Log In</Link>
+              <Link href="/auth/signup" className="bg-navy-800 text-white px-5 py-2 rounded-lg text-sm font-semibold hover:bg-navy-700 hover:shadow-lg transition-all duration-300">Sign Up</Link>
+            </div>
+          </div>
+        </header>
+
+        {/* Hero Section */}
+        <section className="relative pt-24 pb-32 lg:pb-40 overflow-hidden bg-sky-50 min-h-[600px]">
+          <div className="absolute inset-0 bg-gradient-to-br from-sky-50 via-white to-slate-50"></div>
+          
+          {/* Skyline Animation - Multiple Layers */}
+          <div className="absolute bottom-0 left-0 right-0 h-80 overflow-hidden pointer-events-none">
+            {/* Back layer - taller, slower, more transparent */}
+            <div className="skyline-scroll-reverse flex absolute bottom-0 opacity-[0.15]">
+              <div className="flex items-end gap-14 pr-14">
+                {[280, 320, 300, 290, 270, 310, 275, 295, 260, 245].map((h, i) => (
+                  <div 
+                    key={`back-1-${i}`} 
+                    className="rounded-t-sm"
+                    style={{ 
+                      width: i % 3 === 0 ? '44px' : i % 3 === 1 ? '38px' : '50px',
+                      height: `${h}px`,
+                      backgroundColor: i % 4 === 0 ? '#cbd5e1' : i % 4 === 1 ? '#e0e7ff' : i % 4 === 2 ? '#c7d2fe' : '#d1d5db'
+                    }}
+                  />
+                ))}
+              </div>
+              <div className="flex items-end gap-14">
+                {[280, 320, 300, 290, 270, 310, 275, 295, 260, 245].map((h, i) => (
+                  <div 
+                    key={`back-2-${i}`} 
+                    className="rounded-t-sm"
+                    style={{ 
+                      width: i % 3 === 0 ? '44px' : i % 3 === 1 ? '38px' : '50px',
+                      height: `${h}px`,
+                      backgroundColor: i % 4 === 0 ? '#cbd5e1' : i % 4 === 1 ? '#e0e7ff' : i % 4 === 2 ? '#c7d2fe' : '#d1d5db'
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
+            
+            {/* Middle layer */}
+            <div className="skyline-scroll flex absolute bottom-0 opacity-[0.2]" style={{ animationDuration: '80s' }}>
+              <div className="flex items-end gap-16 pr-16">
+                {[220, 200, 250, 170, 240, 190, 230, 205, 215].map((h, i) => (
+                  <div 
+                    key={`mid-1-${i}`} 
+                    className="rounded-t-sm"
+                    style={{ 
+                      width: i % 2 === 0 ? '32px' : '40px',
+                      height: `${h}px`,
+                      backgroundColor: i % 3 === 0 ? '#94a3b8' : i % 3 === 1 ? '#a5b4fc' : '#9ca3af'
+                    }}
+                  />
+                ))}
+              </div>
+              <div className="flex items-end gap-16">
+                {[220, 200, 250, 170, 240, 190, 230, 205, 215].map((h, i) => (
+                  <div 
+                    key={`mid-2-${i}`} 
+                    className="rounded-t-sm"
+                    style={{ 
+                      width: i % 2 === 0 ? '32px' : '40px',
+                      height: `${h}px`,
+                      backgroundColor: i % 3 === 0 ? '#94a3b8' : i % 3 === 1 ? '#a5b4fc' : '#9ca3af'
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
+            
+            {/* Front layer - shorter, faster, more visible */}
+            <div className="skyline-scroll flex absolute bottom-0 opacity-[0.25]" style={{ animationDuration: '50s' }}>
+              <div className="flex items-end gap-10 pr-10">
+                {[130, 110, 140, 120, 135, 115, 145, 108, 138, 118, 128].map((h, i) => (
+                  <div 
+                    key={`front-1-${i}`} 
+                    className="rounded-t-sm"
+                    style={{ 
+                      width: i % 2 === 0 ? '26px' : '34px',
+                      height: `${h}px`,
+                      backgroundColor: i % 3 === 0 ? '#64748b' : i % 3 === 1 ? '#818cf8' : '#6b7280'
+                    }}
+                  />
+                ))}
+              </div>
+              <div className="flex items-end gap-10">
+                {[130, 110, 140, 120, 135, 115, 145, 108, 138, 118, 128].map((h, i) => (
+                  <div 
+                    key={`front-2-${i}`} 
+                    className="rounded-t-sm"
+                    style={{ 
+                      width: i % 2 === 0 ? '26px' : '34px',
+                      height: `${h}px`,
+                      backgroundColor: i % 3 === 0 ? '#64748b' : i % 3 === 1 ? '#818cf8' : '#6b7280'
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 h-full flex items-center">
+            <div className="max-w-2xl">
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-navy-900 leading-tight mb-4 tracking-tight">
+                The Complete Hiring System That
+                <span className="block text-navy-600 mt-1">Closes The Loop</span>
+              </h1>
+              <p className="text-base sm:text-lg lg:text-xl text-slate-600 mb-6 leading-relaxed">
+                HireMe isn't just another job board. It's an end-to-end hiring platform that connects sourcing, screening, collaboration, and onboarding into one seamless workflow.
+              </p>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                <button 
+                  onClick={() => {
+                    const element = document.getElementById('personas');
+                    if (element) {
+                      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                  }}
+                  className="bg-navy-800 text-white px-7 py-3 rounded-lg font-semibold text-base hover:bg-navy-700 hover:shadow-xl transition-all duration-300 flex items-center space-x-2 shadow-lg cursor-pointer"
+                >
+                  <span>Get Started</span>
+                  <i className="fa-solid fa-arrow-down text-sm animate-bounce"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Personas Section */}
+        <section id="personas" className="py-16 lg:py-20 bg-white">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-12 lg:mb-14">
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-navy-900 mb-4 tracking-tight">Built For Everyone</h2>
+              <p className="text-base sm:text-lg lg:text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed">
+                Whether you're a solo recruiter, a growing startup, or an enterprise HR team.
+              </p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 lg:gap-6">
+              {/* Candidates Card */}
+              <div className="bg-white border-2 border-slate-100 rounded-2xl p-6 lg:p-7 card-hover text-center shadow-sm flex flex-col">
+                <div className="w-16 h-16 bg-gradient-to-br from-sky-100 to-sky-50 rounded-xl flex items-center justify-center mx-auto mb-4 shadow-sm">
+                  <i className="fa-solid fa-user-tie text-navy-800 text-2xl"></i>
+                </div>
+                <h3 className="text-xl lg:text-2xl font-bold text-navy-900 mb-3">Candidates</h3>
+                <p className="text-sm text-slate-600 mb-4 leading-relaxed">
+                  Manage multiple roles, track candidate pipelines, and collaborate with hiring managers.
+                </p>
+                <ul className="text-left space-y-2 mb-5 flex-grow">
+                  <li className="flex items-center text-sm text-slate-700">
+                    <i className="fa-solid fa-check text-navy-600 mr-2"></i>
+                    <span>Pipeline management</span>
+                  </li>
+                  <li className="flex items-center text-sm text-slate-700">
+                    <i className="fa-solid fa-check text-navy-600 mr-2"></i>
+                    <span>Candidate tracking</span>
+                  </li>
+                  <li className="flex items-center text-sm text-slate-700">
+                    <i className="fa-solid fa-check text-navy-600 mr-2"></i>
+                    <span>Automated workflows</span>
+                  </li>
+                </ul>
+                <Link href="/auth/signup/seeker" className="inline-block bg-navy-50 text-navy-800 px-5 py-2 rounded-lg text-sm font-semibold hover:bg-navy-100 transition-all duration-200 mt-auto">Get Started</Link>
+              </div>
+
+              {/* Employer Card */}
+              <div className="bg-white border-2 border-slate-100 rounded-2xl p-6 lg:p-7 card-hover text-center shadow-sm flex flex-col">
+                <div className="w-16 h-16 bg-gradient-to-br from-sky-100 to-sky-50 rounded-xl flex items-center justify-center mx-auto mb-4 shadow-sm">
+                  <i className="fa-solid fa-building text-navy-800 text-2xl"></i>
+                </div>
+                <h3 className="text-xl lg:text-2xl font-bold text-navy-900 mb-3">Employer</h3>
+                <p className="text-sm text-slate-600 mb-4 leading-relaxed">
+                  Review candidates, provide feedback, and make hiring decisions with full context.
+                </p>
+                <ul className="text-left space-y-2 mb-5 flex-grow">
+                  <li className="flex items-center text-sm text-slate-700">
+                    <i className="fa-solid fa-check text-navy-600 mr-2"></i>
+                    <span>Shared scorecards</span>
+                  </li>
+                  <li className="flex items-center text-sm text-slate-700">
+                    <i className="fa-solid fa-check text-navy-600 mr-2"></i>
+                    <span>Real-time updates</span>
+                  </li>
+                  <li className="flex items-center text-sm text-slate-700">
+                    <i className="fa-solid fa-check text-navy-600 mr-2"></i>
+                    <span>Collaborative feedback</span>
+                  </li>
+                </ul>
+                <Link href="/auth/signup/employer/company" className="inline-block bg-navy-50 text-navy-800 px-5 py-2 rounded-lg text-sm font-semibold hover:bg-navy-100 transition-all duration-200 mt-auto">Get Started</Link>
+              </div>
+
+              {/* Recruiters Card */}
+              <div className="bg-white border-2 border-slate-100 rounded-2xl p-6 lg:p-7 card-hover text-center shadow-sm md:col-span-2 lg:col-span-1 flex flex-col">
+                <div className="w-16 h-16 bg-gradient-to-br from-sky-100 to-sky-50 rounded-xl flex items-center justify-center mx-auto mb-4 shadow-sm">
+                  <i className="fa-solid fa-chart-line text-navy-800 text-2xl"></i>
+                </div>
+                <h3 className="text-xl lg:text-2xl font-bold text-navy-900 mb-3">Recruiters</h3>
+                <p className="text-sm text-slate-600 mb-4 leading-relaxed">
+                  Get visibility into every hiring metric that matters. Track performance and identify bottlenecks.
+                </p>
+                <ul className="text-left space-y-2 mb-5 flex-grow">
+                  <li className="flex items-center text-sm text-slate-700">
+                    <i className="fa-solid fa-check text-navy-600 mr-2"></i>
+                    <span>Advanced analytics</span>
+                  </li>
+                  <li className="flex items-center text-sm text-slate-700">
+                    <i className="fa-solid fa-check text-navy-600 mr-2"></i>
+                    <span>Compliance tracking</span>
+                  </li>
+                  <li className="flex items-center text-sm text-slate-700">
+                    <i className="fa-solid fa-check text-navy-600 mr-2"></i>
+                    <span>Team performance</span>
+                  </li>
+                </ul>
+                <Link href="/auth/signup/employer/recruiter" className="inline-block bg-navy-50 text-navy-800 px-5 py-2 rounded-lg text-sm font-semibold hover:bg-navy-100 transition-all duration-200 mt-auto">Get Started</Link>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Workflows Section */}
+        <section id="workflows" className="py-16 lg:py-20 bg-slate-50 relative overflow-hidden">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-12 lg:mb-16">
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-navy-900 mb-4 tracking-tight">Flexible Hiring Workflows</h2>
+              <p className="text-base sm:text-lg lg:text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed">
+                HireMe isn't a job board. It's a closed-loop hiring system where everything connects.
+              </p>
+            </div>
+            <div className="flex flex-col lg:flex-row items-center justify-between gap-8">
+              <div className="w-full lg:w-1/2 space-y-4">
+                {workflowSteps.map((step, index) => {
+                  const isHovered = hoveredWorkflowIndex === index;
+                  
+                  return (
+                    <div 
+                      key={step.id} 
+                      id={`step-${step.id}`} 
+                      className={`transition-all duration-300 cursor-pointer ${isHovered ? 'opacity-100' : 'opacity-60 hover:opacity-80'}`}
+                      onMouseEnter={() => setHoveredWorkflowIndex(index)}
+                      onMouseLeave={() => setHoveredWorkflowIndex(null)}
+                    >
+                      <div className={`flex items-start space-x-3 p-4 rounded-xl transition-all duration-300 ${
+                        isHovered 
+                          ? 'bg-white shadow-lg' 
+                          : 'hover:bg-white/50'
+                      }`}>
+                        <div 
+                          className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 transition-all duration-300 ${
+                            isHovered 
+                              ? 'bg-gradient-to-br from-navy-600 to-navy-700' 
+                              : 'bg-gradient-to-br from-sky-100 to-sky-50 shadow-sm'
+                          }`}
+                          style={isHovered ? { animation: 'iconPulse 2s ease-in-out infinite' } : {}}
+                        >
+                          <i className={`fa-solid ${step.icon} text-base transition-colors duration-300 ${
+                            isHovered ? 'text-white' : 'text-navy-700'
+                          }`}></i>
+                        </div>
+                        <div>
+                          <h3 className="text-lg lg:text-xl font-bold text-navy-900 mb-2">{step.title}</h3>
+                          <p className="text-sm text-slate-600 leading-relaxed">{step.description}</p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="w-full lg:w-1/2 flex items-center justify-center">
+                <div className="relative w-[300px] h-[300px] lg:w-[375px] lg:h-[375px]">
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-24 h-24 bg-gradient-to-br from-navy-800 to-navy-900 rounded-full flex items-center justify-center shadow-2xl z-10">
+                      <i className="fa-solid fa-users text-white text-3xl"></i>
+                    </div>
+                  </div>
+                  <div className="absolute inset-0 border-2 border-dashed border-sky-200 rounded-full"></div>
+
+                  {workflowSteps.map((step, index) => {
+                    const isHovered = hoveredWorkflowIndex === index;
+                    
+                    return (
+                      <div
+                        key={step.id}
+                        id={`node-${step.id}`}
+                        className={`absolute w-16 h-16 rounded-full flex flex-col items-center justify-center cursor-pointer text-white ${
+                          isHovered 
+                            ? 'z-20 bg-gradient-to-br from-sky-300 via-sky-400 to-cyan-500' 
+                            : 'hover:brightness-110'
+                        } ${
+                          !isHovered && (index === 0 || index === 4)
+                            ? 'bg-gradient-to-br from-sky-400 to-sky-500'
+                            : !isHovered ? 'bg-gradient-to-br from-navy-500 to-navy-600' : ''
+                        }`}
+                        style={{
+                          boxShadow: isHovered 
+                            ? '0 0 50px rgba(56, 189, 248, 0.9), 0 0 80px rgba(186, 230, 253, 0.7), 0 10px 40px rgba(0, 0, 0, 0.3)' 
+                            : '0 3px 9px rgba(0, 0, 0, 0.1)',
+                          animation: isHovered ? 'nodeGlow 1.5s ease-in-out infinite' : 'none',
+                          transform: isHovered ? undefined : undefined,
+                          transition: 'box-shadow 0.2s ease-out, background 0.2s ease-out'
+                        }}
+                        onMouseEnter={() => setHoveredWorkflowIndex(index)}
+                        onMouseLeave={() => setHoveredWorkflowIndex(null)}
+                      >
+                        <i className={`fa-solid ${step.icon} mb-0.5 transition-all duration-200 ${isHovered ? 'text-2xl drop-shadow-lg' : 'text-lg'}`}></i>
+                        <span className={`font-bold transition-all duration-200 ${isHovered ? 'text-[11px] drop-shadow-md' : 'text-[10px]'}`}>{step.title.split(' ')[0]}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Comparison Section */}
+        <section id="comparison" className="py-16 lg:py-20 bg-white">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-10 lg:mb-12">
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-navy-900 mb-4 tracking-tight">How HireMe Compares</h2>
+              <p className="text-base sm:text-lg lg:text-xl text-slate-600 max-w-2xl mx-auto mb-6 leading-relaxed">
+                All the essentials candidates and employers expect — plus verified intent and clear timelines.
+              </p>
+              <div className="inline-flex items-center bg-slate-100 rounded-lg p-1 shadow-sm border border-slate-200">
+                <button
+                  onClick={() => setComparisonView('employer')}
+                  className={`px-5 py-2 rounded-md text-sm font-semibold transition-all ${
+                    comparisonView === 'employer'
+                      ? 'bg-navy-800 text-white shadow-md'
+                      : 'text-slate-600 hover:text-navy-900'
+                  }`}
+                >
+                  Employer View
+                </button>
+                <button
+                  onClick={() => setComparisonView('candidate')}
+                  className={`px-5 py-2 rounded-md text-sm font-semibold transition-all ${
+                    comparisonView === 'candidate'
+                      ? 'bg-navy-800 text-white shadow-md'
+                      : 'text-slate-600 hover:text-navy-900'
+                  }`}
+                >
+                  Candidate View
+                </button>
+              </div>
+            </div>
+            <div className="bg-white rounded-2xl shadow-xl overflow-hidden border-2 border-slate-100">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b-2 border-slate-200">
+                      <th className="sticky left-0 z-20 bg-white py-4 px-4 text-left font-bold text-navy-900 text-base border-r-2 border-slate-200 shadow-sm">
+                        Feature
+                      </th>
+                      <th className="py-4 px-4 text-center border-r-2 border-sky-100 bg-gradient-to-b from-sky-50 to-white">
+                        <div className="flex flex-col items-center space-y-2">
+                          <div className="inline-flex items-center space-x-1.5 bg-gradient-to-r from-navy-800 to-navy-900 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg">
+                            <i className="fa-solid fa-star text-sky-300 text-xs"></i>
+                            <span>Best</span>
+                          </div>
+                          <span className="font-bold text-navy-900 text-base">HireMe</span>
+                        </div>
+                      </th>
+                      <th className="py-4 px-4 text-center border-r-2 border-slate-200 bg-white">
+                        <span className="font-semibold text-slate-700 text-sm">LinkedIn</span>
+                      </th>
+                      <th className="py-4 px-4 text-center border-r-2 border-slate-200 bg-white">
+                        <span className="font-semibold text-slate-700 text-sm">Handshake</span>
+                      </th>
+                      <th className="py-4 px-4 text-center bg-white">
+                        <span className="font-semibold text-slate-700 text-sm">Indeed</span>
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {comparisonData[comparisonView].map((section, sectionIndex) => (
+                      <React.Fragment key={sectionIndex}>
+                        <tr className="bg-slate-50">
+                          <td colSpan={5} className="py-2 px-4 text-[10px] font-semibold tracking-wider text-slate-500 uppercase">
+                            {section.group}
+                          </td>
+                        </tr>
+                        {section.rows.map((row, rowIndex) => (
+                          <tr key={row.key} className="border-b border-slate-100 hover:bg-sky-50/30 transition-colors duration-200">
+                            <td className="sticky left-0 z-10 bg-white py-4 px-4 border-r-2 border-slate-200 shadow-sm">
+                              <div className="font-semibold text-navy-900 mb-1 text-sm">{row.label}</div>
+                              <div className="text-xs text-slate-600 leading-relaxed">{row.description}</div>
+                            </td>
+                            <td className={`py-4 px-4 text-center border-r-2 border-sky-100 ${row.highlight ? 'bg-sky-50/50 relative' : 'bg-sky-50/30'}`}>
+                              <i className={`fa-solid ${row.hireme ? 'fa-check text-green-500' : 'fa-times text-red-500'} text-xl transition-transform duration-300 ${row.highlight ? 'group-hover:scale-110' : ''}`}></i>
+                            </td>
+                            <td className="py-4 px-4 text-center border-r-2 border-slate-200 bg-white">
+                              <i className={`fa-solid ${row.linkedin ? 'fa-check text-green-500' : 'fa-times text-red-500'} text-xl`}></i>
+                            </td>
+                            <td className="py-4 px-4 text-center border-r-2 border-slate-200 bg-white">
+                              <i className={`fa-solid ${row.handshake ? 'fa-check text-green-500' : 'fa-times text-red-500'} text-xl`}></i>
+                            </td>
+                            <td className="py-4 px-4 text-center bg-white">
+                              <i className={`fa-solid ${row.indeed ? 'fa-check text-green-500' : 'fa-times text-red-500'} text-xl`}></i>
+                            </td>
+                          </tr>
+                        ))}
+                      </React.Fragment>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Features Grid */}
+        <section id="features" className="py-16 lg:py-20 bg-slate-50">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-12 lg:mb-14">
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-navy-900 mb-4 tracking-tight">Everything You Need to Hire Smarter</h2>
+              <p className="text-base sm:text-lg lg:text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed">
+                A complete hiring ecosystem designed to eliminate friction and accelerate decisions.
+              </p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 lg:gap-6">
+              {[
+                { icon: 'fa-search', title: 'Smart Sourcing', desc: 'AI-powered candidate discovery that finds the perfect match.', features: ['Multi-channel sourcing', 'AI candidate matching'], bg: 'from-sky-100 to-sky-50' },
+                { icon: 'fa-filter', title: 'Intelligent Screening', desc: 'Automate resume parsing and skills assessment.', features: ['Automated resume parsing', 'Skills-based filtering'], bg: 'from-navy-50 to-slate-50' },
+                { icon: 'fa-users', title: 'Team Collaboration', desc: 'Keep everyone aligned with shared scorecards and feedback.', features: ['Shared scorecards', 'Real-time feedback loops'], bg: 'from-sky-100 to-sky-50' },
+                { icon: 'fa-calendar-check', title: 'Interview Management', desc: 'Streamline scheduling and automate reminders.', features: ['One-click scheduling', 'Automated reminders'], bg: 'from-navy-50 to-slate-50' },
+                { icon: 'fa-chart-line', title: 'Analytics & Insights', desc: 'Track every metric that matters. From time-to-hire to source effectiveness.', features: ['Real-time dashboards', 'Predictive analytics'], bg: 'from-sky-100 to-sky-50' },
+                { icon: 'fa-rocket', title: 'Seamless Onboarding', desc: 'Turn accepted offers into day-one success.', features: ['Digital offer letters', 'Document management'], bg: 'from-navy-50 to-slate-50' }
+              ].map((feature, index) => (
+                <div key={index} className="bg-white rounded-2xl p-6 lg:p-7 card-hover border-2 border-slate-100 shadow-sm">
+                  <div className={`w-12 h-12 bg-gradient-to-br ${feature.bg} rounded-xl flex items-center justify-center mb-4 shadow-sm`}>
+                    <i className={`fa-solid ${feature.icon} text-navy-700 text-lg`}></i>
+                  </div>
+                  <h3 className="text-lg lg:text-xl font-bold text-navy-900 mb-3">{feature.title}</h3>
+                  <p className="text-sm text-slate-600 mb-4 leading-relaxed">{feature.desc}</p>
+                  <ul className="space-y-2">
+                    {feature.features.map((item, i) => (
+                      <li key={i} className="flex items-center text-sm text-slate-700">
+                        <i className="fa-solid fa-check text-sky-600 mr-2"></i>
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* FAQ Section */}
+        <section id="faq" className="py-16 lg:py-20 bg-white">
+          <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-12 lg:mb-14">
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-navy-900 mb-4 tracking-tight">Frequently Asked Questions</h2>
+              <p className="text-base sm:text-lg text-slate-600 leading-relaxed">Answers to our most frequently asked questions are just one click away.</p>
+            </div>
+            <div className="bg-gradient-to-br from-sky-50 to-white rounded-2xl p-2 border-2 border-sky-100 mb-7 shadow-sm">
+              {faqItems.map((item, index) => (
+                <div key={index} className="faq-item group">
+                  <button
+                    onClick={() => toggleFaq(index)}
+                    className="w-full flex items-center justify-between p-4 text-left focus:outline-none rounded-xl hover:bg-white/60 transition-all duration-200"
+                  >
+                    <span className="text-base font-bold text-navy-900 pr-3">{item.question}</span>
+                    <span className="ml-3 flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-full bg-white text-navy-600 shadow-sm group-hover:shadow-md transition-all duration-200">
+                      <i className={`fa-solid ${openFaqIndex === index ? 'fa-minus' : 'fa-plus'} text-sm transition-transform duration-300 ${openFaqIndex === index ? 'rotate-0' : ''}`}></i>
+                    </span>
+                  </button>
+                  {openFaqIndex === index && (
+                    <div className="px-4 pb-4 pt-1">
+                      <div className="bg-white rounded-lg p-4 border border-sky-100 shadow-sm">
+                        <p className="text-sm text-slate-600 leading-relaxed">{item.answer}</p>
+                      </div>
+                    </div>
+                  )}
+                  {index < faqItems.length - 1 && <div className="h-px bg-sky-100 mx-4"></div>}
+                </div>
+              ))}
+            </div>
+
+            <div className="bg-gradient-to-br from-navy-50 to-white rounded-2xl p-6 lg:p-7 border-2 border-slate-200 flex flex-col md:flex-row items-center justify-between gap-4 shadow-md">
+              <div>
+                <h3 className="text-lg font-bold text-navy-900 mb-2">Still have questions?</h3>
+                <p className="text-slate-600 text-sm">Can't find the answer you're looking for? Please chat to our friendly team.</p>
+              </div>
+              <a href="#" className="bg-navy-800 text-white px-6 py-3 rounded-lg font-semibold text-base hover:bg-navy-700 hover:shadow-xl transition-all duration-300 whitespace-nowrap shadow-md">
+                Get in Touch
+              </a>
+            </div>
+          </div>
+        </section>
+
+        {/* CTA Section */}
+        <section className="py-16 lg:py-20 bg-gradient-to-br from-navy-900 via-navy-800 to-navy-900 relative overflow-hidden">
+          <div className="absolute inset-0 opacity-10">
+            <div className="absolute top-0 right-0 w-72 h-72 bg-sky-400 rounded-full blur-3xl"></div>
+            <div className="absolute bottom-0 left-0 w-72 h-72 bg-sky-600 rounded-full blur-3xl"></div>
+          </div>
+
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-6 lg:mb-7 tracking-tight leading-tight">Want to get hired?</h2>
+            <p className="text-lg sm:text-xl lg:text-2xl text-sky-100 mb-8 lg:mb-10 leading-relaxed max-w-2xl mx-auto">
+              Join Applicants and Employers from around the world with HireMe
+            </p>
+            <div className="flex items-center justify-center">
+              <Link href="/auth/signup" className="bg-white text-navy-900 px-9 py-3.5 rounded-lg font-bold text-lg hover:bg-sky-50 hover:shadow-xl transition-all duration-300 shadow-lg hover:scale-105">
+                Hire ME!
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        {/* Footer */}
+        <footer className="bg-navy-950 text-slate-300 py-12 lg:py-14">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 lg:gap-8 mb-8">
+              <div className="col-span-2 md:col-span-3 lg:col-span-1">
+                <div className="flex items-center space-x-2 mb-4">
+                  <div className="w-8 h-8 bg-navy-800 rounded-lg flex items-center justify-center shadow-md">
+                    <i className="fa-solid fa-users text-white text-base"></i>
+                  </div>
+                  <span className="text-xl font-bold text-white">HireMe</span>
+                </div>
+                <p className="text-sm text-slate-400 leading-relaxed mb-4">The complete hiring system that closes the loop.</p>
+              </div>
+
+              <div>
+                <h4 className="text-white font-semibold mb-3 text-sm">Product</h4>
+                <ul className="space-y-2">
+                  <li><a href="#" className="text-sm hover:text-white transition-colors duration-200">Features</a></li>
+                  <li><a href="#" className="text-sm hover:text-white transition-colors duration-200">Pricing</a></li>
+                  <li><a href="#" className="text-sm hover:text-white transition-colors duration-200">Integrations</a></li>
+                </ul>
+              </div>
+
+              <div>
+                <h4 className="text-white font-semibold mb-3 text-sm">Solutions</h4>
+                <ul className="space-y-2">
+                  <li><a href="#" className="text-sm hover:text-white transition-colors duration-200">For Recruiters</a></li>
+                  <li><a href="#" className="text-sm hover:text-white transition-colors duration-200">For Hiring Managers</a></li>
+                  <li><a href="#" className="text-sm hover:text-white transition-colors duration-200">For HR Leaders</a></li>
+                </ul>
+              </div>
+
+              <div>
+                <h4 className="text-white font-semibold mb-3 text-sm">Resources</h4>
+                <ul className="space-y-2">
+                  <li><a href="#" className="text-sm hover:text-white transition-colors duration-200">Blog</a></li>
+                  <li><a href="#" className="text-sm hover:text-white transition-colors duration-200">Guides</a></li>
+                  <li><a href="#" className="text-sm hover:text-white transition-colors duration-200">Help Center</a></li>
+                </ul>
+              </div>
+
+              <div>
+                <h4 className="text-white font-semibold mb-3 text-sm">Company</h4>
+                <ul className="space-y-2">
+                  <li><a href="#" className="text-sm hover:text-white transition-colors duration-200">About</a></li>
+                  <li><a href="#" className="text-sm hover:text-white transition-colors duration-200">Careers</a></li>
+                  <li><a href="#" className="text-sm hover:text-white transition-colors duration-200">Contact</a></li>
+                </ul>
+              </div>
+            </div>
+
+            <div className="border-t border-navy-800 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
+              <p className="text-slate-500 text-xs">© 2024 HireMe. All rights reserved.</p>
+              <div className="flex items-center space-x-5">
+                <a href="#" className="text-slate-400 hover:text-white transition-colors duration-200">
+                  <i className="fa-brands fa-twitter text-lg"></i>
+                </a>
+                <a href="#" className="text-slate-400 hover:text-white transition-colors duration-200">
+                  <i className="fa-brands fa-linkedin text-lg"></i>
+                </a>
+                <a href="#" className="text-slate-400 hover:text-white transition-colors duration-200">
+                  <i className="fa-brands fa-facebook text-lg"></i>
+                </a>
+              </div>
+            </div>
+          </div>
+        </footer>
+      </div>
+    </>
+  );
 }

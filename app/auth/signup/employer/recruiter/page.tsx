@@ -155,11 +155,11 @@ export default function RecruiterSignupPage() {
       <div className="w-full max-w-2xl p-8 bg-white rounded-xl shadow-lg">
         {/* Back Button */}
         <Link 
-          href="/auth/signup/employer/type"
+          href="/"
           className="inline-flex items-center px-4 py-2 bg-blue-50 text-navy-800 rounded-full hover:bg-blue-100 hover:shadow-sm transition-all duration-200 hover:-translate-y-1 mb-6"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to profile type
+          Back to home page
         </Link>
 
         <div className="text-center mb-8">
