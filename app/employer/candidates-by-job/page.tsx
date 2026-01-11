@@ -236,15 +236,16 @@ export default function CandidatesByJobPage() {
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50">
-      <div className="max-w-6xl mx-auto p-6">
+      <div className="max-w-6xl mx-auto px-6 pt-12 sm:pt-16 md:pt-20 pb-6">
         {/* Header */}
         <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
           <Link 
             href="/home/employer"
-            className="text-blue-600 hover:underline flex items-center space-x-1 mb-4"
+            className="flex items-center text-navy-800 font-semibold hover:text-navy-900 transition-all duration-200 bg-sky-200/10 hover:bg-sky-200/20 px-3 sm:px-4 py-2 rounded-full w-fit min-h-[44px] text-sm sm:text-base hover:shadow-md hover:scale-105 mb-4"
           >
-            <ArrowLeft className="h-4 w-4" />
-            <span>Back</span>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            <span className="hidden sm:inline">Back to Dashboard</span>
+            <span className="sm:hidden">Back</span>
           </Link>
           <div className="flex items-center gap-3">
             <div className="p-2 bg-green-100 rounded-lg">

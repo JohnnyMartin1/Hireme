@@ -158,10 +158,10 @@ export default function ManageRecruitersPage() {
 
   if (loading || isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-indigo-50 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-navy-800 mx-auto mb-4"></div>
+          <p className="text-slate-600">Loading...</p>
         </div>
       </div>
     );
@@ -172,31 +172,34 @@ export default function ManageRecruitersPage() {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-indigo-50">
-      <div className="max-w-5xl mx-auto p-6">
+    <main className="min-h-screen bg-slate-50 mobile-safe-top mobile-safe-bottom">
+      <div className="max-w-7xl mx-auto px-6 pt-12 sm:pt-16 md:pt-20 pb-6">
         {/* Header */}
-        <div className="mb-6">
+        <div className="mb-8 lg:mb-12">
           <Link 
             href="/home/employer"
-            className="inline-flex items-center text-purple-600 hover:text-purple-800 transition-colors mb-4"
+            className="flex items-center text-navy-800 font-semibold hover:text-navy-900 transition-all duration-200 bg-sky-200/10 hover:bg-sky-200/20 px-3 sm:px-4 py-2 rounded-full w-fit min-h-[44px] text-sm sm:text-base hover:shadow-md hover:scale-105 mb-6"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Dashboard
+            <span className="hidden sm:inline">Back to Dashboard</span>
+            <span className="sm:hidden">Back</span>
           </Link>
-          <h1 className="text-3xl font-bold text-gray-900">Manage Recruiters</h1>
-          <p className="text-gray-600 mt-2">Invite and manage recruiters for your company</p>
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-navy-900 mb-4 tracking-tight">Manage Recruiters</h1>
+          <p className="text-lg sm:text-xl text-slate-600 max-w-3xl leading-relaxed">Invite and manage recruiters for your company</p>
         </div>
 
         {/* Invite Section */}
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-            <UserPlus className="h-5 w-5 mr-2 text-purple-600" />
-            Invite Recruiter
-          </h2>
+        <div className="bg-white rounded-2xl shadow-xl border border-slate-100 p-6 sm:p-8 lg:p-10 mb-6 lg:mb-8">
+          <div className="flex items-center mb-6">
+            <div className="w-12 h-12 bg-sky-100 rounded-lg flex items-center justify-center mr-4">
+              <UserPlus className="h-6 w-6 text-navy-700" />
+            </div>
+            <h2 className="text-xl font-bold text-navy-900">Invite Recruiter</h2>
+          </div>
           
-          <form onSubmit={handleInvite} className="space-y-4">
+          <form onSubmit={handleInvite} className="space-y-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-navy-900 mb-2">
                 Email Address
               </label>
               <input
@@ -204,22 +207,22 @@ export default function ManageRecruitersPage() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-sky-200 focus:border-sky-400 text-navy-900 placeholder-slate-400 transition-all"
                 placeholder="recruiter@company.com"
               />
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-slate-500 mt-2 leading-relaxed">
                 They'll receive an email with instructions to join your company
               </p>
             </div>
 
             {error && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+              <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
                 <p className="text-sm text-red-600">{error}</p>
               </div>
             )}
 
             {success && (
-              <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+              <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
                 <p className="text-sm text-green-600">{success}</p>
               </div>
             )}
@@ -227,23 +230,25 @@ export default function ManageRecruitersPage() {
             <button
               type="submit"
               disabled={inviting}
-              className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center"
+              className="px-8 py-4 bg-navy-800 text-white rounded-lg font-semibold text-lg shadow-md hover:bg-navy-700 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center"
             >
-              <Mail className="h-4 w-4 mr-2" />
+              <Mail className="h-5 w-5 mr-2" />
               {inviting ? 'Sending Invitation...' : 'Send Invitation'}
             </button>
           </form>
         </div>
 
         {/* Active Recruiters */}
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Active Recruiters</h2>
+        <div className="bg-white rounded-2xl shadow-xl border border-slate-100 p-6 sm:p-8 lg:p-10 mb-6 lg:mb-8">
+          <h2 className="text-xl font-bold text-navy-900 mb-6">Active Recruiters</h2>
           
           {recruiters.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              <UserPlus className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-              <p>No recruiters yet</p>
-              <p className="text-sm">Invite recruiters to help manage your hiring</p>
+            <div className="text-center py-12">
+              <div className="w-16 h-16 bg-sky-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+                <UserPlus className="h-8 w-8 text-navy-700" />
+              </div>
+              <p className="text-lg font-medium text-navy-900 mb-2">No recruiters yet</p>
+              <p className="text-slate-600 leading-relaxed">Invite recruiters to help manage your hiring</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -251,23 +256,23 @@ export default function ManageRecruitersPage() {
                 <Link
                   href={`/company/recruiter/${recruiter.id}`}
                   key={recruiter.id}
-                  className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors group"
+                  className="flex items-center justify-between p-4 bg-slate-50 rounded-lg hover:bg-sky-50 hover:shadow-md transition-all border border-transparent hover:border-sky-100 group"
                 >
-                  <div className="flex items-center flex-1">
-                    <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center mr-3">
-                      <span className="text-purple-600 font-medium">
+                  <div className="flex items-center flex-1 min-w-0">
+                    <div className="w-12 h-12 bg-sky-100 rounded-lg flex items-center justify-center mr-4 flex-shrink-0">
+                      <span className="text-navy-700 font-semibold text-lg">
                         {recruiter.firstName?.[0]}{recruiter.lastName?.[0]}
                       </span>
                     </div>
-                    <div className="flex-1">
-                      <p className="font-medium text-gray-900 group-hover:text-purple-600 transition-colors">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-navy-900 group-hover:text-navy-700 transition-colors truncate">
                         {recruiter.firstName} {recruiter.lastName}
                       </p>
-                      <p className="text-sm text-gray-600">{recruiter.email}</p>
+                      <p className="text-sm text-slate-600 truncate">{recruiter.email}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <span className="px-3 py-1 bg-green-100 text-green-800 text-sm rounded-full">
+                  <div className="flex items-center gap-3 flex-shrink-0">
+                    <span className="px-3 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full">
                       Active
                     </span>
                     <button
@@ -276,7 +281,7 @@ export default function ManageRecruitersPage() {
                         e.stopPropagation();
                         handleRemoveRecruiter(recruiter.id, `${recruiter.firstName} ${recruiter.lastName}`);
                       }}
-                      className="text-red-600 hover:text-red-800 transition-colors"
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50 p-2 rounded-lg transition-all"
                       title="Remove recruiter"
                     >
                       <Trash2 className="h-5 w-5" />
@@ -290,23 +295,23 @@ export default function ManageRecruitersPage() {
 
         {/* Pending Invitations */}
         {invitations.length > 0 && (
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Pending Invitations</h2>
+          <div className="bg-white rounded-2xl shadow-xl border border-slate-100 p-6 sm:p-8 lg:p-10">
+            <h2 className="text-xl font-bold text-navy-900 mb-6">Pending Invitations</h2>
             
             <div className="space-y-3">
               {invitations.map((invitation) => (
                 <div
                   key={invitation.id}
-                  className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
+                  className="flex items-center justify-between p-4 bg-slate-50 rounded-lg hover:bg-sky-50 hover:shadow-sm transition-all border border-transparent hover:border-sky-100"
                 >
-                  <div className="flex items-center">
-                    <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center mr-3">
-                      <Mail className="h-5 w-5 text-gray-500" />
+                  <div className="flex items-center flex-1 min-w-0">
+                    <div className="w-12 h-12 bg-sky-100 rounded-lg flex items-center justify-center mr-4 flex-shrink-0">
+                      <Mail className="h-6 w-6 text-navy-700" />
                     </div>
-                    <div>
-                      <p className="font-medium text-gray-900">{invitation.invitedEmail}</p>
-                      <p className="text-sm text-gray-600 flex items-center">
-                        <Clock className="h-3 w-3 mr-1" />
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-navy-900 truncate">{invitation.invitedEmail}</p>
+                      <p className="text-sm text-slate-600 flex items-center mt-1">
+                        <Clock className="h-4 w-4 mr-1.5" />
                         Pending
                       </p>
                     </div>
@@ -314,7 +319,8 @@ export default function ManageRecruitersPage() {
                   
                   <button
                     onClick={() => handleCancelInvitation(invitation.id)}
-                    className="text-red-600 hover:text-red-800 transition-colors"
+                    className="text-red-600 hover:text-red-700 hover:bg-red-50 p-2 rounded-lg transition-all flex-shrink-0"
+                    title="Cancel invitation"
                   >
                     <Trash2 className="h-5 w-5" />
                   </button>

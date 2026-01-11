@@ -127,16 +127,17 @@ export default function MessagesPage() {
     : '/home/employer';
 
   return (
-    <main className="min-h-screen" style={{background: 'linear-gradient(180deg, #E6F0FF 0%, #F8FAFC 100%)'}}>
-      <div className="max-w-4xl mx-auto p-6">
+    <main className="min-h-screen mobile-safe-top mobile-safe-bottom" style={{background: 'linear-gradient(180deg, #E6F0FF 0%, #F8FAFC 100%)'}}>
+      <div className="max-w-4xl mx-auto px-6 pt-12 sm:pt-16 md:pt-20 pb-6">
         {/* Header */}
         <div className="mb-8">
           <Link 
             href={dashboardUrl}
-            className="text-navy-800 hover:text-sky-600 hover:underline flex items-center space-x-1 mb-4 bg-sky-50 hover:bg-sky-100 px-4 py-2 rounded-full w-fit transition-colors"
+            className="flex items-center text-navy-800 font-semibold hover:text-navy-900 transition-all duration-200 bg-sky-200/10 hover:bg-sky-200/20 px-3 sm:px-4 py-2 rounded-full w-fit min-h-[44px] text-sm sm:text-base hover:shadow-md hover:scale-105 mb-4"
           >
-            <ArrowLeft className="h-4 w-4" />
-            <span>Back</span>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            <span className="hidden sm:inline">Back to Dashboard</span>
+            <span className="sm:hidden">Back</span>
           </Link>
           <h1 className="text-3xl font-bold text-navy-900 mb-2">Messages</h1>
           <p className="text-slate-600">Your conversations with candidates and employers</p>

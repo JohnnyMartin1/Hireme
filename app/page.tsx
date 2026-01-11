@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import HireMeLogo from "@/components/brand/HireMeLogo";
 
 export default function Home() {
   // Comparison table state
@@ -354,12 +355,9 @@ export default function Home() {
         {/* Header */}
         <header className="fixed top-0 left-0 right-0 bg-white/95 backdrop-blur-md shadow-sm z-50 border-b border-slate-100">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-navy-800 rounded-lg flex items-center justify-center shadow-md">
-                <i className="fa-solid fa-users text-white text-lg"></i>
-              </div>
-              <span className="text-xl font-bold text-navy-900">HireMe</span>
-            </div>
+            <Link href="/" className="shrink-0" aria-label="HireMe home">
+              <HireMeLogo variant="full" className="h-7 sm:h-8 w-auto" />
+            </Link>
             <nav className="hidden md:flex items-center space-x-5 lg:space-x-6">
               <a href="#personas" className="text-sm text-slate-600 hover:text-navy-700 font-medium transition-colors duration-200">For Teams</a>
               <a href="#workflows" className="text-sm text-slate-600 hover:text-navy-700 font-medium transition-colors duration-200">Workflows</a>

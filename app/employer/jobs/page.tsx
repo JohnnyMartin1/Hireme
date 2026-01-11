@@ -38,11 +38,13 @@ export default function EmployerJobsPage() {
 
   return (
     <main className="min-h-screen mobile-safe-top mobile-safe-bottom overflow-x-hidden w-full bg-gradient-to-br from-green-50 via-white to-emerald-50">
-      <div className="w-full md:max-w-6xl md:mx-auto px-0 sm:px-3 md:p-6 py-4 sm:py-6 min-w-0">
+      <div className="w-full md:max-w-6xl md:mx-auto px-0 sm:px-3 md:px-6 pt-12 sm:pt-16 md:pt-20 pb-4 sm:pb-6 md:pb-6 min-w-0">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0 mb-4 sm:mb-6 px-2 sm:px-0">
           <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
-            <Link href="/home/employer" className="text-green-700 hover:underline flex items-center min-h-[44px] text-sm sm:text-base flex-shrink-0">
-              <ArrowLeft className="h-4 w-4 mr-1" /> <span className="hidden sm:inline">Back</span>
+            <Link href="/home/employer" className="flex items-center text-navy-800 font-semibold hover:text-navy-900 transition-all duration-200 bg-sky-200/10 hover:bg-sky-200/20 px-3 sm:px-4 py-2 rounded-full w-fit min-h-[44px] text-sm sm:text-base hover:shadow-md hover:scale-105 flex-shrink-0">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              <span className="hidden sm:inline">Back to Dashboard</span>
+              <span className="sm:hidden">Back</span>
             </Link>
             <h1 className="text-xl sm:text-2xl font-bold text-gray-900 break-words">Your Active Jobs</h1>
           </div>
