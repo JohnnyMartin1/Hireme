@@ -1,0 +1,105 @@
+
+> hireme@1.0.0 build
+> prisma generate && next build
+
+Environment variables loaded from .env
+Prisma schema loaded from prisma/schema.prisma
+
+✔ Generated Prisma Client (v5.22.0) to ./node_modules/@prisma/client in 52ms
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+Tip: Need your database queries to be 1000x faster? Accelerate offers you that and more: https://pris.ly/tip-2-accelerate
+
+  ▲ Next.js 14.2.33
+  - Environments: .env.local, .env
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully
+   Linting and checking validity of types ...
+   Collecting page data ...
+Firebase Admin SDK initialization: {
+  projectId: 'SET',
+  clientEmail: 'SET',
+  privateKey: 'SET (length: 1704)',
+  privateKeyStarts: '-----BEGIN PRIVATE K...'
+}
+Firebase Admin SDK initialization: {
+  projectId: 'SET',
+  clientEmail: 'SET',
+  privateKey: 'SET (length: 1704)',
+  privateKeyStarts: '-----BEGIN PRIVATE K...'
+}
+Firebase Admin SDK initialization: {
+  projectId: 'SET',
+  clientEmail: 'SET',
+  privateKey: 'SET (length: 1704)',
+  privateKeyStarts: '-----BEGIN PRIVATE K...'
+}
+Firebase Admin SDK initialization: {
+  projectId: 'SET',
+  clientEmail: 'SET',
+  privateKey: 'SET (length: 1704)',
+  privateKeyStarts: '-----BEGIN PRIVATE K...'
+}
+Firebase Admin SDK initialization: {
+  projectId: 'SET',
+  clientEmail: 'SET',
+  privateKey: 'SET (length: 1704)',
+  privateKeyStarts: '-----BEGIN PRIVATE K...'
+}
+Firebase Admin SDK initialization: {
+  projectId: 'SET',
+  clientEmail: 'SET',
+  privateKey: 'SET (length: 1704)',
+  privateKeyStarts: '-----BEGIN PRIVATE K...'
+}
+Firebase Admin SDK initialization: {
+  projectId: 'SET',
+  clientEmail: 'SET',
+  privateKey: 'SET (length: 1704)',
+  privateKeyStarts: '-----BEGIN PRIVATE K...'
+}
+Firebase Admin SDK initialized successfully
+Firebase Admin SDK initialized successfully
+Firebase Admin SDK initialized successfully
+Firebase Admin SDK initialized successfully
+Firebase Admin SDK initialization: {
+  projectId: 'SET',
+  clientEmail: 'SET',
+  privateKey: 'SET (length: 1704)',
+  privateKeyStarts: '-----BEGIN PRIVATE K...'
+}
+Firebase Admin SDK initialized successfully
+Firebase Admin SDK initialized successfully
+Firebase Admin SDK initialized successfully
+Firebase Admin SDK initialization: {
+  projectId: 'SET',
+  clientEmail: 'SET',
+  privateKey: 'SET (length: 1704)',
+  privateKeyStarts: '-----BEGIN PRIVATE K...'
+}
+Firebase Admin SDK initialized successfully
+Firebase Admin SDK initialized successfully
+   Generating static pages (0/62) ...
+   Generating static pages (15/62) 
+   Generating static pages (30/62) 
+   Generating static pages (46/62) 
+ ⨯ useSearchParams() should be wrapped in a suspense boundary at page "/messages/candidate". Read more: https://nextjs.org/docs/messages/missing-suspense-with-csr-bailout
+    at s (/Users/catherinefratila/Desktop/hireme/.next/server/chunks/8726.js:3:221364)
+    at c (/Users/catherinefratila/Desktop/hireme/.next/server/chunks/8726.js:3:232386)
+    at g (/Users/catherinefratila/Desktop/hireme/.next/server/app/messages/candidate/page.js:1:2923)
+    at nj (/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:46252)
+    at nM (/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:47572)
+    at nN (/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:64547)
+    at nI (/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:47011)
+    at nM (/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:47718)
+    at nM (/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:61547)
+    at nN (/Users/catherinefratila/Desktop/hireme/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:64547)
+
+Error occurred prerendering page "/messages/candidate". Read more: https://nextjs.org/docs/messages/prerender-error
+
+ ✓ Generating static pages (62/62)
+
+> Export encountered errors on following paths:
+	/messages/candidate/page: /messages/candidate

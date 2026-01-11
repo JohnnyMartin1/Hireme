@@ -25,9 +25,6 @@ export default function SeekerHomePage() {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [threads, setThreads] = useState<any[]>([]);
   const [profileViews, setProfileViews] = useState(0);
-  const routerToViews = () => {
-    router.push('/home/seeker/profile-views');
-  };
   const [isLoadingStats, setIsLoadingStats] = useState(true);
   const [threadDetails, setThreadDetails] = useState<any[]>([]);
   // Tri-state for modal visibility to prevent flicker
@@ -281,10 +278,10 @@ export default function SeekerHomePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-navy-800 mx-auto mb-4"></div>
+          <p className="text-slate-600">Loading your dashboard...</p>
         </div>
       </div>
     );
@@ -300,149 +297,157 @@ export default function SeekerHomePage() {
   }
 
   const QuickActionsCard = ({ className = "" }: { className?: string }) => (
-    <div className={`w-full bg-white/90 backdrop-blur-sm p-5 sm:p-6 rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-light-gray hover:shadow-lg transition-all duration-200 ${className}`}>
-      <h2 className="text-lg sm:text-xl font-bold text-navy mb-4 sm:mb-5 px-2">Quick Actions</h2>
-      <div className="space-y-2">
-        <Link href="/account/profile" className="flex items-center p-3 sm:p-4 rounded-lg hover:bg-light-blue/20 active:bg-light-blue/30 transition-all duration-200 cursor-pointer group min-h-[56px]">
-          <div className="w-10 h-10 bg-light-blue/30 rounded-lg flex items-center justify-center mr-3 sm:mr-4 flex-shrink-0">
-            <User className="h-5 w-5 text-navy" />
+    <div className={`w-full bg-white rounded-2xl shadow-xl border border-slate-100 p-6 sm:p-8 ${className}`}>
+      <h2 className="text-xl font-bold text-navy-900 mb-6">Quick Actions</h2>
+      <div className="space-y-1">
+        <Link href="/account/profile" className="flex items-center p-4 rounded-xl hover:bg-sky-50 transition-all duration-200 cursor-pointer group">
+          <div className="w-12 h-12 bg-sky-100 rounded-lg flex items-center justify-center mr-4 flex-shrink-0 group-hover:bg-sky-200 transition-colors">
+            <User className="h-5 w-5 text-navy-700" />
           </div>
-          <span className="font-semibold text-sm sm:text-base text-gray-700">Edit Profile</span>
-          <div className="ml-auto">
-            <div className="w-4 h-4 border-r-2 border-b-2 border-gray-400 rotate-45"></div>
-          </div>
+          <span className="font-semibold text-navy-900 group-hover:text-navy-700 transition-colors">Edit Profile</span>
+          <svg className="ml-auto h-5 w-5 text-slate-400 group-hover:text-navy-600 group-hover:translate-x-1 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
         </Link>
-        <Link href={`/candidate/${user?.uid}`} className="flex items-center p-3 sm:p-4 rounded-lg hover:bg-light-blue/20 active:bg-light-blue/30 transition-all duration-200 cursor-pointer group min-h-[56px]">
-          <div className="w-10 h-10 bg-light-blue/30 rounded-lg flex items-center justify-center mr-3 sm:mr-4 flex-shrink-0">
-            <Eye className="h-5 w-5 text-navy" />
+        {user?.uid ? (
+          <Link href={`/candidate/${user.uid}`} className="flex items-center p-4 rounded-xl hover:bg-sky-50 transition-all duration-200 cursor-pointer group">
+            <div className="w-12 h-12 bg-sky-100 rounded-lg flex items-center justify-center mr-4 flex-shrink-0 group-hover:bg-sky-200 transition-colors">
+              <Eye className="h-5 w-5 text-navy-700" />
+            </div>
+            <span className="font-semibold text-navy-900 group-hover:text-navy-700 transition-colors">Preview Profile</span>
+            <svg className="ml-auto h-5 w-5 text-slate-400 group-hover:text-navy-600 group-hover:translate-x-1 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </Link>
+        ) : (
+          <div className="flex items-center p-4 rounded-xl opacity-50 cursor-not-allowed">
+            <div className="w-12 h-12 bg-sky-100 rounded-lg flex items-center justify-center mr-4 flex-shrink-0">
+              <Eye className="h-5 w-5 text-navy-700" />
+            </div>
+            <span className="font-semibold text-navy-900">Preview Profile</span>
           </div>
-          <span className="font-semibold text-sm sm:text-base text-gray-700">Preview Profile</span>
-          <div className="ml-auto">
-            <div className="w-4 h-4 border-r-2 border-b-2 border-gray-400 rotate-45"></div>
+        )}
+        <Link href="/messages/candidate" className="flex items-center p-4 rounded-xl hover:bg-sky-50 transition-all duration-200 cursor-pointer group">
+          <div className="w-12 h-12 bg-sky-100 rounded-lg flex items-center justify-center mr-4 flex-shrink-0 group-hover:bg-sky-200 transition-colors">
+            <MessageSquare className="h-5 w-5 text-navy-700" />
           </div>
+          <span className="font-semibold text-navy-900 group-hover:text-navy-700 transition-colors">View Messages</span>
+          <svg className="ml-auto h-5 w-5 text-slate-400 group-hover:text-navy-600 group-hover:translate-x-1 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
         </Link>
-        <Link href="/messages/candidate" className="flex items-center p-3 sm:p-4 rounded-lg hover:bg-light-blue/20 active:bg-light-blue/30 transition-all duration-200 cursor-pointer group min-h-[56px]">
-          <div className="w-10 h-10 bg-light-blue/30 rounded-lg flex items-center justify-center mr-3 sm:mr-4 flex-shrink-0">
-            <MessageSquare className="h-5 w-5 text-navy" />
-          </div>
-          <span className="font-semibold text-sm sm:text-base text-gray-700">View Messages</span>
-          <div className="ml-auto">
-            <div className="w-4 h-4 border-r-2 border-b-2 border-gray-400 rotate-45"></div>
-          </div>
-        </Link>
-        <Link href="/endorsements" className="flex items-center p-3 sm:p-4 rounded-lg hover:bg-light-blue/20 active:bg-light-blue/30 transition-all duration-200 cursor-pointer group min-h-[56px]">
-          <div className="w-10 h-10 bg-light-blue/30 rounded-lg flex items-center justify-center mr-3 sm:mr-4 flex-shrink-0">
-            <Star className="h-5 w-5 text-navy" />
+        <Link href="/endorsements" className="flex items-center p-4 rounded-xl hover:bg-sky-50 transition-all duration-200 cursor-pointer group">
+          <div className="w-12 h-12 bg-sky-100 rounded-lg flex items-center justify-center mr-4 flex-shrink-0 group-hover:bg-sky-200 transition-colors">
+            <Star className="h-5 w-5 text-navy-700" />
           </div>
           <div className="flex-grow">
-            <span className="font-semibold text-sm sm:text-base text-gray-700">Endorsements</span>
+            <span className="font-semibold text-navy-900 group-hover:text-navy-700 transition-colors">Endorsements</span>
             {!isLoadingStats && endorsements.length === 0 && (
-              <span className="block text-xs bg-yellow-100 text-yellow-800 font-bold px-2 py-0.5 rounded-full w-fit mt-1">Recommended</span>
+              <span className="block text-xs font-semibold tracking-wider text-amber-700 uppercase mt-0.5">Recommended</span>
             )}
           </div>
-          <div className="ml-auto">
-            <div className="w-4 h-4 border-r-2 border-b-2 border-gray-400 rotate-45"></div>
-          </div>
+          <svg className="ml-auto h-5 w-5 text-slate-400 group-hover:text-navy-600 group-hover:translate-x-1 transition-all flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
         </Link>
       </div>
     </div>
   );
 
   return (
-    <main className="min-h-screen mobile-safe-top mobile-safe-bottom overflow-x-hidden w-full" style={{background: 'linear-gradient(180deg, #E6F0FF 0%, #F0F8FF 100%)'}}>
-      <div className="w-full md:max-w-7xl md:mx-auto px-0 sm:px-3 md:px-6 lg:px-8 py-4 sm:py-6 md:py-10 min-w-0">
-        <div className="grid grid-cols-12 lg:grid-cols-3 gap-0 sm:gap-3 md:gap-4 lg:gap-6 xl:gap-8 w-full max-w-full min-w-0">
-          <div className="col-span-12 lg:col-span-2 space-y-0 sm:space-y-3 md:space-y-4 lg:space-y-6 xl:space-y-8 w-full max-w-full min-w-0 px-0">
+    <main className="min-h-screen bg-slate-50 mobile-safe-top mobile-safe-bottom overflow-x-hidden w-full">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-8 sm:pt-16 sm:pb-10 lg:pt-20 lg:pb-12">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+          <div className="lg:col-span-2 space-y-6 lg:space-y-8">
             
             {/* Welcome Banner */}
-            <section className="w-full min-w-0 bg-gradient-to-r from-navy to-blue-900 text-white p-4 sm:p-5 md:p-6 lg:p-8 rounded-none sm:rounded-xl md:rounded-2xl flex flex-col sm:flex-row items-center justify-between shadow-lg mb-3 sm:mb-0">
-              <div className="flex items-center space-x-3 sm:space-x-4 md:space-x-6 w-full sm:w-auto">
-                {(() => {
-                  console.log('Rendering profile image:', userProfile?.profileImageUrl);
-                  return userProfile?.profileImageUrl ? (
-                    <Image
-                      src={userProfile.profileImageUrl}
-                      alt={`${profile?.firstName || 'User'}'s avatar`}
-                      width={80}
-                      height={80}
-                      className="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-full border-4 border-white/30 shadow-lg flex-shrink-0"
-                    />
-                  ) : (
-                    <div className="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-full border-4 border-white/30 shadow-lg bg-white/20 flex items-center justify-center flex-shrink-0">
-                      <User className="h-7 w-7 sm:h-8 sm:w-8 md:h-10 md:w-10 text-white" />
-                    </div>
-                  );
-                })()}
-                <div className="text-center sm:text-left flex-1 min-w-0">
-                  <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold break-words">Welcome back, {profile?.firstName || 'Job Seeker'}! 👋</h1>
-                  <p className="text-blue-200 mt-1 text-xs sm:text-sm md:text-base">Here's your dashboard overview for today.</p>
+            <section className="bg-gradient-to-br from-navy-800 via-navy-800 to-navy-900 text-white p-6 sm:p-8 lg:p-10 rounded-2xl shadow-xl">
+              <div className="flex items-center gap-5 sm:gap-6">
+                {userProfile?.profileImageUrl ? (
+                  <Image
+                    src={userProfile.profileImageUrl}
+                    alt={`${profile?.firstName || 'User'}'s avatar`}
+                    width={80}
+                    height={80}
+                    className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-4 border-white/20 shadow-lg flex-shrink-0"
+                  />
+                ) : (
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-4 border-white/20 shadow-lg bg-white/10 flex items-center justify-center flex-shrink-0">
+                    <User className="h-8 w-8 sm:h-10 sm:w-10 text-white/80" />
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight">Welcome back, {profile?.firstName || 'Job Seeker'}!</h1>
+                  <p className="text-sky-200 mt-2 text-base sm:text-lg">Here's your dashboard overview for today.</p>
                 </div>
               </div>
             </section>
 
             {/* Profile Completion Card */}
-            <div className="w-full min-w-0 bg-white/90 backdrop-blur-sm p-4 sm:p-6 md:p-8 rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-light-gray hover:shadow-lg transition-all duration-200 mb-3 sm:mb-0">
-              <div className="flex justify-between items-center mb-3 sm:mb-4 gap-2">
-                <h2 className="text-base sm:text-lg md:text-xl font-bold text-navy">Profile Completion</h2>
-                <span className="text-lg sm:text-xl md:text-2xl font-bold text-navy bg-light-blue/30 px-3 sm:px-4 py-1 sm:py-1.5 rounded-full flex-shrink-0">{completion}%</span>
+            <div className="bg-white rounded-2xl shadow-xl border border-slate-100 p-6 sm:p-8 hover:shadow-2xl transition-shadow duration-300">
+              <div className="flex justify-between items-center mb-5">
+                <h2 className="text-xl font-bold text-navy-900">Profile Completion</h2>
+                <span className="text-2xl font-bold text-navy-900 bg-sky-50 px-4 py-1.5 rounded-full border border-sky-100">{completion}%</span>
               </div>
-              <div className="w-full bg-light-gray/50 rounded-full h-2.5 sm:h-3 mb-3 shadow-inner">
+              <div className="w-full bg-slate-100 rounded-full h-3 mb-4">
                 <div 
-                  className="bg-gradient-to-r from-navy to-light-blue h-2.5 sm:h-3 rounded-full transition-all duration-500 ease-out" 
+                  className="bg-gradient-to-r from-navy-800 to-sky-500 h-3 rounded-full transition-all duration-500 ease-out" 
                   style={{ width: `${completion}%` }}
                 />
               </div>
-              <p className="text-gray-600 text-xs sm:text-sm break-words">
+              <p className="text-slate-600 leading-relaxed">
                 Complete your profile to increase your visibility to top employers.{' '}
-                <a href="/account/profile" className="font-semibold text-navy hover:underline decoration-2 underline-offset-2 cursor-pointer">Finish profile →</a>
+                <Link href="/account/profile" className="font-semibold text-navy-800 hover:text-navy-600 transition-colors">
+                  Finish profile →
+                </Link>
               </p>
             </div>
 
             {/* Stats Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-0 sm:gap-3 md:gap-6 lg:gap-8 mb-3 sm:mb-0 w-full min-w-0">
-              <Link href="/messages/candidate" className="bg-white/90 backdrop-blur-sm p-5 sm:p-6 rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-light-gray hover:shadow-lg transition-all duration-200 text-center group min-h-[120px] sm:min-h-[140px] flex flex-col items-center justify-center mb-3 sm:mb-0">
-                <div className="w-12 h-12 sm:w-14 sm:h-14 mx-auto rounded-full bg-light-blue/30 flex items-center justify-center mb-3">
-                  <MessageSquare className="h-5 w-5 sm:h-6 sm:w-6 text-navy" />
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
+              <Link href="/messages/candidate" className="bg-white rounded-2xl shadow-xl border border-slate-100 p-6 sm:p-8 text-center group hover:shadow-2xl transition-shadow duration-300">
+                <div className="w-14 h-14 mx-auto rounded-lg bg-sky-100 flex items-center justify-center mb-4">
+                  <MessageSquare className="h-6 w-6 text-navy-700" />
                 </div>
-                <p className="text-3xl sm:text-4xl font-extrabold text-navy">{isLoadingStats ? '...' : threads.length}</p>
-                <p className="text-sm sm:text-base text-gray-500 font-medium mt-1">Messages</p>
+                <p className="text-4xl font-bold text-navy-900">{isLoadingStats ? '...' : threads.length}</p>
+                <p className="text-slate-600 font-medium mt-2">Messages</p>
               </Link>
 
-              <button onClick={routerToViews} className="bg-white/90 backdrop-blur-sm p-5 sm:p-6 rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-light-gray hover:shadow-lg transition-all duration-200 text-center group w-full min-h-[120px] sm:min-h-[140px] flex flex-col items-center justify-center mb-3 sm:mb-0">
-                <div className="w-12 h-12 sm:w-14 sm:h-14 mx-auto rounded-full bg-light-blue/30 flex items-center justify-center mb-3">
-                  <Eye className="h-5 w-5 sm:h-6 sm:w-6 text-navy" />
+              <Link href="/home/seeker/profile-views" className="bg-white rounded-2xl shadow-xl border border-slate-100 p-6 sm:p-8 text-center group hover:shadow-2xl transition-shadow duration-300 block">
+                <div className="w-14 h-14 mx-auto rounded-lg bg-sky-100 flex items-center justify-center mb-4">
+                  <Eye className="h-6 w-6 text-navy-700" />
                 </div>
-                <p className="text-3xl sm:text-4xl font-extrabold text-navy">{isLoadingStats ? '...' : profileViews}</p>
-                <p className="text-sm sm:text-base text-gray-500 font-medium mt-1">Companies Viewed You</p>
-              </button>
+                <p className="text-4xl font-bold text-navy-900">{isLoadingStats ? '...' : profileViews}</p>
+                <p className="text-slate-600 font-medium mt-2">Profile Views</p>
+              </Link>
 
-              <Link href="/endorsements" className="bg-white/90 backdrop-blur-sm p-5 sm:p-6 rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-light-gray hover:shadow-lg transition-all duration-200 text-center group relative min-h-[120px] sm:min-h-[140px] flex flex-col items-center justify-center mb-3 sm:mb-0">
-                <div className="w-12 h-12 sm:w-14 sm:h-14 mx-auto rounded-full bg-light-blue/30 flex items-center justify-center mb-3 relative">
-                  <Star className="h-5 w-5 sm:h-6 sm:w-6 text-navy" />
+              <Link href="/endorsements" className="bg-white rounded-2xl shadow-xl border border-slate-100 p-6 sm:p-8 text-center group hover:shadow-2xl transition-shadow duration-300 relative">
+                <div className="w-14 h-14 mx-auto rounded-lg bg-sky-100 flex items-center justify-center mb-4 relative">
+                  <Star className="h-6 w-6 text-navy-700" />
                   {!isLoadingStats && endorsements.length === 0 && (
-                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">NEW</span>
+                    <span className="absolute -top-2 -right-2 bg-navy-800 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">NEW</span>
                   )}
                 </div>
-                <p className="text-3xl sm:text-4xl font-extrabold text-navy">{isLoadingStats ? '...' : endorsements.length}</p>
-                <p className="text-sm sm:text-base text-gray-500 font-medium mt-1">Endorsements</p>
+                <p className="text-4xl font-bold text-navy-900">{isLoadingStats ? '...' : endorsements.length}</p>
+                <p className="text-slate-600 font-medium mt-2">Endorsements</p>
               </Link>
             </div>
 
             {/* Endorsement Promo Card */}
             {!isLoadingStats && endorsements.length === 0 && (
-              <div className="w-full min-w-0 bg-light-blue/20 backdrop-blur-sm p-5 sm:p-8 rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-light-blue/30 hover:shadow-lg transition-all duration-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-3 sm:mb-0">
-                <div className="flex items-center space-x-3 sm:space-x-4">
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white rounded-full flex items-center justify-center shadow-md flex-shrink-0">
-                    <Star className="h-5 w-5 sm:h-6 sm:w-6 text-navy" />
+              <div className="bg-gradient-to-br from-sky-50 to-white rounded-2xl shadow-xl border border-sky-100 p-6 sm:p-8 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 bg-white rounded-lg flex items-center justify-center shadow-md flex-shrink-0 border border-sky-100">
+                    <Star className="h-7 w-7 text-navy-700" />
                   </div>
                   <div>
-                    <h3 className="text-base sm:text-lg font-bold text-navy">Get Your First Endorsement!</h3>
-                    <p className="text-sm sm:text-base text-navy/80">Boost your profile credibility and stand out from the crowd.</p>
+                    <h3 className="text-xl font-bold text-navy-900">Get Your First Endorsement</h3>
+                    <p className="text-slate-600 mt-1">Boost your profile credibility and stand out from the crowd.</p>
                   </div>
                 </div>
                 <Link
                   href="/endorsements"
-                  className="bg-navy text-white font-semibold py-2.5 sm:py-3 px-5 sm:px-6 rounded-lg hover:bg-blue-900 transition-colors duration-200 shadow-md hover:shadow-lg text-center min-h-[44px] flex items-center justify-center w-full sm:w-auto"
+                  className="bg-navy-800 text-white font-semibold py-4 px-8 rounded-lg hover:bg-navy-700 transition-all duration-200 shadow-md hover:shadow-lg text-center whitespace-nowrap"
                 >
                   Get Endorsements
                 </Link>
@@ -450,47 +455,47 @@ export default function SeekerHomePage() {
             )}
 
             {/* Mobile Quick Actions */}
-            <div className="block lg:hidden mb-3 sm:mb-0">
+            <div className="block lg:hidden">
               <QuickActionsCard />
             </div>
 
-                {/* Recent Activity Card */}
-                <div className="w-full min-w-0 bg-white/90 backdrop-blur-sm p-5 sm:p-6 md:p-8 rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-light-gray hover:shadow-lg transition-all duration-200 mb-3 sm:mb-0">
-              <h2 className="text-lg sm:text-xl font-bold text-navy mb-4 sm:mb-6">Recent Activity</h2>
+            {/* Recent Activity Card */}
+            <div className="bg-white rounded-2xl shadow-xl border border-slate-100 p-6 sm:p-8 hover:shadow-2xl transition-shadow duration-300">
+              <h2 className="text-xl font-bold text-navy-900 mb-6">Recent Activity</h2>
               {threadDetails.length > 0 ? (
-                <div className="space-y-2 sm:space-y-3">
+                <div className="space-y-3">
                   {threadDetails.slice(0, 3).map((thread: any, index: number) => (
                     <Link
                       key={thread.id || index}
                       href={`/messages/candidate?thread=${thread.id}`}
-                      className="flex items-center p-3 sm:p-4 bg-slate-50 rounded-lg hover:bg-slate-100 active:bg-slate-200 transition-all duration-200 cursor-pointer group min-h-[64px]"
+                      className="flex items-center p-4 bg-slate-50 rounded-xl hover:bg-sky-50 transition-all duration-200 cursor-pointer group border border-transparent hover:border-sky-100"
                     >
-                      <div className="w-10 h-10 bg-slate-200 rounded-lg flex items-center justify-center group-hover:bg-blue-100 transition-colors duration-200 flex-shrink-0">
-                        <MessageSquare className="h-5 w-5 text-slate-400 group-hover:text-blue-600 transition-colors duration-200" />
+                      <div className="w-12 h-12 bg-sky-100 rounded-lg flex items-center justify-center group-hover:bg-sky-200 transition-colors duration-200 flex-shrink-0">
+                        <MessageSquare className="h-5 w-5 text-navy-700" />
                       </div>
-                      <div className="flex-1 ml-3 sm:ml-4 min-w-0">
-                        <span className="text-sm sm:text-base text-slate-700 group-hover:text-slate-900 transition-colors duration-200 break-words">
+                      <div className="flex-1 ml-4 min-w-0">
+                        <span className="text-navy-900 group-hover:text-navy-700 transition-colors break-words">
                           New message from{' '}
-                          <span className="font-medium group-hover:text-blue-600 transition-colors duration-200">
+                          <span className="font-semibold">
                             {thread.otherParticipant?.companyName || 
                              `${thread.otherParticipant?.firstName || ''} ${thread.otherParticipant?.lastName || ''}`.trim() || 
                              'employer'}
                           </span>
                         </span>
                       </div>
-                      <span className="text-xs sm:text-sm text-slate-500 group-hover:text-slate-700 transition-colors duration-200 ml-2 flex-shrink-0">
+                      <span className="text-sm text-slate-500 ml-4 flex-shrink-0">
                         {formatTimeAgo(thread.lastMessageAt)}
                       </span>
                     </Link>
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-8 sm:py-12">
-                  <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto bg-slate-100 rounded-full flex items-center justify-center mb-4 sm:mb-6">
-                    <MessageSquare className="h-6 w-6 sm:h-8 sm:w-8 text-slate-400" />
+                <div className="text-center py-12">
+                  <div className="w-20 h-20 mx-auto bg-slate-100 rounded-2xl flex items-center justify-center mb-6">
+                    <MessageSquare className="h-8 w-8 text-slate-400" />
                   </div>
-                  <h3 className="text-lg sm:text-xl font-bold text-gray-700">No recent activity</h3>
-                  <p className="text-sm sm:text-base text-gray-500 mt-2 max-w-sm mx-auto px-4">Your activity, such as profile views and new messages, will appear here.</p>
+                  <h3 className="text-xl font-bold text-navy-900">No recent activity</h3>
+                  <p className="text-slate-600 mt-2 max-w-sm mx-auto leading-relaxed">Your activity, such as profile views and new messages, will appear here.</p>
                 </div>
               )}
             </div>
@@ -498,8 +503,8 @@ export default function SeekerHomePage() {
           </div>
 
           {/* Quick Actions Sidebar */}
-          <div className="col-span-12 lg:col-span-1 w-full max-w-full px-0 hidden lg:block">
-            <QuickActionsCard className="lg:sticky lg:top-28" />
+          <div className="hidden lg:block">
+            <QuickActionsCard className="sticky top-24" />
           </div>
         </div>
       </div>

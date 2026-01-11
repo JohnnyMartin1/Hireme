@@ -1,10 +1,9 @@
 import "./globals.css";
-import SiteHeader from "@/components/SiteHeader";
 import { FirebaseAuthProvider } from "@/components/FirebaseAuthProvider";
 import { ProfileCompletionProvider } from "@/components/ProfileCompletionProvider";
-import EmailVerificationBanner from "@/components/EmailVerificationBanner";
 import { NotificationProvider } from "@/components/NotificationSystem";
 import FontAwesomeFallback from "@/components/FontAwesomeFallback";
+import ConditionalLayout from "@/components/ConditionalLayout";
 
 export const metadata = { 
   title: "HireMe"
@@ -25,15 +24,18 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" 
           crossOrigin="anonymous"
         />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
       </head>
-      <body>
+      <body className="font-inter">
         <NotificationProvider>
           <FirebaseAuthProvider>
             <ProfileCompletionProvider>
               <FontAwesomeFallback />
-              <SiteHeader />
-              <EmailVerificationBanner />
-              {children}
+              <ConditionalLayout>
+                {children}
+              </ConditionalLayout>
             </ProfileCompletionProvider>
           </FirebaseAuthProvider>
         </NotificationProvider>

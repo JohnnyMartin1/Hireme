@@ -211,7 +211,7 @@ const handleFileUpload = async (
       <div className="min-h-screen mobile-safe-top mobile-safe-bottom" style={{background: 'linear-gradient(180deg, #E6F0FF 0%, #F8FAFC 100%)'}}>
         <div className="flex items-center justify-center h-screen">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-navy mx-auto mb-4"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-navy-800 mx-auto mb-4"></div>
             <p className="text-gray-600">Loading...</p>
           </div>
         </div>
@@ -231,7 +231,7 @@ const handleFileUpload = async (
         <section className="mb-4 sm:mb-6 md:mb-8 px-2 sm:px-0">
           <Link 
             href="/home/employer"
-            className="flex items-center text-navy font-semibold hover:text-blue-900 transition-colors duration-200 text-sm sm:text-base min-h-[44px]"
+            className="flex items-center text-navy-800 font-semibold hover:text-blue-900 transition-colors duration-200 text-sm sm:text-base min-h-[44px]"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
             <span className="hidden sm:inline">Back to Dashboard</span>
@@ -241,18 +241,18 @@ const handleFileUpload = async (
 
         {/* Page Header */}
         <section className="mb-4 sm:mb-6 md:mb-8 lg:mb-10 px-2 sm:px-0">
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-navy mb-2 break-words">Company Profile</h1>
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-navy-800 mb-2 break-words">Company Profile</h1>
           <p className="text-sm sm:text-base md:text-lg text-gray-600 break-words">Customize how your company appears to candidates.</p>
         </section>
 
         <div className="space-y-3 sm:space-y-4 md:space-y-6 lg:space-y-8">
           {/* Banner Image Card */}
-          <section className="w-full min-w-0 bg-white/90 backdrop-blur-sm p-4 sm:p-6 md:p-8 rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-light-gray card-hover card-enter mb-3 sm:mb-0" style={{animationDelay: '0.1s'}}>
+          <section className="w-full min-w-0 bg-white/90 backdrop-blur-sm p-4 sm:p-6 md:p-8 rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-slate-200 card-hover card-enter mb-3 sm:mb-0" style={{animationDelay: '0.1s'}}>
             <div className="flex justify-between items-center mb-4 sm:mb-6">
               <h2 className="text-lg sm:text-xl font-bold text-navy">Banner Image</h2>
               <button 
                 onClick={() => bannerUploadRef.current?.click()}
-                className="bg-navy text-white font-semibold py-2 sm:py-2.5 px-4 sm:px-5 rounded-lg btn-hover flex items-center space-x-2 text-xs sm:text-sm"
+                className="bg-navy-800 text-white font-semibold py-2 sm:py-2.5 px-4 sm:px-5 rounded-lg btn-hover flex items-center space-x-2 text-xs sm:text-sm"
                 disabled={isLoading}
                 aria-label="Upload company banner"
               >
@@ -264,7 +264,7 @@ const handleFileUpload = async (
             
             <div 
               onClick={() => !formData.bannerImageUrl && bannerUploadRef.current?.click()}
-              className={`border-2 border-dashed border-gray-300 rounded-xl p-8 sm:p-12 text-center bg-gray-50/50 ${!formData.bannerImageUrl ? 'cursor-pointer hover:border-navy hover:bg-blue-50/30 transition-all' : ''}`}
+              className={`border-2 border-dashed border-gray-300 rounded-xl p-8 sm:p-12 text-center bg-gray-50/50 ${!formData.bannerImageUrl ? 'cursor-pointer hover:border-navy-800 hover:bg-blue-50/30 transition-all' : ''}`}
             >
               {formData.bannerImageUrl ? (
                 <div className="relative w-full h-32 sm:h-48 rounded-lg overflow-hidden mb-4">
@@ -307,12 +307,12 @@ const handleFileUpload = async (
           </section>
 
           {/* Company Logo Card */}
-          <section className="w-full min-w-0 bg-white/90 backdrop-blur-sm p-4 sm:p-6 md:p-8 rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-light-gray card-hover card-enter mb-3 sm:mb-0" style={{animationDelay: '0.2s'}}>
+          <section className="w-full min-w-0 bg-white/90 backdrop-blur-sm p-4 sm:p-6 md:p-8 rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-slate-200 card-hover card-enter mb-3 sm:mb-0" style={{animationDelay: '0.2s'}}>
             <div className="flex justify-between items-center mb-4 sm:mb-6">
               <h2 className="text-lg sm:text-xl font-bold text-navy">Company Logo</h2>
               <button 
                 onClick={() => logoUploadRef.current?.click()}
-                className="bg-navy text-white font-semibold py-2 sm:py-2.5 px-4 sm:px-5 rounded-lg btn-hover flex items-center space-x-2 text-xs sm:text-sm"
+                className="bg-navy-800 text-white font-semibold py-2 sm:py-2.5 px-4 sm:px-5 rounded-lg btn-hover flex items-center space-x-2 text-xs sm:text-sm"
                 disabled={isLoading}
                 aria-label="Upload company logo"
               >
@@ -324,7 +324,7 @@ const handleFileUpload = async (
             
             <div 
               onClick={() => !formData.logoImageUrl && logoUploadRef.current?.click()}
-              className={`border-2 border-dashed border-gray-300 rounded-xl p-8 sm:p-12 text-center bg-gray-50/50 ${!formData.logoImageUrl ? 'cursor-pointer hover:border-navy hover:bg-blue-50/30 transition-all' : ''}`}
+              className={`border-2 border-dashed border-gray-300 rounded-xl p-8 sm:p-12 text-center bg-gray-50/50 ${!formData.logoImageUrl ? 'cursor-pointer hover:border-navy-800 hover:bg-blue-50/30 transition-all' : ''}`}
             >
               {formData.logoImageUrl ? (
                 <div className="flex flex-col items-center">
@@ -349,7 +349,7 @@ const handleFileUpload = async (
                       e.stopPropagation();
                       logoUploadRef.current?.click();
                     }}
-                    className="text-sm text-gray-600 hover:text-navy transition-colors"
+                    className="text-sm text-gray-600 hover:text-navy-800 transition-colors"
                   >
                     Change logo
                   </button>
@@ -379,8 +379,8 @@ const handleFileUpload = async (
 
           {/* Company Information Card */}
           <form onSubmit={handleSubmit}>
-            <section className="w-full min-w-0 bg-white/90 backdrop-blur-sm p-4 sm:p-6 md:p-8 rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-light-gray card-hover card-enter mb-3 sm:mb-0" style={{animationDelay: '0.3s'}}>
-              <h2 className="text-lg sm:text-xl font-bold text-navy mb-4 sm:mb-6">Company Information</h2>
+            <section className="w-full min-w-0 bg-white/90 backdrop-blur-sm p-4 sm:p-6 md:p-8 rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-slate-200 card-hover card-enter mb-3 sm:mb-0" style={{animationDelay: '0.3s'}}>
+              <h2 className="text-lg sm:text-xl font-bold text-navy-800 mb-4 sm:mb-6">Company Information</h2>
               
               <div className="space-y-4 sm:space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">

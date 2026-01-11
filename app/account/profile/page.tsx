@@ -270,10 +270,10 @@ export default function EditProfilePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-navy-800 mx-auto mb-4"></div>
+          <p className="text-slate-600">Loading...</p>
         </div>
       </div>
     );
@@ -284,130 +284,142 @@ export default function EditProfilePage() {
   }
 
   return (
-    <div className="min-h-screen mobile-safe-top mobile-safe-bottom overflow-x-hidden w-full" style={{background: 'linear-gradient(180deg, #E6F0FF 0%, #F0F8FF 100%)'}}>
+    <div className="min-h-screen bg-slate-50">
       {/* Header */}
-      <header className="bg-white/80 backdrop-blur-md sticky top-0 z-40 border-b border-light-gray/30 mobile-safe-top">
-        <div className="w-full md:max-w-7xl md:mx-auto px-0 sm:px-3 md:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16 sm:h-20 px-4 sm:px-0">
-            <div className="flex items-center space-x-2 sm:space-x-4 md:space-x-6">
-              <button
-                onClick={() => {
-                  if (profile?.role === 'JOB_SEEKER') {
-                    router.push('/home/seeker');
-                  } else if (profile?.role === 'EMPLOYER' || profile?.role === 'RECRUITER') {
-                    router.push('/home/employer');
-                  } else {
-                    router.push('/home');
-                  }
-                }}
-                className="flex items-center space-x-1 sm:space-x-2 text-navy hover:text-navy/80 transition-all duration-300 group px-2 sm:px-4 py-2 rounded-full hover:bg-light-blue/10 hover:shadow-md hover:scale-105 min-h-[44px]"
-              >
-                <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform duration-300" />
-                <span className="font-semibold text-sm sm:text-base hidden sm:inline">Back to Dashboard</span>
-                <span className="font-semibold text-sm sm:hidden">Back</span>
-              </button>
+      <header className="sticky top-0 bg-white shadow-sm z-50 border-b border-slate-100">
+        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+          <button
+            onClick={() => {
+              if (profile?.role === 'JOB_SEEKER') {
+                router.push('/home/seeker');
+              } else if (profile?.role === 'EMPLOYER' || profile?.role === 'RECRUITER') {
+                router.push('/home/employer');
+              } else {
+                router.push('/home');
+              }
+            }}
+            className="flex items-center gap-2 text-navy-800 hover:text-navy-600 transition-colors group"
+          >
+            <ArrowLeft className="h-5 w-5 group-hover:-translate-x-1 transition-transform" />
+            <span className="font-medium">Back to Dashboard</span>
+          </button>
+          <Link href="/" className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-navy-800 rounded-lg flex items-center justify-center">
+              <svg width="20" height="20" viewBox="0 0 269 274" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M111.028 0C172.347 0.000238791 222.055 51.647 222.055 115.356C222.055 140.617 214.238 163.98 200.983 182.981L258.517 242.758L238.036 264.036L181.077 204.857C161.97 221.02 137.589 230.713 111.028 230.713C49.7092 230.713 2.76862e-05 179.066 0 115.356C0 51.6468 49.7092 0 111.028 0Z" fill="white"/>
+                <path d="M205.69 115.392C205.69 170.42 163.308 215.029 111.028 215.029C58.748 215.029 16.3666 170.42 16.3666 115.392C16.3666 60.3646 58.748 15.7559 111.028 15.7559C163.308 15.7559 205.69 60.3646 205.69 115.392Z" fill="#4F86F7"/>
+              </svg>
             </div>
-            <div className="flex items-center space-x-2 sm:space-x-3">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-navy rounded-xl flex items-center justify-center flex-shrink-0">
-                <i className="fa-solid fa-magnifying-glass text-white text-sm sm:text-lg"></i>
-              </div>
-              <span className="text-lg sm:text-xl md:text-2xl font-bold text-navy">HireMe</span>
-            </div>
-          </div>
+            <span className="text-xl font-bold text-navy-900">HireMe</span>
+          </Link>
         </div>
       </header>
 
-      <main className="w-full md:max-w-7xl md:mx-auto px-0 sm:px-3 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8 min-w-0">
-        <div className="flex flex-col lg:flex-row gap-0 sm:gap-4 md:gap-6 lg:gap-8">
-          <div className="flex-1 w-full min-w-0">
-            {/* Page Header */}
-            <div className="mb-4 sm:mb-6 md:mb-8 px-2 sm:px-0">
-              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-navy mb-2">Edit Profile</h1>
-              <p className="text-sm sm:text-base text-gray-600">Complete your profile to increase visibility and connect with top employers.</p>
-            </div>
-          
-            {/* Profile Completion Card */}
-            <div className="w-full min-w-0 bg-white/90 backdrop-blur-sm p-4 sm:p-5 md:p-6 rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-light-gray/30 mb-3 sm:mb-6 md:mb-8">
-              <div className="flex justify-between items-center mb-3 sm:mb-4 gap-2">
-                <h2 className="text-base sm:text-lg md:text-xl font-bold text-navy">Profile Completion</h2>
-                <span className="text-lg sm:text-xl md:text-2xl font-bold text-navy bg-light-blue/30 px-3 sm:px-4 py-1 sm:py-1.5 rounded-full flex-shrink-0">{completion}%</span>
-              </div>
-              <div className="w-full bg-light-gray/30 rounded-full h-3 mb-3">
-                <div className="bg-gradient-to-r from-navy to-light-blue h-3 rounded-full transition-all duration-500" style={{ width: `${completion}%` }}></div>
-              </div>
-              <p className="text-gray-600 text-sm">{Math.floor(completion / 10)} of 10 sections completed</p>
-            </div>
+      <main className="max-w-4xl mx-auto px-6 py-10">
+        {/* Page Header */}
+        <div className="mb-10">
+          <h1 className="text-3xl sm:text-4xl font-bold text-navy-900 tracking-tight">Edit Profile</h1>
+          <p className="text-slate-600 mt-2 text-lg">Complete your profile to increase visibility and connect with top employers.</p>
         </div>
+        
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+          {/* Sidebar - Profile Completion */}
+          <div className="lg:col-span-1">
+            <div className="bg-white rounded-2xl shadow-xl border border-slate-100 p-6 sticky top-24">
+              <h2 className="text-lg font-bold text-navy-900 mb-4">Profile Completion</h2>
+              <div className="flex items-center justify-center mb-4">
+                <div className="relative w-24 h-24">
+                  <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                    <circle cx="50" cy="50" r="45" stroke="#e2e8f0" strokeWidth="8" fill="none" />
+                    <circle cx="50" cy="50" r="45" stroke="url(#gradient)" strokeWidth="8" fill="none" strokeLinecap="round" strokeDasharray={`${completion * 2.83} 283`} />
+                    <defs>
+                      <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stopColor="#1e3a5f" />
+                        <stop offset="100%" stopColor="#0ea5e9" />
+                      </linearGradient>
+                    </defs>
+                  </svg>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <span className="text-2xl font-bold text-navy-900">{completion}%</span>
+                  </div>
+                </div>
+              </div>
+              <p className="text-slate-600 text-sm text-center">{Math.floor(completion / 10)} of 10 sections completed</p>
+            </div>
+          </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Main Form Area */}
+          <div className="lg:col-span-3">
+
+        <form onSubmit={handleSubmit} className="space-y-8">
           {/* Basic Information */}
-          <div className="w-full min-w-0 bg-white/90 backdrop-blur-sm p-4 sm:p-6 md:p-8 rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-light-gray/30 mb-3 sm:mb-6 md:mb-8">
-            <div className="flex items-center mb-4 sm:mb-5 md:mb-6">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-light-blue/30 rounded-xl flex items-center justify-center mr-3 sm:mr-4 flex-shrink-0">
-                <User className="text-navy text-lg" />
+          <div className="bg-white rounded-2xl shadow-xl border border-slate-100 p-8">
+            <div className="flex items-center mb-6">
+              <div className="w-12 h-12 bg-sky-100 rounded-lg flex items-center justify-center mr-4">
+                <User className="h-6 w-6 text-navy-700" />
               </div>
               <div className="flex-1">
-                <h3 className="text-base sm:text-lg md:text-xl font-bold text-navy">Basic Information</h3>
-                <p className="text-gray-600 text-sm">Your core personal details</p>
+                <h3 className="text-xl font-bold text-navy-900">Basic Information</h3>
+                <p className="text-slate-600 text-sm">Your core personal details</p>
               </div>
               {isBasicInfoComplete() && (
-                <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
-                  <Check className="text-white text-sm" />
+                <div className="w-7 h-7 bg-green-500 rounded-full flex items-center justify-center">
+                  <Check className="h-4 w-4 text-white" />
                 </div>
               )}
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
               <div>
-                <label className="block text-sm font-semibold text-navy mb-2">First Name *</label>
+                <label className="block text-sm font-medium text-navy-900 mb-2">First Name *</label>
                 <input
                   type="text"
                   required
                   value={formData.firstName}
                   onChange={(e) => handleInputChange('firstName', e.target.value)}
-                  className="w-full h-12 px-4 rounded-xl bg-light-blue/8 border border-light-blue/20 text-gray-800 focus:outline-none focus:ring-2 focus:ring-navy/30 focus:border-navy focus:bg-light-blue/12 transition-all duration-200"
+                  className="w-full h-12 px-4 rounded-lg bg-white border border-slate-200 text-navy-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-200 focus:border-sky-400 transition-all"
                   placeholder="John"
                 />
               </div>
               
               <div>
-                <label className="block text-sm font-semibold text-navy mb-2">Last Name *</label>
+                <label className="block text-sm font-medium text-navy-900 mb-2">Last Name *</label>
                 <input
                   type="text"
                   required
                   value={formData.lastName}
                   onChange={(e) => handleInputChange('lastName', e.target.value)}
-                  className="w-full h-12 px-4 rounded-xl bg-light-blue/8 border border-light-blue/20 text-gray-800 focus:outline-none focus:ring-2 focus:ring-navy/30 focus:border-navy focus:bg-light-blue/12 transition-all duration-200"
+                  className="w-full h-12 px-4 rounded-lg bg-white border border-slate-200 text-navy-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-200 focus:border-sky-400 transition-all"
                   placeholder="Doe"
                 />
               </div>
             </div>
 
-            <div className="mb-6">
-              <label className="block text-sm font-semibold text-navy mb-2">Professional Headline</label>
+            <div>
+              <label className="block text-sm font-medium text-navy-900 mb-2">Professional Headline</label>
               <input
                 type="text"
                 value={formData.headline}
                 onChange={(e) => handleInputChange('headline', e.target.value)}
-                className="w-full h-12 px-4 rounded-xl bg-light-blue/8 border border-light-blue/20 text-gray-800 focus:outline-none focus:ring-2 focus:ring-navy/30 focus:border-navy focus:bg-light-blue/12 transition-all duration-200"
+                className="w-full h-12 px-4 rounded-lg bg-white border border-slate-200 text-navy-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-200 focus:border-sky-400 transition-all"
                 placeholder="e.g., Computer Science Student | Full-Stack Developer"
               />
             </div>
           </div>
 
           {/* Education */}
-          <div className="w-full min-w-0 bg-white/90 backdrop-blur-sm p-4 sm:p-6 md:p-8 rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-light-gray/30 mb-3 sm:mb-6 md:mb-8">
-            <div className="flex items-center mb-4 sm:mb-5 md:mb-6">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-light-blue/30 rounded-xl flex items-center justify-center mr-3 sm:mr-4 flex-shrink-0">
-                <GraduationCap className="text-navy text-lg" />
+          <div className="bg-white rounded-2xl shadow-xl border border-slate-100 p-8">
+            <div className="flex items-center mb-6">
+              <div className="w-12 h-12 bg-sky-100 rounded-lg flex items-center justify-center mr-4">
+                <GraduationCap className="h-6 w-6 text-navy-700" />
               </div>
               <div className="flex-1">
-                <h3 className="text-base sm:text-lg md:text-xl font-bold text-navy">Education</h3>
-                <p className="text-gray-600 text-sm">Your academic background and achievements</p>
+                <h3 className="text-xl font-bold text-navy-900">Education</h3>
+                <p className="text-slate-600 text-sm">Your academic background and achievements</p>
               </div>
               {isEducationComplete() && (
-                <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
-                  <Check className="text-white text-sm" />
+                <div className="w-7 h-7 bg-green-500 rounded-full flex items-center justify-center">
+                  <Check className="h-4 w-4 text-white" />
                 </div>
               )}
             </div>
@@ -426,16 +438,16 @@ export default function EditProfilePage() {
                   }];
                   handleInputChange('education', newEducation);
                 }}
-                className="px-4 py-2 bg-navy text-white text-sm rounded-xl hover:bg-blue-900 transition-colors"
+                className="px-5 py-2.5 bg-navy-800 text-white text-sm font-semibold rounded-lg hover:bg-navy-700 transition-colors shadow-sm"
               >
                 Add Education
               </button>
             </div>
             
             {formData.education.map((edu, index) => (
-              <div key={index} className="border border-gray-200 rounded-lg p-4 mb-4">
+              <div key={index} className="border border-slate-200 rounded-xl p-6 mb-4 bg-slate-50">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-medium text-gray-900">Education {index + 1}</h3>
+                  <h3 className="text-lg font-semibold text-navy-900">Education {index + 1}</h3>
                   {formData.education.length > 1 && (
                     <button
                       type="button"
@@ -443,7 +455,7 @@ export default function EditProfilePage() {
                         const newEducation = formData.education.filter((_, i) => i !== index);
                         handleInputChange('education', newEducation);
                       }}
-                      className="text-red-600 hover:text-red-800 text-sm"
+                      className="text-red-600 hover:text-red-700 text-sm font-medium transition-colors"
                     >
                       Remove
                     </button>
@@ -540,30 +552,30 @@ export default function EditProfilePage() {
             ))}
             
             {formData.education.length === 0 && (
-              <div className="text-center py-8 text-gray-500">
-                <GraduationCap className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                <p>No education added yet</p>
-                <p className="text-sm">Click "Add Education" to get started</p>
+              <div className="text-center py-12 text-slate-500">
+                <GraduationCap className="h-12 w-12 mx-auto mb-4 text-slate-300" />
+                <p className="font-medium text-navy-900">No education added yet</p>
+                <p className="text-sm mt-1">Click "Add Education" to get started</p>
               </div>
             )}
           </div>
 
           {/* Location & Preferences */}
-          <div className="w-full min-w-0 bg-white/90 backdrop-blur-sm p-4 sm:p-6 md:p-8 rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-light-gray/30 mb-3 sm:mb-6 md:mb-8">
-            <div className="flex items-center mb-4 sm:mb-5 md:mb-6">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-light-blue/30 rounded-xl flex items-center justify-center mr-3 sm:mr-4 flex-shrink-0">
-                <MapPin className="text-navy text-lg" />
+          <div className="bg-white rounded-2xl shadow-xl border border-slate-100 p-8">
+            <div className="flex items-center mb-6">
+              <div className="w-12 h-12 bg-sky-100 rounded-lg flex items-center justify-center mr-4">
+                <MapPin className="h-6 w-6 text-navy-700" />
               </div>
               <div className="flex-1">
-                <h3 className="text-base sm:text-lg md:text-xl font-bold text-navy">Location & Work Preferences</h3>
-                <p className="text-gray-600 text-sm">Where and how you'd like to work</p>
+                <h3 className="text-xl font-bold text-navy-900">Location & Work Preferences</h3>
+                <p className="text-slate-600 text-sm">Where and how you'd like to work</p>
               </div>
               {!isLocationComplete() && (
-                <span className="text-sm font-semibold text-orange-600 bg-orange-100 px-3 py-1 rounded-full">Required</span>
+                <span className="text-xs font-semibold tracking-wider text-orange-700 bg-orange-100 px-3 py-1 rounded-full uppercase">Required</span>
               )}
               {isLocationComplete() && (
-                <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
-                  <Check className="text-white text-sm" />
+                <div className="w-7 h-7 bg-green-500 rounded-full flex items-center justify-center">
+                  <Check className="h-4 w-4 text-white" />
                 </div>
               )}
             </div>
@@ -602,21 +614,21 @@ export default function EditProfilePage() {
           </div>
 
           {/* Skills */}
-          <div className="w-full min-w-0 bg-white/90 backdrop-blur-sm p-4 sm:p-6 md:p-8 rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-light-gray/30 mb-3 sm:mb-6 md:mb-8">
-            <div className="flex items-center mb-4 sm:mb-5 md:mb-6">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-light-blue/30 rounded-xl flex items-center justify-center mr-3 sm:mr-4 flex-shrink-0">
-                <Award className="text-navy text-lg" />
+          <div className="bg-white rounded-2xl shadow-xl border border-slate-100 p-8">
+            <div className="flex items-center mb-6">
+              <div className="w-12 h-12 bg-sky-100 rounded-lg flex items-center justify-center mr-4">
+                <Award className="h-6 w-6 text-navy-700" />
               </div>
               <div className="flex-1">
-                <h3 className="text-base sm:text-lg md:text-xl font-bold text-navy">Skills & Expertise</h3>
-                <p className="text-gray-600 text-sm">Technical and professional skills (up to 20)</p>
+                <h3 className="text-xl font-bold text-navy-900">Skills & Expertise</h3>
+                <p className="text-slate-600 text-sm">Technical and professional skills (up to 20)</p>
               </div>
               {!isSkillsComplete() && (
-                <span className="text-sm font-semibold text-orange-600 bg-orange-100 px-3 py-1 rounded-full">Required</span>
+                <span className="text-xs font-semibold tracking-wider text-orange-700 bg-orange-100 px-3 py-1 rounded-full uppercase">Required</span>
               )}
               {isSkillsComplete() && (
-                <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
-                  <Check className="text-white text-sm" />
+                <div className="w-7 h-7 bg-green-500 rounded-full flex items-center justify-center">
+                  <Check className="h-4 w-4 text-white" />
                 </div>
               )}
             </div>
@@ -633,32 +645,32 @@ export default function EditProfilePage() {
           </div>
 
           {/* Experience & Activities */}
-          <div className="w-full min-w-0 bg-white/90 backdrop-blur-sm p-4 sm:p-6 md:p-8 rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-light-gray/30 mb-3 sm:mb-6 md:mb-8">
-            <div className="flex items-center mb-4 sm:mb-5 md:mb-6">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-light-blue/30 rounded-xl flex items-center justify-center mr-3 sm:mr-4 flex-shrink-0">
-                <Briefcase className="text-navy text-lg" />
+          <div className="bg-white rounded-2xl shadow-xl border border-slate-100 p-8">
+            <div className="flex items-center mb-6">
+              <div className="w-12 h-12 bg-sky-100 rounded-lg flex items-center justify-center mr-4">
+                <Briefcase className="h-6 w-6 text-navy-700" />
               </div>
               <div className="flex-1">
-                <h3 className="text-base sm:text-lg md:text-xl font-bold text-navy">Experience & Activities</h3>
-                <p className="text-gray-600 text-sm">Your professional and academic experiences</p>
+                <h3 className="text-xl font-bold text-navy-900">Experience & Activities</h3>
+                <p className="text-slate-600 text-sm">Your professional and academic experiences</p>
               </div>
               {!isExperienceComplete() && (
-                <span className="text-sm font-semibold text-orange-600 bg-orange-100 px-3 py-1 rounded-full">Required</span>
+                <span className="text-xs font-semibold tracking-wider text-orange-700 bg-orange-100 px-3 py-1 rounded-full uppercase">Required</span>
               )}
               {isExperienceComplete() && (
-                <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
-                  <Check className="text-white text-sm" />
+                <div className="w-7 h-7 bg-green-500 rounded-full flex items-center justify-center">
+                  <Check className="h-4 w-4 text-white" />
                 </div>
               )}
             </div>
             
             <div className="mb-6">
-              <label className="block text-sm font-semibold text-navy mb-2">Relevant Experience</label>
+              <label className="block text-sm font-medium text-navy-900 mb-2">Relevant Experience</label>
               <textarea
                 value={formData.experience}
                 onChange={(e) => handleInputChange('experience', e.target.value)}
                 rows={4}
-                className="w-full px-4 py-3 rounded-xl bg-light-blue/8 border border-light-blue/20 text-gray-800 focus:outline-none focus:ring-2 focus:ring-navy/30 focus:border-navy focus:bg-light-blue/12 transition-all duration-200 resize-none"
+                className="w-full px-4 py-3 rounded-lg bg-white border border-slate-200 text-navy-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-200 focus:border-sky-400 transition-all resize-none"
                 placeholder="Describe your relevant work experience, internships, projects, etc."
               />
             </div>
@@ -694,21 +706,21 @@ export default function EditProfilePage() {
           </div>
 
           {/* Career Interests */}
-          <div className="w-full min-w-0 bg-white/90 backdrop-blur-sm p-4 sm:p-6 md:p-8 rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-light-gray/30 mb-3 sm:mb-6 md:mb-8">
-            <div className="flex items-center mb-4 sm:mb-5 md:mb-6">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-light-blue/30 rounded-xl flex items-center justify-center mr-3 sm:mr-4 flex-shrink-0">
-                <Briefcase className="text-navy text-lg" />
+          <div className="bg-white rounded-2xl shadow-xl border border-slate-100 p-8">
+            <div className="flex items-center mb-6">
+              <div className="w-12 h-12 bg-sky-100 rounded-lg flex items-center justify-center mr-4">
+                <Briefcase className="h-6 w-6 text-navy-700" />
               </div>
               <div className="flex-1">
-                <h3 className="text-base sm:text-lg md:text-xl font-bold text-navy">Career Interests</h3>
-                <p className="text-gray-600 text-sm">Industries and roles you're interested in (up to 5)</p>
+                <h3 className="text-xl font-bold text-navy-900">Career Interests</h3>
+                <p className="text-slate-600 text-sm">Industries and roles you're interested in (up to 5)</p>
               </div>
               {!isCareerInterestsComplete() && (
-                <span className="text-sm font-semibold text-orange-600 bg-orange-100 px-3 py-1 rounded-full">Required</span>
+                <span className="text-xs font-semibold tracking-wider text-orange-700 bg-orange-100 px-3 py-1 rounded-full uppercase">Required</span>
               )}
               {isCareerInterestsComplete() && (
-                <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
-                  <Check className="text-white text-sm" />
+                <div className="w-7 h-7 bg-green-500 rounded-full flex items-center justify-center">
+                  <Check className="h-4 w-4 text-white" />
                 </div>
               )}
             </div>
@@ -723,37 +735,37 @@ export default function EditProfilePage() {
                 allowCustom
                 maxSelections={5}
               />
-              <p className="text-sm text-gray-500 mt-2">
+              <p className="text-sm text-slate-500 mt-2">
                 Select up to 5 industries you're most interested in pursuing for your career.
               </p>
             </div>
           </div>
 
           {/* Work Authorization */}
-          <div className="w-full min-w-0 bg-white/90 backdrop-blur-sm p-4 sm:p-6 md:p-8 rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-light-gray/30 mb-3 sm:mb-6 md:mb-8">
-            <div className="flex items-center mb-4 sm:mb-5 md:mb-6">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-light-blue/30 rounded-xl flex items-center justify-center mr-3 sm:mr-4 flex-shrink-0">
-                <HelpCircle className="text-navy text-lg" />
+          <div className="bg-white rounded-2xl shadow-xl border border-slate-100 p-8">
+            <div className="flex items-center mb-6">
+              <div className="w-12 h-12 bg-sky-100 rounded-lg flex items-center justify-center mr-4">
+                <Globe className="h-6 w-6 text-navy-700" />
               </div>
               <div className="flex-1">
-                <h3 className="text-base sm:text-lg md:text-xl font-bold text-navy">Work Authorization</h3>
-                <p className="text-gray-600 text-sm">Your work eligibility status</p>
+                <h3 className="text-xl font-bold text-navy-900">Work Authorization</h3>
+                <p className="text-slate-600 text-sm">Your work eligibility status</p>
               </div>
               {!isWorkAuthComplete() && (
-                <span className="text-sm font-semibold text-orange-600 bg-orange-100 px-3 py-1 rounded-full">Required</span>
+                <span className="text-xs font-semibold tracking-wider text-orange-700 bg-orange-100 px-3 py-1 rounded-full uppercase">Required</span>
               )}
               {isWorkAuthComplete() && (
-                <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
-                  <Check className="text-white text-sm" />
+                <div className="w-7 h-7 bg-green-500 rounded-full flex items-center justify-center">
+                  <Check className="h-4 w-4 text-white" />
                 </div>
               )}
             </div>
             
-            <div className="space-y-6 mb-6">
+            <div className="space-y-6">
               <div>
-                <label className="block text-sm font-semibold text-navy mb-3">Are you authorized to work in the United States?</label>
-                <div className="flex space-x-6">
-                  <label className="flex items-center">
+                <label className="block text-sm font-medium text-navy-900 mb-3">Are you authorized to work in the United States?</label>
+                <div className="flex gap-6">
+                  <label className="flex items-center cursor-pointer">
                     <input
                       type="radio"
                       name="authorizedToWork"
@@ -763,11 +775,11 @@ export default function EditProfilePage() {
                         ...formData.workAuthorization,
                         authorizedToWork: e.target.value === 'yes'
                       })}
-                      className="w-4 h-4 text-navy focus:ring-navy/30 border-light-gray/30"
+                      className="w-4 h-4 text-navy-800 focus:ring-sky-200 border-slate-300"
                     />
-                    <span className="ml-2 text-gray-800">Yes</span>
+                    <span className="ml-2 text-navy-900">Yes</span>
                   </label>
-                  <label className="flex items-center">
+                  <label className="flex items-center cursor-pointer">
                     <input
                       type="radio"
                       name="authorizedToWork"
@@ -777,17 +789,17 @@ export default function EditProfilePage() {
                         ...formData.workAuthorization,
                         authorizedToWork: false
                       })}
-                      className="w-4 h-4 text-navy focus:ring-navy/30 border-light-gray/30"
+                      className="w-4 h-4 text-navy-800 focus:ring-sky-200 border-slate-300"
                     />
-                    <span className="ml-2 text-gray-800">No</span>
+                    <span className="ml-2 text-navy-900">No</span>
                   </label>
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-navy mb-3">Do you require sponsorship for employment visa status?</label>
-                <div className="flex space-x-6">
-                  <label className="flex items-center">
+                <label className="block text-sm font-medium text-navy-900 mb-3">Do you require sponsorship for employment visa status?</label>
+                <div className="flex gap-6">
+                  <label className="flex items-center cursor-pointer">
                     <input
                       type="radio"
                       name="requiresVisaSponsorship"
@@ -797,11 +809,11 @@ export default function EditProfilePage() {
                         ...formData.workAuthorization,
                         requiresVisaSponsorship: e.target.value === 'yes'
                       })}
-                      className="w-4 h-4 text-navy focus:ring-navy/30 border-light-gray/30"
+                      className="w-4 h-4 text-navy-800 focus:ring-sky-200 border-slate-300"
                     />
-                    <span className="ml-2 text-gray-800">Yes</span>
+                    <span className="ml-2 text-navy-900">Yes</span>
                   </label>
-                  <label className="flex items-center">
+                  <label className="flex items-center cursor-pointer">
                     <input
                       type="radio"
                       name="requiresVisaSponsorship"
@@ -811,9 +823,9 @@ export default function EditProfilePage() {
                         ...formData.workAuthorization,
                         requiresVisaSponsorship: false
                       })}
-                      className="w-4 h-4 text-navy focus:ring-navy/30 border-light-gray/30"
+                      className="w-4 h-4 text-navy-800 focus:ring-sky-200 border-slate-300"
                     />
-                    <span className="ml-2 text-gray-800">No</span>
+                    <span className="ml-2 text-navy-900">No</span>
                   </label>
                 </div>
               </div>
@@ -821,58 +833,52 @@ export default function EditProfilePage() {
           </div>
 
           {/* Personal & Links */}
-          <div className="w-full min-w-0 bg-white/90 backdrop-blur-sm p-4 sm:p-6 md:p-8 rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-light-gray/30 mb-3 sm:mb-6 md:mb-8">
-            <div className="flex items-center mb-4 sm:mb-5 md:mb-6">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-light-blue/30 rounded-xl flex items-center justify-center mr-3 sm:mr-4 flex-shrink-0">
-                <BookOpen className="text-navy text-lg" />
+          <div className="bg-white rounded-2xl shadow-xl border border-slate-100 p-8">
+            <div className="flex items-center mb-6">
+              <div className="w-12 h-12 bg-sky-100 rounded-lg flex items-center justify-center mr-4">
+                <BookOpen className="h-6 w-6 text-navy-700" />
               </div>
               <div className="flex-1">
-                <h3 className="text-base sm:text-lg md:text-xl font-bold text-navy">Personal & Links</h3>
-                <p className="text-gray-600 text-sm">Tell employers about yourself and share your work</p>
+                <h3 className="text-xl font-bold text-navy-900">Personal & Links</h3>
+                <p className="text-slate-600 text-sm">Tell employers about yourself and share your work</p>
               </div>
               {isPersonalComplete() && (
-                <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
-                  <Check className="text-white text-sm" />
+                <div className="w-7 h-7 bg-green-500 rounded-full flex items-center justify-center">
+                  <Check className="h-4 w-4 text-white" />
                 </div>
               )}
             </div>
             
             <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Bio
-              </label>
+              <label className="block text-sm font-medium text-navy-900 mb-2">Bio</label>
               <textarea
                 value={formData.bio}
                 onChange={(e) => handleInputChange('bio', e.target.value)}
                 rows={4}
-                className="w-full px-4 py-3 rounded-xl bg-light-blue/8 border border-light-blue/20 text-gray-800 focus:outline-none focus:ring-2 focus:ring-navy/30 focus:border-navy focus:bg-light-blue/12 transition-all duration-200"
+                className="w-full px-4 py-3 rounded-lg bg-white border border-slate-200 text-navy-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-200 focus:border-sky-400 transition-all resize-none"
                 placeholder="Tell employers about yourself, your goals, and what makes you unique..."
               />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  LinkedIn URL
-                </label>
+                <label className="block text-sm font-medium text-navy-900 mb-2">LinkedIn URL</label>
                 <input
                   type="url"
                   value={formData.linkedinUrl}
                   onChange={(e) => handleInputChange('linkedinUrl', e.target.value)}
-                  className="w-full h-12 px-4 rounded-xl bg-light-blue/8 border border-light-blue/20 text-gray-800 focus:outline-none focus:ring-2 focus:ring-navy/30 focus:border-navy focus:bg-light-blue/12 transition-all duration-200"
+                  className="w-full h-12 px-4 rounded-lg bg-white border border-slate-200 text-navy-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-200 focus:border-sky-400 transition-all"
                   placeholder="https://linkedin.com/in/yourprofile"
                 />
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Portfolio/Website URL
-                </label>
+                <label className="block text-sm font-medium text-navy-900 mb-2">Portfolio/Website URL</label>
                 <input
                   type="url"
                   value={formData.portfolioUrl}
                   onChange={(e) => handleInputChange('portfolioUrl', e.target.value)}
-                  className="w-full h-12 px-4 rounded-xl bg-light-blue/8 border border-light-blue/20 text-gray-800 focus:outline-none focus:ring-2 focus:ring-navy/30 focus:border-navy focus:bg-light-blue/12 transition-all duration-200"
+                  className="w-full h-12 px-4 rounded-lg bg-white border border-slate-200 text-navy-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-200 focus:border-sky-400 transition-all"
                   placeholder="https://yourportfolio.com"
                 />
               </div>
@@ -880,18 +886,18 @@ export default function EditProfilePage() {
           </div>
 
           {/* Profile Picture & Resume */}
-          <div className="w-full min-w-0 bg-white/90 backdrop-blur-sm p-4 sm:p-6 md:p-8 rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-light-gray/30 mb-3 sm:mb-6 md:mb-8">
-            <div className="flex items-center mb-4 sm:mb-5 md:mb-6">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-light-blue/30 rounded-xl flex items-center justify-center mr-3 sm:mr-4 flex-shrink-0">
-                <User className="text-navy text-lg" />
+          <div className="bg-white rounded-2xl shadow-xl border border-slate-100 p-8">
+            <div className="flex items-center mb-6">
+              <div className="w-12 h-12 bg-sky-100 rounded-lg flex items-center justify-center mr-4">
+                <User className="h-6 w-6 text-navy-700" />
               </div>
               <div className="flex-1">
-                <h3 className="text-base sm:text-lg md:text-xl font-bold text-navy">Profile Picture & Resume</h3>
-                <p className="text-gray-600 text-sm">Upload your photo and resume to stand out</p>
+                <h3 className="text-xl font-bold text-navy-900">Profile Picture & Resume</h3>
+                <p className="text-slate-600 text-sm">Upload your photo and resume to stand out</p>
               </div>
               {isFilesComplete() && (
-                <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
-                  <Check className="text-white text-sm" />
+                <div className="w-7 h-7 bg-green-500 rounded-full flex items-center justify-center">
+                  <Check className="h-4 w-4 text-white" />
                 </div>
               )}
             </div>
@@ -899,9 +905,7 @@ export default function EditProfilePage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {/* Profile Picture */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-4">
-                  Profile Picture
-                </label>
+                <label className="block text-sm font-medium text-navy-900 mb-4">Profile Picture</label>
                 <FileUpload
                   type="profile-image"
                   currentFile={formData.profileImageUrl}
@@ -913,9 +917,7 @@ export default function EditProfilePage() {
 
               {/* Resume */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-4">
-                  Resume
-                </label>
+                <label className="block text-sm font-medium text-navy-900 mb-4">Resume</label>
                 <FileUpload
                   type="resume"
                   currentFile={formData.resumeUrl}
@@ -928,26 +930,24 @@ export default function EditProfilePage() {
           </div>
 
           {/* Profile Video */}
-          <div className="w-full min-w-0 bg-white/90 backdrop-blur-sm p-4 sm:p-6 md:p-8 rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-light-gray/30 mb-3 sm:mb-6 md:mb-8">
-            <div className="flex items-center mb-4 sm:mb-5 md:mb-6">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-light-blue/30 rounded-xl flex items-center justify-center mr-3 sm:mr-4 flex-shrink-0">
-                <Video className="text-navy text-lg" />
+          <div className="bg-white rounded-2xl shadow-xl border border-slate-100 p-8">
+            <div className="flex items-center mb-6">
+              <div className="w-12 h-12 bg-sky-100 rounded-lg flex items-center justify-center mr-4">
+                <Video className="h-6 w-6 text-navy-700" />
               </div>
               <div className="flex-1">
-                <h3 className="text-base sm:text-lg md:text-xl font-bold text-navy">Profile Video</h3>
-                <p className="text-gray-600 text-sm">Record a short video to introduce yourself</p>
+                <h3 className="text-xl font-bold text-navy-900">Profile Video</h3>
+                <p className="text-slate-600 text-sm">Record a short video to introduce yourself</p>
               </div>
               {isVideoComplete() && (
-                <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
-                  <Check className="text-white text-sm" />
+                <div className="w-7 h-7 bg-green-500 rounded-full flex items-center justify-center">
+                  <Check className="h-4 w-4 text-white" />
                 </div>
               )}
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-4">
-                Profile Video (Max 30 seconds)
-              </label>
+              <label className="block text-sm font-medium text-navy-900 mb-4">Profile Video (Max 30 seconds)</label>
               <VideoUpload
                 currentVideo={formData.videoUrl}
                 onUploadComplete={(url) => handleInputChange('videoUrl', url)}
@@ -958,61 +958,66 @@ export default function EditProfilePage() {
           </div>
 
           {/* Endorsements */}
-          <div className="w-full min-w-0 bg-white/90 backdrop-blur-sm p-4 sm:p-6 md:p-8 rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-light-gray/30 mb-3 sm:mb-6 md:mb-8">
-            <div className="flex items-center mb-4 sm:mb-5 md:mb-6">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-light-blue/30 rounded-xl flex items-center justify-center mr-3 sm:mr-4 flex-shrink-0">
-                <Award className="text-navy text-lg" />
+          <div className="bg-white rounded-2xl shadow-xl border border-slate-100 p-8">
+            <div className="flex items-center mb-6">
+              <div className="w-12 h-12 bg-sky-100 rounded-lg flex items-center justify-center mr-4">
+                <Award className="h-6 w-6 text-navy-700" />
               </div>
               <div className="flex-1">
-                <h3 className="text-base sm:text-lg md:text-xl font-bold text-navy">Endorsements</h3>
-                <p className="text-gray-600 text-sm">Share your profile to get endorsements</p>
+                <h3 className="text-xl font-bold text-navy-900">Endorsements</h3>
+                <p className="text-slate-600 text-sm">Share your profile to get endorsements</p>
               </div>
               {isEndorsementsComplete() && (
-                <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
-                  <Check className="text-white text-sm" />
+                <div className="w-7 h-7 bg-green-500 rounded-full flex items-center justify-center">
+                  <Check className="h-4 w-4 text-white" />
                 </div>
               )}
             </div>
-            <div className="text-sm text-gray-700 flex items-center mb-6">
-              <Share2 className="h-4 w-4 mr-2" />
-              <span className="mr-2">Share link:</span>
-              <code className="bg-light-blue/20 px-3 py-2 rounded-lg text-navy font-mono text-sm">
+            <div className="bg-slate-50 rounded-xl p-4 mb-4">
+              <div className="flex items-center text-sm text-slate-600 mb-2">
+                <Share2 className="h-4 w-4 mr-2 text-navy-700" />
+                <span>Share this link:</span>
+              </div>
+              <code className="block bg-white px-4 py-3 rounded-lg text-navy-900 font-mono text-sm border border-slate-200 break-all">
                 {typeof window !== 'undefined' ? `${window.location.origin}/endorse/${user.uid}` : `/endorse/${user.uid}`}
               </code>
             </div>
-            <p className="text-gray-600 mb-2">Send this link to colleagues, managers or peers so they can vouch for your skills.</p>
-            <Link href={`/endorse/${user.uid}`} className="text-blue-600 hover:underline text-sm">Open endorsement form</Link>
+            <p className="text-slate-600 mb-4">Send this link to colleagues, managers or peers so they can vouch for your skills.</p>
+            <Link href={`/endorse/${user.uid}`} className="text-navy-800 hover:text-navy-600 font-medium transition-colors">
+              Open endorsement form →
+            </Link>
           </div>
 
           {/* Save All Changes */}
-          <div className="sticky bottom-0 bg-white/95 backdrop-blur-md border-t border-light-gray/30 p-4 sm:p-6 rounded-t-xl sm:rounded-t-2xl shadow-lg mobile-safe-bottom">
-            <div className="w-full md:max-w-7xl md:mx-auto flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0">
-              <div className="hidden sm:block">
-                <h3 className="text-base sm:text-lg font-semibold text-navy">Save All Changes</h3>
-                <p className="text-gray-600 text-xs sm:text-sm">Review and save your profile updates</p>
+          <div className="bg-gradient-to-br from-navy-800 to-navy-900 rounded-2xl shadow-xl p-8 text-white">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div>
+                <h3 className="text-xl font-bold">Ready to save?</h3>
+                <p className="text-sky-200 mt-1">Review and save your profile updates</p>
               </div>
-              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
+              <div className="flex gap-3 w-full sm:w-auto">
                 <button
                   type="button"
-                  className="bg-light-blue/10 text-navy font-semibold py-2.5 sm:py-3 px-4 sm:px-6 rounded-xl border border-light-blue/40 hover:bg-light-blue/15 transition-all duration-200 min-h-[44px] w-full sm:w-auto text-sm sm:text-base"
+                  onClick={() => router.back()}
+                  className="flex-1 sm:flex-none px-6 py-3 bg-white/10 text-white font-semibold rounded-lg hover:bg-white/20 transition-colors border border-white/20"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="bg-navy text-white font-semibold py-2.5 sm:py-3 px-4 sm:px-6 md:px-8 rounded-xl hover:bg-blue-900 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center min-h-[44px] w-full sm:w-auto text-sm sm:text-base"
+                  className="flex-1 sm:flex-none px-6 py-3 bg-white text-navy-900 font-semibold rounded-lg hover:bg-sky-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center shadow-md"
                 >
-                  <Save className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
-                  <span className="hidden sm:inline">{isSubmitting ? 'Saving...' : 'Save All Changes'}</span>
-                  <span className="sm:hidden">{isSubmitting ? 'Saving...' : 'Save'}</span>
+                  <Save className="h-5 w-5 mr-2" />
+                  {isSubmitting ? 'Saving...' : 'Save Changes'}
                 </button>
               </div>
             </div>
           </div>
         </form>
-      </div>
-    </main>
+          </div>
+        </div>
+      </main>
     </div>
   );
 }

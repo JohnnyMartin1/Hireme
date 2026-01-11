@@ -3,6 +3,7 @@ import { useFirebaseAuth } from "@/components/FirebaseAuthProvider";
 import { useRouter, useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 
 export default function UserSettingsPage() {
   const { user, profile, loading } = useFirebaseAuth();
@@ -37,10 +38,10 @@ export default function UserSettingsPage() {
 
   if (loading) {
     return (
-      <div style={{background: 'linear-gradient(180deg, #E6F0FF 0%, #F0F8FF 100%)', minHeight: '100vh'}} className="flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#000080] mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-navy-800 mx-auto mb-4"></div>
+          <p className="text-slate-600">Loading...</p>
         </div>
       </div>
     );
@@ -68,38 +69,20 @@ export default function UserSettingsPage() {
   };
 
   return (
-    <div className="mobile-safe-top mobile-safe-bottom overflow-x-hidden w-full" style={{background: 'linear-gradient(180deg, #E6F0FF 0%, #F0F8FF 100%)', minHeight: '100vh', fontFamily: "'Inter', sans-serif"}}>
+    <div className="min-h-screen bg-slate-50 mobile-safe-top mobile-safe-bottom overflow-x-hidden w-full">
       <style jsx global>{`
-        ::-webkit-scrollbar { display: none; }
-        
-        .tab-active {
-          background: linear-gradient(135deg, #000080 0%, #ADD8E6 100%);
-          color: white;
-        }
-        
-        .tab-inactive {
-          background: white;
-          color: #000080;
-          border: 1px solid #D3D3D3;
-        }
-        
-        .tab-inactive:hover {
-          background: #F0F8FF;
-          border-color: #ADD8E6;
-        }
-        
         .toggle-switch {
           position: relative;
           width: 48px;
           height: 24px;
-          background: #D3D3D3;
+          background: #cbd5e1;
           border-radius: 12px;
           cursor: pointer;
           transition: background-color 0.2s;
         }
         
         .toggle-switch.active {
-          background: #ADD8E6;
+          background: #0ea5e9;
         }
         
         .toggle-switch::after {
@@ -119,127 +102,53 @@ export default function UserSettingsPage() {
           transform: translateX(24px);
         }
         
-        .input-focus {
-          transition: all 0.2s ease;
-        }
-        
-        .input-focus:focus {
-          outline: none;
-          border-color: #ADD8E6;
-          box-shadow: 0 0 0 3px rgba(173, 216, 230, 0.1);
-          transform: translateY(-1px);
-        }
-        
-        .card-hover {
-          transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-        
-        .card-hover:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 8px 16px rgba(173, 216, 230, 0.15);
-        }
-        
-        .btn-primary {
-          background: linear-gradient(135deg, #000080 0%, #ADD8E6 100%);
-          color: white;
-          transition: all 0.2s ease;
-        }
-        
-        .btn-primary:hover {
-          transform: translateY(-1px);
-          box-shadow: 0 4px 12px rgba(0, 0, 128, 0.2);
-        }
-        
-        .btn-secondary {
-          background: white;
-          color: #000080;
-          border: 1px solid #D3D3D3;
-          transition: all 0.2s ease;
-        }
-        
-        .btn-secondary:hover {
-          background: #F0F8FF;
-          border-color: #ADD8E6;
-          transform: translateY(-1px);
-        }
-        
-        .btn-danger {
-          background: #DC2626;
-          color: white;
-          transition: all 0.2s ease;
-        }
-        
-        .btn-danger:hover {
-          background: #B91C1C;
-          transform: translateY(-1px);
-        }
-        
-        .fade-in {
-          opacity: 0;
-          transform: translateY(8px);
-          animation: fadeIn 220ms ease-out forwards;
-        }
-        
-        @keyframes fadeIn {
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        
-        .toast {
-          position: fixed;
-          top: 20px;
-          right: 20px;
-          background: #000080;
-          color: white;
-          padding: 12px 20px;
-          border-radius: 8px;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-          transform: translateX(${showToast ? '0' : '400px'});
-          transition: transform 0.3s ease;
-          z-index: 1000;
-        }
-        
         .danger-zone {
           border: 1px solid #DC2626;
           background: linear-gradient(135deg, #FEF2F2 0%, #FECACA 100%);
         }
       `}</style>
 
-      {/* Toast Notification */}
-      {showToast && (
-        <div className="toast">
-          <div className="flex items-center space-x-2">
-            <i className="fa-solid fa-check"></i>
-            <span>{toastMessage}</span>
-          </div>
-        </div>
-      )}
-
       {/* Header */}
-      <header className="bg-white/80 backdrop-blur-md sticky top-0 z-40 border-b border-[#D3D3D3] mobile-safe-top">
-        <div className="w-full md:max-w-7xl md:mx-auto px-0 sm:px-3 md:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16 sm:h-20 px-4 sm:px-0">
-            <div className="flex items-center space-x-2 sm:space-x-4 md:space-x-6">
-              <Link href={dashboardUrl} className="flex items-center space-x-1 sm:space-x-2 text-[#000080] hover:text-[#ADD8E6] transition-colors duration-200 bg-white px-2 sm:px-4 py-2 rounded-full border border-[#D3D3D3] hover:border-[#ADD8E6] min-h-[44px]">
-                <i className="fa-solid fa-arrow-left text-sm sm:text-base"></i>
-                <span className="font-semibold text-sm sm:text-base hidden sm:inline">Back to Dashboard</span>
-                <span className="font-semibold text-sm sm:hidden">Back</span>
-              </Link>
+      <header className="sticky top-0 bg-white shadow-sm z-50 border-b border-slate-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
+          <Link
+            href={dashboardUrl}
+            className="flex items-center gap-2 text-navy-900 hover:text-navy-600 transition-colors group px-3 py-2 rounded-lg hover:bg-sky-50 min-h-[44px]"
+          >
+            <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform duration-200" />
+            <span className="font-medium text-sm hidden sm:inline">Back to Dashboard</span>
+            <span className="font-medium text-sm sm:hidden">Back</span>
+          </Link>
+          <Link href="/" className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-navy-800 rounded-lg flex items-center justify-center shadow-md">
+              <svg width="20" height="20" viewBox="0 0 269 274" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M111.028 0C172.347 0.000238791 222.055 51.647 222.055 115.356C222.055 140.617 214.238 163.98 200.983 182.981L258.517 242.758L238.036 264.036L181.077 204.857C161.97 221.02 137.589 230.713 111.028 230.713C49.7092 230.713 2.76862e-05 179.066 0 115.356C0 51.6468 49.7092 0 111.028 0Z" fill="white"/>
+                <path d="M205.69 115.392C205.69 170.42 163.308 215.029 111.028 215.029C58.748 215.029 16.3666 170.42 16.3666 115.392C16.3666 60.3646 58.748 15.7559 111.028 15.7559C163.308 15.7559 205.69 60.3646 205.69 115.392Z" fill="#4F86F7"/>
+              </svg>
             </div>
-          </div>
+            <span className="text-xl font-bold text-navy-900">HireMe</span>
+          </Link>
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="w-full md:max-w-7xl md:mx-auto px-0 sm:px-3 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8 min-w-0">
-        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-[#000080] mb-4 sm:mb-6 md:mb-8 px-2 sm:px-0">Settings</h1>
+      {/* Toast Notification */}
+      {showToast && (
+        <div className={`fixed top-24 right-6 z-50 bg-navy-800 text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-2 transition-all duration-300 ${showToast ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-full'}`}>
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+          </svg>
+          <span>{toastMessage}</span>
+        </div>
+      )}
 
-        <div className="flex flex-col lg:flex-row gap-0 sm:gap-4 md:gap-6 lg:gap-8">
+      {/* Main Content */}
+      <main className="max-w-7xl mx-auto px-6 py-12 lg:py-16">
+        <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-navy-900 mb-12 tracking-tight">Settings</h1>
+
+        <div className="flex flex-col lg:flex-row gap-8">
           {/* Sidebar */}
-          <aside className="lg:w-80 shrink-0 w-full lg:block">
-            <div className="bg-white rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-[#D3D3D3] p-4 sm:p-5 md:p-6 lg:sticky lg:top-28 mb-3 sm:mb-0">
+          <aside className="lg:w-80 shrink-0">
+            <div className="bg-white rounded-2xl shadow-xl border border-slate-100 p-6 sticky top-24">
               <nav className="space-y-2">
                 {(profile.role === 'JOB_SEEKER' ? [
                   { id: 'account', icon: 'user', label: 'Account' },
@@ -266,8 +175,10 @@ export default function UserSettingsPage() {
                   <button
                     key={tab.id}
                     onClick={() => handleTabClick(tab.id)}
-                    className={`w-full text-left px-4 py-3 rounded-xl font-semibold transition-all duration-200 ${
-                      activeTab === tab.id ? 'tab-active' : 'tab-inactive'
+                    className={`w-full text-left px-4 py-3 rounded-lg font-semibold transition-all duration-200 ${
+                      activeTab === tab.id
+                        ? 'bg-navy-800 text-white'
+                        : 'bg-white text-navy-900 hover:bg-sky-50 border border-transparent hover:border-sky-100'
                     }`}
                   >
                     <i className={`fa-solid fa-${tab.icon} mr-3`}></i>{tab.label}
@@ -305,43 +216,43 @@ function AccountSection({ toast, profile }: { toast: (msg: string) => void; prof
   const [lastName, setLastName] = useState(profile.lastName || '');
 
   return (
-    <section className="space-y-6 fade-in">
-      <div className="w-full min-w-0 bg-white rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-[#D3D3D3] p-4 sm:p-6 md:p-8 mb-3 sm:mb-6">
-        <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-[#000080] mb-4 sm:mb-5 md:mb-6 flex items-center">
-          <i className="fa-solid fa-user text-[#ADD8E6] mr-3"></i>
+    <section className="space-y-6 ">
+      <div className="bg-white rounded-none sm:rounded-lg md:rounded-2xl shadow-xl border border-slate-100 p-8">
+        <h2 className="text-xl font-bold text-navy-900 mb-6 flex items-center">
+          <i className="fa-solid fa-user text-sky-500 mr-3"></i>
           Profile Information
         </h2>
         <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-semibold text-[#000080] mb-2">First Name</label>
+              <label className="block text-sm font-medium text-navy-900 mb-2">First Name</label>
               <input 
                 type="text" 
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
-                className="w-full px-4 py-3 border border-[#D3D3D3] rounded-xl input-focus" 
+                className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-sky-200 focus:border-sky-400 text-navy-900 placeholder-slate-400" 
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-[#000080] mb-2">Last Name</label>
+              <label className="block text-sm font-medium text-navy-900 mb-2">Last Name</label>
               <input 
                 type="text" 
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
-                className="w-full px-4 py-3 border border-[#D3D3D3] rounded-xl input-focus" 
+                className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-sky-200 focus:border-sky-400 text-navy-900 placeholder-slate-400" 
               />
             </div>
           </div>
           <div>
-            <label className="block text-sm font-semibold text-[#000080] mb-2">
+            <label className="block text-sm font-medium text-navy-900 mb-2">
               Email
-              <span className="ml-2 text-xs text-gray-500 font-normal">(Cannot be changed)</span>
+              <span className="ml-2 text-xs text-slate-500 font-normal">(Cannot be changed)</span>
             </label>
             <input 
               type="email" 
               value={profile.email || ''}
               disabled
-              className="w-full px-4 py-3 border border-[#D3D3D3] rounded-xl bg-gray-50 text-gray-600 cursor-not-allowed" 
+              className="w-full px-4 py-3 border border-slate-200 rounded-lg bg-slate-50 text-slate-600 cursor-not-allowed" 
             />
           </div>
         </div>
@@ -350,44 +261,44 @@ function AccountSection({ toast, profile }: { toast: (msg: string) => void; prof
       {/* Only show Login Settings and Session Management for employers */}
       {(profile.role === 'EMPLOYER' || profile.role === 'RECRUITER') && (
         <>
-          <div className="w-full min-w-0 bg-white rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-[#D3D3D3] p-4 sm:p-6 md:p-8 mb-3 sm:mb-6">
-            <h3 className="text-xl font-bold text-[#000080] mb-6">Login Settings</h3>
+          <div className="bg-white rounded-none sm:rounded-lg md:rounded-2xl shadow-xl border border-slate-100 p-8">
+            <h3 className="text-xl font-bold text-navy-900 mb-6">Login Settings</h3>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-semibold text-[#000080] mb-2">Username</label>
-                <input type="text" defaultValue="johnsmith" className="w-full px-4 py-3 border border-[#D3D3D3] rounded-xl input-focus" />
+                <label className="block text-sm font-medium text-navy-900 mb-2">Username</label>
+                <input type="text" defaultValue="johnsmith" className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-sky-200 focus:border-sky-400 text-navy-900 placeholder-slate-400" />
               </div>
               <div>
-                <h4 className="font-semibold text-[#000080] mb-3">Connected Accounts</h4>
+                <h4 className="font-semibold text-navy-900 mb-3">Connected Accounts</h4>
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between p-3 border border-[#D3D3D3] rounded-xl">
+                  <div className="flex items-center justify-between p-3 border border-slate-200 rounded-lg">
                     <div className="flex items-center space-x-3">
                       <i className="fa-brands fa-google text-xl text-red-500"></i>
-                      <span className="font-medium text-[#000080]">Google</span>
+                      <span className="font-medium text-navy-900">Google</span>
                     </div>
                     <button className="text-red-500 hover:text-red-600 font-semibold">Disconnect</button>
                   </div>
-                  <div className="flex items-center justify-between p-3 border border-[#D3D3D3] rounded-xl">
+                  <div className="flex items-center justify-between p-3 border border-slate-200 rounded-lg">
                     <div className="flex items-center space-x-3">
                       <i className="fa-brands fa-linkedin text-xl text-blue-600"></i>
-                      <span className="font-medium text-[#000080]">LinkedIn</span>
+                      <span className="font-medium text-navy-900">LinkedIn</span>
                     </div>
-                    <button className="text-[#ADD8E6] hover:text-[#000080] font-semibold">Connect</button>
+                    <button className="text-sky-500 hover:text-navy-900 font-semibold">Connect</button>
                   </div>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="w-full min-w-0 bg-white rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-[#D3D3D3] p-4 sm:p-6 md:p-8 mb-3 sm:mb-6">
-            <h3 className="text-xl font-bold text-[#000080] mb-6">Session Management</h3>
-            <button className="btn-secondary px-6 py-3 rounded-xl font-semibold">Sign out of other devices</button>
+          <div className="bg-white rounded-none sm:rounded-lg md:rounded-2xl shadow-xl border border-slate-100 p-8">
+            <h3 className="text-xl font-bold text-navy-900 mb-6">Session Management</h3>
+            <button className="px-6 py-3 bg-white border border-slate-200 text-navy-900 rounded-lg font-semibold shadow-sm hover:bg-slate-50 transition-colors">Sign out of other devices</button>
           </div>
         </>
       )}
 
       <div className="flex justify-end">
-        <button onClick={() => toast('Changes saved successfully')} className="btn-primary px-8 py-3 rounded-xl font-semibold">Save Changes</button>
+        <button onClick={() => toast('Changes saved successfully')} className="px-8 py-4 bg-navy-800 text-white rounded-lg font-semibold text-lg shadow-md hover:bg-navy-700 transition-colors">Save Changes</button>
       </div>
     </section>
   );
@@ -520,54 +431,54 @@ function SecuritySection({ toast, profile }: { toast: (msg: string) => void; pro
   };
 
   return (
-    <section className="space-y-6 fade-in">
-      <div className="w-full min-w-0 bg-white rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-[#D3D3D3] p-4 sm:p-6 md:p-8 mb-3 sm:mb-6">
-        <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-[#000080] mb-4 sm:mb-5 md:mb-6 flex items-center">
-          <i className="fa-solid fa-shield-halved text-[#ADD8E6] mr-3"></i>
+    <section className="space-y-6 ">
+      <div className="bg-white rounded-none sm:rounded-lg md:rounded-2xl shadow-xl border border-slate-100 p-8">
+        <h2 className="text-xl font-bold text-navy-900 mb-6 flex items-center">
+          <i className="fa-solid fa-shield-halved text-sky-500 mr-3"></i>
           Password & Authentication
         </h2>
         <div className="space-y-6">
           <div>
-            <h3 className="text-lg font-bold text-[#000080] mb-4">Change Password</h3>
+            <h3 className="text-lg font-bold text-navy-900 mb-4">Change Password</h3>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-semibold text-[#000080] mb-2">Current Password</label>
+                <label className="block text-sm font-medium text-navy-900 mb-2">Current Password</label>
                 <input 
                   type="password" 
                   value={currentPassword}
                   onChange={(e) => setCurrentPassword(e.target.value)}
-                  className="w-full px-4 py-3 border border-[#D3D3D3] rounded-xl input-focus" 
+                  className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-sky-200 focus:border-sky-400 text-navy-900 placeholder-slate-400" 
                 />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-[#000080] mb-2">New Password</label>
+                <label className="block text-sm font-medium text-navy-900 mb-2">New Password</label>
                 <input 
                   type="password" 
                   value={newPassword}
                   onChange={handleNewPasswordChange}
-                  className="w-full px-4 py-3 border border-[#D3D3D3] rounded-xl input-focus" 
+                  className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-sky-200 focus:border-sky-400 text-navy-900 placeholder-slate-400" 
                 />
                 <div className="mt-2 flex space-x-1">
                   {getStrengthBars().map((bg, index) => (
                     <div key={index} className={`h-1 w-full ${bg} rounded`}></div>
                   ))}
                 </div>
-                <p className="text-xs text-gray-600 mt-1">Password strength: {passwordStrength}</p>
+                <p className="text-xs text-slate-600 mt-1">Password strength: {passwordStrength}</p>
               </div>
               <div>
-                <label className="block text-sm font-semibold text-[#000080] mb-2">Confirm New Password</label>
+                <label className="block text-sm font-medium text-navy-900 mb-2">Confirm New Password</label>
                 <input 
                   type="password" 
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full px-4 py-3 border border-[#D3D3D3] rounded-xl input-focus" 
+                  className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-sky-200 focus:border-sky-400 text-navy-900 placeholder-slate-400" 
                 />
               </div>
             </div>
             <button 
               onClick={handleUpdatePassword} 
               disabled={isUpdating}
-              className="btn-primary px-6 py-3 rounded-xl font-semibold mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-8 py-4 bg-navy-800 text-white rounded-lg font-semibold text-lg shadow-md hover:bg-navy-700 transition-colors px-6 py-3 rounded-lg font-semibold mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isUpdating ? 'Updating...' : 'Update Password'}
             </button>
@@ -578,54 +489,54 @@ function SecuritySection({ toast, profile }: { toast: (msg: string) => void; pro
       {/* Only show Two-Factor Authentication and Active Sessions for employers */}
       {(profile.role === 'EMPLOYER' || profile.role === 'RECRUITER') && (
         <>
-          <div className="w-full min-w-0 bg-white rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-[#D3D3D3] p-4 sm:p-6 md:p-8 mb-3 sm:mb-6">
-            <h3 className="text-xl font-bold text-[#000080] mb-6">Two-Factor Authentication</h3>
-            <div className="flex items-center justify-between p-4 border border-[#D3D3D3] rounded-xl">
+          <div className="bg-white rounded-none sm:rounded-lg md:rounded-2xl shadow-xl border border-slate-100 p-8">
+            <h3 className="text-xl font-bold text-navy-900 mb-6">Two-Factor Authentication</h3>
+            <div className="flex items-center justify-between p-4 border border-slate-200 rounded-lg">
               <div>
-                <h4 className="font-semibold text-[#000080]">Authenticator App</h4>
-                <p className="text-sm text-gray-600">Use an authenticator app to generate codes</p>
+                <h4 className="font-semibold text-navy-900">Authenticator App</h4>
+                <p className="text-sm text-slate-600">Use an authenticator app to generate codes</p>
               </div>
               <div className="flex items-center space-x-3">
                 <span className="px-3 py-1 bg-red-100 text-red-800 rounded-full text-xs font-semibold">Disabled</span>
-                <button onClick={() => toast('2FA enabled')} className="btn-primary px-4 py-2 rounded-xl font-semibold">Enable</button>
+                <button onClick={() => toast('2FA enabled')} className="px-8 py-4 bg-navy-800 text-white rounded-lg font-semibold text-lg shadow-md hover:bg-navy-700 transition-colors px-4 py-2 rounded-lg font-semibold">Enable</button>
               </div>
             </div>
           </div>
 
-          <div className="w-full min-w-0 bg-white rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-[#D3D3D3] p-4 sm:p-6 md:p-8 mb-3 sm:mb-6">
-            <h3 className="text-xl font-bold text-[#000080] mb-6">Active Sessions</h3>
+          <div className="bg-white rounded-none sm:rounded-lg md:rounded-2xl shadow-xl border border-slate-100 p-8">
+            <h3 className="text-xl font-bold text-navy-900 mb-6">Active Sessions</h3>
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-[#D3D3D3]">
-                    <th className="text-left py-3 font-semibold text-[#000080]">Device</th>
-                    <th className="text-left py-3 font-semibold text-[#000080]">Location</th>
-                    <th className="text-left py-3 font-semibold text-[#000080]">Last Active</th>
-                    <th className="text-left py-3 font-semibold text-[#000080]">Action</th>
+                  <tr className="border-b border-slate-200">
+                    <th className="text-left py-3 font-semibold text-navy-900">Device</th>
+                    <th className="text-left py-3 font-semibold text-navy-900">Location</th>
+                    <th className="text-left py-3 font-semibold text-navy-900">Last Active</th>
+                    <th className="text-left py-3 font-semibold text-navy-900">Action</th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr className="border-b border-[#D3D3D3]">
+                  <tr className="border-b border-slate-200">
                     <td className="py-3">
                       <div className="flex items-center space-x-2">
-                        <i className="fa-solid fa-desktop text-[#ADD8E6]"></i>
+                        <i className="fa-solid fa-desktop text-sky-500"></i>
                         <span>Chrome on MacOS</span>
                         <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">Current</span>
                       </div>
                     </td>
-                    <td className="py-3 text-gray-600">New York, NY</td>
-                    <td className="py-3 text-gray-600">Now</td>
+                    <td className="py-3 text-slate-600">New York, NY</td>
+                    <td className="py-3 text-slate-600">Now</td>
                     <td className="py-3">-</td>
                   </tr>
-                  <tr className="border-b border-[#D3D3D3]">
+                  <tr className="border-b border-slate-200">
                     <td className="py-3">
                       <div className="flex items-center space-x-2">
-                        <i className="fa-solid fa-mobile text-[#ADD8E6]"></i>
+                        <i className="fa-solid fa-mobile text-sky-500"></i>
                         <span>Safari on iPhone</span>
                       </div>
                     </td>
-                    <td className="py-3 text-gray-600">New York, NY</td>
-                    <td className="py-3 text-gray-600">2 hours ago</td>
+                    <td className="py-3 text-slate-600">New York, NY</td>
+                    <td className="py-3 text-slate-600">2 hours ago</td>
                     <td className="py-3">
                       <button onClick={() => toast('Session revoked')} className="text-red-500 hover:text-red-600 font-semibold">Revoke</button>
                     </td>
@@ -654,56 +565,56 @@ function PrivacySection({ toast }: { toast: (msg: string) => void }) {
   };
 
   return (
-    <section className="space-y-6 fade-in">
-      <div className="w-full min-w-0 bg-white rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-[#D3D3D3] p-4 sm:p-6 md:p-8 mb-3 sm:mb-6">
-        <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-[#000080] mb-4 sm:mb-5 md:mb-6 flex items-center">
-          <i className="fa-solid fa-eye text-[#ADD8E6] mr-3"></i>
+    <section className="space-y-6 ">
+      <div className="bg-white rounded-none sm:rounded-lg md:rounded-2xl shadow-xl border border-slate-100 p-8">
+        <h2 className="text-xl font-bold text-navy-900 mb-6 flex items-center">
+          <i className="fa-solid fa-eye text-sky-500 mr-3"></i>
           Privacy & Visibility Settings
         </h2>
         <div className="space-y-6">
-          <div className="flex items-center justify-between p-4 border border-[#D3D3D3] rounded-xl">
+          <div className="flex items-center justify-between p-4 border border-slate-200 rounded-lg">
             <div>
-              <h3 className="font-semibold text-[#000080]">Show company profile to candidates</h3>
-              <p className="text-sm text-gray-600">Allow candidates to view your company profile</p>
+              <h3 className="font-semibold text-navy-900">Show company profile to candidates</h3>
+              <p className="text-sm text-slate-600">Allow candidates to view your company profile</p>
             </div>
             <div className={`toggle-switch ${settings.companyProfile ? 'active' : ''}`} onClick={() => toggleSetting('companyProfile')}></div>
           </div>
-          <div className="flex items-center justify-between p-4 border border-[#D3D3D3] rounded-xl">
+          <div className="flex items-center justify-between p-4 border border-slate-200 rounded-lg">
             <div>
-              <h3 className="font-semibold text-[#000080]">Allow candidates to message first</h3>
-              <p className="text-sm text-gray-600">Let candidates initiate conversations</p>
+              <h3 className="font-semibold text-navy-900">Allow candidates to message first</h3>
+              <p className="text-sm text-slate-600">Let candidates initiate conversations</p>
             </div>
             <div className={`toggle-switch ${settings.candidateMessages ? 'active' : ''}`} onClick={() => toggleSetting('candidateMessages')}></div>
           </div>
-          <div className="flex items-center justify-between p-4 border border-[#D3D3D3] rounded-xl">
+          <div className="flex items-center justify-between p-4 border border-slate-200 rounded-lg">
             <div>
-              <h3 className="font-semibold text-[#000080]">Share recruiter names in outreach</h3>
-              <p className="text-sm text-gray-600">Include recruiter information in messages</p>
+              <h3 className="font-semibold text-navy-900">Share recruiter names in outreach</h3>
+              <p className="text-sm text-slate-600">Include recruiter information in messages</p>
             </div>
             <div className={`toggle-switch ${settings.recruiterNames ? 'active' : ''}`} onClick={() => toggleSetting('recruiterNames')}></div>
           </div>
         </div>
       </div>
 
-      <div className="w-full min-w-0 bg-white rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-[#D3D3D3] p-4 sm:p-6 md:p-8 mb-3 sm:mb-6">
-        <h3 className="text-xl font-bold text-[#000080] mb-6">Do-Not-Contact List</h3>
+      <div className="bg-white rounded-none sm:rounded-lg md:rounded-2xl shadow-xl border border-slate-100 p-8">
+        <h3 className="text-xl font-bold text-navy-900 mb-6">Do-Not-Contact List</h3>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-semibold text-[#000080] mb-2">Add email or domain</label>
+            <label className="block text-sm font-medium text-navy-900 mb-2">Add email or domain</label>
             <div className="flex space-x-2">
-              <input type="text" placeholder="email@domain.com" className="flex-1 px-4 py-3 border border-[#D3D3D3] rounded-xl input-focus" />
-              <button onClick={() => toast('Added to list')} className="btn-primary px-6 py-3 rounded-xl font-semibold">Add</button>
+              <input type="text" placeholder="email@domain.com" className="flex-1 px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-sky-200 focus:border-sky-400 text-navy-900 placeholder-slate-400" />
+              <button onClick={() => toast('Added to list')} className="px-8 py-4 bg-navy-800 text-white rounded-lg font-semibold text-lg shadow-md hover:bg-navy-700 transition-colors px-6 py-3 rounded-lg font-semibold">Add</button>
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
             <div className="flex items-center space-x-2 bg-[#ADD8E6]/20 px-3 py-2 rounded-full">
-              <span className="text-sm text-[#000080]">competitor@company.com</span>
+              <span className="text-sm text-navy-900">competitor@company.com</span>
               <button className="text-red-500 hover:text-red-600">
                 <i className="fa-solid fa-times text-xs"></i>
               </button>
             </div>
             <div className="flex items-center space-x-2 bg-[#ADD8E6]/20 px-3 py-2 rounded-full">
-              <span className="text-sm text-[#000080]">@blockedcompany.com</span>
+              <span className="text-sm text-navy-900">@blockedcompany.com</span>
               <button className="text-red-500 hover:text-red-600">
                 <i className="fa-solid fa-times text-xs"></i>
               </button>
@@ -712,20 +623,20 @@ function PrivacySection({ toast }: { toast: (msg: string) => void }) {
         </div>
       </div>
 
-      <div className="w-full min-w-0 bg-white rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-[#D3D3D3] p-4 sm:p-6 md:p-8 mb-3 sm:mb-6">
-        <h3 className="text-xl font-bold text-[#000080] mb-6">Compliance</h3>
+      <div className="bg-white rounded-none sm:rounded-lg md:rounded-2xl shadow-xl border border-slate-100 p-8">
+        <h3 className="text-xl font-bold text-navy-900 mb-6">Compliance</h3>
         <div className="space-y-3">
-          <a href="#" className="flex items-center justify-between p-3 border border-[#D3D3D3] rounded-xl hover:bg-gray-50">
-            <span className="text-[#000080] font-medium">Privacy Policy</span>
-            <i className="fa-solid fa-external-link text-[#ADD8E6]"></i>
+          <a href="#" className="flex items-center justify-between p-3 border border-slate-200 rounded-lg hover:bg-slate-50">
+            <span className="text-navy-900 font-medium">Privacy Policy</span>
+            <i className="fa-solid fa-external-link text-sky-500"></i>
           </a>
-          <a href="#" className="flex items-center justify-between p-3 border border-[#D3D3D3] rounded-xl hover:bg-gray-50">
-            <span className="text-[#000080] font-medium">Data Processing Agreement</span>
-            <i className="fa-solid fa-external-link text-[#ADD8E6]"></i>
+          <a href="#" className="flex items-center justify-between p-3 border border-slate-200 rounded-lg hover:bg-slate-50">
+            <span className="text-navy-900 font-medium">Data Processing Agreement</span>
+            <i className="fa-solid fa-external-link text-sky-500"></i>
           </a>
-          <a href="#" className="flex items-center justify-between p-3 border border-[#D3D3D3] rounded-xl hover:bg-gray-50">
-            <span className="text-[#000080] font-medium">Subprocessors</span>
-            <i className="fa-solid fa-external-link text-[#ADD8E6]"></i>
+          <a href="#" className="flex items-center justify-between p-3 border border-slate-200 rounded-lg hover:bg-slate-50">
+            <span className="text-navy-900 font-medium">Subprocessors</span>
+            <i className="fa-solid fa-external-link text-sky-500"></i>
           </a>
         </div>
       </div>
@@ -840,25 +751,25 @@ function NotificationsSection({ toast, profile }: { toast: (msg: string) => void
   };
 
   return (
-    <section className="space-y-6 fade-in">
-      <div className="w-full min-w-0 bg-white rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-[#D3D3D3] p-4 sm:p-6 md:p-8 mb-3 sm:mb-6">
-        <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-[#000080] mb-4 sm:mb-5 md:mb-6 flex items-center">
-          <i className="fa-solid fa-bell text-[#ADD8E6] mr-3"></i>
+    <section className="space-y-6 ">
+      <div className="bg-white rounded-none sm:rounded-lg md:rounded-2xl shadow-xl border border-slate-100 p-8">
+        <h2 className="text-xl font-bold text-navy-900 mb-6 flex items-center">
+          <i className="fa-solid fa-bell text-sky-500 mr-3"></i>
           Notification Preferences
         </h2>
         {isLoading ? (
-          <div className="text-center py-8 text-gray-600">Loading preferences...</div>
+          <div className="text-center py-8 text-slate-600">Loading preferences...</div>
         ) : (
           <div className={`grid grid-cols-1 ${profile.role === 'EMPLOYER' || profile.role === 'RECRUITER' ? 'lg:grid-cols-2' : ''} gap-8`}>
             <div>
-              <h3 className="text-lg font-bold text-[#000080] mb-4">Email Notifications</h3>
+              <h3 className="text-lg font-bold text-navy-900 mb-4">Email Notifications</h3>
               <div className="space-y-4">
                 {notifications.map((notif, i) => (
                   <div key={i} className="flex items-center justify-between">
                     <div className="flex-1 mr-4">
-                      <div className="text-[#000080] font-medium">{notif.label}</div>
+                      <div className="text-navy-900 font-medium">{notif.label}</div>
                       {notif.description && (
-                        <div className="text-sm text-gray-600 mt-1">{notif.description}</div>
+                        <div className="text-sm text-slate-600 mt-1">{notif.description}</div>
                       )}
                     </div>
                     <div 
@@ -880,12 +791,12 @@ function NotificationsSection({ toast, profile }: { toast: (msg: string) => void
             {/* Only show In-App Notifications for employers */}
             {(profile.role === 'EMPLOYER' || profile.role === 'RECRUITER') && (
               <div>
-                <h3 className="text-lg font-bold text-[#000080] mb-4">In-App Notifications</h3>
+                <h3 className="text-lg font-bold text-navy-900 mb-4">In-App Notifications</h3>
                 <div className="space-y-4">
                   {notifications.map((notif, i) => (
                     <div key={i} className="flex items-center justify-between">
                       <div className="flex-1 mr-4">
-                        <div className="text-[#000080] font-medium">{notif.label}</div>
+                        <div className="text-navy-900 font-medium">{notif.label}</div>
                       </div>
                       <div 
                         className={`toggle-switch ${inAppNotifs[i] ? 'active' : ''} ${i === 3 ? 'opacity-50 cursor-not-allowed' : ''}`}
@@ -918,7 +829,7 @@ function InformationSection({ profile }: { profile: any }) {
   // Show candidate-specific information for job seekers
   if (profile.role === 'JOB_SEEKER') {
     return (
-      <section className="space-y-14 fade-in">
+      <section className="space-y-14 ">
       {/* Hero Banner */}
       <div className="bg-gradient-to-r from-[#000080] via-blue-800 to-purple-700 text-white p-10 rounded-3xl shadow-lg">
         <div className="max-w-4xl">
@@ -932,17 +843,17 @@ function InformationSection({ profile }: { profile: any }) {
       {/* Step Cards */}
       <div className="space-y-6">
         {/* Step 1 - Build Your Complete Profile */}
-        <div className="bg-white/90 backdrop-blur-sm p-8 rounded-2xl shadow-sm border-l-4 border-[#ADD8E6] hover:shadow-lg transition-all duration-200">
+        <div className="bg-white/90 backdrop-blur-sm p-8 rounded-2xl shadow-xl border border-slate-100-l-4 border-[#ADD8E6] hover:shadow-lg transition-all duration-200">
           <div className="flex items-start space-x-6">
             <div className="w-12 h-12 bg-[#ADD8E6] text-white rounded-full flex items-center justify-center font-bold text-lg flex-shrink-0">1</div>
             <div className="flex-1">
-              <h3 className="text-xl font-bold text-[#000080] mb-3">Build Your Complete Profile</h3>
+              <h3 className="text-xl font-bold text-navy-900 mb-3">Build Your Complete Profile</h3>
               <p className="text-gray-700 leading-relaxed mb-4">
                 Create a comprehensive professional profile that showcases your skills, education, experience, and personality. Upload your resume, add a brief video introduction, and highlight your achievements to stand out to potential employers.
               </p>
               <div className="p-4 bg-[#ADD8E6]/20 rounded-lg border border-[#ADD8E6]/30">
-                <p className="text-sm font-semibold text-[#000080] flex items-center space-x-2">
-                  <i className="fa-solid fa-star text-[#ADD8E6]"></i>
+                <p className="text-sm font-medium text-navy-900 flex items-center space-x-2">
+                  <i className="fa-solid fa-star text-sky-500"></i>
                   <span>Pro tip: Complete profiles get 3x more employer views and messages</span>
                 </p>
               </div>
@@ -951,11 +862,11 @@ function InformationSection({ profile }: { profile: any }) {
         </div>
 
         {/* Step 2 - Get Discovered by Employers */}
-        <div className="bg-white/90 backdrop-blur-sm p-8 rounded-2xl shadow-sm border-l-4 border-green-500 hover:shadow-lg transition-all duration-200">
+        <div className="bg-white/90 backdrop-blur-sm p-8 rounded-2xl shadow-xl border border-slate-100-l-4 border-green-500 hover:shadow-lg transition-all duration-200">
           <div className="flex items-start space-x-6">
             <div className="w-12 h-12 bg-green-500 text-white rounded-full flex items-center justify-center font-bold text-lg flex-shrink-0">2</div>
             <div className="flex-1">
-              <h3 className="text-xl font-bold text-[#000080] mb-3">Get Discovered by Employers</h3>
+              <h3 className="text-xl font-bold text-navy-900 mb-3">Get Discovered by Employers</h3>
               <p className="text-gray-700 leading-relaxed mb-4">
                 Once your profile is live, employers can find you through our advanced search and matching system. They'll browse verified candidate profiles and reach out directly to candidates who match their requirements—no more endless job applications.
               </p>
@@ -978,11 +889,11 @@ function InformationSection({ profile }: { profile: any }) {
         </div>
 
         {/* Step 3 - Connect & Interview */}
-        <div className="bg-white/90 backdrop-blur-sm p-8 rounded-2xl shadow-sm border-l-4 border-purple-500 hover:shadow-lg transition-all duration-200">
+        <div className="bg-white/90 backdrop-blur-sm p-8 rounded-2xl shadow-xl border border-slate-100-l-4 border-purple-500 hover:shadow-lg transition-all duration-200">
           <div className="flex items-start space-x-6">
             <div className="w-12 h-12 bg-purple-500 text-white rounded-full flex items-center justify-center font-bold text-lg flex-shrink-0">3</div>
             <div className="flex-1">
-              <h3 className="text-xl font-bold text-[#000080] mb-3">Connect & Interview</h3>
+              <h3 className="text-xl font-bold text-navy-900 mb-3">Connect & Interview</h3>
               <p className="text-gray-700 leading-relaxed mb-4">
                 Communicate directly with employers through our secure messaging platform. Track your conversations, schedule interviews, and manage your hiring pipeline all in one place. Our transparent process keeps you informed at every step.
               </p>
@@ -1006,13 +917,13 @@ function InformationSection({ profile }: { profile: any }) {
       </div>
 
       {/* Trust & Safety Section */}
-      <div className="bg-white/90 backdrop-blur-sm p-8 rounded-2xl shadow-sm border-l-4 border-yellow-400" style={{background: 'linear-gradient(135deg, #FEF3C7 0%, #FEF9E7 100%)'}}>
+      <div className="bg-white/90 backdrop-blur-sm p-8 rounded-2xl shadow-xl border border-slate-100-l-4 border-yellow-400" style={{background: 'linear-gradient(135deg, #FEF3C7 0%, #FEF9E7 100%)'}}>
         <div className="flex items-start space-x-4">
-          <div className="w-12 h-12 bg-yellow-400/30 rounded-xl flex items-center justify-center flex-shrink-0">
+          <div className="w-12 h-12 bg-yellow-400/30 rounded-lg flex items-center justify-center flex-shrink-0">
             <i className="fa-solid fa-shield-check text-yellow-600 text-xl"></i>
           </div>
           <div className="flex-1">
-            <h3 className="text-xl font-bold text-[#000080] mb-4">Trust & Safety (your time matters)</h3>
+            <h3 className="text-xl font-bold text-navy-900 mb-4">Trust & Safety (your time matters)</h3>
             <div className="space-y-4">
               <div className="flex items-start space-x-3">
                 <i className="fa-solid fa-check text-yellow-600 text-sm mt-1"></i>
@@ -1032,27 +943,27 @@ function InformationSection({ profile }: { profile: any }) {
       </div>
 
       {/* Want More Invites Section */}
-      <div className="bg-white/90 backdrop-blur-sm p-8 rounded-2xl shadow-sm border border-[#D3D3D3]" style={{background: 'linear-gradient(135deg, #E0F2FE 0%, #F0F9FF 100%)'}}>
+      <div className="bg-white/90 backdrop-blur-sm p-8 rounded-2xl shadow-xl border border-slate-100 border-slate-200" style={{background: 'linear-gradient(135deg, #E0F2FE 0%, #F0F9FF 100%)'}}>
         <div className="flex items-center space-x-3 mb-6">
-          <div className="w-10 h-10 bg-[#ADD8E6]/30 rounded-xl flex items-center justify-center">
-            <i className="fa-solid fa-arrow-trend-up text-[#000080] text-lg"></i>
+          <div className="w-10 h-10 bg-[#ADD8E6]/30 rounded-lg flex items-center justify-center">
+            <i className="fa-solid fa-arrow-trend-up text-navy-900 text-lg"></i>
           </div>
-          <h3 className="text-xl font-bold text-[#000080]">Want more invites?</h3>
+          <h3 className="text-xl font-bold text-navy-900">Want more invites?</h3>
         </div>
         
         <div className="space-y-3">
-          <div className="flex items-center space-x-4 p-4 bg-white/60 rounded-xl border border-[#ADD8E6]/20 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer">
-            <i className="fa-solid fa-check text-[#ADD8E6]"></i>
+          <div className="flex items-center space-x-4 p-4 bg-white/60 rounded-lg border border-[#ADD8E6]/20 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer">
+            <i className="fa-solid fa-check text-sky-500"></i>
             <span className="text-gray-700 font-medium">Finish everything in your profile (yes, everything)</span>
           </div>
           
-          <div className="flex items-center space-x-4 p-4 bg-white/60 rounded-xl border border-[#ADD8E6]/20 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer">
-            <i className="fa-solid fa-video text-[#ADD8E6]"></i>
+          <div className="flex items-center space-x-4 p-4 bg-white/60 rounded-lg border border-[#ADD8E6]/20 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer">
+            <i className="fa-solid fa-video text-sky-500"></i>
             <span className="text-gray-700 font-medium">Add the video (0–30 seconds, friendly and clear)</span>
           </div>
           
-          <div className="flex items-center space-x-4 p-4 bg-white/60 rounded-xl border border-[#ADD8E6]/20 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer">
-            <i className="fa-solid fa-arrow-up text-[#ADD8E6]"></i>
+          <div className="flex items-center space-x-4 p-4 bg-white/60 rounded-lg border border-[#ADD8E6]/20 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer">
+            <i className="fa-solid fa-arrow-up text-sky-500"></i>
             <span className="text-gray-700 font-medium">Keep it fresh with new skills, projects, and wins</span>
           </div>
         </div>
@@ -1066,7 +977,7 @@ function InformationSection({ profile }: { profile: any }) {
         </p>
         <button 
           onClick={() => router.push('/account/profile')}
-          className="bg-white text-[#000080] px-8 py-4 rounded-full font-bold text-lg shadow-lg hover:scale-105 hover:shadow-xl transition-all duration-200 inline-flex items-center space-x-3"
+          className="bg-white text-navy-900 px-8 py-4 rounded-full font-bold text-lg shadow-lg hover:scale-105 hover:shadow-xl transition-all duration-200 inline-flex items-center space-x-3"
         >
           <span>Complete Your Profile</span>
           <i className="fa-solid fa-arrow-right"></i>
@@ -1078,7 +989,7 @@ function InformationSection({ profile }: { profile: any }) {
 
   // Show employer-specific information for employers and recruiters
   return (
-    <section className="space-y-14 fade-in">
+    <section className="space-y-14 ">
       {/* Welcome Hero */}
       <div className="bg-gradient-to-r from-[#000080] to-[#ADD8E6] text-white p-10 rounded-3xl shadow-lg">
         <div className="flex items-center space-x-6">
@@ -1099,8 +1010,8 @@ function InformationSection({ profile }: { profile: any }) {
       </div>
 
       {/* Placeholder for employer information */}
-      <div className="bg-white p-10 rounded-2xl shadow-sm border border-[#D3D3D3]">
-        <h2 className="text-2xl font-bold text-[#000080] mb-4">Employer Information</h2>
+      <div className="bg-white p-10 rounded-2xl shadow-xl border border-slate-100 border-slate-200">
+        <h2 className="text-2xl font-bold text-navy-900 mb-4">Employer Information</h2>
         <p className="text-gray-700">
           Detailed employer information and guidelines will be available here soon.
         </p>
@@ -1112,13 +1023,13 @@ function InformationSection({ profile }: { profile: any }) {
 // Billing Section Component (Employer Only)
 function BillingSection() {
   return (
-    <section className="space-y-6 fade-in">
-      <div className="w-full min-w-0 bg-white rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-[#D3D3D3] p-4 sm:p-6 md:p-8 mb-3 sm:mb-6">
-        <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-[#000080] mb-4 sm:mb-5 md:mb-6 flex items-center">
-          <i className="fa-solid fa-credit-card text-[#ADD8E6] mr-3"></i>
+    <section className="space-y-6 ">
+      <div className="bg-white rounded-none sm:rounded-lg md:rounded-2xl shadow-xl border border-slate-100 p-8">
+        <h2 className="text-xl font-bold text-navy-900 mb-6 flex items-center">
+          <i className="fa-solid fa-credit-card text-sky-500 mr-3"></i>
           Billing & Subscription
         </h2>
-        <div className="p-6 bg-gradient-to-r from-[#000080] to-[#ADD8E6] text-white rounded-xl mb-6">
+        <div className="p-6 bg-gradient-to-r from-[#000080] to-[#ADD8E6] text-white rounded-lg mb-6">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-xl font-bold mb-2">Professional Plan</h3>
@@ -1126,7 +1037,7 @@ function BillingSection() {
               <p className="text-2xl font-bold mt-2">$199/month</p>
             </div>
             <div className="text-right">
-              <button className="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-xl font-semibold transition-colors">
+              <button className="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg font-semibold transition-colors">
                 Manage Plan
               </button>
             </div>
@@ -1134,53 +1045,53 @@ function BillingSection() {
         </div>
       </div>
 
-      <div className="w-full min-w-0 bg-white rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-[#D3D3D3] p-4 sm:p-6 md:p-8 mb-3 sm:mb-6">
-        <h3 className="text-xl font-bold text-[#000080] mb-6">Payment Method</h3>
-        <div className="flex items-center justify-between p-4 border border-[#D3D3D3] rounded-xl">
+      <div className="bg-white rounded-none sm:rounded-lg md:rounded-2xl shadow-xl border border-slate-100 p-8">
+        <h3 className="text-xl font-bold text-navy-900 mb-6">Payment Method</h3>
+        <div className="flex items-center justify-between p-4 border border-slate-200 rounded-lg">
           <div className="flex items-center space-x-4">
             <i className="fa-brands fa-cc-visa text-2xl text-blue-600"></i>
             <div>
-              <p className="font-semibold text-[#000080]">•••• •••• •••• 4242</p>
-              <p className="text-sm text-gray-600">Expires 12/26</p>
+              <p className="font-semibold text-navy-900">•••• •••• •••• 4242</p>
+              <p className="text-sm text-slate-600">Expires 12/26</p>
             </div>
           </div>
-          <button className="btn-secondary px-4 py-2 rounded-xl font-semibold">Update Card</button>
+          <button className="px-6 py-3 bg-white border border-slate-200 text-navy-900 rounded-lg font-semibold shadow-sm hover:bg-slate-50 transition-colors px-4 py-2 rounded-lg font-semibold">Update Card</button>
         </div>
       </div>
 
-      <div className="w-full min-w-0 bg-white rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-[#D3D3D3] p-4 sm:p-6 md:p-8 mb-3 sm:mb-6">
-        <h3 className="text-xl font-bold text-[#000080] mb-6">Invoice History</h3>
+      <div className="bg-white rounded-none sm:rounded-lg md:rounded-2xl shadow-xl border border-slate-100 p-8">
+        <h3 className="text-xl font-bold text-navy-900 mb-6">Invoice History</h3>
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-[#D3D3D3]">
-                <th className="text-left py-3 font-semibold text-[#000080]">Date</th>
-                <th className="text-left py-3 font-semibold text-[#000080]">Amount</th>
-                <th className="text-left py-3 font-semibold text-[#000080]">Status</th>
-                <th className="text-left py-3 font-semibold text-[#000080]">Download</th>
+              <tr className="border-b border-slate-200">
+                <th className="text-left py-3 font-semibold text-navy-900">Date</th>
+                <th className="text-left py-3 font-semibold text-navy-900">Amount</th>
+                <th className="text-left py-3 font-semibold text-navy-900">Status</th>
+                <th className="text-left py-3 font-semibold text-navy-900">Download</th>
               </tr>
             </thead>
             <tbody>
-              <tr className="border-b border-[#D3D3D3]">
+              <tr className="border-b border-slate-200">
                 <td className="py-3">Feb 15, 2024</td>
                 <td className="py-3 font-semibold">$199.00</td>
                 <td className="py-3">
                   <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">Paid</span>
                 </td>
                 <td className="py-3">
-                  <button className="text-[#ADD8E6] hover:text-[#000080]">
+                  <button className="text-sky-500 hover:text-navy-900">
                     <i className="fa-solid fa-download"></i>
                   </button>
                 </td>
               </tr>
-              <tr className="border-b border-[#D3D3D3]">
+              <tr className="border-b border-slate-200">
                 <td className="py-3">Jan 15, 2024</td>
                 <td className="py-3 font-semibold">$199.00</td>
                 <td className="py-3">
                   <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">Paid</span>
                 </td>
                 <td className="py-3">
-                  <button className="text-[#ADD8E6] hover:text-[#000080]">
+                  <button className="text-sky-500 hover:text-navy-900">
                     <i className="fa-solid fa-download"></i>
                   </button>
                 </td>
@@ -1196,59 +1107,59 @@ function BillingSection() {
 // Team Section Component (Employer Only)
 function TeamSection({ toast }: { toast: (msg: string) => void }) {
   return (
-    <section className="space-y-6 fade-in">
-      <div className="w-full min-w-0 bg-white rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-[#D3D3D3] p-4 sm:p-6 md:p-8 mb-3 sm:mb-6">
-        <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-[#000080] mb-4 sm:mb-5 md:mb-6 flex items-center">
-          <i className="fa-solid fa-users text-[#ADD8E6] mr-3"></i>
+    <section className="space-y-6 ">
+      <div className="bg-white rounded-none sm:rounded-lg md:rounded-2xl shadow-xl border border-slate-100 p-8">
+        <h2 className="text-xl font-bold text-navy-900 mb-6 flex items-center">
+          <i className="fa-solid fa-users text-sky-500 mr-3"></i>
           Team Members & Recruiters
         </h2>
         <div className="mb-6">
           <div className="flex space-x-2">
-            <input type="email" placeholder="Enter email address" className="flex-1 px-4 py-3 border border-[#D3D3D3] rounded-xl input-focus" />
-            <select className="px-4 py-3 border border-[#D3D3D3] rounded-xl input-focus">
+            <input type="email" placeholder="Enter email address" className="flex-1 px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-sky-200 focus:border-sky-400 text-navy-900 placeholder-slate-400" />
+            <select className="px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-sky-200 focus:border-sky-400 text-navy-900 placeholder-slate-400">
               <option>Admin</option>
               <option>Recruiter</option>
             </select>
-            <button onClick={() => toast('Invite sent')} className="btn-primary px-6 py-3 rounded-xl font-semibold">Send Invite</button>
+            <button onClick={() => toast('Invite sent')} className="px-8 py-4 bg-navy-800 text-white rounded-lg font-semibold text-lg shadow-md hover:bg-navy-700 transition-colors px-6 py-3 rounded-lg font-semibold">Send Invite</button>
           </div>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-[#D3D3D3]">
-                <th className="text-left py-3 font-semibold text-[#000080]">Name</th>
-                <th className="text-left py-3 font-semibold text-[#000080]">Email</th>
-                <th className="text-left py-3 font-semibold text-[#000080]">Role</th>
-                <th className="text-left py-3 font-semibold text-[#000080]">Status</th>
-                <th className="text-left py-3 font-semibold text-[#000080]">Last Active</th>
-                <th className="text-left py-3 font-semibold text-[#000080]">Actions</th>
+              <tr className="border-b border-slate-200">
+                <th className="text-left py-3 font-semibold text-navy-900">Name</th>
+                <th className="text-left py-3 font-semibold text-navy-900">Email</th>
+                <th className="text-left py-3 font-semibold text-navy-900">Role</th>
+                <th className="text-left py-3 font-semibold text-navy-900">Status</th>
+                <th className="text-left py-3 font-semibold text-navy-900">Last Active</th>
+                <th className="text-left py-3 font-semibold text-navy-900">Actions</th>
               </tr>
             </thead>
             <tbody>
-              <tr className="border-b border-[#D3D3D3]">
-                <td className="py-3 font-semibold text-[#000080]">John Smith</td>
+              <tr className="border-b border-slate-200">
+                <td className="py-3 font-semibold text-navy-900">John Smith</td>
                 <td className="py-3">john.smith@company.com</td>
                 <td className="py-3">
-                  <span className="px-3 py-1 bg-[#000080]/10 text-[#000080] rounded-full text-xs font-semibold">Owner</span>
+                  <span className="px-3 py-1 bg-[#000080]/10 text-navy-900 rounded-full text-xs font-semibold">Owner</span>
                 </td>
                 <td className="py-3">
                   <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">Active</span>
                 </td>
-                <td className="py-3 text-gray-600">Now</td>
+                <td className="py-3 text-slate-600">Now</td>
                 <td className="py-3">-</td>
               </tr>
-              <tr className="border-b border-[#D3D3D3]">
-                <td className="py-3 font-semibold text-[#000080]">Sarah Wilson</td>
+              <tr className="border-b border-slate-200">
+                <td className="py-3 font-semibold text-navy-900">Sarah Wilson</td>
                 <td className="py-3">sarah.wilson@company.com</td>
                 <td className="py-3">
-                  <span className="px-3 py-1 bg-[#ADD8E6]/20 text-[#000080] rounded-full text-xs font-semibold">Admin</span>
+                  <span className="px-3 py-1 bg-[#ADD8E6]/20 text-navy-900 rounded-full text-xs font-semibold">Admin</span>
                 </td>
                 <td className="py-3">
                   <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">Active</span>
                 </td>
-                <td className="py-3 text-gray-600">2 hours ago</td>
+                <td className="py-3 text-slate-600">2 hours ago</td>
                 <td className="py-3">
-                  <button className="text-[#ADD8E6] hover:text-[#000080] mr-2">Edit</button>
+                  <button className="text-sky-500 hover:text-navy-900 mr-2">Edit</button>
                   <button onClick={() => toast('Member removed')} className="text-red-500 hover:text-red-600">Remove</button>
                 </td>
               </tr>
@@ -1257,20 +1168,20 @@ function TeamSection({ toast }: { toast: (msg: string) => void }) {
         </div>
       </div>
 
-      <div className="w-full min-w-0 bg-white rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-[#D3D3D3] p-4 sm:p-6 md:p-8 mb-3 sm:mb-6">
-        <h3 className="text-xl font-bold text-[#000080] mb-6">Role Descriptions</h3>
+      <div className="bg-white rounded-none sm:rounded-lg md:rounded-2xl shadow-xl border border-slate-100 p-8">
+        <h3 className="text-xl font-bold text-navy-900 mb-6">Role Descriptions</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="p-4 border border-[#D3D3D3] rounded-xl">
-            <h4 className="font-semibold text-[#000080] mb-2">Owner</h4>
-            <p className="text-sm text-gray-600">Full access to all features and billing</p>
+          <div className="p-4 border border-slate-200 rounded-lg">
+            <h4 className="font-semibold text-navy-900 mb-2">Owner</h4>
+            <p className="text-sm text-slate-600">Full access to all features and billing</p>
           </div>
-          <div className="p-4 border border-[#D3D3D3] rounded-xl">
-            <h4 className="font-semibold text-[#000080] mb-2">Admin</h4>
-            <p className="text-sm text-gray-600">Manage team members and company settings</p>
+          <div className="p-4 border border-slate-200 rounded-lg">
+            <h4 className="font-semibold text-navy-900 mb-2">Admin</h4>
+            <p className="text-sm text-slate-600">Manage team members and company settings</p>
           </div>
-          <div className="p-4 border border-[#D3D3D3] rounded-xl">
-            <h4 className="font-semibold text-[#000080] mb-2">Recruiter</h4>
-            <p className="text-sm text-gray-600">Search candidates and manage hiring</p>
+          <div className="p-4 border border-slate-200 rounded-lg">
+            <h4 className="font-semibold text-navy-900 mb-2">Recruiter</h4>
+            <p className="text-sm text-slate-600">Search candidates and manage hiring</p>
           </div>
         </div>
       </div>
@@ -1281,24 +1192,24 @@ function TeamSection({ toast }: { toast: (msg: string) => void }) {
 // Company Section Component (Employer Only)
 function CompanySection({ toast }: { toast: (msg: string) => void }) {
   return (
-    <section className="space-y-6 fade-in">
-      <div className="w-full min-w-0 bg-white rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-[#D3D3D3] p-4 sm:p-6 md:p-8 mb-3 sm:mb-6">
-        <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-[#000080] mb-4 sm:mb-5 md:mb-6 flex items-center">
-          <i className="fa-solid fa-building text-[#ADD8E6] mr-3"></i>
+    <section className="space-y-6 ">
+      <div className="bg-white rounded-none sm:rounded-lg md:rounded-2xl shadow-xl border border-slate-100 p-8">
+        <h2 className="text-xl font-bold text-navy-900 mb-6 flex items-center">
+          <i className="fa-solid fa-building text-sky-500 mr-3"></i>
           Company Profile
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label className="block text-sm font-semibold text-[#000080] mb-2">Company Name</label>
-            <input type="text" defaultValue="TechCorp Inc." className="w-full px-4 py-3 border border-[#D3D3D3] rounded-xl input-focus" />
+            <label className="block text-sm font-medium text-navy-900 mb-2">Company Name</label>
+            <input type="text" defaultValue="TechCorp Inc." className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-sky-200 focus:border-sky-400 text-navy-900 placeholder-slate-400" />
           </div>
           <div>
-            <label className="block text-sm font-semibold text-[#000080] mb-2">Website</label>
-            <input type="url" defaultValue="https://techcorp.com" className="w-full px-4 py-3 border border-[#D3D3D3] rounded-xl input-focus" />
+            <label className="block text-sm font-medium text-navy-900 mb-2">Website</label>
+            <input type="url" defaultValue="https://techcorp.com" className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-sky-200 focus:border-sky-400 text-navy-900 placeholder-slate-400" />
           </div>
           <div>
-            <label className="block text-sm font-semibold text-[#000080] mb-2">Industry</label>
-            <select className="w-full px-4 py-3 border border-[#D3D3D3] rounded-xl input-focus">
+            <label className="block text-sm font-medium text-navy-900 mb-2">Industry</label>
+            <select className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-sky-200 focus:border-sky-400 text-navy-900 placeholder-slate-400">
               <option>Technology</option>
               <option>Finance</option>
               <option>Healthcare</option>
@@ -1306,8 +1217,8 @@ function CompanySection({ toast }: { toast: (msg: string) => void }) {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-semibold text-[#000080] mb-2">Company Size</label>
-            <select className="w-full px-4 py-3 border border-[#D3D3D3] rounded-xl input-focus">
+            <label className="block text-sm font-medium text-navy-900 mb-2">Company Size</label>
+            <select className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-sky-200 focus:border-sky-400 text-navy-900 placeholder-slate-400">
               <option>1-10 employees</option>
               <option>11-50 employees</option>
               <option>51-200 employees</option>
@@ -1316,30 +1227,30 @@ function CompanySection({ toast }: { toast: (msg: string) => void }) {
             </select>
           </div>
           <div className="md:col-span-2">
-            <label className="block text-sm font-semibold text-[#000080] mb-2">Headquarters Location</label>
-            <input type="text" defaultValue="New York, NY" className="w-full px-4 py-3 border border-[#D3D3D3] rounded-xl input-focus" />
+            <label className="block text-sm font-medium text-navy-900 mb-2">Headquarters Location</label>
+            <input type="text" defaultValue="New York, NY" className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-sky-200 focus:border-sky-400 text-navy-900 placeholder-slate-400" />
           </div>
         </div>
         <div className="mt-6 space-y-4">
           <div>
-            <label className="block text-sm font-semibold text-[#000080] mb-2">Company Logo</label>
+            <label className="block text-sm font-medium text-navy-900 mb-2">Company Logo</label>
             <div className="flex items-center space-x-4">
-              <div className="w-16 h-16 bg-[#ADD8E6]/20 rounded-xl flex items-center justify-center">
-                <i className="fa-solid fa-building text-[#000080] text-xl"></i>
+              <div className="w-16 h-16 bg-[#ADD8E6]/20 rounded-lg flex items-center justify-center">
+                <i className="fa-solid fa-building text-navy-900 text-xl"></i>
               </div>
-              <button className="btn-secondary px-4 py-2 rounded-xl font-semibold">Upload Logo</button>
+              <button className="px-6 py-3 bg-white border border-slate-200 text-navy-900 rounded-lg font-semibold shadow-sm hover:bg-slate-50 transition-colors px-4 py-2 rounded-lg font-semibold">Upload Logo</button>
             </div>
           </div>
           <div>
-            <label className="block text-sm font-semibold text-[#000080] mb-2">Company Banner</label>
-            <div className="w-full h-32 bg-[#ADD8E6]/20 rounded-xl flex items-center justify-center border-2 border-dashed border-[#ADD8E6]">
-              <button className="btn-secondary px-4 py-2 rounded-xl font-semibold">Upload Banner</button>
+            <label className="block text-sm font-medium text-navy-900 mb-2">Company Banner</label>
+            <div className="w-full h-32 bg-[#ADD8E6]/20 rounded-lg flex items-center justify-center border-2 border-dashed border-[#ADD8E6]">
+              <button className="px-6 py-3 bg-white border border-slate-200 text-navy-900 rounded-lg font-semibold shadow-sm hover:bg-slate-50 transition-colors px-4 py-2 rounded-lg font-semibold">Upload Banner</button>
             </div>
           </div>
         </div>
         <div className="mt-6 flex justify-between items-center">
-          <button className="btn-secondary px-6 py-3 rounded-xl font-semibold">Open Full Editor</button>
-          <button onClick={() => toast('Changes saved')} className="btn-primary px-8 py-3 rounded-xl font-semibold">Save Changes</button>
+          <button className="px-6 py-3 bg-white border border-slate-200 text-navy-900 rounded-lg font-semibold shadow-sm hover:bg-slate-50 transition-colors">Open Full Editor</button>
+          <button onClick={() => toast('Changes saved')} className="px-8 py-4 bg-navy-800 text-white rounded-lg font-semibold text-lg shadow-md hover:bg-navy-700 transition-colors">Save Changes</button>
         </div>
       </div>
     </section>
@@ -1349,82 +1260,82 @@ function CompanySection({ toast }: { toast: (msg: string) => void }) {
 // Integrations Section Component (Employer Only)
 function IntegrationsSection({ toast }: { toast: (msg: string) => void }) {
   return (
-    <section className="space-y-6 fade-in">
-      <div className="w-full min-w-0 bg-white rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-[#D3D3D3] p-4 sm:p-6 md:p-8 mb-3 sm:mb-6">
-        <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-[#000080] mb-4 sm:mb-5 md:mb-6 flex items-center">
-          <i className="fa-solid fa-plug text-[#ADD8E6] mr-3"></i>
+    <section className="space-y-6 ">
+      <div className="bg-white rounded-none sm:rounded-lg md:rounded-2xl shadow-xl border border-slate-100 p-8">
+        <h2 className="text-xl font-bold text-navy-900 mb-6 flex items-center">
+          <i className="fa-solid fa-plug text-sky-500 mr-3"></i>
           Integrations & Connections
         </h2>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="p-6 border border-[#D3D3D3] rounded-xl card-hover">
+          <div className="p-6 border border-slate-200 rounded-lg card-hover">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center">
+                <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
                   <i className="fa-solid fa-seedling text-green-600"></i>
                 </div>
                 <div>
-                  <h3 className="font-bold text-[#000080]">Greenhouse</h3>
-                  <p className="text-sm text-gray-600">ATS Integration</p>
+                  <h3 className="font-bold text-navy-900">Greenhouse</h3>
+                  <p className="text-sm text-slate-600">ATS Integration</p>
                 </div>
               </div>
               <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">Connected</span>
             </div>
             <div className="space-y-2">
-              <input type="text" placeholder="API Key" className="w-full px-3 py-2 border border-[#D3D3D3] rounded-lg text-sm input-focus" />
-              <button onClick={() => toast('Disconnected')} className="btn-secondary w-full py-2 rounded-lg font-semibold text-sm">Disconnect</button>
+              <input type="text" placeholder="API Key" className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-sky-200 focus:border-sky-400 text-navy-900 placeholder-slate-400" />
+              <button onClick={() => toast('Disconnected')} className="px-6 py-3 bg-white border border-slate-200 text-navy-900 rounded-lg font-semibold shadow-sm hover:bg-slate-50 transition-colors w-full py-2 rounded-lg font-semibold text-sm">Disconnect</button>
             </div>
           </div>
 
-          <div className="p-6 border border-[#D3D3D3] rounded-xl card-hover">
+          <div className="p-6 border border-slate-200 rounded-lg card-hover">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
+                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
                   <i className="fa-solid fa-calendar text-blue-600"></i>
                 </div>
                 <div>
-                  <h3 className="font-bold text-[#000080]">Google Calendar</h3>
-                  <p className="text-sm text-gray-600">Interview Scheduling</p>
+                  <h3 className="font-bold text-navy-900">Google Calendar</h3>
+                  <p className="text-sm text-slate-600">Interview Scheduling</p>
                 </div>
               </div>
               <span className="px-3 py-1 bg-red-100 text-red-800 rounded-full text-xs font-semibold">Disconnected</span>
             </div>
-            <button onClick={() => toast('Connected')} className="btn-primary w-full py-2 rounded-lg font-semibold text-sm">Connect</button>
+            <button onClick={() => toast('Connected')} className="px-8 py-4 bg-navy-800 text-white rounded-lg font-semibold text-lg shadow-md hover:bg-navy-700 transition-colors w-full py-2 rounded-lg font-semibold text-sm">Connect</button>
           </div>
 
-          <div className="p-6 border border-[#D3D3D3] rounded-xl card-hover">
+          <div className="p-6 border border-slate-200 rounded-lg card-hover">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
+                <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
                   <i className="fa-solid fa-shield text-purple-600"></i>
                 </div>
                 <div>
-                  <h3 className="font-bold text-[#000080]">Single Sign-On</h3>
-                  <p className="text-sm text-gray-600">SAML/SCIM</p>
+                  <h3 className="font-bold text-navy-900">Single Sign-On</h3>
+                  <p className="text-sm text-slate-600">SAML/SCIM</p>
                 </div>
               </div>
               <span className="px-3 py-1 bg-red-100 text-red-800 rounded-full text-xs font-semibold">Not Configured</span>
             </div>
             <div className="space-y-2">
-              <input type="text" placeholder="ACS URL" className="w-full px-3 py-2 border border-[#D3D3D3] rounded-lg text-sm input-focus" />
-              <input type="text" placeholder="Entity ID" className="w-full px-3 py-2 border border-[#D3D3D3] rounded-lg text-sm input-focus" />
-              <button onClick={() => toast('Metadata uploaded')} className="btn-secondary w-full py-2 rounded-lg font-semibold text-sm">Upload Metadata</button>
+              <input type="text" placeholder="ACS URL" className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-sky-200 focus:border-sky-400 text-navy-900 placeholder-slate-400" />
+              <input type="text" placeholder="Entity ID" className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-sky-200 focus:border-sky-400 text-navy-900 placeholder-slate-400" />
+              <button onClick={() => toast('Metadata uploaded')} className="px-6 py-3 bg-white border border-slate-200 text-navy-900 rounded-lg font-semibold shadow-sm hover:bg-slate-50 transition-colors w-full py-2 rounded-lg font-semibold text-sm">Upload Metadata</button>
             </div>
           </div>
 
-          <div className="p-6 border border-[#D3D3D3] rounded-xl card-hover">
+          <div className="p-6 border border-slate-200 rounded-lg card-hover">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center">
+                <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
                   <i className="fa-solid fa-webhook text-orange-600"></i>
                 </div>
                 <div>
-                  <h3 className="font-bold text-[#000080]">Webhooks</h3>
-                  <p className="text-sm text-gray-600">Event Notifications</p>
+                  <h3 className="font-bold text-navy-900">Webhooks</h3>
+                  <p className="text-sm text-slate-600">Event Notifications</p>
                 </div>
               </div>
-              <button onClick={() => toast('Webhook added')} className="btn-primary px-4 py-1 rounded-lg font-semibold text-sm">+ Add</button>
+              <button onClick={() => toast('Webhook added')} className="px-8 py-4 bg-navy-800 text-white rounded-lg font-semibold text-lg shadow-md hover:bg-navy-700 transition-colors px-4 py-1 rounded-lg font-semibold text-sm">+ Add</button>
             </div>
-            <div className="text-sm text-gray-600">
+            <div className="text-sm text-slate-600">
               <p>No webhooks configured</p>
             </div>
           </div>
@@ -1437,43 +1348,43 @@ function IntegrationsSection({ toast }: { toast: (msg: string) => void }) {
 // Data Section Component (Employer Only)
 function DataSection() {
   return (
-    <section className="space-y-6 fade-in">
-      <div className="w-full min-w-0 bg-white rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-[#D3D3D3] p-4 sm:p-6 md:p-8 mb-3 sm:mb-6">
-        <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-[#000080] mb-4 sm:mb-5 md:mb-6 flex items-center">
-          <i className="fa-solid fa-database text-[#ADD8E6] mr-3"></i>
+    <section className="space-y-6 ">
+      <div className="bg-white rounded-none sm:rounded-lg md:rounded-2xl shadow-xl border border-slate-100 p-8">
+        <h2 className="text-xl font-bold text-navy-900 mb-6 flex items-center">
+          <i className="fa-solid fa-database text-sky-500 mr-3"></i>
           Data Management & Export
         </h2>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <div>
-            <h3 className="text-xl font-bold text-[#000080] mb-4">Export Data</h3>
+            <h3 className="text-xl font-bold text-navy-900 mb-4">Export Data</h3>
             <div className="space-y-4">
-              <div className="p-4 border border-[#D3D3D3] rounded-xl">
-                <h4 className="font-semibold text-[#000080] mb-2">Candidate Data</h4>
-                <p className="text-sm text-gray-600 mb-3">Export all candidate interactions and messages</p>
+              <div className="p-4 border border-slate-200 rounded-lg">
+                <h4 className="font-semibold text-navy-900 mb-2">Candidate Data</h4>
+                <p className="text-sm text-slate-600 mb-3">Export all candidate interactions and messages</p>
                 <div className="flex space-x-2">
-                  <button className="btn-secondary px-4 py-2 rounded-lg font-semibold text-sm">CSV</button>
-                  <button className="btn-secondary px-4 py-2 rounded-lg font-semibold text-sm">JSON</button>
+                  <button className="px-6 py-3 bg-white border border-slate-200 text-navy-900 rounded-lg font-semibold shadow-sm hover:bg-slate-50 transition-colors px-4 py-2 rounded-lg font-semibold text-sm">CSV</button>
+                  <button className="px-6 py-3 bg-white border border-slate-200 text-navy-900 rounded-lg font-semibold shadow-sm hover:bg-slate-50 transition-colors px-4 py-2 rounded-lg font-semibold text-sm">JSON</button>
                 </div>
               </div>
-              <div className="p-4 border border-[#D3D3D3] rounded-xl">
-                <h4 className="font-semibold text-[#000080] mb-2">Job Postings</h4>
-                <p className="text-sm text-gray-600 mb-3">Export all job postings and applications</p>
+              <div className="p-4 border border-slate-200 rounded-lg">
+                <h4 className="font-semibold text-navy-900 mb-2">Job Postings</h4>
+                <p className="text-sm text-slate-600 mb-3">Export all job postings and applications</p>
                 <div className="flex space-x-2">
-                  <button className="btn-secondary px-4 py-2 rounded-lg font-semibold text-sm">CSV</button>
-                  <button className="btn-secondary px-4 py-2 rounded-lg font-semibold text-sm">JSON</button>
+                  <button className="px-6 py-3 bg-white border border-slate-200 text-navy-900 rounded-lg font-semibold shadow-sm hover:bg-slate-50 transition-colors px-4 py-2 rounded-lg font-semibold text-sm">CSV</button>
+                  <button className="px-6 py-3 bg-white border border-slate-200 text-navy-900 rounded-lg font-semibold shadow-sm hover:bg-slate-50 transition-colors px-4 py-2 rounded-lg font-semibold text-sm">JSON</button>
                 </div>
               </div>
             </div>
           </div>
           <div>
-            <h3 className="text-xl font-bold text-[#000080] mb-4">Import Data</h3>
+            <h3 className="text-xl font-bold text-navy-900 mb-4">Import Data</h3>
             <div className="space-y-4">
-              <div className="p-4 border border-[#D3D3D3] rounded-xl">
-                <h4 className="font-semibold text-[#000080] mb-2">Job Postings</h4>
-                <p className="text-sm text-gray-600 mb-3">Import job postings from CSV template</p>
+              <div className="p-4 border border-slate-200 rounded-lg">
+                <h4 className="font-semibold text-navy-900 mb-2">Job Postings</h4>
+                <p className="text-sm text-slate-600 mb-3">Import job postings from CSV template</p>
                 <div className="flex space-x-2">
-                  <button className="btn-secondary px-4 py-2 rounded-lg font-semibold text-sm">Download Template</button>
-                  <button className="btn-primary px-4 py-2 rounded-lg font-semibold text-sm">Upload CSV</button>
+                  <button className="px-6 py-3 bg-white border border-slate-200 text-navy-900 rounded-lg font-semibold shadow-sm hover:bg-slate-50 transition-colors px-4 py-2 rounded-lg font-semibold text-sm">Download Template</button>
+                  <button className="px-8 py-4 bg-navy-800 text-white rounded-lg font-semibold text-lg shadow-md hover:bg-navy-700 transition-colors px-4 py-2 rounded-lg font-semibold text-sm">Upload CSV</button>
                 </div>
               </div>
             </div>
@@ -1481,15 +1392,15 @@ function DataSection() {
         </div>
       </div>
 
-      <div className="w-full min-w-0 bg-white rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-[#D3D3D3] p-4 sm:p-6 md:p-8 mb-3 sm:mb-6">
-        <h3 className="text-xl font-bold text-[#000080] mb-6">Data Retention</h3>
-        <div className="p-4 border border-[#D3D3D3] rounded-xl">
+      <div className="bg-white rounded-none sm:rounded-lg md:rounded-2xl shadow-xl border border-slate-100 p-8">
+        <h3 className="text-xl font-bold text-navy-900 mb-6">Data Retention</h3>
+        <div className="p-4 border border-slate-200 rounded-lg">
           <div className="flex items-center justify-between">
             <div>
-              <h4 className="font-semibold text-[#000080]">Message Retention Period</h4>
-              <p className="text-sm text-gray-600">How long to keep candidate messages</p>
+              <h4 className="font-semibold text-navy-900">Message Retention Period</h4>
+              <p className="text-sm text-slate-600">How long to keep candidate messages</p>
             </div>
-            <select className="px-4 py-2 border border-[#D3D3D3] rounded-lg input-focus">
+            <select className="px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-sky-200 focus:border-sky-400 text-navy-900 placeholder-slate-400">
               <option>12 months</option>
               <option>24 months</option>
               <option>36 months</option>
@@ -1508,20 +1419,20 @@ function AccessibilitySection({ toast }: { toast: (msg: string) => void }) {
   const [keyboardShortcuts, setKeyboardShortcuts] = useState(true);
 
   return (
-    <section className="space-y-6 fade-in">
-      <div className="w-full min-w-0 bg-white rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-[#D3D3D3] p-4 sm:p-6 md:p-8 mb-3 sm:mb-6">
-        <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-[#000080] mb-4 sm:mb-5 md:mb-6 flex items-center">
-          <i className="fa-solid fa-universal-access text-[#ADD8E6] mr-3"></i>
+    <section className="space-y-6 ">
+      <div className="bg-white rounded-none sm:rounded-lg md:rounded-2xl shadow-xl border border-slate-100 p-8">
+        <h2 className="text-xl font-bold text-navy-900 mb-6 flex items-center">
+          <i className="fa-solid fa-universal-access text-sky-500 mr-3"></i>
           Accessibility & Preferences
         </h2>
         <div className="space-y-6">
-          <div className="p-4 border border-[#D3D3D3] rounded-xl">
+          <div className="p-4 border border-slate-200 rounded-lg">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="font-semibold text-[#000080]">Theme Preference</h3>
-                <p className="text-sm text-gray-600">Choose your preferred appearance</p>
+                <h3 className="font-semibold text-navy-900">Theme Preference</h3>
+                <p className="text-sm text-slate-600">Choose your preferred appearance</p>
               </div>
-              <select className="px-4 py-2 border border-[#D3D3D3] rounded-lg input-focus">
+              <select className="px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-sky-200 focus:border-sky-400 text-navy-900 placeholder-slate-400">
                 <option>Light</option>
                 <option>Dark</option>
                 <option>System</option>
@@ -1529,11 +1440,11 @@ function AccessibilitySection({ toast }: { toast: (msg: string) => void }) {
             </div>
           </div>
 
-          <div className="p-4 border border-[#D3D3D3] rounded-xl">
+          <div className="p-4 border border-slate-200 rounded-lg">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="font-semibold text-[#000080]">Reduce Motion</h3>
-                <p className="text-sm text-gray-600">Minimize animations and transitions</p>
+                <h3 className="font-semibold text-navy-900">Reduce Motion</h3>
+                <p className="text-sm text-slate-600">Minimize animations and transitions</p>
               </div>
               <div 
                 className={`toggle-switch ${reduceMotion ? 'active' : ''}`}
@@ -1545,13 +1456,13 @@ function AccessibilitySection({ toast }: { toast: (msg: string) => void }) {
             </div>
           </div>
 
-          <div className="p-4 border border-[#D3D3D3] rounded-xl">
+          <div className="p-4 border border-slate-200 rounded-lg">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="font-semibold text-[#000080]">Font Size</h3>
-                <p className="text-sm text-gray-600">Adjust text size for better readability</p>
+                <h3 className="font-semibold text-navy-900">Font Size</h3>
+                <p className="text-sm text-slate-600">Adjust text size for better readability</p>
               </div>
-              <select className="px-4 py-2 border border-[#D3D3D3] rounded-lg input-focus">
+              <select className="px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-sky-200 focus:border-sky-400 text-navy-900 placeholder-slate-400">
                 <option>Normal (100%)</option>
                 <option>Large (112%)</option>
                 <option>Extra Large (125%)</option>
@@ -1559,11 +1470,11 @@ function AccessibilitySection({ toast }: { toast: (msg: string) => void }) {
             </div>
           </div>
 
-          <div className="p-4 border border-[#D3D3D3] rounded-xl">
+          <div className="p-4 border border-slate-200 rounded-lg">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="font-semibold text-[#000080]">Keyboard Shortcuts</h3>
-                <p className="text-sm text-gray-600">Enable quick keyboard navigation</p>
+                <h3 className="font-semibold text-navy-900">Keyboard Shortcuts</h3>
+                <p className="text-sm text-slate-600">Enable quick keyboard navigation</p>
               </div>
               <div 
                 className={`toggle-switch ${keyboardShortcuts ? 'active' : ''}`}
@@ -1577,19 +1488,19 @@ function AccessibilitySection({ toast }: { toast: (msg: string) => void }) {
         </div>
       </div>
 
-      <div className="w-full min-w-0 bg-white rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-[#D3D3D3] p-4 sm:p-6 md:p-8 mb-3 sm:mb-6">
-        <h3 className="text-xl font-bold text-[#000080] mb-6">Keyboard Shortcuts</h3>
+      <div className="bg-white rounded-none sm:rounded-lg md:rounded-2xl shadow-xl border border-slate-100 p-8">
+        <h3 className="text-xl font-bold text-navy-900 mb-6">Keyboard Shortcuts</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="p-3 bg-gray-50 rounded-lg">
+          <div className="p-3 bg-slate-50 rounded-lg">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-[#000080]">Search</span>
-              <kbd className="px-2 py-1 bg-white border border-[#D3D3D3] rounded text-xs font-mono">/ </kbd>
+              <span className="text-sm text-navy-900">Search</span>
+              <kbd className="px-2 py-1 bg-white border border-slate-200 rounded text-xs font-mono">/ </kbd>
             </div>
           </div>
-          <div className="p-3 bg-gray-50 rounded-lg">
+          <div className="p-3 bg-slate-50 rounded-lg">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-[#000080]">Command Bar</span>
-              <kbd className="px-2 py-1 bg-white border border-[#D3D3D3] rounded text-xs font-mono">⌘K</kbd>
+              <span className="text-sm text-navy-900">Command Bar</span>
+              <kbd className="px-2 py-1 bg-white border border-slate-200 rounded text-xs font-mono">⌘K</kbd>
             </div>
           </div>
         </div>
@@ -1601,54 +1512,54 @@ function AccessibilitySection({ toast }: { toast: (msg: string) => void }) {
 // Legal Section Component
 function LegalSection() {
   return (
-    <section className="space-y-6 fade-in">
-      <div className="w-full min-w-0 bg-white rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-[#D3D3D3] p-4 sm:p-6 md:p-8 mb-3 sm:mb-6">
-        <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-[#000080] mb-4 sm:mb-5 md:mb-6 flex items-center">
-          <i className="fa-solid fa-gavel text-[#ADD8E6] mr-3"></i>
+    <section className="space-y-6 ">
+      <div className="bg-white rounded-none sm:rounded-lg md:rounded-2xl shadow-xl border border-slate-100 p-8">
+        <h2 className="text-xl font-bold text-navy-900 mb-6 flex items-center">
+          <i className="fa-solid fa-gavel text-sky-500 mr-3"></i>
           Legal & Compliance
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <a href="#" target="_blank" className="flex items-center justify-between p-4 border border-[#D3D3D3] rounded-xl hover:bg-gray-50 transition-colors">
+          <a href="#" target="_blank" className="flex items-center justify-between p-4 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
             <div className="flex items-center space-x-3">
-              <i className="fa-solid fa-file-contract text-[#ADD8E6]"></i>
-              <span className="font-medium text-[#000080]">Terms of Service</span>
+              <i className="fa-solid fa-file-contract text-sky-500"></i>
+              <span className="font-medium text-navy-900">Terms of Service</span>
             </div>
-            <i className="fa-solid fa-external-link text-[#ADD8E6]"></i>
+            <i className="fa-solid fa-external-link text-sky-500"></i>
           </a>
-          <a href="#" target="_blank" className="flex items-center justify-between p-4 border border-[#D3D3D3] rounded-xl hover:bg-gray-50 transition-colors">
+          <a href="#" target="_blank" className="flex items-center justify-between p-4 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
             <div className="flex items-center space-x-3">
-              <i className="fa-solid fa-shield-check text-[#ADD8E6]"></i>
-              <span className="font-medium text-[#000080]">Privacy Policy</span>
+              <i className="fa-solid fa-shield-check text-sky-500"></i>
+              <span className="font-medium text-navy-900">Privacy Policy</span>
             </div>
-            <i className="fa-solid fa-external-link text-[#ADD8E6]"></i>
+            <i className="fa-solid fa-external-link text-sky-500"></i>
           </a>
-          <a href="#" target="_blank" className="flex items-center justify-between p-4 border border-[#D3D3D3] rounded-xl hover:bg-gray-50 transition-colors">
+          <a href="#" target="_blank" className="flex items-center justify-between p-4 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
             <div className="flex items-center space-x-3">
-              <i className="fa-solid fa-cookie-bite text-[#ADD8E6]"></i>
-              <span className="font-medium text-[#000080]">Cookie Policy</span>
+              <i className="fa-solid fa-cookie-bite text-sky-500"></i>
+              <span className="font-medium text-navy-900">Cookie Policy</span>
             </div>
-            <i className="fa-solid fa-external-link text-[#ADD8E6]"></i>
+            <i className="fa-solid fa-external-link text-sky-500"></i>
           </a>
-          <a href="#" target="_blank" className="flex items-center justify-between p-4 border border-[#D3D3D3] rounded-xl hover:bg-gray-50 transition-colors">
+          <a href="#" target="_blank" className="flex items-center justify-between p-4 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
             <div className="flex items-center space-x-3">
-              <i className="fa-solid fa-server text-[#ADD8E6]"></i>
-              <span className="font-medium text-[#000080]">Subprocessors</span>
+              <i className="fa-solid fa-server text-sky-500"></i>
+              <span className="font-medium text-navy-900">Subprocessors</span>
             </div>
-            <i className="fa-solid fa-external-link text-[#ADD8E6]"></i>
+            <i className="fa-solid fa-external-link text-sky-500"></i>
           </a>
-          <a href="#" target="_blank" className="flex items-center justify-between p-4 border border-[#D3D3D3] rounded-xl hover:bg-gray-50 transition-colors">
+          <a href="#" target="_blank" className="flex items-center justify-between p-4 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
             <div className="flex items-center space-x-3">
-              <i className="fa-solid fa-lock text-[#ADD8E6]"></i>
-              <span className="font-medium text-[#000080]">Security Overview</span>
+              <i className="fa-solid fa-lock text-sky-500"></i>
+              <span className="font-medium text-navy-900">Security Overview</span>
             </div>
-            <i className="fa-solid fa-external-link text-[#ADD8E6]"></i>
+            <i className="fa-solid fa-external-link text-sky-500"></i>
           </a>
-          <div className="flex items-center justify-between p-4 border border-[#D3D3D3] rounded-xl">
+          <div className="flex items-center justify-between p-4 border border-slate-200 rounded-lg">
             <div className="flex items-center space-x-3">
-              <i className="fa-solid fa-certificate text-[#ADD8E6]"></i>
-              <span className="font-medium text-[#000080]">SOC2 Report</span>
+              <i className="fa-solid fa-certificate text-sky-500"></i>
+              <span className="font-medium text-navy-900">SOC2 Report</span>
             </div>
-            <button className="btn-secondary px-4 py-1 rounded-lg font-semibold text-sm">Download</button>
+            <button className="px-6 py-3 bg-white border border-slate-200 text-navy-900 rounded-lg font-semibold shadow-sm hover:bg-slate-50 transition-colors px-4 py-1 rounded-lg font-semibold text-sm">Download</button>
           </div>
         </div>
       </div>
@@ -1659,13 +1570,13 @@ function LegalSection() {
 // Danger Section Component
 function DangerSection() {
   return (
-    <section className="space-y-6 fade-in">
-      <div className="danger-zone rounded-none sm:rounded-xl md:rounded-2xl shadow-sm p-4 sm:p-6 md:p-8 mb-3 sm:mb-6">
-        <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-red-800 mb-4 sm:mb-5 md:mb-6 flex items-center">
+    <section className="space-y-6 ">
+      <div className="danger-zone rounded-none sm:rounded-lg md:rounded-2xl shadow-sm p-8">
+        <h2 className="text-xl font-bold text-red-800 mb-6 flex items-center">
           <i className="fa-solid fa-trash text-red-600 mr-3"></i>
           Delete Account
         </h2>
-        <div className="bg-white rounded-xl p-6 border border-red-200">
+        <div className="bg-white rounded-lg p-6 border border-red-200">
           <h3 className="text-xl font-bold text-red-800 mb-4">Account Deletion</h3>
           <div className="space-y-4">
             <div className="p-4 bg-red-50 rounded-lg border border-red-200">
@@ -1679,7 +1590,7 @@ function DangerSection() {
               </ul>
             </div>
             <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-              <h4 className="font-semibold text-[#000080] mb-2">
+              <h4 className="font-semibold text-navy-900 mb-2">
                 <i className="fa-solid fa-envelope mr-2"></i>
                 Contact Support to Delete Your Account
               </h4>
@@ -1688,7 +1599,7 @@ function DangerSection() {
               </p>
               <a 
                 href="mailto:officialhiremeapp@gmail.com" 
-                className="text-[#000080] font-semibold hover:text-[#ADD8E6] transition-colors inline-flex items-center"
+                className="text-navy-900 font-semibold hover:text-sky-500 transition-colors inline-flex items-center"
               >
                 officialhiremeapp@gmail.com
                 <i className="fa-solid fa-external-link ml-2 text-xs"></i>

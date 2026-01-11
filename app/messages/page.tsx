@@ -92,10 +92,10 @@ export default function MessagesPage() {
 
   if (loading || isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center" style={{background: 'linear-gradient(180deg, #E6F0FF 0%, #F8FAFC 100%)'}}>
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading messages...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-navy-800 mx-auto mb-4"></div>
+          <p className="text-slate-600">Loading messages...</p>
         </div>
       </div>
     );
@@ -107,12 +107,12 @@ export default function MessagesPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center" style={{background: 'linear-gradient(180deg, #E6F0FF 0%, #F8FAFC 100%)'}}>
         <div className="text-center">
           <p className="text-red-600 mb-4">{error}</p>
           <button 
             onClick={() => window.location.reload()}
-            className="text-blue-600 hover:text-blue-800 underline"
+            className="text-sky-600 hover:text-navy-800 underline"
           >
             Try again
           </button>
@@ -127,33 +127,33 @@ export default function MessagesPage() {
     : '/home/employer';
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+    <main className="min-h-screen" style={{background: 'linear-gradient(180deg, #E6F0FF 0%, #F8FAFC 100%)'}}>
       <div className="max-w-4xl mx-auto p-6">
         {/* Header */}
         <div className="mb-8">
           <Link 
             href={dashboardUrl}
-            className="text-blue-600 hover:underline flex items-center space-x-1 mb-4"
+            className="text-navy-800 hover:text-sky-600 hover:underline flex items-center space-x-1 mb-4 bg-sky-50 hover:bg-sky-100 px-4 py-2 rounded-full w-fit transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
             <span>Back</span>
           </Link>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Messages</h1>
-          <p className="text-gray-600">Your conversations with candidates and employers</p>
+          <h1 className="text-3xl font-bold text-navy-900 mb-2">Messages</h1>
+          <p className="text-slate-600">Your conversations with candidates and employers</p>
         </div>
 
         {/* Threads List */}
         <div className="space-y-4">
           {threads.length === 0 ? (
-            <div className="bg-white rounded-xl shadow-lg p-12 text-center">
-              <MessageSquare className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No messages yet</h3>
-              <p className="text-gray-500 mb-6">
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-12 text-center">
+              <MessageSquare className="h-16 w-16 text-slate-300 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-navy-900 mb-2">No messages yet</h3>
+              <p className="text-slate-500 mb-6">
                 Start connecting with candidates or employers to begin conversations
               </p>
               <Link
                 href="/search/candidates"
-                className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                className="inline-flex items-center px-4 py-2 bg-navy-800 text-white rounded-lg hover:bg-navy-700 transition-colors"
               >
                 <User className="h-4 w-4 mr-2" />
                 Find Candidates
@@ -164,24 +164,24 @@ export default function MessagesPage() {
               <Link
                 key={thread.id}
                 href={`/messages/${thread.id}`}
-                className="block bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow"
+                className="block bg-white rounded-2xl shadow-sm border border-slate-200 p-6 hover:shadow-lg transition-all"
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                      <User className="h-6 w-6 text-blue-600" />
+                    <div className="w-12 h-12 bg-gradient-to-br from-sky-100 to-sky-50 rounded-full flex items-center justify-center">
+                      <User className="h-6 w-6 text-navy-800" />
                     </div>
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-900">
+                      <h3 className="text-lg font-semibold text-navy-900">
                         {otherParticipant 
                           ? `${otherParticipant.firstName || ''} ${otherParticipant.lastName || ''}`.trim() || 'Unknown User'
                           : 'Unknown User'
                         }
                       </h3>
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-slate-600">
                         {otherParticipant?.headline || otherParticipant?.role || 'User'}
                       </p>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-slate-500">
                         Last activity: {thread.lastMessageAt ? new Date(thread.lastMessageAt.toDate ? thread.lastMessageAt.toDate() : thread.lastMessageAt).toLocaleDateString() : 'Recently'}
                       </p>
                     </div>

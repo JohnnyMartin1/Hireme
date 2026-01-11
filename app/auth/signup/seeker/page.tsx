@@ -203,27 +203,27 @@ export default function SeekerSignupPage() {
         <div className="flex-grow flex flex-col justify-center w-full max-w-[560px] mx-auto py-6 sm:py-0">
           {/* Progress Stepper */}
           <div className="flex flex-wrap items-center gap-2 sm:flex-nowrap sm:gap-4 text-xs sm:text-sm mb-6 sm:mb-8">
-            <div className={`flex items-center ${currentStep >= 1 ? 'text-navy font-semibold' : 'text-text-secondary'} whitespace-nowrap gap-2`}>
+            <div className={`flex items-center ${currentStep >= 1 ? 'text-navy-800 font-semibold' : 'text-text-secondary'} whitespace-nowrap gap-2`}>
               <span className={`flex items-center justify-center w-6 h-6 sm:w-8 sm:h-8 rounded-full text-xs ${
-                currentStep > 1 ? 'bg-success-green text-white' : currentStep === 1 ? 'bg-navy text-white' : 'bg-light-gray text-text-secondary'
+                currentStep > 1 ? 'bg-success-green text-white' : currentStep === 1 ? 'bg-navy-800 text-white' : 'bg-light-gray text-text-secondary'
               }`}>
                 {currentStep > 1 ? <i className="fa-solid fa-check"></i> : <i className="fa-solid fa-envelope"></i>}
               </span>
               Search
             </div>
             <i className="fa-solid fa-chevron-right text-light-gray text-xs hidden sm:block"></i>
-            <div className={`flex items-center ${currentStep >= 2 ? 'text-navy font-semibold' : 'text-text-secondary'} whitespace-nowrap gap-2`}>
+            <div className={`flex items-center ${currentStep >= 2 ? 'text-navy-800 font-semibold' : 'text-text-secondary'} whitespace-nowrap gap-2`}>
               <span className={`flex items-center justify-center w-6 h-6 sm:w-8 sm:h-8 rounded-full text-xs ${
-                currentStep > 2 ? 'bg-success-green text-white' : currentStep === 2 ? 'bg-navy text-white' : 'bg-light-gray text-text-secondary'
+                currentStep > 2 ? 'bg-success-green text-white' : currentStep === 2 ? 'bg-navy-800 text-white' : 'bg-light-gray text-text-secondary'
               }`}>
                 {currentStep > 2 ? <i className="fa-solid fa-check"></i> : <i className="fa-solid fa-user-plus"></i>}
               </span>
               Create Account
             </div>
             <i className="fa-solid fa-chevron-right text-light-gray text-xs hidden sm:block"></i>
-            <div className={`flex items-center ${currentStep >= 3 ? 'text-navy font-semibold' : 'text-text-secondary'} whitespace-nowrap gap-2`}>
+            <div className={`flex items-center ${currentStep >= 3 ? 'text-navy-800 font-semibold' : 'text-text-secondary'} whitespace-nowrap gap-2`}>
               <span className={`flex items-center justify-center w-6 h-6 sm:w-8 sm:h-8 rounded-full text-xs ${
-                currentStep === 3 ? 'bg-navy text-white' : 'bg-light-gray text-text-secondary'
+                currentStep === 3 ? 'bg-navy-800 text-white' : 'bg-light-gray text-text-secondary'
               }`}>
                 <i className="fa-solid fa-smile"></i>
               </span>
@@ -234,7 +234,7 @@ export default function SeekerSignupPage() {
           {/* Progress Bar */}
           <div className="w-full bg-light-gray rounded-full h-2 mb-6 sm:mb-8">
             <div 
-              className="bg-navy h-2 rounded-full transition-all duration-300" 
+              className="bg-navy-800 h-2 rounded-full transition-all duration-300" 
               style={{ width: `${getProgressPercentage()}%` }}
             ></div>
           </div>
@@ -257,14 +257,14 @@ export default function SeekerSignupPage() {
                         sendVerificationCode();
                       }
                     }}
-                    className="w-full bg-white border border-light-gray rounded-xl py-3 sm:py-4 px-4 sm:px-6 text-text-primary focus:border-navy focus:outline-none transition-all duration-200 text-base min-h-[44px]"
+                    className="w-full bg-white border border-slate-200 rounded-xl py-3 sm:py-4 px-4 sm:px-6 text-text-primary focus:border-navy-800 focus:outline-none transition-all duration-200 text-base min-h-[44px]"
                     required
                   />
                   <button 
                     type="button" 
                     onClick={sendVerificationCode}
                     disabled={isLoading}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 bg-navy text-white px-3 sm:px-6 py-2 rounded-lg hover:bg-opacity-90 transition-all duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base min-h-[44px]"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 bg-navy-800 text-white px-3 sm:px-6 py-2 rounded-lg hover:bg-opacity-90 transition-all duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base min-h-[44px]"
                   >
                     {isLoading ? (
                       <i className="fa-solid fa-spinner animate-spin"></i>
@@ -325,7 +325,7 @@ export default function SeekerSignupPage() {
                             }
                           }}
                           data-digit={digit}
-                          className="w-10 h-12 sm:w-12 sm:h-14 text-center text-lg sm:text-xl font-bold border border-light-gray rounded-xl focus:border-navy focus:outline-none transition-all duration-200"
+                          className="w-10 h-12 sm:w-12 sm:h-14 text-center text-lg sm:text-xl font-bold border border-slate-200 rounded-xl focus:border-navy-800 focus:outline-none transition-all duration-200"
                         />
                       ))}
                     </div>
@@ -334,7 +334,7 @@ export default function SeekerSignupPage() {
                       type="button" 
                       onClick={verifyCode}
                       disabled={isLoading || verificationCode.length !== 6}
-                      className="w-full bg-navy text-white py-4 rounded-xl font-semibold hover:bg-opacity-90 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-full bg-navy-800 text-white py-4 rounded-xl font-semibold hover:bg-opacity-90 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {isLoading ? (
                         <i className="fa-solid fa-spinner animate-spin"></i>
@@ -362,7 +362,7 @@ export default function SeekerSignupPage() {
                       placeholder="First name"
                       value={formData.firstName}
                       onChange={handleChange}
-                      className="w-full bg-white border border-light-gray rounded-xl py-4 px-6 text-text-primary focus:border-navy focus:outline-none transition-all duration-200"
+                      className="w-full bg-white border border-slate-200 rounded-xl py-4 px-6 text-text-primary focus:border-navy-800 focus:outline-none transition-all duration-200"
                       required
                     />
                   </div>
@@ -373,7 +373,7 @@ export default function SeekerSignupPage() {
                       placeholder="Last name"
                       value={formData.lastName}
                       onChange={handleChange}
-                      className="w-full bg-white border border-light-gray rounded-xl py-4 px-6 text-text-primary focus:border-navy focus:outline-none transition-all duration-200"
+                      className="w-full bg-white border border-slate-200 rounded-xl py-4 px-6 text-text-primary focus:border-navy-800 focus:outline-none transition-all duration-200"
                       required
                     />
                   </div>
@@ -447,7 +447,7 @@ export default function SeekerSignupPage() {
                       placeholder="Password"
                       value={formData.password}
                       onChange={handleChange}
-                      className="w-full bg-white border border-light-gray rounded-xl py-4 px-6 text-text-primary focus:border-navy focus:outline-none transition-all duration-200"
+                      className="w-full bg-white border border-slate-200 rounded-xl py-4 px-6 text-text-primary focus:border-navy-800 focus:outline-none transition-all duration-200"
                       required
                     />
                   </div>
@@ -458,7 +458,7 @@ export default function SeekerSignupPage() {
                       placeholder="Confirm password"
                       value={formData.confirmPassword}
                       onChange={handleChange}
-                      className="w-full bg-white border border-light-gray rounded-xl py-4 px-6 text-text-primary focus:border-navy focus:outline-none transition-all duration-200"
+                      className="w-full bg-white border border-slate-200 rounded-xl py-4 px-6 text-text-primary focus:border-navy-800 focus:outline-none transition-all duration-200"
                       required
                     />
                     {formData.password === formData.confirmPassword && formData.confirmPassword.length > 0 && (
@@ -476,7 +476,7 @@ export default function SeekerSignupPage() {
                 <button 
                   type="submit"
                   disabled={isLoading}
-                  className="w-full bg-navy text-white py-4 rounded-xl font-semibold hover:bg-opacity-90 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full bg-navy-800 text-white py-4 rounded-xl font-semibold hover:bg-opacity-90 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isLoading ? 'Creating Account...' : 'Create Account'}
                 </button>
@@ -496,7 +496,7 @@ export default function SeekerSignupPage() {
                 </p>
                 <button 
                   onClick={() => router.push("/auth/signup/seeker/steps")}
-                  className="bg-navy text-white px-8 py-4 rounded-xl font-semibold hover:bg-opacity-90 transition-all duration-200"
+                  className="bg-navy-800 text-white px-8 py-4 rounded-xl font-semibold hover:bg-opacity-90 transition-all duration-200"
                 >
                   Start profile setup
                   <i className="fa-solid fa-arrow-right ml-2"></i>

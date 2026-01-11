@@ -2,7 +2,7 @@
 import { useFirebaseAuth } from "@/components/FirebaseAuthProvider";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ArrowLeft, Star, User, MessageSquare, Building } from "lucide-react";
+import { ArrowLeft, Star, User, MessageSquare, Building, Copy, Check } from "lucide-react";
 import { getEndorsements } from '@/lib/firebase-firestore';
 import Link from 'next/link';
 
@@ -12,6 +12,7 @@ export default function EndorsementsPage() {
   const [endorsements, setEndorsements] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -50,10 +51,10 @@ export default function EndorsementsPage() {
 
   if (loading || isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading endorsements...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-navy-800 mx-auto mb-4"></div>
+          <p className="text-slate-600">Loading endorsements...</p>
         </div>
       </div>
     );
@@ -63,118 +64,140 @@ export default function EndorsementsPage() {
     return null; // Will redirect to login
   }
 
+  const handleCopyLink = () => {
+    const link = typeof window !== 'undefined' ? `${window.location.origin}/endorse/${user.uid}` : `/endorse/${user.uid}`;
+    navigator.clipboard.writeText(link);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   return (
-    <main className="min-h-screen mobile-safe-top mobile-safe-bottom overflow-x-hidden w-full" style={{background: 'linear-gradient(180deg, #E6F0FF 0%, #F0F8FF 40%, #F8FAFC 100%)'}}>
-      <div className="w-full md:max-w-7xl md:mx-auto px-0 sm:px-3 md:px-6 lg:px-8 py-4 sm:py-6 space-y-3 sm:space-y-4 md:space-y-6 min-w-0">
-        
-        {/* Back to Dashboard Link */}
-        <div className="mb-4 sm:mb-6 md:mb-10 px-2 sm:px-0">
-          <Link 
+    <div className="min-h-screen bg-slate-50 mobile-safe-top mobile-safe-bottom overflow-x-hidden w-full">
+      {/* Header */}
+      <header className="sticky top-0 bg-white shadow-sm z-50 border-b border-slate-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
+          <Link
             href="/home/seeker"
-            className="inline-flex items-center text-navy font-semibold hover:text-blue-900 transition-all duration-300 bg-light-blue/10 hover:bg-light-blue/30 hover:shadow-md hover:scale-105 px-3 sm:px-4 py-2 rounded-full group min-h-[44px] text-sm sm:text-base"
+            className="flex items-center gap-2 text-navy-800 hover:text-navy-600 transition-colors group px-3 py-2 rounded-lg hover:bg-sky-50 min-h-[44px]"
           >
-            <ArrowLeft className="h-4 w-4 mr-2 group-hover:-translate-x-1 transition-transform duration-300" />
-            <span className="hidden sm:inline">Back to Dashboard</span>
-            <span className="sm:hidden">Back</span>
+            <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform duration-200" />
+            <span className="font-medium text-sm hidden sm:inline">Back to Dashboard</span>
+            <span className="font-medium text-sm sm:hidden">Back</span>
+          </Link>
+          <Link href="/" className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-navy-800 rounded-lg flex items-center justify-center shadow-md">
+              <svg width="20" height="20" viewBox="0 0 269 274" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M111.028 0C172.347 0.000238791 222.055 51.647 222.055 115.356C222.055 140.617 214.238 163.98 200.983 182.981L258.517 242.758L238.036 264.036L181.077 204.857C161.97 221.02 137.589 230.713 111.028 230.713C49.7092 230.713 2.76862e-05 179.066 0 115.356C0 51.6468 49.7092 0 111.028 0Z" fill="white"/>
+                <path d="M205.69 115.392C205.69 170.42 163.308 215.029 111.028 215.029C58.748 215.029 16.3666 170.42 16.3666 115.392C16.3666 60.3646 58.748 15.7559 111.028 15.7559C163.308 15.7559 205.69 60.3646 205.69 115.392Z" fill="#4F86F7"/>
+              </svg>
+            </div>
+            <span className="text-xl font-bold text-navy-900">HireMe</span>
           </Link>
         </div>
+      </header>
 
+      <main className="max-w-7xl mx-auto px-6 py-12 lg:py-16">
         {/* Page Header */}
-        <header className="mb-4 sm:mb-6 md:mb-10 px-2 sm:px-0">
-          <div className="flex items-center space-x-3 sm:space-x-4">
-            <Star className="h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 text-yellow-400 flex-shrink-0" />
-            <div className="min-w-0">
-              <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-navy break-words">Your Endorsements</h1>
-              <p className="text-sm sm:text-base md:text-lg text-gray-500 mt-1 break-words">Professional recommendations from colleagues, managers, and peers.</p>
+        <div className="text-center mb-12 lg:mb-14">
+          <div className="flex items-center justify-center mb-4">
+            <div className="w-12 h-12 bg-sky-100 rounded-lg flex items-center justify-center">
+              <Star className="h-6 w-6 text-navy-700" />
             </div>
           </div>
-        </header>
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-navy-900 mb-4 tracking-tight">Your Endorsements</h1>
+          <p className="text-base sm:text-lg lg:text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed">Professional recommendations from colleagues, managers, and peers.</p>
+        </div>
 
         {/* Endorsement Summary Card */}
-        <section className="w-full min-w-0 bg-white/90 backdrop-blur-sm p-4 sm:p-6 md:p-8 rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-slate-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-0 mb-3 sm:mb-6 md:mb-8 hover:shadow-lg transition-all duration-200">
-          <div className="min-w-0 flex-1">
-            <h2 className="text-base sm:text-lg md:text-xl font-bold text-navy">Endorsement Summary</h2>
-            <p className="text-sm sm:text-base text-gray-600 mt-1 break-words">You have received <span className="font-bold text-navy">{endorsements.length}</span> endorsements.</p>
-          </div>
-          <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
-            <div className="text-right">
-              <p className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-yellow-500">{endorsements.length}</p>
-              <p className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Total Endorsements</p>
+        <section className="bg-white rounded-2xl shadow-xl border border-slate-100 p-8 mb-8 hover:shadow-2xl transition-shadow duration-300">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+            <div className="flex-1">
+              <h2 className="text-xl font-bold text-navy-900 mb-2">Endorsement Summary</h2>
+              <p className="text-slate-600 leading-relaxed">You have received <span className="font-bold text-navy-900">{endorsements.length}</span> endorsements.</p>
+            </div>
+            <div className="text-center sm:text-right">
+              <p className="text-5xl font-bold text-navy-900">{endorsements.length}</p>
+              <p className="text-xs font-semibold tracking-wider text-slate-500 uppercase mt-1">Total Endorsements</p>
             </div>
           </div>
         </section>
         
         {/* Share Link Promo Card */}
-        <section className="bg-gradient-to-br from-light-blue to-navy text-white p-8 rounded-2xl shadow-lg mb-8 hover:shadow-xl transition-all duration-200">
+        <section className="bg-gradient-to-br from-navy-800 to-navy-900 text-white p-8 lg:p-10 rounded-2xl shadow-xl mb-8 hover:shadow-2xl transition-shadow duration-300">
           <div className="flex items-start space-x-4 mb-6">
-            <svg className="w-8 h-8 mt-1 text-blue-100" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/>
-            </svg>
-            <div>
-              <h2 className="text-2xl font-bold">Share Your Endorsement Link</h2>
-              <p className="text-blue-100 mt-1">Send this link to colleagues, managers, professors, or anyone who can vouch for your skills and experience.</p>
+            <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center flex-shrink-0">
+              <MessageSquare className="w-6 h-6 text-white" />
+            </div>
+            <div className="flex-1">
+              <h2 className="text-2xl font-bold mb-2">Share Your Endorsement Link</h2>
+              <p className="text-sky-200 leading-relaxed">Send this link to colleagues, managers, professors, or anyone who can vouch for your skills and experience.</p>
             </div>
           </div>
-          <div className="flex flex-col sm:flex-row items-center space-y-3 sm:space-y-0 sm:space-x-4">
-            <div className="relative flex-grow w-full">
-              <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M10.59 13.41c.41.39.41 1.03 0 1.42-.39.39-1.03.39-1.42 0a5.003 5.003 0 0 1 0-7.07l3.54-3.54a5.003 5.003 0 0 1 7.07 0 5.003 5.003 0 0 1 0 7.07l-1.49 1.49c.01-.82-.12-1.64-.4-2.42l.47-.48a2.982 2.982 0 0 0 0-4.24 2.982 2.982 0 0 0-4.24 0l-3.53 3.53a2.982 2.982 0 0 0 0 4.24zm2.82-4.24c.39-.39 1.03-.39 1.42 0a5.003 5.003 0 0 1 0 7.07l-3.54 3.54a5.003 5.003 0 0 1-7.07 0 5.003 5.003 0 0 1 0-7.07l1.49-1.49c-.01.82.12 1.64.4 2.42l-.47.48a2.982 2.982 0 0 0 0 4.24 2.982 2.982 0 0 0 4.24 0l3.53-3.53a2.982 2.982 0 0 0 0-4.24z"/>
-              </svg>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+            <div className="relative flex-grow">
+              <div className="absolute left-4 top-1/2 -translate-y-1/2">
+                <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                </svg>
+              </div>
               <input 
                 type="text" 
                 value={typeof window !== 'undefined' ? `${window.location.origin}/endorse/${user.uid}` : `/endorse/${user.uid}`}
                 readOnly 
-                className="w-full bg-white/20 border-2 border-white/30 rounded-lg py-3 pl-10 pr-4 text-white placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-white/50 transition-all cursor-pointer"
+                className="w-full bg-white/10 border border-white/20 rounded-lg py-3.5 pl-12 pr-4 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-white/30 focus:border-white/40 transition-all text-base"
               />
             </div>
             <button
-              onClick={() => {
-                const link = typeof window !== 'undefined' ? `${window.location.origin}/endorse/${user.uid}` : `/endorse/${user.uid}`;
-                navigator.clipboard.writeText(link);
-                // You could add a toast notification here
-              }}
-              className="bg-white text-navy font-bold py-3 px-8 rounded-lg w-full sm:w-auto hover:bg-light-blue/20 transition-colors duration-200 shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-navy focus:ring-white"
+              onClick={handleCopyLink}
+              className="bg-white text-navy-900 font-semibold py-3.5 px-8 rounded-lg hover:bg-sky-50 transition-colors duration-200 shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-navy-900 focus:ring-white flex items-center justify-center gap-2 min-h-[48px] text-base"
             >
-              <span>Copy Link</span>
-              <svg className="w-4 h-4 ml-2 inline" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
-              </svg>
+              {copied ? (
+                <>
+                  <Check className="w-5 h-5" />
+                  <span>Copied!</span>
+                </>
+              ) : (
+                <>
+                  <Copy className="w-5 h-5" />
+                  <span>Copy Link</span>
+                </>
+              )}
             </button>
           </div>
         </section>
 
         {/* Error Display */}
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-4 mb-6">
+          <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-4 mb-8">
             {error}
           </div>
         )}
 
         {/* Empty State Card */}
         {endorsements.length === 0 ? (
-          <section className="w-full min-w-0 bg-white/90 backdrop-blur-sm p-6 sm:p-8 rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-slate-200 text-center hover:shadow-lg transition-all duration-200">
-            <div className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 mx-auto bg-slate-100 rounded-full flex items-center justify-center mb-4 sm:mb-6">
-              <Star className="h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 text-slate-400" />
+          <section className="bg-white rounded-2xl shadow-xl border border-slate-100 p-8 lg:p-10 text-center hover:shadow-2xl transition-shadow duration-300">
+            <div className="w-20 h-20 mx-auto bg-sky-100 rounded-full flex items-center justify-center mb-6">
+              <Star className="h-10 w-10 text-slate-400" />
             </div>
-            <h2 className="text-xl sm:text-2xl font-bold text-navy px-4">No endorsements yet</h2>
-            <p className="text-sm sm:text-base text-gray-500 mt-2 max-w-md mx-auto px-4 break-words">Start building your professional reputation by sharing your endorsement link with colleagues and mentors.</p>
-            <div className="mt-8 bg-light-blue/20 border border-light-blue/50 rounded-xl p-6 max-w-sm mx-auto text-left">
-              <h3 className="font-bold text-navy mb-4">Share your link with:</h3>
-              <ul className="space-y-3 text-gray-700">
+            <h2 className="text-2xl font-bold text-navy-900 mb-4">No endorsements yet</h2>
+            <p className="text-slate-600 leading-relaxed max-w-md mx-auto mb-8">Start building your professional reputation by sharing your endorsement link with colleagues and mentors.</p>
+            <div className="bg-sky-50 border border-sky-100 rounded-xl p-6 max-w-md mx-auto text-left">
+              <h3 className="font-bold text-navy-900 mb-4">Share your link with:</h3>
+              <ul className="space-y-3 text-slate-700">
                 <li className="flex items-start">
-                  <div className="w-2 h-2 bg-light-blue rounded-full mr-3 mt-2 flex-shrink-0"></div>
+                  <div className="w-2 h-2 bg-sky-500 rounded-full mr-3 mt-2 flex-shrink-0"></div>
                   <span>Former managers and supervisors</span>
                 </li>
                 <li className="flex items-start">
-                  <div className="w-2 h-2 bg-light-blue rounded-full mr-3 mt-2 flex-shrink-0"></div>
+                  <div className="w-2 h-2 bg-sky-500 rounded-full mr-3 mt-2 flex-shrink-0"></div>
                   <span>Colleagues and teammates</span>
                 </li>
                 <li className="flex items-start">
-                  <div className="w-2 h-2 bg-light-blue rounded-full mr-3 mt-2 flex-shrink-0"></div>
+                  <div className="w-2 h-2 bg-sky-500 rounded-full mr-3 mt-2 flex-shrink-0"></div>
                   <span>Professors and academic advisors</span>
                 </li>
                 <li className="flex items-start">
-                  <div className="w-2 h-2 bg-light-blue rounded-full mr-3 mt-2 flex-shrink-0"></div>
+                  <div className="w-2 h-2 bg-sky-500 rounded-full mr-3 mt-2 flex-shrink-0"></div>
                   <span>Clients and collaborators</span>
                 </li>
               </ul>
@@ -182,30 +205,30 @@ export default function EndorsementsPage() {
           </section>
         ) : (
           /* Endorsements List */
-          <div className="space-y-3 sm:space-y-4 md:space-y-6">
+          <div className="space-y-6">
             {endorsements.map((endorsement: any, index: number) => (
-              <div key={index} className="w-full min-w-0 bg-white/90 backdrop-blur-sm rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-slate-200 p-4 sm:p-5 md:p-6 hover:shadow-lg transition-all duration-200 mb-3 sm:mb-0">
-                <div className="flex items-start justify-between mb-4">
+              <div key={index} className="bg-white rounded-2xl shadow-xl border border-slate-100 p-8 hover:shadow-2xl transition-shadow duration-300">
+                <div className="flex items-start justify-between mb-6">
                   <div className="flex-1">
-                    <h4 className="text-base sm:text-lg font-semibold text-gray-900 mb-2 break-words">{endorsement.skill}</h4>
-                    <div className="flex items-center text-gray-600 mb-2">
-                      <User className="h-4 w-4 mr-2" />
+                    <h4 className="text-xl font-bold text-navy-900 mb-3">{endorsement.skill}</h4>
+                    <div className="flex items-center flex-wrap gap-2 text-slate-600">
+                      <User className="h-4 w-4" />
                       <span className="font-medium">{endorsement.endorserName}</span>
                       {endorsement.endorserTitle && endorsement.endorserCompany && (
-                        <span className="text-gray-500 ml-2">• {endorsement.endorserTitle} at {endorsement.endorserCompany}</span>
+                        <span className="text-slate-500">• {endorsement.endorserTitle} at {endorsement.endorserCompany}</span>
                       )}
                       {endorsement.endorserTitle && !endorsement.endorserCompany && (
-                        <span className="text-gray-500 ml-2">• {endorsement.endorserTitle}</span>
+                        <span className="text-slate-500">• {endorsement.endorserTitle}</span>
                       )}
                       {!endorsement.endorserTitle && endorsement.endorserCompany && (
-                        <span className="text-gray-500 ml-2">• {endorsement.endorserCompany}</span>
+                        <span className="text-slate-500">• {endorsement.endorserCompany}</span>
                       )}
                       {endorsement.endorserLinkedIn && (
                         <a
                           href={endorsement.endorserLinkedIn}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="ml-2 text-blue-600 hover:text-blue-800"
+                          className="ml-2 text-navy-800 hover:text-navy-600 transition-colors"
                           title="View LinkedIn Profile"
                         >
                           <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
@@ -215,14 +238,14 @@ export default function EndorsementsPage() {
                       )}
                     </div>
                   </div>
-                  <div className="flex items-center">
-                    <Star className="h-5 w-5 text-yellow-500 fill-current" />
+                  <div className="flex items-center ml-4">
+                    <Star className="h-6 w-6 text-yellow-500 fill-current" />
                   </div>
                 </div>
                 
                 {endorsement.message && (
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <p className="text-gray-700 italic leading-relaxed">"{endorsement.message}"</p>
+                  <div className="bg-sky-50 border border-sky-100 rounded-xl p-6">
+                    <p className="text-slate-700 leading-relaxed">"{endorsement.message}"</p>
                   </div>
                 )}
               </div>
@@ -231,11 +254,11 @@ export default function EndorsementsPage() {
         )}
         
         {/* Footer */}
-        <footer className="text-center mt-12 text-gray-500 text-sm">
-          <p>Endorsements help employers understand your strengths and professional relationships.</p>
-          <p>Keep sharing your link to build a strong professional reputation!</p>
+        <footer className="text-center mt-12 lg:mt-16 pt-8 border-t border-slate-200">
+          <p className="text-slate-600 leading-relaxed">Endorsements help employers understand your strengths and professional relationships.</p>
+          <p className="text-slate-600 leading-relaxed mt-2">Keep sharing your link to build a strong professional reputation!</p>
         </footer>
-      </div>
-    </main>
+      </main>
+    </div>
   );
 }

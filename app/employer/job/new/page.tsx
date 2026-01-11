@@ -123,7 +123,7 @@ export default function NewJobPage() {
                 router.push('/home/employer');
               }
             }}
-            className="flex items-center text-navy font-semibold hover:text-blue-900 transition-colors duration-200 bg-light-blue/10 hover:bg-light-blue/20 px-3 sm:px-4 py-2 rounded-full w-fit min-h-[44px] text-sm sm:text-base"
+            className="flex items-center text-navy-800 font-semibold hover:text-blue-900 transition-colors duration-200 bg-sky-200/10 hover:bg-sky-200/20 px-3 sm:px-4 py-2 rounded-full w-fit min-h-[44px] text-sm sm:text-base"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
             <span className="hidden sm:inline">Back to Dashboard</span>
@@ -133,12 +133,12 @@ export default function NewJobPage() {
 
         {/* Page Header */}
         <section className="mb-4 sm:mb-6 md:mb-10 px-2 sm:px-0">
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-navy break-words">Post a Job</h1>
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-navy-800 break-words">Post a Job</h1>
         </section>
 
         <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4 md:space-y-6 lg:space-y-8">
           {/* Job Details Card */}
-          <section className="w-full min-w-0 bg-white/90 backdrop-blur-sm p-4 sm:p-6 md:p-8 rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-light-gray mb-3 sm:mb-0">
+          <section className="w-full min-w-0 bg-white/90 backdrop-blur-sm p-4 sm:p-6 md:p-8 rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-slate-200 mb-3 sm:mb-0">
             <div className="space-y-6">
               {/* Job Title */}
               <div className="relative">
@@ -147,11 +147,11 @@ export default function NewJobPage() {
                   type="text" 
                   value={title} 
                   onChange={(e) => setTitle(e.target.value)} 
-                  className="form-input w-full px-4 py-3 text-base border border-gray-300 rounded-lg bg-white focus:outline-none focus:border-navy focus:ring-2 sm:focus:ring-4 focus:ring-navy/10 transition-all duration-200 min-h-[44px]" 
+                  className="form-input w-full px-4 py-3 text-base border border-gray-300 rounded-lg bg-white focus:outline-none focus:border-navy-800 focus:ring-2 sm:focus:ring-4 focus:ring-navy/10 transition-all duration-200 min-h-[44px]" 
                   placeholder="e.g. Software Engineer" 
                   required 
                 />
-                <label htmlFor="title" className="absolute left-4 -top-2 text-sm text-navy bg-white px-1">Job Title *</label>
+                <label htmlFor="title" className="absolute left-4 -top-2 text-sm text-navy-800 bg-white px-1">Job Title *</label>
               </div>
 
               {/* Description */}
@@ -160,12 +160,12 @@ export default function NewJobPage() {
                   id="description" 
                   value={description} 
                   onChange={(e) => setDescription(e.target.value)} 
-                  className="form-input w-full px-4 py-3 text-base border border-gray-300 rounded-lg bg-white focus:outline-none focus:border-navy focus:ring-2 sm:focus:ring-4 focus:ring-navy/10 transition-all duration-200 resize-none min-h-[120px]" 
+                  className="form-input w-full px-4 py-3 text-base border border-gray-300 rounded-lg bg-white focus:outline-none focus:border-navy-800 focus:ring-2 sm:focus:ring-4 focus:ring-navy/10 transition-all duration-200 resize-none min-h-[120px]" 
                   rows={5}
                   placeholder="Describe the role, responsibilities, and what you're looking for..." 
                   required 
                 />
-                <label htmlFor="description" className="absolute left-4 -top-2 text-sm text-navy bg-white px-1">Description *</label>
+                <label htmlFor="description" className="absolute left-4 -top-2 text-sm text-navy-800 bg-white px-1">Description *</label>
               </div>
 
               {/* Location */}
@@ -187,7 +187,7 @@ export default function NewJobPage() {
                     id="employment" 
                     value={employment} 
                     onChange={(e) => setEmployment(e.target.value)} 
-                    className="form-input w-full px-4 py-3 border border-gray-300 rounded-lg bg-white focus:outline-none focus:border-navy focus:ring-4 focus:ring-navy/10 transition-all duration-200 appearance-none" 
+                    className="form-input w-full px-4 py-3 border border-gray-300 rounded-lg bg-white focus:outline-none focus:border-navy-800 focus:ring-4 focus:ring-navy/10 transition-all duration-200 appearance-none" 
                     required
                   >
                     <option value="FULL_TIME">Full-time</option>
@@ -195,7 +195,7 @@ export default function NewJobPage() {
                     <option value="CONTRACT">Contract</option>
                     <option value="INTERNSHIP">Internship</option>
                   </select>
-                  <label htmlFor="employment" className="absolute left-4 -top-2 text-sm text-navy bg-white px-1">Job Type *</label>
+                  <label htmlFor="employment" className="absolute left-4 -top-2 text-sm text-navy-800 bg-white px-1">Job Type *</label>
                   <i className="fa-solid fa-chevron-down absolute right-4 top-4 text-gray-400 pointer-events-none"></i>
                 </div>
 
@@ -204,14 +204,14 @@ export default function NewJobPage() {
                     id="workMode" 
                     value={workMode} 
                     onChange={(e) => setWorkMode(e.target.value)} 
-                    className="form-input w-full px-4 py-3 border border-gray-300 rounded-lg bg-white focus:outline-none focus:border-navy focus:ring-4 focus:ring-navy/10 transition-all duration-200 appearance-none" 
+                    className="form-input w-full px-4 py-3 border border-gray-300 rounded-lg bg-white focus:outline-none focus:border-navy-800 focus:ring-4 focus:ring-navy/10 transition-all duration-200 appearance-none" 
                     required
                   >
                     <option value="IN_PERSON">In-person</option>
                     <option value="HYBRID">Hybrid</option>
                     <option value="REMOTE">Remote</option>
                   </select>
-                  <label htmlFor="workMode" className="absolute left-4 -top-2 text-sm text-navy bg-white px-1">Work Mode *</label>
+                  <label htmlFor="workMode" className="absolute left-4 -top-2 text-sm text-navy-800 bg-white px-1">Work Mode *</label>
                   <i className="fa-solid fa-chevron-down absolute right-4 top-4 text-gray-400 pointer-events-none"></i>
                 </div>
               </div>
@@ -224,7 +224,7 @@ export default function NewJobPage() {
                     type="number" 
                     value={salaryMin} 
                     onChange={(e) => setSalaryMin(e.target.value)} 
-                    className="form-input w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg bg-white focus:outline-none focus:border-navy focus:ring-4 focus:ring-navy/10 transition-all duration-200" 
+                    className="form-input w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg bg-white focus:outline-none focus:border-navy-800 focus:ring-4 focus:ring-navy/10 transition-all duration-200" 
                     placeholder="50000" 
                     min="0" 
                   />
@@ -238,7 +238,7 @@ export default function NewJobPage() {
                     type="number" 
                     value={salaryMax} 
                     onChange={(e) => setSalaryMax(e.target.value)} 
-                    className="form-input w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg bg-white focus:outline-none focus:border-navy focus:ring-4 focus:ring-navy/10 transition-all duration-200" 
+                    className="form-input w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg bg-white focus:outline-none focus:border-navy-800 focus:ring-4 focus:ring-navy/10 transition-all duration-200" 
                     placeholder="80000" 
                     min="0" 
                   />
@@ -254,7 +254,7 @@ export default function NewJobPage() {
                   type="text" 
                   value={tags} 
                   onChange={(e) => setTags(e.target.value)} 
-                  className="form-input w-full px-4 py-3 text-base border border-gray-300 rounded-lg bg-white focus:outline-none focus:border-navy focus:ring-2 sm:focus:ring-4 focus:ring-navy/10 transition-all duration-200 min-h-[44px]" 
+                  className="form-input w-full px-4 py-3 text-base border border-gray-300 rounded-lg bg-white focus:outline-none focus:border-navy-800 focus:ring-2 sm:focus:ring-4 focus:ring-navy/10 transition-all duration-200 min-h-[44px]" 
                   placeholder="Enter tags separated by commas (e.g. React, JavaScript, Remote)" 
                 />
                 <label htmlFor="tags" className="absolute left-4 -top-2 text-sm text-gray-600 bg-white px-1">Tags</label>
@@ -263,8 +263,8 @@ export default function NewJobPage() {
           </section>
 
           {/* Candidate Requirements Card */}
-          <section className="w-full min-w-0 bg-white/90 backdrop-blur-sm p-4 sm:p-6 md:p-8 rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-light-gray mb-3 sm:mb-0">
-            <h3 className="text-base sm:text-lg md:text-xl font-bold text-navy mb-2">Candidate Requirements</h3>
+          <section className="w-full min-w-0 bg-white/90 backdrop-blur-sm p-4 sm:p-6 md:p-8 rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-slate-200 mb-3 sm:mb-0">
+            <h3 className="text-base sm:text-lg md:text-xl font-bold text-navy-800 mb-2">Candidate Requirements</h3>
             <p className="text-xs sm:text-sm text-gray-600 mb-4 sm:mb-6">These are used for filtering and matching.</p>
 
             <div className="space-y-6">
@@ -274,7 +274,7 @@ export default function NewJobPage() {
                   id="requiredGpa" 
                   value={requiredGpa} 
                   onChange={(e) => setRequiredGpa(e.target.value)} 
-                  className="form-input w-full px-4 py-3 border border-gray-300 rounded-lg bg-white focus:outline-none focus:border-navy focus:ring-4 focus:ring-navy/10 transition-all duration-200 appearance-none"
+                  className="form-input w-full px-4 py-3 border border-gray-300 rounded-lg bg-white focus:outline-none focus:border-navy-800 focus:ring-4 focus:ring-navy/10 transition-all duration-200 appearance-none"
                 >
                   <option value="">No GPA requirement</option>
                   <option value="2.5">2.5+</option>
@@ -309,7 +309,7 @@ export default function NewJobPage() {
             <button 
               type="submit" 
               disabled={loading} 
-              className="bg-navy text-white font-semibold py-2.5 sm:py-3 px-4 sm:px-6 md:px-8 rounded-lg hover:bg-blue-900 hover:shadow-md transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 min-h-[44px] w-full sm:w-auto text-sm sm:text-base"
+              className="bg-navy-800 text-white font-semibold py-2.5 sm:py-3 px-4 sm:px-6 md:px-8 rounded-lg hover:bg-blue-900 hover:shadow-md transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 min-h-[44px] w-full sm:w-auto text-sm sm:text-base"
             >
               <span>{loading ? 'Posting...' : 'Post Job'}</span>
               <i className={`fa-solid ${loading ? 'fa-spinner animate-spin' : 'fa-plus'}`}></i>

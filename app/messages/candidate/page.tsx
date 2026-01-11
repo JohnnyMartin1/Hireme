@@ -255,7 +255,7 @@ function CandidateMessagesPageContent() {
 
   if (loading || isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <p className="text-gray-600">Loading messages...</p>
@@ -270,7 +270,7 @@ function CandidateMessagesPageContent() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center">
           <p className="text-red-600 mb-4">{error}</p>
           <button 
@@ -285,30 +285,43 @@ function CandidateMessagesPageContent() {
   }
 
   return (
-    <main className="min-h-screen mobile-safe-top mobile-safe-bottom" style={{background: 'linear-gradient(180deg, #E6F0FF 0%, #F0F8FF 100%)'}}>
-      <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-4">
-        {/* Back to Dashboard Button - Hidden on mobile when in conversation view */}
-        <div className={`mb-4 md:mb-6 ${mobileView === 'conversation' ? 'hidden md:block' : ''}`}>
-          <Link 
+    <main className="min-h-screen bg-slate-50 mobile-safe-top mobile-safe-bottom">
+      {/* Header */}
+      <header className="sticky top-0 bg-white shadow-sm z-50 border-b border-slate-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
+          <Link
             href="/home/seeker"
-            className="inline-flex items-center text-navy font-semibold hover:text-blue-900 transition-all duration-300 bg-light-blue/10 hover:bg-light-blue/30 hover:shadow-md hover:scale-105 px-4 py-2 rounded-full group"
+            className="flex items-center gap-2 text-navy-800 hover:text-navy-600 transition-colors group px-3 py-2 rounded-lg hover:bg-sky-50 min-h-[44px]"
           >
-            <ArrowLeft className="h-4 w-4 mr-2 group-hover:-translate-x-1 transition-transform duration-300" />
-            Back to Dashboard
+            <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform duration-200" />
+            <span className="font-medium text-sm hidden sm:inline">Back to Dashboard</span>
+            <span className="font-medium text-sm sm:hidden">Back</span>
+          </Link>
+          <Link href="/" className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-navy-800 rounded-lg flex items-center justify-center shadow-md">
+              <svg width="20" height="20" viewBox="0 0 269 274" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M111.028 0C172.347 0.000238791 222.055 51.647 222.055 115.356C222.055 140.617 214.238 163.98 200.983 182.981L258.517 242.758L238.036 264.036L181.077 204.857C161.97 221.02 137.589 230.713 111.028 230.713C49.7092 230.713 2.76862e-05 179.066 0 115.356C0 51.6468 49.7092 0 111.028 0Z" fill="white"/>
+                <path d="M205.69 115.392C205.69 170.42 163.308 215.029 111.028 215.029C58.748 215.029 16.3666 170.42 16.3666 115.392C16.3666 60.3646 58.748 15.7559 111.028 15.7559C163.308 15.7559 205.69 60.3646 205.69 115.392Z" fill="#4F86F7"/>
+              </svg>
+            </div>
+            <span className="text-xl font-bold text-navy-900">HireMe</span>
           </Link>
         </div>
+      </header>
+
+      <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-4">
         
         {/* Mobile: Show list OR conversation, Desktop: Show both */}
         <div className="hidden md:grid md:grid-cols-12 md:gap-6 h-[calc(100vh-120px)]">
           
           {/* Thread List Sidebar */}
-          <div className="col-span-12 md:col-span-4 lg:col-span-3 bg-white rounded-2xl border border-slate-200/60 shadow-sm overflow-hidden flex flex-col">
+          <div className="col-span-12 md:col-span-4 lg:col-span-3 bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden flex flex-col">
             
             {/* Thread List Header */}
-            <div className="p-6 border-b border-slate-200/60">
+            <div className="p-6 border-b border-slate-100">
               <div className="mb-4">
-                <h1 className="text-2xl font-bold text-slate-900">Messages</h1>
-                <p className="text-sm text-slate-500">Your conversations with employers.</p>
+                <h1 className="text-2xl font-bold text-navy-900">Messages</h1>
+                <p className="text-sm text-slate-600">Your conversations with employers.</p>
               </div>
               
               {/* Search Bar */}
@@ -319,7 +332,7 @@ function CandidateMessagesPageContent() {
                   placeholder="Search messages"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-navy/30 focus:border-transparent text-sm"
+                  className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-sky-200 focus:border-sky-400 text-sm text-navy-900 placeholder-slate-400"
                 />
               </div>
               
@@ -334,7 +347,7 @@ function CandidateMessagesPageContent() {
                     onClick={() => setActiveFilter(filter.key as any)}
                     className={`px-3 py-1.5 text-xs font-medium rounded-full transition-colors ${
                       activeFilter === filter.key
-                        ? 'bg-navy text-white'
+                        ? 'bg-navy-800 text-white'
                         : 'text-slate-600 hover:bg-slate-100'
                     }`}
                   >
@@ -361,7 +374,7 @@ function CandidateMessagesPageContent() {
                       onClick={() => handleThreadSelect(threadData)}
                       className={`p-4 rounded-lg cursor-pointer transition-colors ${
                         selectedThreadId === threadData.thread.id
-                          ? 'bg-light-blue/20 border border-light-blue/30'
+                          ? 'bg-sky-200/20 border border-light-blue/30'
                           : 'hover:bg-slate-50'
                       }`}
                     >
@@ -428,12 +441,12 @@ function CandidateMessagesPageContent() {
           </div>
           
           {/* Conversation Pane */}
-          <div className="col-span-12 md:col-span-8 lg:col-span-9 bg-white rounded-2xl border border-slate-200/60 shadow-sm overflow-hidden flex flex-col">
+          <div className="col-span-12 md:col-span-8 lg:col-span-9 bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden flex flex-col">
             
             {selectedThread ? (
               <>
                 {/* Conversation Header */}
-                <div className="p-6 border-b border-slate-200/60">
+                <div className="p-6 border-b border-slate-100">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-4">
                       <div className="w-12 h-12 bg-slate-200 rounded-full flex items-center justify-center">
@@ -448,7 +461,7 @@ function CandidateMessagesPageContent() {
                         )}
                       </div>
                       <div>
-                        <h2 className="text-lg font-semibold text-slate-900">
+                        <h2 className="text-lg font-semibold text-navy-900">
                           {selectedThread.otherParticipant 
                             ? `${selectedThread.otherParticipant.firstName || ''} ${selectedThread.otherParticipant.lastName || ''}`.trim() || 'Unknown Employer'
                             : 'Unknown Employer'
@@ -530,7 +543,7 @@ function CandidateMessagesPageContent() {
                             {/* Message Content */}
                             <div className={`px-4 py-3 rounded-2xl ${
                               message.senderId === user?.uid
-                                ? 'bg-navy text-white'
+                                ? 'bg-navy-800 text-white'
                                 : 'bg-slate-100 text-slate-900'
                             }`}>
                               <p className="text-sm">{message.content}</p>
@@ -549,7 +562,7 @@ function CandidateMessagesPageContent() {
                 </div>
                 
                 {/* Message Composer */}
-                <div className="p-6 border-t border-slate-200/60">
+                <div className="p-6 border-t border-slate-100">
                   <div className="flex items-end space-x-3">
                     <button className="p-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">
                       <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -562,7 +575,7 @@ function CandidateMessagesPageContent() {
                         onChange={(e) => setNewMessage(e.target.value)}
                         onKeyPress={handleKeyPress}
                         placeholder="Send a message..."
-                        className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-navy/30 focus:border-transparent resize-none"
+                        className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-sky-200 focus:border-sky-400 resize-none text-navy-900 placeholder-slate-400"
                         rows={1}
                         disabled={isSending}
                       />
@@ -570,7 +583,7 @@ function CandidateMessagesPageContent() {
                     <button
                       onClick={handleSendMessage}
                       disabled={!newMessage.trim() || isSending}
-                      className="bg-navy text-white px-4 py-3 rounded-lg hover:bg-blue-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
+                      className="bg-navy-800 text-white px-4 py-3 rounded-lg hover:bg-navy-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2 shadow-md"
                     >
                       {isSending ? (
                         <Loader2 className="h-5 w-5 animate-spin" />
@@ -595,12 +608,12 @@ function CandidateMessagesPageContent() {
 
         {/* Mobile: Thread List View */}
         {mobileView === 'list' && (
-          <div className="md:hidden bg-white rounded-2xl border border-slate-200/60 shadow-sm overflow-hidden flex flex-col" style={{height: 'calc(100vh - 120px)'}}>
+          <div className="md:hidden bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden flex flex-col" style={{height: 'calc(100vh - 120px)'}}>
             {/* Thread List Header */}
-            <div className="p-4 sm:p-6 border-b border-slate-200/60">
+            <div className="p-4 sm:p-6 border-b border-slate-100">
               <div className="mb-4">
-                <h1 className="text-xl sm:text-2xl font-bold text-slate-900">Messages</h1>
-                <p className="text-xs sm:text-sm text-slate-500">Your conversations with employers.</p>
+                <h1 className="text-xl sm:text-2xl font-bold text-navy-900">Messages</h1>
+                <p className="text-xs sm:text-sm text-slate-600">Your conversations with employers.</p>
               </div>
               
               {/* Search Bar */}
@@ -611,7 +624,7 @@ function CandidateMessagesPageContent() {
                   placeholder="Search messages"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 text-base border border-slate-200 rounded-lg focus:ring-2 focus:ring-navy/30 focus:border-transparent"
+                  className="w-full pl-10 pr-4 py-2.5 text-base border border-slate-200 rounded-lg focus:ring-2 focus:ring-sky-200 focus:border-sky-400 text-navy-900 placeholder-slate-400"
                 />
               </div>
               
@@ -626,7 +639,7 @@ function CandidateMessagesPageContent() {
                     onClick={() => setActiveFilter(filter.key as any)}
                     className={`px-4 py-2 text-sm font-medium rounded-full transition-colors min-h-[44px] ${
                       activeFilter === filter.key
-                        ? 'bg-navy text-white'
+                        ? 'bg-navy-800 text-white'
                         : 'text-slate-600 bg-slate-100'
                     }`}
                   >
@@ -653,7 +666,7 @@ function CandidateMessagesPageContent() {
                       onClick={() => handleThreadSelect(threadData)}
                       className={`p-4 rounded-lg cursor-pointer transition-colors min-h-[72px] ${
                         selectedThreadId === threadData.thread.id
-                          ? 'bg-light-blue/20 border border-light-blue/30'
+                          ? 'bg-sky-200/20 border border-light-blue/30'
                           : 'hover:bg-slate-50 active:bg-slate-100'
                       }`}
                     >
@@ -722,13 +735,13 @@ function CandidateMessagesPageContent() {
 
         {/* Mobile: Conversation View */}
         {mobileView === 'conversation' && selectedThread && (
-          <div className="md:hidden bg-white rounded-2xl border border-slate-200/60 shadow-sm overflow-hidden flex flex-col" style={{height: 'calc(100vh - 120px)'}}>
+          <div className="md:hidden bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden flex flex-col" style={{height: 'calc(100vh - 120px)'}}>
             {/* Conversation Header with Back Button */}
-            <div className="p-4 sm:p-6 border-b border-slate-200/60">
+            <div className="p-4 sm:p-6 border-b border-slate-100">
               <div className="flex items-center justify-between mb-4">
                 <button
                   onClick={() => setMobileView('list')}
-                  className="flex items-center text-navy font-semibold hover:text-blue-900 transition-colors min-h-[44px] pr-2"
+                  className="flex items-center text-navy-800 font-semibold hover:text-blue-900 transition-colors min-h-[44px] pr-2"
                 >
                   <ArrowLeft className="h-5 w-5 mr-2" />
                   <span className="text-sm">Back</span>
@@ -756,7 +769,7 @@ function CandidateMessagesPageContent() {
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h2 className="text-lg font-semibold text-slate-900 truncate">
+                  <h2 className="text-lg font-semibold text-navy-900 truncate">
                     {selectedThread.otherParticipant 
                       ? `${selectedThread.otherParticipant.firstName || ''} ${selectedThread.otherParticipant.lastName || ''}`.trim() || 'Unknown Employer'
                       : 'Unknown Employer'
@@ -823,7 +836,7 @@ function CandidateMessagesPageContent() {
                         {/* Message Content */}
                         <div className={`px-4 py-3 rounded-2xl ${
                           message.senderId === user?.uid
-                            ? 'bg-navy text-white'
+                            ? 'bg-navy-800 text-white'
                             : 'bg-slate-100 text-slate-900'
                         }`}>
                           <p className="text-sm sm:text-base break-words">{message.content}</p>
@@ -842,7 +855,7 @@ function CandidateMessagesPageContent() {
             </div>
             
             {/* Message Composer */}
-            <div className="p-4 sm:p-6 border-t border-slate-200/60 bg-white">
+            <div className="p-4 sm:p-6 border-t border-slate-100 bg-white">
               <div className="flex items-end space-x-2 sm:space-x-3">
                 <div className="flex-1">
                   <textarea
@@ -850,7 +863,7 @@ function CandidateMessagesPageContent() {
                     onChange={(e) => setNewMessage(e.target.value)}
                     onKeyPress={handleKeyPress}
                     placeholder="Send a message..."
-                    className="w-full px-4 py-3 text-base border border-slate-200 rounded-lg focus:ring-2 focus:ring-navy/30 focus:border-transparent resize-none"
+                    className="w-full px-4 py-3 text-base border border-slate-200 rounded-lg focus:ring-2 focus:ring-sky-200 focus:border-sky-400 resize-none text-navy-900 placeholder-slate-400"
                     rows={1}
                     disabled={isSending}
                   />
@@ -858,7 +871,7 @@ function CandidateMessagesPageContent() {
                 <button
                   onClick={handleSendMessage}
                   disabled={!newMessage.trim() || isSending}
-                  className="bg-navy text-white px-4 py-3 rounded-lg hover:bg-blue-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center min-h-[48px] min-w-[48px]"
+                  className="bg-navy-800 text-white px-4 py-3 rounded-lg hover:bg-navy-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center min-h-[48px] min-w-[48px] shadow-md"
                 >
                   {isSending ? (
                     <Loader2 className="h-5 w-5 animate-spin" />
@@ -873,14 +886,14 @@ function CandidateMessagesPageContent() {
 
         {/* Mobile: Empty State */}
         {mobileView === 'conversation' && !selectedThread && (
-          <div className="md:hidden bg-white rounded-2xl border border-slate-200/60 shadow-sm flex flex-col items-center justify-center" style={{height: 'calc(100vh - 120px)'}}>
+          <div className="md:hidden bg-white rounded-2xl shadow-xl border border-slate-100 flex flex-col items-center justify-center" style={{height: 'calc(100vh - 120px)'}}>
             <div className="text-center px-4">
               <MessageSquare className="h-16 w-16 text-slate-300 mx-auto mb-4" />
               <h3 className="text-lg font-semibold text-slate-900 mb-2">Select a conversation</h3>
               <p className="text-slate-500 mb-4">Choose a conversation to start messaging</p>
               <button
                 onClick={() => setMobileView('list')}
-                className="bg-navy text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-900 transition-colors min-h-[48px]"
+                className="bg-navy-800 text-white px-6 py-3 rounded-lg font-semibold hover:bg-navy-700 transition-colors min-h-[48px] shadow-md"
               >
                 View Conversations
               </button>

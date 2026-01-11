@@ -1,0 +1,1369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HireMe - The Complete Hiring System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      window.FontAwesomeConfig = {
+        autoReplaceSvg: 'nest'
+      };
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              navy: {
+                50: '#f0f4f8',
+                100: '#d9e2ec',
+                200: '#bcccdc',
+                300: '#9fb3c8',
+                400: '#829ab1',
+                500: '#627d98',
+                600: '#486581',
+                700: '#334e68',
+                800: '#243b53',
+                900: '#102a43',
+                950: '#061523',
+              },
+              sky: {
+                50: '#f0f9ff',
+                100: '#e0f2fe',
+                200: '#bae6fd',
+                300: '#7dd3fc',
+                400: '#38bdf8',
+                500: '#0ea5e9',
+                600: '#0284c7',
+                700: '#0369a1',
+                800: '#075985',
+                900: '#0c4a6e',
+              }
+            }
+          }
+        }
+      }
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+      ::-webkit-scrollbar { display: none; }
+      * {
+        font-family: 'Inter', sans-serif;
+        box-sizing: border-box;
+      }
+      body { margin: 0; }
+
+      @keyframes float {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-20px); }
+      }
+
+      @keyframes slideLeft {
+        0% { transform: translateX(0); }
+        100% { transform: translateX(-50%); }
+      }
+
+      @keyframes slideRight {
+        0% { transform: translateX(-50%); }
+        100% { transform: translateX(0); }
+      }
+
+      @keyframes workflowPulse {
+        0%, 100% {
+          transform: scale(1);
+          box-shadow: 0 0 20px rgba(186, 230, 253, 0.4);
+        }
+        50% {
+          transform: scale(1.12);
+          box-shadow: 0 0 40px rgba(186, 230, 253, 0.8);
+        }
+      }
+
+      @keyframes pulseRing {
+        0% {
+          transform: translate(-50%, -50%) scale(1);
+          opacity: 0.8;
+        }
+        100% {
+          transform: translate(-50%, -50%) scale(1.6);
+          opacity: 0;
+        }
+      }
+
+      .animate-float { animation: float 6s ease-in-out infinite; }
+      .skyline-scroll { animation: slideLeft 60s linear infinite; }
+      .skyline-scroll-reverse { animation: slideRight 80s linear infinite; }
+      
+      .gradient-bg { background: linear-gradient(135deg, #102a43 0%, #243b53 100%); }
+      .text-gradient {
+        background: linear-gradient(135deg, #102a43 0%, #334e68 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      .card-hover {
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      .card-hover:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 24px 48px rgba(16, 42, 67, 0.12);
+      }
+
+      .orbit-container {
+        position: relative;
+        width: 400px;
+        height: 400px;
+      }
+
+      .orbit-node {
+        position: absolute;
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.5s ease;
+      }
+
+      .orbit-node-inner {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        height: 100%;
+        border-radius: 9999px;
+      }
+
+      .orbit-node.is-active {
+        z-index: 15;
+      }
+
+      .orbit-node.is-active .orbit-node-inner {
+        animation: workflowPulse 2s ease-in-out infinite;
+      }
+
+      .orbit-node.is-active .orbit-node-inner::after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        border: 2px solid rgba(186, 230, 253, 0.6);
+        transform: translate(-50%, -50%);
+        animation: pulseRing 2s ease-out infinite;
+      }
+
+      .workflow-step {
+        opacity: 0.4;
+        transition: opacity 0.35s ease;
+      }
+
+      .workflow-step.is-active {
+        opacity: 1;
+      }
+
+      .workflow-step.is-active h3 {
+        color: rgb(15, 23, 42);
+      }
+
+      .workflow-step.is-active .w-12.h-12 {
+        box-shadow: 0 0 18px rgba(186, 230, 253, 0.7);
+      }
+
+      .hireme-highlight {
+        background-color: rgba(186, 230, 253, 0.2);
+        position: relative;
+      }
+
+      .hireme-highlight::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border: 2px solid #bae6fd;
+        pointer-events: none;
+        opacity: 0.5;
+      }
+
+      .building-primary { background: linear-gradient(to top, #243b53, #486581); }
+      .building-secondary { background: linear-gradient(to top, #bcccdc, #d9e2ec); }
+      .building-accent { background: linear-gradient(to top, #627d98, #829ab1); }
+
+      /* Enhanced focus states */
+      a:focus, button:focus {
+        outline: 2px solid #bae6fd;
+        outline-offset: 2px;
+        border-radius: 4px;
+      }
+
+      /* Smooth scroll */
+      html {
+        scroll-behavior: smooth;
+      }
+    </style>
+  </head>
+
+  <body class="bg-slate-50">
+    <!-- Header -->
+    <header id="header" class="fixed top-0 left-0 right-0 bg-white/95 backdrop-blur-md shadow-sm z-50 border-b border-slate-100">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+          <div class="w-10 h-10 bg-navy-800 rounded-lg flex items-center justify-center shadow-md">
+            <i class="fa-solid fa-users text-white text-xl"></i>
+          </div>
+          <span class="text-2xl font-bold text-navy-900">HireMe</span>
+        </div>
+        <nav class="hidden md:flex items-center space-x-6 lg:space-x-8">
+          <a href="#features" class="text-slate-600 hover:text-navy-700 font-medium transition-colors duration-200">Features</a>
+          <a href="#workflows" class="text-slate-600 hover:text-navy-700 font-medium transition-colors duration-200">Workflows</a>
+          <a href="#personas" class="text-slate-600 hover:text-navy-700 font-medium transition-colors duration-200">For Teams</a>
+          <a href="#comparison" class="text-slate-600 hover:text-navy-700 font-medium transition-colors duration-200">Comparison</a>
+          <a href="#testimonials" class="text-slate-600 hover:text-navy-700 font-medium transition-colors duration-200">Customers</a>
+        </nav>
+        <div class="flex items-center space-x-3 lg:space-x-4">
+          <a href="#" class="text-slate-700 hover:text-navy-700 font-medium transition-colors duration-200">Log In</a>
+          <a href="#" class="bg-navy-800 text-white px-6 py-2.5 rounded-xl font-semibold hover:bg-navy-700 hover:shadow-lg transition-all duration-300">Sign Up</a>
+        </div>
+      </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section id="hero" class="relative pt-32 pb-24 lg:pb-32 overflow-hidden bg-sky-50">
+      <div class="absolute inset-0 bg-gradient-to-br from-sky-50 via-white to-sky-100"></div>
+      
+      <!-- Skyline Animation (Background) -->
+      <div class="absolute bottom-0 left-0 right-0 h-64 overflow-hidden opacity-30">
+        <div id="skyline-1" class="skyline-scroll flex absolute bottom-0">
+          <div class="flex space-x-8 pr-8 items-end">
+            <div class="w-16 h-48 bg-navy-300 rounded-t-sm"></div>
+            <div class="w-12 h-32 bg-sky-200 rounded-t-sm"></div>
+            <div class="w-20 h-56 bg-navy-400 rounded-t-sm"></div>
+            <div class="w-14 h-40 bg-sky-300 rounded-t-sm"></div>
+            <div class="w-18 h-44 bg-navy-200 rounded-t-sm"></div>
+            <div class="w-16 h-36 bg-sky-200 rounded-t-sm"></div>
+            <div class="w-12 h-42 bg-navy-300 rounded-t-sm"></div>
+            <div class="w-20 h-52 bg-sky-300 rounded-t-sm"></div>
+            <div class="w-14 h-46 bg-navy-200 rounded-t-sm"></div>
+            <div class="w-16 h-38 bg-sky-200 rounded-t-sm"></div>
+            <div class="w-12 h-48 bg-navy-400 rounded-t-sm"></div>
+            <div class="w-18 h-42 bg-sky-300 rounded-t-sm"></div>
+          </div>
+          <div class="flex space-x-8 items-end">
+            <div class="w-16 h-48 bg-navy-300 rounded-t-sm"></div>
+            <div class="w-12 h-32 bg-sky-200 rounded-t-sm"></div>
+            <div class="w-20 h-56 bg-navy-400 rounded-t-sm"></div>
+            <div class="w-14 h-40 bg-sky-300 rounded-t-sm"></div>
+            <div class="w-18 h-44 bg-navy-200 rounded-t-sm"></div>
+            <div class="w-16 h-36 bg-sky-200 rounded-t-sm"></div>
+            <div class="w-12 h-42 bg-navy-300 rounded-t-sm"></div>
+            <div class="w-20 h-52 bg-sky-300 rounded-t-sm"></div>
+            <div class="w-14 h-46 bg-navy-200 rounded-t-sm"></div>
+            <div class="w-16 h-38 bg-sky-200 rounded-t-sm"></div>
+            <div class="w-12 h-48 bg-navy-400 rounded-t-sm"></div>
+            <div class="w-18 h-42 bg-sky-300 rounded-t-sm"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Foreground Skyline -->
+      <div class="absolute bottom-0 left-0 right-0 h-48 overflow-hidden opacity-40">
+        <div id="skyline-2" class="skyline-scroll-reverse flex absolute bottom-0">
+          <div class="flex space-x-6 pr-6 items-end">
+            <div class="w-14 h-28 bg-navy-200 rounded-t-sm"></div>
+            <div class="w-10 h-24 bg-sky-200 rounded-t-sm"></div>
+            <div class="w-16 h-36 bg-navy-300 rounded-t-sm"></div>
+            <div class="w-12 h-26 bg-sky-300 rounded-t-sm"></div>
+            <div class="w-14 h-32 bg-navy-200 rounded-t-sm"></div>
+            <div class="w-10 h-22 bg-sky-200 rounded-t-sm"></div>
+            <div class="w-16 h-34 bg-navy-300 rounded-t-sm"></div>
+            <div class="w-12 h-28 bg-sky-300 rounded-t-sm"></div>
+            <div class="w-14 h-30 bg-navy-200 rounded-t-sm"></div>
+            <div class="w-10 h-24 bg-sky-200 rounded-t-sm"></div>
+          </div>
+          <div class="flex space-x-6 items-end">
+            <div class="w-14 h-28 bg-navy-200 rounded-t-sm"></div>
+            <div class="w-10 h-24 bg-sky-200 rounded-t-sm"></div>
+            <div class="w-16 h-36 bg-navy-300 rounded-t-sm"></div>
+            <div class="w-12 h-26 bg-sky-300 rounded-t-sm"></div>
+            <div class="w-14 h-32 bg-navy-200 rounded-t-sm"></div>
+            <div class="w-10 h-22 bg-sky-200 rounded-t-sm"></div>
+            <div class="w-16 h-34 bg-navy-300 rounded-t-sm"></div>
+            <div class="w-12 h-28 bg-sky-300 rounded-t-sm"></div>
+            <div class="w-14 h-30 bg-navy-200 rounded-t-sm"></div>
+            <div class="w-10 h-24 bg-sky-200 rounded-t-sm"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 h-full flex items-center">
+        <div class="max-w-3xl">
+          <h1 class="text-5xl sm:text-6xl lg:text-7xl font-bold text-navy-900 leading-tight mb-6 tracking-tight">
+            The Complete Hiring System That
+            <span class="block text-navy-600 mt-2">Closes The Loop</span>
+          </h1>
+          <p class="text-lg sm:text-xl lg:text-2xl text-slate-600 mb-10 leading-relaxed">
+            HireMe isn't just another job board. It's an end-to-end hiring
+            platform that connects sourcing, screening, collaboration, and
+            onboarding into one seamless workflow.
+          </p>
+          <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+            <a href="#" class="bg-navy-800 text-white px-10 py-4 rounded-xl font-semibold text-lg hover:bg-navy-700 hover:shadow-2xl transition-all duration-300 flex items-center space-x-2 shadow-lg">
+              <span>Get Started</span>
+              <i class="fa-solid fa-arrow-right"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Personas Section -->
+    <section id="personas" class="py-24 lg:py-32 bg-white">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16 lg:mb-20">
+          <h2 class="text-4xl sm:text-5xl lg:text-6xl font-bold text-navy-900 mb-6 tracking-tight">Built For Everyone</h2>
+          <p class="text-lg sm:text-xl lg:text-2xl text-slate-600 max-w-3xl mx-auto leading-relaxed">
+            Whether you're a solo recruiter, a growing startup, or an enterprise HR team.
+          </p>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+          <!-- Card 1 -->
+          <div id="persona-card-1" class="bg-white border-2 border-slate-100 rounded-3xl p-8 lg:p-10 card-hover text-center shadow-sm">
+            <div class="w-24 h-24 bg-gradient-to-br from-sky-100 to-sky-50 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-sm">
+              <i class="fa-solid fa-user-tie text-navy-800 text-4xl"></i>
+            </div>
+            <h3 class="text-2xl lg:text-3xl font-bold text-navy-900 mb-4">Candidates</h3>
+            <p class="text-slate-600 mb-6 leading-relaxed">
+              Manage multiple roles, track candidate pipelines, and collaborate with hiring managers.
+            </p>
+            <ul class="text-left space-y-3 mb-8">
+              <li class="flex items-center text-slate-700">
+                <i class="fa-solid fa-check text-navy-600 mr-3 text-lg"></i>
+                <span>Pipeline management</span>
+              </li>
+              <li class="flex items-center text-slate-700">
+                <i class="fa-solid fa-check text-navy-600 mr-3 text-lg"></i>
+                <span>Candidate tracking</span>
+              </li>
+              <li class="flex items-center text-slate-700">
+                <i class="fa-solid fa-check text-navy-600 mr-3 text-lg"></i>
+                <span>Automated workflows</span>
+              </li>
+            </ul>
+            <a href="/auth/signup/seeker" class="inline-block bg-navy-50 text-navy-800 px-6 py-3 rounded-xl font-semibold hover:bg-navy-100 transition-all duration-200">Learn More</a>
+          </div>
+
+          <!-- Card 2 -->
+          <div id="persona-card-2" class="bg-white border-2 border-slate-100 rounded-3xl p-8 lg:p-10 card-hover text-center shadow-sm">
+            <div class="w-24 h-24 bg-gradient-to-br from-sky-100 to-sky-50 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-sm">
+              <i class="fa-solid fa-building text-navy-800 text-4xl"></i>
+            </div>
+            <h3 class="text-2xl lg:text-3xl font-bold text-navy-900 mb-4">Employer</h3>
+            <p class="text-slate-600 mb-6 leading-relaxed">
+              Review candidates, provide feedback, and make hiring decisions with full context.
+            </p>
+            <ul class="text-left space-y-3 mb-8">
+              <li class="flex items-center text-slate-700">
+                <i class="fa-solid fa-check text-navy-600 mr-3 text-lg"></i>
+                <span>Shared scorecards</span>
+              </li>
+              <li class="flex items-center text-slate-700">
+                <i class="fa-solid fa-check text-navy-600 mr-3 text-lg"></i>
+                <span>Real-time updates</span>
+              </li>
+              <li class="flex items-center text-slate-700">
+                <i class="fa-solid fa-check text-navy-600 mr-3 text-lg"></i>
+                <span>Collaborative feedback</span>
+              </li>
+            </ul>
+            <a href="/auth/signup/employer/company" class="inline-block bg-navy-50 text-navy-800 px-6 py-3 rounded-xl font-semibold hover:bg-navy-100 transition-all duration-200">Learn More</a>
+          </div>
+
+          <!-- Card 3 -->
+          <div id="persona-card-3" class="bg-white border-2 border-slate-100 rounded-3xl p-8 lg:p-10 card-hover text-center shadow-sm md:col-span-2 lg:col-span-1">
+            <div class="w-24 h-24 bg-gradient-to-br from-sky-100 to-sky-50 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-sm">
+              <i class="fa-solid fa-chart-line text-navy-800 text-4xl"></i>
+            </div>
+            <h3 class="text-2xl lg:text-3xl font-bold text-navy-900 mb-4">Recruiters</h3>
+            <p class="text-slate-600 mb-6 leading-relaxed">
+              Get visibility into every hiring metric that matters. Track performance and identify bottlenecks.
+            </p>
+            <ul class="text-left space-y-3 mb-8">
+              <li class="flex items-center text-slate-700">
+                <i class="fa-solid fa-check text-navy-600 mr-3 text-lg"></i>
+                <span>Advanced analytics</span>
+              </li>
+              <li class="flex items-center text-slate-700">
+                <i class="fa-solid fa-check text-navy-600 mr-3 text-lg"></i>
+                <span>Compliance tracking</span>
+              </li>
+              <li class="flex items-center text-slate-700">
+                <i class="fa-solid fa-check text-navy-600 mr-3 text-lg"></i>
+                <span>Team performance</span>
+              </li>
+            </ul>
+            <a href="/auth/signup/employer/recruiter" class="inline-block bg-navy-50 text-navy-800 px-6 py-3 rounded-xl font-semibold hover:bg-navy-100 transition-all duration-200">Learn More</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Workflows Section -->
+    <section id="workflows" class="py-24 lg:py-32 bg-slate-50 relative overflow-hidden">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16 lg:mb-24">
+          <h2 class="text-4xl sm:text-5xl lg:text-6xl font-bold text-navy-900 mb-6 tracking-tight">Flexible Hiring Workflows</h2>
+          <p class="text-lg sm:text-xl lg:text-2xl text-slate-600 max-w-3xl mx-auto leading-relaxed">
+            HireMe isn't a job board. It's a closed-loop hiring system where everything connects.
+          </p>
+        </div>
+        <div class="flex flex-col lg:flex-row items-center justify-between gap-12">
+          <div id="workflow-description" class="w-full lg:w-1/2 space-y-6">
+            <div id="step-source" class="workflow-step">
+              <div class="flex items-start space-x-4 p-5 rounded-2xl hover:bg-white hover:shadow-md transition-all duration-300">
+                <div class="w-14 h-14 bg-gradient-to-br from-sky-100 to-sky-50 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm">
+                  <i class="fa-solid fa-search text-navy-700 text-xl"></i>
+                </div>
+                <div>
+                  <h3 class="text-xl lg:text-2xl font-bold text-navy-900 mb-3">Source Candidates</h3>
+                  <p class="text-slate-600 leading-relaxed">
+                    Discover talent from multiple channels. AI-powered matching ensures you find the right people fast.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div id="step-screen" class="workflow-step">
+              <div class="flex items-start space-x-4 p-5 rounded-2xl hover:bg-white hover:shadow-md transition-all duration-300">
+                <div class="w-14 h-14 bg-gradient-to-br from-sky-100 to-sky-50 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm">
+                  <i class="fa-solid fa-filter text-navy-700 text-xl"></i>
+                </div>
+                <div>
+                  <h3 class="text-xl lg:text-2xl font-bold text-navy-900 mb-3">Screen & Qualify</h3>
+                  <p class="text-slate-600 leading-relaxed">
+                    Automated resume parsing and skills assessment filter out unqualified candidates.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div id="step-interview" class="workflow-step">
+              <div class="flex items-start space-x-4 p-5 rounded-2xl hover:bg-white hover:shadow-md transition-all duration-300">
+                <div class="w-14 h-14 bg-gradient-to-br from-sky-100 to-sky-50 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm">
+                  <i class="fa-solid fa-calendar-check text-navy-700 text-xl"></i>
+                </div>
+                <div>
+                  <h3 class="text-xl lg:text-2xl font-bold text-navy-900 mb-3">Interview & Evaluate</h3>
+                  <p class="text-slate-600 leading-relaxed">
+                    Structured interview guides and shared scorecards keep everyone aligned.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div id="step-decide" class="workflow-step">
+              <div class="flex items-start space-x-4 p-5 rounded-2xl hover:bg-white hover:shadow-md transition-all duration-300">
+                <div class="w-14 h-14 bg-gradient-to-br from-sky-100 to-sky-50 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm">
+                  <i class="fa-solid fa-check-circle text-navy-700 text-xl"></i>
+                </div>
+                <div>
+                  <h3 class="text-xl lg:text-2xl font-bold text-navy-900 mb-3">Make Decisions</h3>
+                  <p class="text-slate-600 leading-relaxed">
+                    Collaborative decision-making with transparent scoring. Compare candidates side-by-side.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div id="step-onboard" class="workflow-step">
+              <div class="flex items-start space-x-4 p-5 rounded-2xl hover:bg-white hover:shadow-md transition-all duration-300">
+                <div class="w-14 h-14 bg-gradient-to-br from-sky-100 to-sky-50 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm">
+                  <i class="fa-solid fa-rocket text-navy-700 text-xl"></i>
+                </div>
+                <div>
+                  <h3 class="text-xl lg:text-2xl font-bold text-navy-900 mb-3">Onboard & Engage</h3>
+                  <p class="text-slate-600 leading-relaxed">
+                    Send digital offer letters, automate paperwork, and create personalized onboarding experiences.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div id="step-measure" class="workflow-step">
+              <div class="flex items-start space-x-4 p-5 rounded-2xl hover:bg-white hover:shadow-md transition-all duration-300">
+                <div class="w-14 h-14 bg-gradient-to-br from-sky-100 to-sky-50 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm">
+                  <i class="fa-solid fa-chart-bar text-navy-700 text-xl"></i>
+                </div>
+                <div>
+                  <h3 class="text-xl lg:text-2xl font-bold text-navy-900 mb-3">Measure & Improve</h3>
+                  <p class="text-slate-600 leading-relaxed">
+                    Track hiring metrics and feedback to continuously improve sourcing, screening, and interview quality.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="w-full lg:w-1/2 flex items-center justify-center">
+            <div id="workflow-wheel" class="relative w-[400px] h-[400px] lg:w-[500px] lg:h-[500px]">
+              <div class="absolute inset-0 flex items-center justify-center">
+                <div class="w-32 h-32 bg-gradient-to-br from-navy-800 to-navy-900 rounded-full flex items-center justify-center shadow-2xl z-10">
+                  <i class="fa-solid fa-users text-white text-4xl"></i>
+                </div>
+              </div>
+              <div class="absolute inset-0 border-2 border-dashed border-sky-200 rounded-full"></div>
+
+              <div id="node-source" data-base-angle="0" class="orbit-node bg-gradient-to-br from-sky-400 to-sky-500 text-white shadow-lg">
+                <div class="orbit-node-inner">
+                  <i class="fa-solid fa-search text-2xl mb-1"></i>
+                  <span class="text-xs font-semibold">Source</span>
+                </div>
+              </div>
+
+              <div id="node-screen" data-base-angle="60" class="orbit-node bg-gradient-to-br from-navy-500 to-navy-600 text-white shadow-lg">
+                <div class="orbit-node-inner">
+                  <i class="fa-solid fa-filter text-2xl mb-1"></i>
+                  <span class="text-xs font-semibold">Screen</span>
+                </div>
+              </div>
+
+              <div id="node-interview" data-base-angle="120" class="orbit-node bg-gradient-to-br from-navy-600 to-navy-700 text-white shadow-lg">
+                <div class="orbit-node-inner">
+                  <i class="fa-solid fa-calendar-check text-2xl mb-1"></i>
+                  <span class="text-xs font-semibold">Interview</span>
+                </div>
+              </div>
+
+              <div id="node-decide" data-base-angle="180" class="orbit-node bg-gradient-to-br from-navy-700 to-navy-800 text-white shadow-lg">
+                <div class="orbit-node-inner">
+                  <i class="fa-solid fa-check-circle text-2xl mb-1"></i>
+                  <span class="text-xs font-semibold">Decide</span>
+                </div>
+              </div>
+
+              <div id="node-onboard" data-base-angle="240" class="orbit-node bg-gradient-to-br from-sky-600 to-sky-700 text-white shadow-lg">
+                <div class="orbit-node-inner">
+                  <i class="fa-solid fa-rocket text-2xl mb-1"></i>
+                  <span class="text-xs font-semibold">Onboard</span>
+                </div>
+              </div>
+
+              <div id="node-measure" data-base-angle="300" class="orbit-node bg-gradient-to-br from-navy-500 to-navy-600 text-white shadow-lg">
+                <div class="orbit-node-inner">
+                  <i class="fa-solid fa-chart-bar text-2xl mb-1"></i>
+                  <span class="text-xs font-semibold">Measure</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <script>
+        (function() {
+          if (window.__hiremeWorkflowTimer) {
+            clearInterval(window.__hiremeWorkflowTimer);
+          }
+
+          let activeIndex = 0;
+          const nodes = Array.from(document.querySelectorAll('#workflow-wheel .orbit-node'));
+          const steps = Array.from(document.querySelectorAll('#workflow-description .workflow-step'));
+          const totalSteps = Math.min(nodes.length, steps.length);
+          const radius = 210;
+          const angleStep = 360 / totalSteps;
+
+          if (totalSteps !== 6) {
+            console.error('Workflow error: expected 6 steps, found', totalSteps);
+            return;
+          }
+
+          const nodeKeys = nodes.map(n => n.id.replace('node-', ''));
+
+          function positionNodes() {
+            nodes.forEach((node, i) => {
+              let baseAngle = parseFloat(node.dataset.baseAngle);
+              if (isNaN(baseAngle)) {
+                baseAngle = i * angleStep;
+                node.dataset.baseAngle = baseAngle;
+              }
+
+              const angleRad = (baseAngle - 90) * (Math.PI / 180);
+              const x = Math.cos(angleRad) * radius;
+              const y = Math.sin(angleRad) * radius;
+
+              node.style.position = 'absolute';
+              node.style.top = '50%';
+              node.style.left = '50%';
+              node.style.transform = `translate(-50%, -50%) translate(${x}px, ${y}px)`;
+            });
+          }
+
+          function setActiveStepByKey(key) {
+            steps.forEach(step => step.classList.remove('is-active'));
+            nodes.forEach(node => node.classList.remove('is-active'));
+
+            const step = document.querySelector(`#step-${key}`);
+            const node = document.querySelector(`#node-${key}`);
+
+            if (step) step.classList.add('is-active');
+            if (node) node.classList.add('is-active');
+          }
+
+          function rotateWorkflow() {
+            const key = nodeKeys[activeIndex];
+            setActiveStepByKey(key);
+            activeIndex = (activeIndex + 1) % totalSteps;
+          }
+
+          positionNodes();
+          setActiveStepByKey(nodeKeys[0]);
+
+          window.__hiremeWorkflowTimer = setInterval(rotateWorkflow, 3500);
+        })();
+      </script>
+    </section>
+
+    <!-- Comparison Section -->
+    <section id="comparison" class="py-24 lg:py-32 bg-white">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-12 lg:mb-16">
+          <h2 class="text-4xl sm:text-5xl lg:text-6xl font-bold text-navy-900 mb-6 tracking-tight">How HireMe Compares</h2>
+          <p class="text-lg sm:text-xl lg:text-2xl text-slate-600 max-w-3xl mx-auto mb-10 leading-relaxed">
+            All the essentials candidates and employers expect — plus verified intent and clear timelines.
+          </p>
+          <div class="inline-flex items-center bg-slate-100 rounded-xl p-1.5 shadow-sm border border-slate-200">
+            <button id="toggle-employer" aria-pressed="true" class="px-6 py-3 rounded-lg font-semibold transition-all bg-navy-800 text-white shadow-md">
+              Employer View
+            </button>
+            <button id="toggle-candidate" aria-pressed="false" class="px-6 py-3 rounded-lg font-semibold transition-all text-slate-600 hover:text-navy-900">
+              Candidate View
+            </button>
+          </div>
+        </div>
+        <div class="bg-white rounded-3xl shadow-2xl overflow-hidden border-2 border-slate-100">
+          <div class="overflow-x-auto">
+            <table id="comparison-table" class="w-full">
+              <thead>
+                <tr class="border-b-2 border-slate-200">
+                  <th class="sticky left-0 z-20 bg-white py-7 px-6 text-left font-bold text-navy-900 text-lg lg:text-xl border-r-2 border-slate-200 shadow-sm">
+                    Feature
+                  </th>
+                  <th class="py-7 px-6 text-center border-r-2 border-sky-100 bg-gradient-to-b from-sky-50 to-white">
+                    <div class="flex flex-col items-center space-y-3">
+                      <div class="inline-flex items-center space-x-2 bg-gradient-to-r from-navy-800 to-navy-900 text-white px-5 py-2 rounded-full text-sm font-bold shadow-lg">
+                        <i class="fa-solid fa-star text-sky-300"></i>
+                        <span>Best</span>
+                      </div>
+                      <span class="font-bold text-navy-900 text-lg lg:text-xl">HireMe</span>
+                    </div>
+                  </th>
+                  <th class="py-7 px-6 text-center border-r-2 border-slate-200 bg-white">
+                    <span class="font-semibold text-slate-700 text-base lg:text-lg">LinkedIn</span>
+                  </th>
+                  <th class="py-7 px-6 text-center border-r-2 border-slate-200 bg-white">
+                    <span class="font-semibold text-slate-700 text-base lg:text-lg">Handshake</span>
+                  </th>
+                  <th class="py-7 px-6 text-center bg-white">
+                    <span class="font-semibold text-slate-700 text-base lg:text-lg">Indeed</span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody id="comparison-tbody">
+                <!-- Rows populated by JavaScript -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="text-center mt-12 lg:mt-16">
+          <a href="#workflows" class="inline-flex items-center space-x-3 bg-navy-800 text-white px-10 py-5 rounded-xl font-semibold text-lg hover:bg-navy-700 hover:shadow-2xl transition-all duration-300 shadow-lg">
+            <span>See How It Works</span>
+            <i class="fa-solid fa-arrow-right"></i>
+          </a>
+        </div>
+      </div>
+
+      <script>
+        // Data structure for comparison table
+        const comparisonData = {
+          employer: [
+            {
+              group: 'Differentiators',
+              rows: [
+                {
+                  key: 'timeline',
+                  label: 'Transparent timelines + status updates',
+                  description: 'Set clear stages + expected response windows so candidates always know what\'s next.',
+                  hireme: true,
+                  linkedin: false,
+                  handshake: false,
+                  indeed: false,
+                  highlight: true
+                },
+                {
+                  key: 'verified',
+                  label: 'Verified intent + outreach controls',
+                  description: 'Outreach stays high-signal: verified roles, guardrails, reduced spam.',
+                  hireme: true,
+                  linkedin: false,
+                  handshake: false,
+                  indeed: false,
+                  highlight: true
+                },
+                {
+                  key: 'screening',
+                  label: 'Structured screening + interview signals',
+                  description: 'Standardized screening criteria + interview scorecards keep teams aligned.',
+                  hireme: true,
+                  linkedin: false,
+                  handshake: false,
+                  indeed: true,
+                  highlight: true
+                },
+                {
+                  key: 'workflow',
+                  label: 'Closed-loop workflow + insights',
+                  description: 'Connect steps end-to-end and learn what drives successful hires.',
+                  hireme: true,
+                  linkedin: true,
+                  handshake: false,
+                  indeed: true,
+                  highlight: true
+                }
+              ]
+            },
+            {
+              group: 'Core capabilities',
+              rows: [
+                {
+                  key: 'search',
+                  label: 'Candidate search + filters',
+                  description: 'Search and filter candidates by role-relevant criteria.',
+                  hireme: true,
+                  linkedin: true,
+                  handshake: true,
+                  indeed: true,
+                  highlight: false
+                },
+                {
+                  key: 'outreach',
+                  label: 'Outreach messaging',
+                  description: 'Message candidates directly and manage conversations.',
+                  hireme: true,
+                  linkedin: true,
+                  handshake: true,
+                  indeed: true,
+                  highlight: false
+                },
+                {
+                  key: 'pipeline',
+                  label: 'Pipeline / tracking',
+                  description: 'Move candidates through stages and track decisions.',
+                  hireme: true,
+                  linkedin: true,
+                  handshake: true,
+                  indeed: true,
+                  highlight: false
+                },
+                {
+                  key: 'profile',
+                  label: 'Candidate profile + artifacts',
+                  description: 'Structured profile with artifacts (resume, transcript/portfolio) in a consistent format.',
+                  hireme: true,
+                  linkedin: true,
+                  handshake: true,
+                  indeed: true,
+                  highlight: false
+                }
+              ]
+            }
+          ],
+          candidate: [
+            {
+              group: 'Differentiators',
+              rows: [
+                {
+                  key: 'timeline',
+                  label: 'Transparent timelines + status updates',
+                  description: 'See your stage, what\'s next, and when to expect updates — fewer dead ends.',
+                  hireme: true,
+                  linkedin: false,
+                  handshake: false,
+                  indeed: false,
+                  highlight: true
+                },
+                {
+                  key: 'verified',
+                  label: 'Verified intent + outreach controls',
+                  description: 'Fewer spammy messages — outreach tied to real roles and clearer intent.',
+                  hireme: true,
+                  linkedin: false,
+                  handshake: false,
+                  indeed: false,
+                  highlight: true
+                },
+                {
+                  key: 'screening',
+                  label: 'Structured screening + interview signals',
+                  description: 'More consistent evaluation — clearer expectations and fairer comparison.',
+                  hireme: true,
+                  linkedin: false,
+                  handshake: false,
+                  indeed: true,
+                  highlight: true
+                },
+                {
+                  key: 'workflow',
+                  label: 'Closed-loop workflow + insights',
+                  description: 'A smoother connected process with fewer handoffs and surprises.',
+                  hireme: true,
+                  linkedin: true,
+                  handshake: false,
+                  indeed: true,
+                  highlight: true
+                }
+              ]
+            },
+            {
+              group: 'Core capabilities',
+              rows: [
+                {
+                  key: 'search',
+                  label: 'Candidate search + filters',
+                  description: 'Get discovered based on skills, interests, and fit signals.',
+                  hireme: true,
+                  linkedin: true,
+                  handshake: true,
+                  indeed: true,
+                  highlight: false
+                },
+                {
+                  key: 'outreach',
+                  label: 'Outreach messaging',
+                  description: 'Communicate with employers in one place.',
+                  hireme: true,
+                  linkedin: true,
+                  handshake: true,
+                  indeed: true,
+                  highlight: false
+                },
+                {
+                  key: 'pipeline',
+                  label: 'Pipeline / tracking',
+                  description: 'Know where you stand as you move through the process.',
+                  hireme: true,
+                  linkedin: true,
+                  handshake: true,
+                  indeed: true,
+                  highlight: false
+                },
+                {
+                  key: 'profile',
+                  label: 'Candidate profile + artifacts',
+                  description: 'One clean profile you can reuse — attach artifacts once, update anytime.',
+                  hireme: true,
+                  linkedin: true,
+                  handshake: true,
+                  indeed: true,
+                  highlight: false
+                }
+              ]
+            }
+          ]
+        };
+
+        let currentComparisonView = 'employer';
+
+        function renderComparisonTable(view) {
+          const tbody = document.getElementById('comparison-tbody');
+          tbody.innerHTML = '';
+          
+          const data = comparisonData[view];
+          
+          data.forEach((section, sectionIndex) => {
+            const groupRow = document.createElement('tr');
+            groupRow.className = 'bg-slate-50';
+            groupRow.innerHTML = `
+              <td colspan="5" class="py-4 px-6 text-xs font-semibold tracking-wider text-slate-500 uppercase">
+                ${section.group}
+              </td>
+            `;
+            tbody.appendChild(groupRow);
+            
+            section.rows.forEach((row, rowIndex) => {
+              const tr = document.createElement('tr');
+              tr.className = 'border-b border-slate-100 hover:bg-sky-50/30 transition-colors duration-200';
+              
+              const hiremeCell = row.highlight ? 
+                'py-6 px-6 text-center border-r-2 border-sky-100 bg-sky-50/50 relative group' :
+                'py-6 px-6 text-center border-r-2 border-sky-100 bg-sky-50/30';
+              
+              const animationClass = row.highlight ? 
+                'group-hover:scale-110 transition-transform duration-300' : '';
+              
+              tr.innerHTML = `
+                <td class="sticky left-0 z-10 bg-white py-6 px-6 border-r-2 border-slate-200 shadow-sm">
+                  <div class="font-semibold text-navy-900 mb-2 text-base lg:text-lg">${row.label}</div>
+                  <div class="text-sm text-slate-600 leading-relaxed">${row.description}</div>
+                </td>
+                <td class="${hiremeCell}">
+                  <i class="fa-solid ${row.hireme ? 'fa-check text-green-500' : 'fa-times text-red-500'} text-2xl lg:text-3xl ${animationClass}"></i>
+                </td>
+                <td class="py-6 px-6 text-center border-r-2 border-slate-200 bg-white">
+                  <i class="fa-solid ${row.linkedin ? 'fa-check text-green-500' : 'fa-times text-red-500'} text-2xl lg:text-3xl"></i>
+                </td>
+                <td class="py-6 px-6 text-center border-r-2 border-slate-200 bg-white">
+                  <i class="fa-solid ${row.handshake ? 'fa-check text-green-500' : 'fa-times text-red-500'} text-2xl lg:text-3xl"></i>
+                </td>
+                <td class="py-6 px-6 text-center bg-white">
+                  <i class="fa-solid ${row.indeed ? 'fa-check text-green-500' : 'fa-times text-red-500'} text-2xl lg:text-3xl"></i>
+                </td>
+              `;
+              
+              tbody.appendChild(tr);
+            });
+          });
+        }
+
+        function updateComparisonToggle() {
+          const employerBtn = document.getElementById('toggle-employer');
+          const candidateBtn = document.getElementById('toggle-candidate');
+          
+          if (currentComparisonView === 'employer') {
+            employerBtn.className = 'px-6 py-3 rounded-lg font-semibold transition-all bg-navy-800 text-white shadow-md';
+            candidateBtn.className = 'px-6 py-3 rounded-lg font-semibold transition-all text-slate-600 hover:text-navy-900';
+            employerBtn.setAttribute('aria-pressed', 'true');
+            candidateBtn.setAttribute('aria-pressed', 'false');
+          } else {
+            candidateBtn.className = 'px-6 py-3 rounded-lg font-semibold transition-all bg-navy-800 text-white shadow-md';
+            employerBtn.className = 'px-6 py-3 rounded-lg font-semibold transition-all text-slate-600 hover:text-navy-900';
+            candidateBtn.setAttribute('aria-pressed', 'true');
+            employerBtn.setAttribute('aria-pressed', 'false');
+          }
+        }
+
+        window.addEventListener('load', function() {
+          renderComparisonTable('employer');
+          
+          document.getElementById('toggle-employer').addEventListener('click', function() {
+            currentComparisonView = 'employer';
+            renderComparisonTable('employer');
+            updateComparisonToggle();
+          });
+          
+          document.getElementById('toggle-candidate').addEventListener('click', function() {
+            currentComparisonView = 'candidate';
+            renderComparisonTable('candidate');
+            updateComparisonToggle();
+          });
+        });
+      </script>
+    </section>
+
+    <!-- Features Grid -->
+    <section id="features" class="py-24 lg:py-32 bg-slate-50">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16 lg:mb-20">
+          <h2 class="text-4xl sm:text-5xl lg:text-6xl font-bold text-navy-900 mb-6 tracking-tight">Everything You Need to Hire Smarter</h2>
+          <p class="text-lg sm:text-xl lg:text-2xl text-slate-600 max-w-3xl mx-auto leading-relaxed">
+            A complete hiring ecosystem designed to eliminate friction and accelerate decisions.
+          </p>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+          <!-- Feature 1 -->
+          <div id="feature-card-1" class="bg-white rounded-3xl p-8 lg:p-10 card-hover border-2 border-slate-100 shadow-sm">
+            <div class="w-16 h-16 bg-gradient-to-br from-sky-100 to-sky-50 rounded-2xl flex items-center justify-center mb-6 shadow-sm">
+              <i class="fa-solid fa-search text-navy-700 text-2xl"></i>
+            </div>
+            <h3 class="text-xl lg:text-2xl font-bold text-navy-900 mb-4">Smart Sourcing</h3>
+            <p class="text-slate-600 mb-6 leading-relaxed">AI-powered candidate discovery that finds the perfect match.</p>
+            <ul class="space-y-3">
+              <li class="flex items-center text-slate-700">
+                <i class="fa-solid fa-check text-sky-600 mr-3 text-lg"></i>
+                <span>Multi-channel sourcing</span>
+              </li>
+              <li class="flex items-center text-slate-700">
+                <i class="fa-solid fa-check text-sky-600 mr-3 text-lg"></i>
+                <span>AI candidate matching</span>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Feature 2 -->
+          <div id="feature-card-2" class="bg-white rounded-3xl p-8 lg:p-10 card-hover border-2 border-slate-100 shadow-sm">
+            <div class="w-16 h-16 bg-gradient-to-br from-navy-50 to-slate-50 rounded-2xl flex items-center justify-center mb-6 shadow-sm">
+              <i class="fa-solid fa-filter text-navy-700 text-2xl"></i>
+            </div>
+            <h3 class="text-xl lg:text-2xl font-bold text-navy-900 mb-4">Intelligent Screening</h3>
+            <p class="text-slate-600 mb-6 leading-relaxed">Automate resume parsing and skills assessment.</p>
+            <ul class="space-y-3">
+              <li class="flex items-center text-slate-700">
+                <i class="fa-solid fa-check text-sky-600 mr-3 text-lg"></i>
+                <span>Automated resume parsing</span>
+              </li>
+              <li class="flex items-center text-slate-700">
+                <i class="fa-solid fa-check text-sky-600 mr-3 text-lg"></i>
+                <span>Skills-based filtering</span>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Feature 3 -->
+          <div id="feature-card-3" class="bg-white rounded-3xl p-8 lg:p-10 card-hover border-2 border-slate-100 shadow-sm">
+            <div class="w-16 h-16 bg-gradient-to-br from-sky-100 to-sky-50 rounded-2xl flex items-center justify-center mb-6 shadow-sm">
+              <i class="fa-solid fa-users text-navy-700 text-2xl"></i>
+            </div>
+            <h3 class="text-xl lg:text-2xl font-bold text-navy-900 mb-4">Team Collaboration</h3>
+            <p class="text-slate-600 mb-6 leading-relaxed">Keep everyone aligned with shared scorecards and feedback.</p>
+            <ul class="space-y-3">
+              <li class="flex items-center text-slate-700">
+                <i class="fa-solid fa-check text-sky-600 mr-3 text-lg"></i>
+                <span>Shared scorecards</span>
+              </li>
+              <li class="flex items-center text-slate-700">
+                <i class="fa-solid fa-check text-sky-600 mr-3 text-lg"></i>
+                <span>Real-time feedback loops</span>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Feature 4 -->
+          <div id="feature-card-4" class="bg-white rounded-3xl p-8 lg:p-10 card-hover border-2 border-slate-100 shadow-sm">
+            <div class="w-16 h-16 bg-gradient-to-br from-navy-50 to-slate-50 rounded-2xl flex items-center justify-center mb-6 shadow-sm">
+              <i class="fa-solid fa-calendar-check text-navy-700 text-2xl"></i>
+            </div>
+            <h3 class="text-xl lg:text-2xl font-bold text-navy-900 mb-4">Interview Management</h3>
+            <p class="text-slate-600 mb-6 leading-relaxed">Streamline scheduling and automate reminders.</p>
+            <ul class="space-y-3">
+              <li class="flex items-center text-slate-700">
+                <i class="fa-solid fa-check text-sky-600 mr-3 text-lg"></i>
+                <span>One-click scheduling</span>
+              </li>
+              <li class="flex items-center text-slate-700">
+                <i class="fa-solid fa-check text-sky-600 mr-3 text-lg"></i>
+                <span>Automated reminders</span>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Feature 5 -->
+          <div id="feature-card-5" class="bg-white rounded-3xl p-8 lg:p-10 card-hover border-2 border-slate-100 shadow-sm">
+            <div class="w-16 h-16 bg-gradient-to-br from-sky-100 to-sky-50 rounded-2xl flex items-center justify-center mb-6 shadow-sm">
+              <i class="fa-solid fa-chart-line text-navy-700 text-2xl"></i>
+            </div>
+            <h3 class="text-xl lg:text-2xl font-bold text-navy-900 mb-4">Analytics & Insights</h3>
+            <p class="text-slate-600 mb-6 leading-relaxed">Track every metric that matters. From time-to-hire to source effectiveness.</p>
+            <ul class="space-y-3">
+              <li class="flex items-center text-slate-700">
+                <i class="fa-solid fa-check text-sky-600 mr-3 text-lg"></i>
+                <span>Real-time dashboards</span>
+              </li>
+              <li class="flex items-center text-slate-700">
+                <i class="fa-solid fa-check text-sky-600 mr-3 text-lg"></i>
+                <span>Predictive analytics</span>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Feature 6 -->
+          <div id="feature-card-6" class="bg-white rounded-3xl p-8 lg:p-10 card-hover border-2 border-slate-100 shadow-sm">
+            <div class="w-16 h-16 bg-gradient-to-br from-navy-50 to-slate-50 rounded-2xl flex items-center justify-center mb-6 shadow-sm">
+              <i class="fa-solid fa-rocket text-navy-700 text-2xl"></i>
+            </div>
+            <h3 class="text-xl lg:text-2xl font-bold text-navy-900 mb-4">Seamless Onboarding</h3>
+            <p class="text-slate-600 mb-6 leading-relaxed">Turn accepted offers into day-one success.</p>
+            <ul class="space-y-3">
+              <li class="flex items-center text-slate-700">
+                <i class="fa-solid fa-check text-sky-600 mr-3 text-lg"></i>
+                <span>Digital offer letters</span>
+              </li>
+              <li class="flex items-center text-slate-700">
+                <i class="fa-solid fa-check text-sky-600 mr-3 text-lg"></i>
+                <span>Document management</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section id="faq" class="py-24 lg:py-32 bg-white">
+      <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16 lg:mb-20">
+          <h2 class="text-4xl sm:text-5xl lg:text-6xl font-bold text-navy-900 mb-6 tracking-tight">Frequently Asked Questions</h2>
+          <p class="text-lg sm:text-xl text-slate-600 leading-relaxed">Answers to our most frequently asked questions are just one click away.</p>
+        </div>
+        <div class="bg-gradient-to-br from-sky-50 to-white rounded-3xl p-3 border-2 border-sky-100 mb-10 shadow-sm">
+          <!-- FAQ Items -->
+          <div class="faq-item group">
+            <button onclick="toggleFaq(this)" class="w-full flex items-center justify-between p-6 text-left focus:outline-none rounded-2xl hover:bg-white/60 transition-all duration-200">
+              <span class="text-lg font-bold text-navy-900 pr-4">What do I need to set up an applicant account?</span>
+              <span class="ml-4 flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-full bg-white text-navy-600 shadow-sm group-hover:shadow-md transition-all duration-200">
+                <i class="fa-solid fa-plus transition-transform duration-300"></i>
+              </span>
+            </button>
+            <div class="faq-content hidden px-6 pb-6 pt-2">
+              <div class="bg-white rounded-xl p-5 border border-sky-100 mb-4 shadow-sm">
+                <p contenteditable="true" spellcheck="true" class="text-slate-600 leading-relaxed">
+                  Setting up an applicant account is quick and straightforward. At a minimum, you'll upload your resume, and you can optionally include a transcript to help employers better understand your background. From there, you can enhance your profile with skills, interests, and availability — all designed to help employers find you faster without lengthy applications.
+                </p>
+              </div>
+              <button onclick="saveFaqEdit(this)" class="text-sm text-navy-600 hover:text-navy-800 font-medium transition-colors duration-200">
+                <i class="fa-solid fa-check mr-1"></i>Save Changes
+              </button>
+            </div>
+            <div class="h-px bg-sky-100 mx-6"></div>
+          </div>
+
+          <div class="faq-item group">
+            <button onclick="toggleFaq(this)" class="w-full flex items-center justify-between p-6 text-left focus:outline-none rounded-2xl hover:bg-white/60 transition-all duration-200">
+              <span class="text-lg font-bold text-navy-900 pr-4">How do employers start searching for candidates?</span>
+              <span class="ml-4 flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-full bg-white text-navy-600 shadow-sm group-hover:shadow-md transition-all duration-200">
+                <i class="fa-solid fa-plus transition-transform duration-300"></i>
+              </span>
+            </button>
+            <div class="faq-content hidden px-6 pb-6 pt-2">
+              <div class="bg-white rounded-xl p-5 border border-sky-100 mb-4 shadow-sm">
+                <p contenteditable="true" spellcheck="true" class="text-slate-600 leading-relaxed">
+                  Employers create a verified account and define what they're looking for — role type, skills, availability, and hiring timeline. From there, HireMe surfaces qualified, early-career candidates automatically, allowing employers to search, filter, and connect without posting a job or waiting weeks for applications.
+                </p>
+              </div>
+              <button onclick="saveFaqEdit(this)" class="text-sm text-navy-600 hover:text-navy-800 font-medium transition-colors duration-200">
+                <i class="fa-solid fa-check mr-1"></i>Save Changes
+              </button>
+            </div>
+            <div class="h-px bg-sky-100 mx-6"></div>
+          </div>
+
+          <div class="faq-item group">
+            <button onclick="toggleFaq(this)" class="w-full flex items-center justify-between p-6 text-left focus:outline-none rounded-2xl hover:bg-white/60 transition-all duration-200">
+              <span class="text-lg font-bold text-navy-900 pr-4">How is HireMe different from LinkedIn or Handshake?</span>
+              <span class="ml-4 flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-full bg-white text-navy-600 shadow-sm group-hover:shadow-md transition-all duration-200">
+                <i class="fa-solid fa-plus transition-transform duration-300"></i>
+              </span>
+            </button>
+            <div class="faq-content hidden px-6 pb-6 pt-2">
+              <div class="bg-white rounded-xl p-5 border border-sky-100 mb-4 shadow-sm">
+                <p contenteditable="true" spellcheck="true" class="text-slate-600 leading-relaxed">
+                  HireMe flips the traditional job search. Instead of candidates applying endlessly, verified employers actively search for early-career talent. This reduces ghosting, speeds up hiring, and creates more transparent, intentional connections on both sides.
+                </p>
+              </div>
+              <button onclick="saveFaqEdit(this)" class="text-sm text-navy-600 hover:text-navy-800 font-medium transition-colors duration-200">
+                <i class="fa-solid fa-check mr-1"></i>Save Changes
+              </button>
+            </div>
+            <div class="h-px bg-sky-100 mx-6"></div>
+          </div>
+
+          <div class="faq-item group">
+            <button onclick="toggleFaq(this)" class="w-full flex items-center justify-between p-6 text-left focus:outline-none rounded-2xl hover:bg-white/60 transition-all duration-200">
+              <span class="text-lg font-bold text-navy-900 pr-4">Are employers on HireMe verified?</span>
+              <span class="ml-4 flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-full bg-white text-navy-600 shadow-sm group-hover:shadow-md transition-all duration-200">
+                <i class="fa-solid fa-plus transition-transform duration-300"></i>
+              </span>
+            </button>
+            <div class="faq-content hidden px-6 pb-6 pt-2">
+              <div class="bg-white rounded-xl p-5 border border-sky-100 mb-4 shadow-sm">
+                <p contenteditable="true" spellcheck="true" class="text-slate-600 leading-relaxed">
+                  Yes. Employers must complete a verification process before searching or contacting candidates. This helps ensure legitimate opportunities and more meaningful conversations.
+                </p>
+              </div>
+              <button onclick="saveFaqEdit(this)" class="text-sm text-navy-600 hover:text-navy-800 font-medium transition-colors duration-200">
+                <i class="fa-solid fa-check mr-1"></i>Save Changes
+              </button>
+            </div>
+            <div class="h-px bg-sky-100 mx-6"></div>
+          </div>
+
+          <div class="faq-item group">
+            <button onclick="toggleFaq(this)" class="w-full flex items-center justify-between p-6 text-left focus:outline-none rounded-2xl hover:bg-white/60 transition-all duration-200">
+              <span class="text-lg font-bold text-navy-900 pr-4">Is HireMe only for students or recent graduates?</span>
+              <span class="ml-4 flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-full bg-white text-navy-600 shadow-sm group-hover:shadow-md transition-all duration-200">
+                <i class="fa-solid fa-plus transition-transform duration-300"></i>
+              </span>
+            </button>
+            <div class="faq-content hidden px-6 pb-6 pt-2">
+              <div class="bg-white rounded-xl p-5 border border-sky-100 mb-4 shadow-sm">
+                <p contenteditable="true" spellcheck="true" class="text-slate-600 leading-relaxed">
+                  HireMe is built for early-career talent — including students, recent graduates, and individuals exploring entry-level or rotational roles.
+                </p>
+              </div>
+              <button onclick="saveFaqEdit(this)" class="text-sm text-navy-600 hover:text-navy-800 font-medium transition-colors duration-200">
+                <i class="fa-solid fa-check mr-1"></i>Save Changes
+              </button>
+            </div>
+            <div class="h-px bg-sky-100 mx-6"></div>
+          </div>
+
+          <div class="faq-item group">
+            <button onclick="toggleFaq(this)" class="w-full flex items-center justify-between p-6 text-left focus:outline-none rounded-2xl hover:bg-white/60 transition-all duration-200">
+              <span class="text-lg font-bold text-navy-900 pr-4">What happens after an employer reaches out?</span>
+              <span class="ml-4 flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-full bg-white text-navy-600 shadow-sm group-hover:shadow-md transition-all duration-200">
+                <i class="fa-solid fa-plus transition-transform duration-300"></i>
+              </span>
+            </button>
+            <div class="faq-content hidden px-6 pb-6 pt-2">
+              <div class="bg-white rounded-xl p-5 border border-sky-100 mb-4 shadow-sm">
+                <p contenteditable="true" spellcheck="true" class="text-slate-600 leading-relaxed">
+                  Once an employer initiates contact, both parties can communicate directly, schedule interviews, and move forward — all without unnecessary steps or intermediaries.
+                </p>
+              </div>
+              <button onclick="saveFaqEdit(this)" class="text-sm text-navy-600 hover:text-navy-800 font-medium transition-colors duration-200">
+                <i class="fa-solid fa-check mr-1"></i>Save Changes
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-gradient-to-br from-navy-50 to-white rounded-3xl p-8 lg:p-10 border-2 border-slate-200 flex flex-col md:flex-row items-center justify-between gap-6 shadow-md">
+          <div>
+            <h3 class="text-2xl font-bold text-navy-900 mb-3">Still have questions?</h3>
+            <p class="text-slate-600 text-lg">Can't find the answer you're looking for? Please chat to our friendly team.</p>
+          </div>
+          <a href="#" class="bg-navy-800 text-white px-8 py-4 rounded-xl font-semibold text-lg hover:bg-navy-700 hover:shadow-xl transition-all duration-300 whitespace-nowrap shadow-md">
+            Get in Touch
+          </a>
+        </div>
+      </div>
+
+      <script>
+        function toggleFaq(button) {
+          const content = button.nextElementSibling;
+          const icon = button.querySelector('i');
+          const isHidden = content.classList.contains('hidden');
+
+          document.querySelectorAll('.faq-content').forEach(el => {
+            el.classList.add('hidden');
+            const btn = el.previousElementSibling;
+            const icn = btn.querySelector('i');
+            if (icn) {
+              icn.classList.remove('rotate-45');
+              icn.classList.remove('fa-minus');
+              icn.classList.add('fa-plus');
+            }
+          });
+
+          if (isHidden) {
+            content.classList.remove('hidden');
+            icon.classList.add('rotate-45');
+          } else {
+            content.classList.add('hidden');
+            icon.classList.remove('rotate-45');
+          }
+        }
+
+        function saveFaqEdit(button) {
+          const saveIcon = button.querySelector('i');
+          const originalClass = saveIcon.className;
+
+          saveIcon.className = 'fa-solid fa-check-circle mr-1';
+          button.innerHTML = '<i class="fa-solid fa-check-circle mr-1"></i>Saved!';
+          button.classList.add('text-green-600');
+
+          setTimeout(() => {
+            button.innerHTML = '<i class="fa-solid fa-check mr-1"></i>Save Changes';
+            button.classList.remove('text-green-600');
+          }, 2000);
+        }
+      </script>
+    </section>
+
+    <!-- CTA Section -->
+    <section id="cta" class="py-24 lg:py-32 bg-gradient-to-br from-navy-900 via-navy-800 to-navy-900 relative overflow-hidden">
+      <!-- Decorative elements -->
+      <div class="absolute inset-0 opacity-10">
+        <div class="absolute top-0 right-0 w-96 h-96 bg-sky-400 rounded-full blur-3xl"></div>
+        <div class="absolute bottom-0 left-0 w-96 h-96 bg-sky-600 rounded-full blur-3xl"></div>
+      </div>
+
+      <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
+        <h2 class="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-8 lg:mb-10 tracking-tight leading-tight">Want to get hired?</h2>
+        <p class="text-xl sm:text-2xl lg:text-3xl text-sky-100 mb-12 lg:mb-16 leading-relaxed max-w-3xl mx-auto">
+          Join Applicants and Employers from around the world with HireMe
+        </p>
+        <div class="flex items-center justify-center">
+          <a href="#" class="bg-white text-navy-900 px-12 py-5 rounded-xl font-bold text-xl hover:bg-sky-50 hover:shadow-2xl transition-all duration-300 shadow-xl hover:scale-105">
+            Hire ME!
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer id="footer" class="bg-navy-950 text-slate-300 py-16 lg:py-20">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8 lg:gap-12 mb-12">
+          <div class="col-span-2 md:col-span-3 lg:col-span-1">
+            <div class="flex items-center space-x-3 mb-6">
+              <div class="w-10 h-10 bg-navy-800 rounded-lg flex items-center justify-center shadow-md">
+                <i class="fa-solid fa-users text-white text-xl"></i>
+              </div>
+              <span class="text-2xl font-bold text-white">HireMe</span>
+            </div>
+            <p class="text-slate-400 leading-relaxed mb-6">The complete hiring system that closes the loop.</p>
+          </div>
+
+          <div>
+            <h4 class="text-white font-semibold mb-4 text-lg">Product</h4>
+            <ul class="space-y-3">
+              <li><a href="#" class="hover:text-white transition-colors duration-200">Features</a></li>
+              <li><a href="#" class="hover:text-white transition-colors duration-200">Pricing</a></li>
+              <li><a href="#" class="hover:text-white transition-colors duration-200">Integrations</a></li>
+            </ul>
+          </div>
+
+          <div>
+            <h4 class="text-white font-semibold mb-4 text-lg">Solutions</h4>
+            <ul class="space-y-3">
+              <li><a href="#" class="hover:text-white transition-colors duration-200">For Recruiters</a></li>
+              <li><a href="#" class="hover:text-white transition-colors duration-200">For Hiring Managers</a></li>
+              <li><a href="#" class="hover:text-white transition-colors duration-200">For HR Leaders</a></li>
+            </ul>
+          </div>
+
+          <div>
+            <h4 class="text-white font-semibold mb-4 text-lg">Resources</h4>
+            <ul class="space-y-3">
+              <li><a href="#" class="hover:text-white transition-colors duration-200">Blog</a></li>
+              <li><a href="#" class="hover:text-white transition-colors duration-200">Guides</a></li>
+              <li><a href="#" class="hover:text-white transition-colors duration-200">Help Center</a></li>
+            </ul>
+          </div>
+
+          <div>
+            <h4 class="text-white font-semibold mb-4 text-lg">Company</h4>
+            <ul class="space-y-3">
+              <li><a href="#" class="hover:text-white transition-colors duration-200">About</a></li>
+              <li><a href="#" class="hover:text-white transition-colors duration-200">Careers</a></li>
+              <li><a href="#" class="hover:text-white transition-colors duration-200">Contact</a></li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="border-t border-navy-800 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p class="text-slate-500 text-sm">© 2024 HireMe. All rights reserved.</p>
+          <div class="flex items-center space-x-6">
+            <a href="#" class="text-slate-400 hover:text-white transition-colors duration-200">
+              <i class="fa-brands fa-twitter text-xl"></i>
+            </a>
+            <a href="#" class="text-slate-400 hover:text-white transition-colors duration-200">
+              <i class="fa-brands fa-linkedin text-xl"></i>
+            </a>
+            <a href="#" class="text-slate-400 hover:text-white transition-colors duration-200">
+              <i class="fa-brands fa-facebook text-xl"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>
+

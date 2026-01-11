@@ -4,6 +4,7 @@ import { useFirebaseAuth } from '@/components/FirebaseAuthProvider';
 import { useRouter } from 'next/navigation';
 import { getProfileViewers } from '@/lib/firebase-firestore';
 import Link from 'next/link';
+import { ArrowLeft, Building, Search, Filter, Lock, Eye, Clock } from 'lucide-react';
 
 // Mock data structure matching the HTML design
 interface Company {
@@ -107,9 +108,9 @@ export default function ProfileViewersPage() {
     if (!toastContainer) return;
     
     const toast = document.createElement('div');
-    toast.className = 'toast bg-white border border-light-gray rounded-xl px-4 py-3 shadow-lg flex items-center space-x-3';
+    toast.className = 'toast bg-white border border-slate-200 rounded-xl px-4 py-3 shadow-lg flex items-center space-x-3';
     
-    const iconClass = type === 'success' ? 'fa-check text-green-500' : 'fa-info text-light-blue';
+    const iconClass = type === 'success' ? 'fa-check text-green-500' : 'fa-info text-sky-400';
     toast.innerHTML = `
       <i class="fa-solid ${iconClass}"></i>
       <span class="font-semibold text-navy">${message}</span>
@@ -124,334 +125,281 @@ export default function ProfileViewersPage() {
     }, 3000);
   };
 
-  if (!user) return null;
+  if (loading || isLoading) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-navy-800 mx-auto mb-4"></div>
+          <p className="text-slate-600">Loading companies...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user || !profile) {
+    return null;
+  }
 
   return (
-    <>
-      <style jsx global>{`
-        .card-hover {
-          transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-        .card-hover:hover {
-          transform: translateY(-3px);
-          box-shadow: 0 10px 20px rgba(0, 0, 128, 0.08), 0 3px 6px rgba(0, 0, 128, 0.04);
-        }
-        .fade-up {
-          opacity: 0;
-          transform: translateY(10px);
-          animation: fadeUp 220ms ease-out forwards;
-        }
-        .fade-up-delay-1 { animation-delay: 50ms; }
-        .fade-up-delay-2 { animation-delay: 100ms; }
-        .fade-up-delay-3 { animation-delay: 150ms; }
-        .fade-up-delay-4 { animation-delay: 200ms; }
-        .fade-up-delay-5 { animation-delay: 250ms; }
-        .fade-up-delay-6 { animation-delay: 300ms; }
-        @keyframes fadeUp {
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        .save-pulse {
-          animation: savePulse 0.3s ease-out;
-        }
-        @keyframes savePulse {
-          0% { transform: scale(1); }
-          50% { transform: scale(1.1); }
-          100% { transform: scale(1); }
-        }
-        .drawer-enter {
-          animation: drawerEnter 200ms ease-out;
-        }
-        @keyframes drawerEnter {
-          from {
-            opacity: 0;
-            transform: translateX(100%);
-          }
-          to {
-            opacity: 1;
-            transform: translateX(0);
-          }
-        }
-        .toast {
-          animation: toastSlide 300ms ease-out;
-        }
-        @keyframes toastSlide {
-          from {
-            opacity: 0;
-            transform: translateY(-100%);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-      `}</style>
+    <div className="min-h-screen bg-slate-50 mobile-safe-top mobile-safe-bottom overflow-x-hidden w-full">
+      {/* Header */}
+      <header className="sticky top-0 bg-white shadow-sm z-50 border-b border-slate-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
+          <Link
+            href="/home/seeker"
+            className="flex items-center gap-2 text-navy-800 hover:text-navy-600 transition-colors group px-3 py-2 rounded-lg hover:bg-sky-50 min-h-[44px]"
+          >
+            <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform duration-200" />
+            <span className="font-medium text-sm hidden sm:inline">Back to Dashboard</span>
+            <span className="font-medium text-sm sm:hidden">Back</span>
+          </Link>
+          <Link href="/" className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-navy-800 rounded-lg flex items-center justify-center shadow-md">
+              <svg width="20" height="20" viewBox="0 0 269 274" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M111.028 0C172.347 0.000238791 222.055 51.647 222.055 115.356C222.055 140.617 214.238 163.98 200.983 182.981L258.517 242.758L238.036 264.036L181.077 204.857C161.97 221.02 137.589 230.713 111.028 230.713C49.7092 230.713 2.76862e-05 179.066 0 115.356C0 51.6468 49.7092 0 111.028 0Z" fill="white"/>
+                <path d="M205.69 115.392C205.69 170.42 163.308 215.029 111.028 215.029C58.748 215.029 16.3666 170.42 16.3666 115.392C16.3666 60.3646 58.748 15.7559 111.028 15.7559C163.308 15.7559 205.69 60.3646 205.69 115.392Z" fill="#4F86F7"/>
+              </svg>
+            </div>
+            <span className="text-xl font-bold text-navy-900">HireMe</span>
+          </Link>
+        </div>
+      </header>
 
-      <div style={{ background: 'linear-gradient(180deg, #E6F0FF 0%, #F0F8FF 100%)' }}>
-        {/* Header */}
-        <header className="bg-white/80 backdrop-blur-md sticky top-0 z-50 border-b border-light-gray">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center h-20">
-              <div className="flex items-center space-x-6">
-                <Link 
-                  href="/home/seeker"
-                  className="flex items-center space-x-2 text-navy hover:text-light-blue transition-colors duration-200 bg-light-blue/20 hover:bg-light-blue/30 px-4 py-2 rounded-full"
-                >
-                  <i className="fa-solid fa-arrow-left"></i>
-                  <span className="font-semibold">Back to Dashboard</span>
-                </Link>
-              </div>
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-navy rounded-xl flex items-center justify-center">
-                  <i className="fa-solid fa-magnifying-glass text-white text-lg"></i>
-                </div>
-                <span className="text-2xl font-bold text-navy">HireMe</span>
-              </div>
+      <main className="max-w-7xl mx-auto px-6 py-12 lg:py-16">
+        {/* Page Header */}
+        <div className="text-center mb-12 lg:mb-14">
+          <div className="flex items-center justify-center mb-4">
+            <div className="w-12 h-12 bg-sky-100 rounded-lg flex items-center justify-center">
+              <Building className="h-6 w-6 text-navy-700" />
             </div>
           </div>
-        </header>
-
-        <main className="min-h-screen mobile-safe-top mobile-safe-bottom overflow-x-hidden w-full">
-          <div className="w-full md:max-w-6xl md:mx-auto px-0 sm:px-3 md:px-6 lg:px-8 py-4 sm:py-6 md:py-12 min-w-0">
-            {/* Page Header */}
-            <section className="mb-4 sm:mb-6 md:mb-10 fade-up px-2 sm:px-0">
-              <div className="text-center mb-4 sm:mb-6 md:mb-8">
-                <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-navy mb-3 sm:mb-4 px-4 break-words">Companies that viewed your profile</h1>
-                <p className="text-sm sm:text-base md:text-lg text-gray-600 mb-3 sm:mb-4 px-4 break-words">See who's interested in you and follow up confidently.</p>
-                <div className="inline-flex items-center space-x-2 bg-light-blue/20 px-3 sm:px-4 py-2 rounded-full border border-light-blue/30">
-                  <i className="fa-solid fa-lock text-navy text-xs sm:text-sm"></i>
-                  <span className="text-xs sm:text-sm font-semibold text-navy">Private to you</span>
-                </div>
-              </div>
-              <div className="text-center mb-4 sm:mb-6 px-2">
-                <p className="text-xs sm:text-sm text-gray-500 break-words">Only you can see this list. Employers are not notified when you view this page.</p>
-                <button className="text-light-blue hover:text-navy text-xs sm:text-sm font-semibold underline decoration-2 underline-offset-4 mt-2 min-h-[44px]">
-                  How to turn views into interviews →
-                </button>
-              </div>
-            </section>
-
-            {/* Toolbar */}
-            <section className="sticky top-16 sm:top-20 md:top-24 z-40 bg-white/90 backdrop-blur-md p-4 sm:p-5 md:p-6 rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-light-gray mb-3 sm:mb-6 md:mb-8 fade-up fade-up-delay-1 mobile-safe-top">
-              <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
-                <div className="flex-1 w-full lg:w-auto">
-                  <div className="relative">
-                    <i className="fa-solid fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                    <input 
-                      type="text" 
-                      placeholder="Search by company name or domain..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full pl-10 sm:pl-12 pr-4 py-3 text-base border border-light-gray rounded-xl focus:outline-none focus:ring-2 focus:ring-light-blue focus:border-transparent min-h-[44px]"
-                    />
-                  </div>
-                </div>
-                
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4 w-full sm:w-auto">
-                  <button className="flex items-center justify-center space-x-2 px-4 py-3 border border-light-gray rounded-xl hover:bg-light-blue/10 transition-colors min-h-[44px] text-sm sm:text-base w-full sm:w-auto">
-                    <i className="fa-solid fa-filter text-navy"></i>
-                    <span className="font-semibold text-navy">Filters</span>
-                  </button>
-                  
-                  <select 
-                    value={sortOption}
-                    onChange={(e) => setSortOption(e.target.value)}
-                    className="px-4 py-3 text-base border border-light-gray rounded-xl focus:outline-none focus:ring-2 focus:ring-light-blue font-semibold text-navy min-h-[44px] w-full sm:w-auto"
-                  >
-                    <option>Most recent</option>
-                    <option>Most views</option>
-                    <option>A–Z</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Active Filters */}
-              {activeFilters.length > 0 && (
-                <div className="mt-4 flex flex-wrap gap-2">
-                  {activeFilters.map(filter => (
-                    <div key={filter} className="flex items-center space-x-2 bg-light-blue/20 px-3 py-1 rounded-full border border-light-blue/30">
-                      <span className="text-sm font-semibold text-navy">{filter}</span>
-                      <button 
-                        onClick={() => removeFilter(filter)}
-                        className="text-navy hover:text-red-500"
-                      >
-                        <i className="fa-solid fa-times text-xs"></i>
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </section>
-
-            {/* Company Results */}
-            <section className="space-y-6">
-              {isLoading ? (
-                <div className="w-full min-w-0 text-center py-12 px-2 sm:px-0">
-                  <div className="animate-spin rounded-full h-10 w-10 sm:h-12 sm:w-12 border-b-2 border-navy mx-auto mb-4"></div>
-                  <p className="text-sm sm:text-base text-gray-600">Loading companies...</p>
-                </div>
-              ) : companies.length === 0 ? (
-                <div className="w-full min-w-0 text-center py-12 sm:py-16 bg-white/90 backdrop-blur-sm rounded-none sm:rounded-xl md:rounded-2xl border-x-0 sm:border border-light-gray px-4">
-                  <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-4 sm:mb-6 bg-light-blue/20 rounded-full flex items-center justify-center">
-                    <i className="fa-solid fa-building text-navy text-2xl sm:text-3xl"></i>
-                  </div>
-                  <h3 className="text-xl sm:text-2xl font-bold text-navy mb-3 break-words">No companies yet</h3>
-                  <p className="text-sm sm:text-base text-gray-600 max-w-md mx-auto break-words">
-                    No companies have viewed your profile yet. Keep your profile updated and complete to attract more employers.
-                  </p>
-                </div>
-              ) : (
-                <>
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
-                    {companies.map((company, index) => (
-                  <div 
-                    key={company.id}
-                    onClick={() => openDrawer(company)}
-                    className={`w-full min-w-0 bg-white/90 backdrop-blur-sm p-4 sm:p-5 md:p-6 rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-light-gray card-hover cursor-pointer fade-up fade-up-delay-${index + 2} mb-3 sm:mb-0`}
-                    tabIndex={0}
-                  >
-                    <div className="flex items-start space-x-4">
-                      <div className={`w-14 h-14 ${company.avatarBg === 'navy' ? 'bg-navy' : 'bg-light-blue'} rounded-xl flex items-center justify-center flex-shrink-0`}>
-                        <span className="text-white font-bold text-lg">{company.initials}</span>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between mb-2">
-                          <div className="flex-1 min-w-0">
-                            <h3 className="text-lg font-bold text-navy truncate">{company.name}</h3>
-                            <p className="text-sm text-gray-500 mb-2">{company.domain}</p>
-                            <p className="text-sm text-gray-600 line-clamp-2">{company.description}</p>
-                          </div>
-                          <button 
-                            onClick={(e) => toggleSave(company.id, e)}
-                            className={`ml-4 p-2 transition-colors save-toggle ${company.isSaved ? 'text-red-500 hover:text-gray-400' : 'text-gray-400 hover:text-red-500'}`}
-                          >
-                            <i className={`${company.isSaved ? 'fa-solid' : 'fa-regular'} fa-heart text-lg`}></i>
-                          </button>
-                        </div>
-                        
-                        <div className="flex items-center space-x-4 mb-4 text-xs text-gray-500">
-                          <div className="flex items-center space-x-1">
-                            <i className="fa-solid fa-clock"></i>
-                            <span>{company.viewedAt}</span>
-                          </div>
-                          <div className="flex items-center space-x-1">
-                            <i className="fa-solid fa-eye"></i>
-                            <span>{company.visits} visit{company.visits !== 1 ? 's' : ''}</span>
-                          </div>
-                          {company.isNew && (
-                            <div className="bg-light-blue/20 px-2 py-1 rounded-full">
-                              <span className="text-xs font-semibold text-navy">NEW</span>
-                            </div>
-                          )}
-                        </div>
-                        
-                        <div className="flex items-center justify-between">
-                          <button className="bg-navy hover:bg-navy/90 text-white px-6 py-2 rounded-xl font-semibold transition-colors">
-                            View Company
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                    ))}
-                  </div>
-
-                  {/* Load More - Only show if there are companies */}
-                  {companies.length > 0 && (
-                    <div className="text-center py-8 fade-up fade-up-delay-6">
-                      <div className="text-gray-500 mb-4">
-                        <span className="font-semibold">Showing {companies.length} {companies.length === 1 ? 'company' : 'companies'}</span>
-                      </div>
-                    </div>
-                  )}
-                </>
-              )}
-            </section>
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-navy-900 mb-4 tracking-tight">Companies that viewed your profile</h1>
+          <p className="text-base sm:text-lg lg:text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed mb-6">See who's interested in you and follow up confidently.</p>
+          <div className="inline-flex items-center gap-2 bg-sky-50 px-4 py-2 rounded-full border border-sky-100 mb-4">
+            <Lock className="h-4 w-4 text-navy-700" />
+            <span className="text-sm font-semibold text-navy-900">Private to you</span>
           </div>
-        </main>
+          <p className="text-sm text-slate-500 mb-4">Only you can see this list. Employers are not notified when you view this page.</p>
+          <Link href="#" className="text-sm font-semibold text-navy-800 hover:text-navy-600 transition-colors inline-flex items-center gap-1">
+            How to turn views into interviews
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </Link>
+        </div>
 
-        {/* Detail Drawer */}
-        <div 
-          className={`fixed inset-y-0 right-0 w-96 bg-white shadow-2xl z-50 transition-transform duration-200 ${drawerOpen ? 'translate-x-0 drawer-enter' : 'translate-x-full'} ${!drawerOpen && !selectedCompany ? 'hidden' : ''}`}
-        >
-          <div className="p-6 border-b border-light-gray">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold text-navy">Company Details</h2>
-              <button 
-                onClick={closeDrawer}
-                className="p-2 text-gray-400 hover:text-navy transition-colors"
-              >
-                <i className="fa-solid fa-times text-lg"></i>
+        {/* Toolbar */}
+        <div className="bg-white rounded-2xl shadow-xl border border-slate-100 p-6 mb-8 sticky top-20 z-40">
+          <div className="flex flex-col lg:flex-row gap-4 items-stretch lg:items-center">
+            <div className="flex-1">
+              <div className="relative">
+                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400" />
+                <input 
+                  type="text" 
+                  placeholder="Search by company name or domain..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-12 pr-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-200 focus:border-sky-400 text-navy-900 placeholder-slate-400"
+                />
+              </div>
+            </div>
+            
+            <div className="flex gap-3">
+              <button className="flex items-center justify-center gap-2 px-4 py-3 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors font-semibold text-navy-900">
+                <Filter className="h-4 w-4" />
+                <span>Filters</span>
               </button>
+              
+              <select 
+                value={sortOption}
+                onChange={(e) => setSortOption(e.target.value)}
+                className="px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-200 focus:border-sky-400 font-semibold text-navy-900 bg-white"
+              >
+                <option>Most recent</option>
+                <option>Most views</option>
+                <option>A–Z</option>
+              </select>
             </div>
           </div>
-          
-          {selectedCompany && (
-            <div className="p-6 space-y-6">
-              <div className="flex items-center space-x-4">
-                <div className={`w-16 h-16 ${selectedCompany.avatarBg === 'navy' ? 'bg-navy' : 'bg-light-blue'} rounded-xl flex items-center justify-center`}>
-                  <span className="text-white font-bold text-xl">{selectedCompany.initials}</span>
+
+          {/* Active Filters */}
+          {activeFilters.length > 0 && (
+            <div className="mt-4 flex flex-wrap gap-2">
+              {activeFilters.map(filter => (
+                <div key={filter} className="flex items-center gap-2 bg-sky-50 px-3 py-1.5 rounded-full border border-sky-100">
+                  <span className="text-sm font-semibold text-navy-900">{filter}</span>
+                  <button 
+                    onClick={() => removeFilter(filter)}
+                    className="text-slate-400 hover:text-red-500 transition-colors"
+                  >
+                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                    </svg>
+                  </button>
                 </div>
-                <div>
-                  <h3 className="text-lg font-bold text-navy">{selectedCompany.name}</h3>
-                  <p className="text-gray-500">{selectedCompany.domain}</p>
-                </div>
-              </div>
-              
-              <div>
-                <h4 className="font-semibold text-navy mb-2">Description</h4>
-                <p className="text-gray-600 leading-relaxed">{selectedCompany.description}</p>
-              </div>
-              
-              <div>
-                <h4 className="font-semibold text-navy mb-3">Recent Activity</h4>
-                <div className="space-y-2">
-                  <div className="flex items-center space-x-3 text-sm">
-                    <div className="w-2 h-2 bg-light-blue rounded-full"></div>
-                    <span className="text-gray-600">Viewed your profile - 2 hours ago</span>
-                  </div>
-                  <div className="flex items-center space-x-3 text-sm">
-                    <div className="w-2 h-2 bg-gray-300 rounded-full"></div>
-                    <span className="text-gray-600">Viewed your profile - 2 days ago</span>
-                  </div>
-                  <div className="flex items-center space-x-3 text-sm">
-                    <div className="w-2 h-2 bg-gray-300 rounded-full"></div>
-                    <span className="text-gray-600">Viewed your profile - 1 week ago</span>
-                  </div>
-                </div>
-              </div>
-              
-              <div>
-                <h4 className="font-semibold text-navy mb-3">Shared Interests</h4>
-                <div className="flex flex-wrap gap-2">
-                  <span className="bg-light-blue/20 text-navy px-3 py-1 rounded-full text-sm font-semibold">JavaScript</span>
-                  <span className="bg-light-blue/20 text-navy px-3 py-1 rounded-full text-sm font-semibold">React</span>
-                  <span className="bg-light-blue/20 text-navy px-3 py-1 rounded-full text-sm font-semibold">Cloud</span>
-                </div>
-              </div>
-              
-              <div className="space-y-3 pt-6 border-t border-light-gray">
-                <button className="w-full bg-navy hover:bg-navy/90 text-white py-3 rounded-xl font-semibold transition-colors">
-                  View Company Profile
-                </button>
-              </div>
+              ))}
             </div>
           )}
         </div>
 
-        {/* Toast Container */}
-        <div id="toast-container" className="fixed top-24 right-6 z-50 space-y-2"></div>
+        {/* Company Results */}
+        <div className="space-y-6">
+          {companies.length === 0 ? (
+            <div className="bg-white rounded-2xl shadow-xl border border-slate-100 p-12 text-center">
+              <div className="w-20 h-20 mx-auto bg-sky-100 rounded-full flex items-center justify-center mb-6">
+                <Building className="h-10 w-10 text-slate-400" />
+              </div>
+              <h3 className="text-2xl font-bold text-navy-900 mb-4">No companies yet</h3>
+              <p className="text-slate-600 leading-relaxed max-w-md mx-auto">
+                No companies have viewed your profile yet. Keep your profile updated and complete to attract more employers.
+              </p>
+            </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {companies.map((company) => (
+                  <div 
+                    key={company.id}
+                    onClick={() => openDrawer(company)}
+                    className="bg-white rounded-2xl shadow-xl border border-slate-100 p-8 hover:shadow-2xl transition-shadow duration-300 cursor-pointer"
+                    tabIndex={0}
+                  >
+                    <div className="flex items-start gap-4">
+                      <div className={`w-14 h-14 ${company.avatarBg === 'navy' ? 'bg-navy-800' : 'bg-sky-100'} rounded-xl flex items-center justify-center flex-shrink-0`}>
+                        <span className={`font-bold text-lg ${company.avatarBg === 'navy' ? 'text-white' : 'text-navy-900'}`}>{company.initials}</span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex-1 min-w-0">
+                            <h3 className="text-xl font-bold text-navy-900 truncate mb-1">{company.name}</h3>
+                            <p className="text-sm text-slate-500 mb-3">{company.domain}</p>
+                            <p className="text-sm text-slate-600 line-clamp-2 leading-relaxed">{company.description}</p>
+                          </div>
+                          <button 
+                            onClick={(e) => toggleSave(company.id, e)}
+                            className={`ml-4 p-2 transition-colors ${company.isSaved ? 'text-red-500 hover:text-red-600' : 'text-slate-400 hover:text-red-500'}`}
+                          >
+                            <svg className="w-5 h-5" fill={company.isSaved ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                            </svg>
+                          </button>
+                        </div>
+                        
+                        <div className="flex items-center gap-4 mb-6 text-xs text-slate-500">
+                          <div className="flex items-center gap-1.5">
+                            <Clock className="h-3.5 w-3.5" />
+                            <span>{company.viewedAt}</span>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <Eye className="h-3.5 w-3.5" />
+                            <span>{company.visits} visit{company.visits !== 1 ? 's' : ''}</span>
+                          </div>
+                          {company.isNew && (
+                            <div className="bg-sky-50 px-2 py-1 rounded-full border border-sky-100">
+                              <span className="text-xs font-semibold text-navy-900">NEW</span>
+                            </div>
+                          )}
+                        </div>
+                        
+                        <button className="bg-navy-800 hover:bg-navy-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors shadow-md">
+                          View Company
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
 
-        {/* Drawer Overlay */}
-        {drawerOpen && (
+              {/* Load More - Only show if there are companies */}
+              {companies.length > 0 && (
+                <div className="text-center py-8">
+                  <div className="text-slate-600">
+                    <span className="font-semibold">Showing {companies.length} {companies.length === 1 ? 'company' : 'companies'}</span>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      </main>
+
+      {/* Detail Drawer */}
+      {drawerOpen && selectedCompany && (
+        <>
           <div 
-            className="fixed inset-0 bg-black/20 z-40"
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50"
             onClick={closeDrawer}
           />
-        )}
-      </div>
-    </>
+          <div className="fixed inset-y-0 right-0 w-full sm:w-96 bg-white shadow-2xl z-50 overflow-y-auto">
+            <div className="p-6 border-b border-slate-100 sticky top-0 bg-white">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-bold text-navy-900">Company Details</h2>
+                <button 
+                  onClick={closeDrawer}
+                  className="p-2 text-slate-400 hover:text-navy-900 transition-colors rounded-lg hover:bg-slate-50"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+            
+            <div className="p-6 space-y-6">
+              <div className="flex items-center gap-4">
+                <div className={`w-16 h-16 ${selectedCompany.avatarBg === 'navy' ? 'bg-navy-800' : 'bg-sky-100'} rounded-xl flex items-center justify-center flex-shrink-0`}>
+                  <span className={`font-bold text-xl ${selectedCompany.avatarBg === 'navy' ? 'text-white' : 'text-navy-900'}`}>{selectedCompany.initials}</span>
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-navy-900">{selectedCompany.name}</h3>
+                  <p className="text-slate-500">{selectedCompany.domain}</p>
+                </div>
+              </div>
+              
+              <div>
+                <h4 className="font-bold text-navy-900 mb-2">Description</h4>
+                <p className="text-slate-600 leading-relaxed">{selectedCompany.description}</p>
+              </div>
+              
+              <div>
+                <h4 className="font-bold text-navy-900 mb-3">Recent Activity</h4>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3 text-sm">
+                    <div className="w-2 h-2 bg-sky-500 rounded-full"></div>
+                    <span className="text-slate-600">Viewed your profile - 2 hours ago</span>
+                  </div>
+                  <div className="flex items-center gap-3 text-sm">
+                    <div className="w-2 h-2 bg-slate-300 rounded-full"></div>
+                    <span className="text-slate-600">Viewed your profile - 2 days ago</span>
+                  </div>
+                  <div className="flex items-center gap-3 text-sm">
+                    <div className="w-2 h-2 bg-slate-300 rounded-full"></div>
+                    <span className="text-slate-600">Viewed your profile - 1 week ago</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div>
+                <h4 className="font-bold text-navy-900 mb-3">Shared Interests</h4>
+                <div className="flex flex-wrap gap-2">
+                  <span className="bg-sky-50 border border-sky-100 text-navy-900 px-3 py-1.5 rounded-full text-sm font-semibold">JavaScript</span>
+                  <span className="bg-sky-50 border border-sky-100 text-navy-900 px-3 py-1.5 rounded-full text-sm font-semibold">React</span>
+                  <span className="bg-sky-50 border border-sky-100 text-navy-900 px-3 py-1.5 rounded-full text-sm font-semibold">Cloud</span>
+                </div>
+              </div>
+              
+              <div className="pt-6 border-t border-slate-100">
+                <button className="w-full bg-navy-800 hover:bg-navy-700 text-white py-3 rounded-lg font-semibold transition-colors shadow-md">
+                  View Company Profile
+                </button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Toast Container */}
+      <div id="toast-container" className="fixed top-24 right-6 z-50 space-y-2"></div>
+    </div>
   );
 }

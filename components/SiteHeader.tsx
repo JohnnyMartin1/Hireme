@@ -17,33 +17,33 @@ export default function SiteHeader() {
     : '/';
 
   return (
-    <header className="bg-white/80 backdrop-blur-sm py-4 px-4 sm:px-6 sticky top-0 z-40 shadow-sm mobile-safe-top">
-      <div className="container mx-auto flex items-center justify-between max-w-full">
+    <header className="fixed top-0 left-0 right-0 bg-white/95 backdrop-blur-md shadow-sm z-50 border-b border-slate-100 mobile-safe-top">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
         <Link href="/" className="shrink-0" aria-label="HireMe home">
-          <HireMeLogo variant="full" className="h-6 sm:h-8 w-auto" />
+          <HireMeLogo variant="full" className="h-7 sm:h-8 w-auto" />
         </Link>
 
         {!user ? (
           <>
             {/* Desktop Navigation - Not Logged In */}
-            <div className="hidden sm:flex items-center space-x-4 md:space-x-8">
+            <div className="hidden sm:flex items-center space-x-4 md:space-x-6">
               <Link
                 href="/"
-                className="text-gray-700 font-medium hover:text-navy transition cursor-pointer text-sm md:text-base"
+                className="text-sm text-slate-600 hover:text-navy-700 font-medium transition-colors duration-200"
               >
                 Home
               </Link>
               <Link
                 href="/auth/signup"
-                className="bg-navy text-white px-4 md:px-6 py-2 rounded-full font-medium hover:bg-blue-900 transition btn-hover text-sm md:text-base"
+                className="bg-navy-800 text-white px-5 py-2 rounded-lg text-sm font-semibold hover:bg-navy-700 hover:shadow-lg transition-all duration-300"
               >
                 Sign up
               </Link>
               <Link
                 href="/auth/login"
-                className="text-gray-700 border border-gray-300 px-4 md:px-6 py-2 rounded-full font-medium hover:bg-gray-100 hover:text-navy transition btn-hover text-sm md:text-base"
+                className="text-slate-700 hover:text-navy-700 font-medium transition-colors duration-200 text-sm"
               >
-                Log in
+                Log In
               </Link>
             </div>
 
@@ -51,13 +51,13 @@ export default function SiteHeader() {
             <div className="flex sm:hidden items-center space-x-2">
               <Link
                 href="/auth/signup"
-                className="bg-navy text-white px-4 py-2 rounded-full font-medium hover:bg-blue-900 transition text-sm"
+                className="bg-navy-800 text-white px-4 py-2 rounded-lg font-semibold hover:bg-navy-700 transition-all text-sm"
               >
                 Sign up
               </Link>
               <Link
                 href="/auth/login"
-                className="text-gray-700 border border-gray-300 px-4 py-2 rounded-full font-medium hover:bg-gray-100 hover:text-navy transition text-sm"
+                className="text-slate-700 px-3 py-2 font-medium hover:text-navy-700 transition-colors text-sm"
               >
                 Log in
               </Link>
@@ -66,22 +66,22 @@ export default function SiteHeader() {
         ) : (
           <>
             {/* Desktop Navigation - Logged In */}
-            <nav className="hidden md:flex items-center gap-6">
+            <nav className="hidden md:flex items-center gap-5 lg:gap-6">
               <Link 
                 href={dashboardLink} 
-                className="text-sm text-[var(--muted)] hover:text-[var(--text)] transition-all duration-200 hover:-translate-y-1 hover:shadow-md px-3 py-2 rounded-lg whitespace-nowrap"
+                className="text-sm text-slate-600 hover:text-navy-700 font-medium transition-colors duration-200"
               >
                 Dashboard
               </Link>
               <Link 
                 href={`/account/${user?.uid}/settings`}
-                className="text-sm text-[var(--muted)] hover:text-[var(--text)] transition-all duration-200 hover:-translate-y-1 hover:shadow-md px-3 py-2 rounded-lg whitespace-nowrap"
+                className="text-sm text-slate-600 hover:text-navy-700 font-medium transition-colors duration-200"
               >
                 Settings
               </Link>
               <button
                 onClick={signOut}
-                className="hireme-btn hireme-btn-ghost text-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md whitespace-nowrap"
+                className="text-sm text-slate-600 hover:text-navy-700 font-medium transition-colors duration-200"
               >
                 Sign out
               </button>
@@ -97,12 +97,12 @@ export default function SiteHeader() {
               onTouchStart={(e) => {
                 e.stopPropagation();
               }}
-              className="md:hidden p-2.5 hover:bg-gray-100 active:bg-gray-200 rounded-lg transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center z-50 relative touch-manipulation"
+              className="md:hidden p-2.5 hover:bg-slate-100 active:bg-slate-200 rounded-lg transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center z-50 relative touch-manipulation"
               aria-label="Open menu"
               aria-expanded={mobileMenuOpen}
               type="button"
             >
-              <Menu className="h-6 w-6 text-gray-700 pointer-events-none" />
+              <Menu className="h-6 w-6 text-slate-700 pointer-events-none" />
             </button>
 
             {/* Mobile Menu - Logged In */}
@@ -111,14 +111,14 @@ export default function SiteHeader() {
                 <Link 
                   href={dashboardLink}
                   onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center justify-center px-4 py-4 text-base font-medium text-gray-700 hover:bg-gray-50 active:bg-gray-100 transition-colors border-b border-gray-100 min-h-[56px] w-full text-center"
+                  className="flex items-center justify-center px-4 py-4 text-base font-medium text-navy-900 hover:bg-sky-50 active:bg-sky-100 transition-colors border-b border-slate-100 min-h-[56px] w-full text-center"
                 >
                   Dashboard
                 </Link>
                 <Link 
                   href={`/account/${user?.uid}/settings`}
                   onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center justify-center px-4 py-4 text-base font-medium text-gray-700 hover:bg-gray-50 active:bg-gray-100 transition-colors border-b border-gray-100 min-h-[56px] w-full text-center"
+                  className="flex items-center justify-center px-4 py-4 text-base font-medium text-navy-900 hover:bg-sky-50 active:bg-sky-100 transition-colors border-b border-slate-100 min-h-[56px] w-full text-center"
                 >
                   Settings
                 </Link>

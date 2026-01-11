@@ -377,7 +377,7 @@ export default function SearchCandidatesPage() {
       <div className="min-h-screen" style={{background: 'linear-gradient(180deg, #E6F0FF 0%, #F8FAFC 100%)'}}>
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center">
-            <Loader2 className="h-12 w-12 animate-spin text-navy mx-auto mb-4" />
+            <Loader2 className="h-12 w-12 animate-spin text-navy-800 mx-auto mb-4" />
             <p className="text-gray-600">Loading...</p>
           </div>
         </div>
@@ -398,7 +398,7 @@ export default function SearchCandidatesPage() {
         <section className="mb-4 sm:mb-6 md:mb-8 px-2 sm:px-0">
           <Link 
             href="/home/employer"
-            className="flex items-center text-navy font-semibold hover:text-blue-900 transition-colors duration-200 bg-light-blue/10 hover:bg-light-blue/20 px-3 sm:px-4 py-2 rounded-full w-fit min-h-[44px] text-sm sm:text-base"
+            className="flex items-center text-navy-800 font-semibold hover:text-navy-700 transition-colors duration-200 bg-sky-50 hover:bg-sky-100 px-3 sm:px-4 py-2 rounded-full w-fit min-h-[44px] text-sm sm:text-base"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
             <span className="hidden sm:inline">Back to Dashboard</span>
@@ -408,12 +408,12 @@ export default function SearchCandidatesPage() {
 
         {/* Page Header */}
         <section className="mb-4 sm:mb-6 md:mb-10 px-2 sm:px-0">
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-navy mb-2 break-words">Find Your Perfect Candidate</h1>
-          <p className="text-sm sm:text-base md:text-lg text-gray-600 break-words">Search through talented job seekers to find the right fit for your company.</p>
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-navy-900 mb-2 break-words">Find Your Perfect Candidate</h1>
+          <p className="text-sm sm:text-base md:text-lg text-slate-600 break-words">Search through talented job seekers to find the right fit for your company.</p>
         </section>
 
         {/* Search Toolbar */}
-        <section className="sticky top-16 sm:top-20 z-30 bg-white/90 backdrop-blur-sm p-4 sm:p-5 md:p-6 rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-light-gray mb-3 sm:mb-6 md:mb-8 mobile-safe-top">
+        <section className="sticky top-16 sm:top-20 z-30 bg-white/90 backdrop-blur-sm p-4 sm:p-5 md:p-6 rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-slate-200 mb-3 sm:mb-6 md:mb-8 mobile-safe-top">
           <div className="flex flex-col lg:flex-row gap-4 items-stretch lg:items-center">
             <div className="flex-1 relative">
               <input 
@@ -426,7 +426,7 @@ export default function SearchCandidatesPage() {
                     handleSearch();
                   }
                 }}
-                className="w-full px-4 py-3 pl-10 sm:pl-12 text-base border border-gray-300 rounded-lg bg-white focus:outline-none focus:border-navy focus:ring-2 sm:focus:ring-4 focus:ring-navy/10 transition-all duration-200 min-h-[44px]"
+                className="w-full px-4 py-3 pl-10 sm:pl-12 text-base border border-slate-300 rounded-lg bg-white focus:outline-none focus:border-sky-400 focus:ring-2 sm:focus:ring-4 focus:ring-sky-300/30 transition-all duration-200 min-h-[44px]"
                 aria-label="Search candidates"
               />
               <Search className="absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 text-gray-400" />
@@ -439,7 +439,7 @@ export default function SearchCandidatesPage() {
                 <Filter className="h-4 w-4" />
                 <span>Filters</span>
                 {hasActiveFilters && (
-                  <div className="absolute -top-2 -right-2 bg-navy text-white text-xs rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center">
+                  <div className="absolute -top-2 -right-2 bg-navy-800 text-white text-xs rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center">
                     {filterCount}
                   </div>
                 )}
@@ -447,7 +447,7 @@ export default function SearchCandidatesPage() {
               <button 
                 onClick={handleSearch}
                 disabled={isLoading}
-                className="bg-navy text-white font-semibold py-2.5 sm:py-3 px-4 sm:px-6 md:px-8 rounded-lg hover:bg-blue-900 hover:shadow-md transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 min-h-[44px] text-sm sm:text-base w-full sm:w-auto"
+                className="bg-navy-800 text-white font-semibold py-2.5 sm:py-3 px-4 sm:px-6 md:px-8 rounded-lg hover:bg-navy-700 hover:shadow-md transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 min-h-[44px] text-sm sm:text-base w-full sm:w-auto"
               >
                 {isLoading ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -581,7 +581,7 @@ export default function SearchCandidatesPage() {
                       type="checkbox"
                       checked={hasVideo}
                       onChange={(e) => setHasVideo(e.target.checked)}
-                      className="h-4 w-4 text-navy focus:ring-navy border-gray-300 rounded"
+                      className="h-4 w-4 text-navy-800 focus:ring-navy-800 border-gray-300 rounded"
                     />
                     <span className="text-sm text-gray-700">Has Video</span>
                   </label>
@@ -591,7 +591,7 @@ export default function SearchCandidatesPage() {
                       type="checkbox"
                       checked={hasResume}
                       onChange={(e) => setHasResume(e.target.checked)}
-                      className="h-4 w-4 text-navy focus:ring-navy border-gray-300 rounded"
+                      className="h-4 w-4 text-navy-800 focus:ring-navy-800 border-gray-300 rounded"
                     />
                     <span className="text-sm text-gray-700">Has Resume</span>
                   </label>
@@ -601,7 +601,7 @@ export default function SearchCandidatesPage() {
                       type="checkbox"
                       checked={hasProfileImage}
                       onChange={(e) => setHasProfileImage(e.target.checked)}
-                      className="h-4 w-4 text-navy focus:ring-navy border-gray-300 rounded"
+                      className="h-4 w-4 text-navy-800 focus:ring-navy-800 border-gray-300 rounded"
                     />
                     <span className="text-sm text-gray-700">Has Photo</span>
                   </label>
@@ -611,7 +611,7 @@ export default function SearchCandidatesPage() {
                       type="checkbox"
                       checked={hasBio}
                       onChange={(e) => setHasBio(e.target.checked)}
-                      className="h-4 w-4 text-navy focus:ring-navy border-gray-300 rounded"
+                      className="h-4 w-4 text-navy-800 focus:ring-navy-800 border-gray-300 rounded"
                     />
                     <span className="text-sm text-gray-700">Has Bio</span>
                   </label>
@@ -644,7 +644,7 @@ export default function SearchCandidatesPage() {
         {/* Results Meta */}
         <section className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
           <div className="flex items-center gap-4">
-            <h2 className="text-xl font-bold text-navy">
+            <h2 className="text-xl font-bold text-navy-900">
               {isLoading ? 'Searching...' : `Found ${candidates.length} candidate${candidates.length !== 1 ? 's' : ''}`}
             </h2>
           </div>
@@ -662,18 +662,18 @@ export default function SearchCandidatesPage() {
             <p className="text-sm sm:text-base text-gray-500 px-4">Use the search bar above to find candidates</p>
           </div>
         ) : isLoading ? (
-          <div className="w-full min-w-0 text-center py-12 sm:py-16 bg-white rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-gray-200">
-            <Loader2 className="h-8 w-8 animate-spin text-navy mx-auto mb-4" />
+          <div className="w-full min-w-0 text-center py-12 sm:py-16 bg-white rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-slate-200">
+            <Loader2 className="h-8 w-8 animate-spin text-navy-800 mx-auto mb-4" />
             <p className="text-sm sm:text-base text-gray-600">Searching for candidates...</p>
           </div>
         ) : candidates.length === 0 ? (
-          <div className="w-full min-w-0 text-center py-12 sm:py-16 bg-white rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-gray-200">
-            <User className="h-10 w-10 sm:h-12 sm:w-12 text-gray-300 mx-auto mb-4" />
-            <p className="text-sm sm:text-base text-gray-500 px-4">No candidates found matching your criteria</p>
-            <p className="text-xs sm:text-sm text-gray-400 mt-2 px-4">Try adjusting your search terms or filters</p>
+          <div className="w-full min-w-0 text-center py-12 sm:py-16 bg-white rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-slate-200">
+            <User className="h-10 w-10 sm:h-12 sm:w-12 text-slate-300 mx-auto mb-4" />
+            <p className="text-sm sm:text-base text-slate-500 px-4">No candidates found matching your criteria</p>
+            <p className="text-xs sm:text-sm text-slate-400 mt-2 px-4">Try adjusting your search terms or filters</p>
             <button
               onClick={clearFilters}
-              className="mt-4 bg-navy text-white font-semibold py-2.5 px-5 rounded-lg hover:bg-blue-900 transition-colors min-h-[44px] text-sm sm:text-base"
+              className="mt-4 bg-navy-800 text-white font-semibold py-2.5 px-5 rounded-lg hover:bg-navy-700 transition-colors min-h-[44px] text-sm sm:text-base"
             >
               Clear filters
             </button>
@@ -681,10 +681,10 @@ export default function SearchCandidatesPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
             {candidates.map((candidate) => (
-              <div key={candidate.id} className="w-full min-w-0 bg-white p-4 sm:p-5 md:p-6 rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-gray-200 hover:shadow-md transition-all duration-200">
+              <div key={candidate.id} className="w-full min-w-0 bg-white p-4 sm:p-5 md:p-6 rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-slate-200 hover:shadow-md transition-all duration-200">
                 <div className="flex justify-between items-start mb-4">
                   <div>
-                    <h3 className="text-base sm:text-lg font-bold text-navy break-words">
+                    <h3 className="text-base sm:text-lg font-bold text-navy-900 break-words">
                       {candidate.firstName} {candidate.lastName}
                     </h3>
                     <p className="text-xs sm:text-sm text-gray-500 break-words">{candidate.headline || 'No headline'}</p>
@@ -724,7 +724,7 @@ export default function SearchCandidatesPage() {
                       {candidate.skills.slice(0, 4).map((skill, index) => (
                         <span
                           key={index}
-                          className="bg-light-blue/20 text-navy px-3 py-1 rounded-full text-xs font-medium"
+                          className="bg-sky-100 text-navy-800 px-3 py-1 rounded-full text-xs font-medium"
                         >
                           {skill}
                         </span>
@@ -745,7 +745,7 @@ export default function SearchCandidatesPage() {
                   <div className="flex space-x-2">
                     <Link
                       href={`/candidate/${candidate.id}`}
-                      className="bg-navy text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-900 transition-colors"
+                      className="bg-navy-800 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-navy-700 transition-colors"
                     >
                       View Profile
                     </Link>

@@ -243,7 +243,7 @@ export default function NextStepsOnboarding() {
             </div>
             <div className="w-full bg-gray-200/40 rounded-full h-2">
               <div 
-                className="bg-navy h-2 rounded-full transition-all duration-300" 
+                className="bg-navy-800 h-2 rounded-full transition-all duration-300" 
                 style={{ width: `${progressPercentage}%` }}
               ></div>
             </div>
@@ -324,7 +324,7 @@ export default function NextStepsOnboarding() {
                   onChange={(e) => setProfileData({...profileData, experience: e.target.value})}
                   rows={6}
                   placeholder="Describe your work experience, internships, projects, and achievements..."
-                  className="w-full bg-blue-50/50 rounded-xl border border-gray-200 px-4 py-4 focus:border-navy focus:ring-2 focus:ring-navy/20 focus:outline-none transition-all resize-none"
+                  className="w-full bg-blue-50/50 rounded-xl border border-gray-200 px-4 py-4 focus:border-navy-800 focus:ring-2 focus:ring-navy/20 focus:outline-none transition-all resize-none"
                 />
                 <div className="flex justify-end mt-2">
                   <span className="text-sm text-gray-500">
@@ -361,7 +361,7 @@ export default function NextStepsOnboarding() {
                     value={profileData.linkedin}
                     onChange={(e) => setProfileData({...profileData, linkedin: e.target.value})}
                     placeholder="https://linkedin.com/in/yourprofile"
-                    className="w-full h-12 bg-blue-50/50 rounded-xl border border-gray-200 px-4 py-4 focus:border-navy focus:ring-2 focus:ring-navy/20 focus:outline-none transition-all"
+                    className="w-full h-12 bg-blue-50/50 rounded-xl border border-gray-200 px-4 py-4 focus:border-navy-800 focus:ring-2 focus:ring-navy/20 focus:outline-none transition-all"
                   />
                 </div>
                 <div className="relative">
@@ -373,7 +373,7 @@ export default function NextStepsOnboarding() {
                     value={profileData.portfolio}
                     onChange={(e) => setProfileData({...profileData, portfolio: e.target.value})}
                     placeholder="https://yourportfolio.com"
-                    className="w-full h-12 bg-blue-50/50 rounded-xl border border-gray-200 px-4 py-4 focus:border-navy focus:ring-2 focus:ring-navy/20 focus:outline-none transition-all"
+                    className="w-full h-12 bg-blue-50/50 rounded-xl border border-gray-200 px-4 py-4 focus:border-navy-800 focus:ring-2 focus:ring-navy/20 focus:outline-none transition-all"
                   />
                 </div>
               </div>
@@ -433,7 +433,7 @@ export default function NextStepsOnboarding() {
                       <h3 className="font-semibold text-gray-900">Work Preferences</h3>
                       <button 
                         onClick={() => setCurrentSlide(1)}
-                        className="text-navy text-sm hover:underline"
+                        className="text-navy-800 text-sm hover:underline"
                       >
                         Edit
                       </button>
@@ -451,7 +451,7 @@ export default function NextStepsOnboarding() {
                       <h3 className="font-semibold text-gray-900">Skills</h3>
                       <button 
                         onClick={() => setCurrentSlide(2)}
-                        className="text-navy text-sm hover:underline"
+                        className="text-navy-800 text-sm hover:underline"
                       >
                         Edit
                       </button>
@@ -467,7 +467,7 @@ export default function NextStepsOnboarding() {
                       <h3 className="font-semibold text-gray-900">Experience</h3>
                       <button 
                         onClick={() => setCurrentSlide(3)}
-                        className="text-navy text-sm hover:underline"
+                        className="text-navy-800 text-sm hover:underline"
                       >
                         Edit
                       </button>
@@ -483,7 +483,7 @@ export default function NextStepsOnboarding() {
                       <h3 className="font-semibold text-gray-900">Industries</h3>
                       <button 
                         onClick={() => setCurrentSlide(4)}
-                        className="text-navy text-sm hover:underline"
+                        className="text-navy-800 text-sm hover:underline"
                       >
                         Edit
                       </button>
@@ -499,7 +499,7 @@ export default function NextStepsOnboarding() {
                       <h3 className="font-semibold text-gray-900">Links</h3>
                       <button 
                         onClick={() => setCurrentSlide(5)}
-                        className="text-navy text-sm hover:underline"
+                        className="text-navy-800 text-sm hover:underline"
                       >
                         Edit
                       </button>
@@ -516,7 +516,7 @@ export default function NextStepsOnboarding() {
                       <h3 className="font-semibold text-gray-900">Uploads</h3>
                       <button 
                         onClick={() => setCurrentSlide(6)}
-                        className="text-navy text-sm hover:underline"
+                        className="text-navy-800 text-sm hover:underline"
                       >
                         Edit
                       </button>
@@ -539,7 +539,7 @@ export default function NextStepsOnboarding() {
             <button 
               onClick={prevSlide}
               disabled={currentSlide === 1}
-              className="flex items-center px-6 py-3 text-navy border border-navy rounded-xl font-medium transition-all hover:bg-navy/5 disabled:opacity-40 disabled:cursor-not-allowed"
+              className="flex items-center px-6 py-3 text-navy-800 border border-navy-800 rounded-xl font-medium transition-all hover:bg-navy/5 disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <i className="fa-solid fa-chevron-left mr-2"></i>
               Back
@@ -547,7 +547,7 @@ export default function NextStepsOnboarding() {
             <button 
               onClick={nextSlide}
               disabled={isSubmitting}
-              className="px-8 py-3 bg-navy text-white rounded-xl font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+              className="px-8 py-3 bg-navy-800 text-white rounded-xl font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {isSubmitting ? (
                 <>

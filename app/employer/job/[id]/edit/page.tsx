@@ -124,7 +124,7 @@ export default function EditJobPage({ params }: { params: { id: string } }) {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-blue-600" />
           <p className="text-gray-600">Loading job details...</p>
@@ -135,7 +135,7 @@ export default function EditJobPage({ params }: { params: { id: string } }) {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center">
           <p className="text-red-600 mb-4">{error}</p>
           <BackButton />
@@ -145,7 +145,7 @@ export default function EditJobPage({ params }: { params: { id: string } }) {
   }
 
   return (
-    <div className="min-h-screen mobile-safe-top mobile-safe-bottom overflow-x-hidden w-full bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+    <div className="min-h-screen mobile-safe-top mobile-safe-bottom overflow-x-hidden w-full bg-slate-50">
       <div className="w-full md:max-w-4xl md:mx-auto px-0 sm:px-3 md:p-6 py-4 sm:py-6 min-w-0">
         <div className="mb-4 sm:mb-6 px-2 sm:px-0">
           <BackButton />
