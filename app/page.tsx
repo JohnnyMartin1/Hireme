@@ -43,47 +43,171 @@ export default function Home() {
     { id: 'measure', icon: 'fa-chart-bar', title: 'Measure & Improve', description: 'Track hiring metrics and feedback to continuously improve sourcing, screening, and interview quality.' }
   ];
 
+  // Comparison content with truth-safe states
+  const comparisonRows = [
+    {
+      key: "timeline",
+      group: "Differentiators",
+      label: "Transparent timelines + status updates (anti-ghosting)",
+      employerDescription: "Set clear stages + expected response windows so candidates know what's next and when updates will happen.",
+      candidateDescription: "See your stage, what's next, and when to expect updates — fewer dead ends.",
+      states: {
+        hireme: "built_in",
+        linkedin: "varies",
+        handshake: "varies",
+        indeed: "varies",
+      },
+      highlight: true,
+    },
+    {
+      key: "verified_intent",
+      group: "Differentiators",
+      label: "Verified intent + outreach controls",
+      employerDescription: "Outreach stays high-signal: verified roles/timelines, guardrails, and quality controls that reduce spam.",
+      candidateDescription: "Fewer spammy messages — outreach is tied to real roles and clearer intent.",
+      states: {
+        hireme: "built_in",
+        linkedin: "available",
+        handshake: "available",
+        indeed: "available",
+      },
+      highlight: true,
+    },
+    {
+      key: "structured_signals",
+      group: "Differentiators",
+      label: "Structured screening + interview signals (built-in)",
+      employerDescription: "Standardized screening criteria + interview scorecards keep teams aligned and make evaluations consistent.",
+      candidateDescription: "More consistent evaluation — clearer expectations and fairer comparison.",
+      states: {
+        hireme: "built_in",
+        linkedin: "available",
+        handshake: "available",
+        indeed: "available",
+      },
+      highlight: true,
+    },
+    {
+      key: "closed_loop",
+      group: "Differentiators",
+      label: "Closed-loop workflow + insights (action → outcome)",
+      employerDescription: "Connect steps end-to-end and learn what actually drives successful hires so you can improve the process.",
+      candidateDescription: "A smoother connected process with fewer handoffs and surprises.",
+      states: {
+        hireme: "built_in",
+        linkedin: "available",
+        handshake: "available",
+        indeed: "available",
+      },
+      highlight: true,
+    },
+    {
+      key: "discovery",
+      group: "Core capabilities",
+      label: "Talent discovery: search + filters",
+      employerDescription: "Search and filter for candidates by role-relevant criteria to build targeted shortlists.",
+      candidateDescription: "Get discovered based on skills, interests, and fit signals.",
+      states: {
+        hireme: "built_in",
+        linkedin: "built_in",
+        handshake: "built_in",
+        indeed: "available",
+      },
+      highlight: false,
+    },
+    {
+      key: "messaging",
+      group: "Core capabilities",
+      label: "Outreach messaging",
+      employerDescription: "Message candidates directly and manage conversations in one place.",
+      candidateDescription: "Communicate with employers without losing context.",
+      states: {
+        hireme: "built_in",
+        linkedin: "built_in",
+        handshake: "built_in",
+        indeed: "available",
+      },
+      highlight: false,
+    },
+    {
+      key: "pipeline",
+      group: "Core capabilities",
+      label: "Pipeline / tracking",
+      employerDescription: "Move candidates through stages and track decisions with shared visibility.",
+      candidateDescription: "Know where you stand as you move through the process.",
+      states: {
+        hireme: "built_in",
+        linkedin: "built_in",
+        handshake: "available",
+        indeed: "available",
+      },
+      highlight: false,
+    },
+    {
+      key: "profile_artifacts",
+      group: "Core capabilities",
+      label: "Candidate profile + artifacts (resume, transcript/portfolio)",
+      employerDescription: "A consistent profile format with reusable artifacts — fewer missing pieces when reviewing.",
+      candidateDescription: "One clean profile you can reuse — attach artifacts once, update anytime.",
+      states: {
+        hireme: "built_in",
+        linkedin: "built_in",
+        handshake: "built_in",
+        indeed: "available",
+      },
+      highlight: false,
+    },
+  ];
+
+  const comparisonCopy = {
+    employer: {
+      title: "How HireMe Compares",
+      subtitle: "All the essentials employers expect — plus verified intent and clearer timelines.",
+    },
+    candidate: {
+      title: "How HireMe Compares",
+      subtitle: "All the essentials candidates expect — plus fewer dead ends and higher-signal outreach.",
+    },
+  };
+
+  // Transform comparisonRows into the format expected by the rendering code
   const comparisonData = {
-    employer: [
-      {
-        group: 'Differentiators',
-        rows: [
-          { key: 'timeline', label: 'Transparent timelines + status updates', description: "Set clear stages + expected response windows so candidates always know what's next.", hireme: true, linkedin: false, handshake: false, indeed: false, highlight: true },
-          { key: 'verified', label: 'Verified intent + outreach controls', description: 'Outreach stays high-signal: verified roles, guardrails, reduced spam.', hireme: true, linkedin: false, handshake: false, indeed: false, highlight: true },
-          { key: 'screening', label: 'Structured screening + interview signals', description: 'Standardized screening criteria + interview scorecards keep teams aligned.', hireme: true, linkedin: false, handshake: false, indeed: true, highlight: true },
-          { key: 'workflow', label: 'Closed-loop workflow + insights', description: 'Connect steps end-to-end and learn what drives successful hires.', hireme: true, linkedin: true, handshake: false, indeed: true, highlight: true }
-        ]
-      },
-      {
-        group: 'Core capabilities',
-        rows: [
-          { key: 'search', label: 'Candidate search + filters', description: 'Search and filter candidates by role-relevant criteria.', hireme: true, linkedin: true, handshake: true, indeed: true, highlight: false },
-          { key: 'outreach', label: 'Outreach messaging', description: 'Message candidates directly and manage conversations.', hireme: true, linkedin: true, handshake: true, indeed: true, highlight: false },
-          { key: 'pipeline', label: 'Pipeline / tracking', description: 'Move candidates through stages and track decisions.', hireme: true, linkedin: true, handshake: true, indeed: true, highlight: false },
-          { key: 'profile', label: 'Candidate profile + artifacts', description: 'Structured profile with artifacts (resume, transcript/portfolio) in a consistent format.', hireme: true, linkedin: true, handshake: true, indeed: true, highlight: false }
-        ]
-      }
-    ],
-    candidate: [
-      {
-        group: 'Differentiators',
-        rows: [
-          { key: 'timeline', label: 'Transparent timelines + status updates', description: "See your stage, what's next, and when to expect updates — fewer dead ends.", hireme: true, linkedin: false, handshake: false, indeed: false, highlight: true },
-          { key: 'verified', label: 'Verified intent + outreach controls', description: 'Fewer spammy messages — outreach tied to real roles and clearer intent.', hireme: true, linkedin: false, handshake: false, indeed: false, highlight: true },
-          { key: 'screening', label: 'Structured screening + interview signals', description: 'More consistent evaluation — clearer expectations and fairer comparison.', hireme: true, linkedin: false, handshake: false, indeed: true, highlight: true },
-          { key: 'workflow', label: 'Closed-loop workflow + insights', description: 'A smoother connected process with fewer handoffs and surprises.', hireme: true, linkedin: true, handshake: false, indeed: true, highlight: true }
-        ]
-      },
-      {
-        group: 'Core capabilities',
-        rows: [
-          { key: 'search', label: 'Candidate search + filters', description: 'Get discovered based on skills, interests, and fit signals.', hireme: true, linkedin: true, handshake: true, indeed: true, highlight: false },
-          { key: 'outreach', label: 'Outreach messaging', description: 'Communicate with employers in one place.', hireme: true, linkedin: true, handshake: true, indeed: true, highlight: false },
-          { key: 'pipeline', label: 'Pipeline / tracking', description: 'Know where you stand as you move through the process.', hireme: true, linkedin: true, handshake: true, indeed: true, highlight: false },
-          { key: 'profile', label: 'Candidate profile + artifacts', description: 'One clean profile you can reuse — attach artifacts once, update anytime.', hireme: true, linkedin: true, handshake: true, indeed: true, highlight: false }
-        ]
-      }
-    ]
+    employer: (() => {
+      const groups = Array.from(new Set(comparisonRows.map(r => r.group)));
+      return groups.map(group => ({
+        group,
+        rows: comparisonRows
+          .filter(r => r.group === group)
+          .map(row => ({
+            key: row.key,
+            label: row.label,
+            description: row.employerDescription,
+            hireme: row.states.hireme === "built_in" || row.states.hireme === "available",
+            linkedin: row.states.linkedin === "built_in" || row.states.linkedin === "available",
+            handshake: row.states.handshake === "built_in" || row.states.handshake === "available",
+            indeed: row.states.indeed === "built_in" || row.states.indeed === "available",
+            highlight: row.highlight,
+          })),
+      }));
+    })(),
+    candidate: (() => {
+      const groups = Array.from(new Set(comparisonRows.map(r => r.group)));
+      return groups.map(group => ({
+        group,
+        rows: comparisonRows
+          .filter(r => r.group === group)
+          .map(row => ({
+            key: row.key,
+            label: row.label,
+            description: row.candidateDescription,
+            hireme: row.states.hireme === "built_in" || row.states.hireme === "available",
+            linkedin: row.states.linkedin === "built_in" || row.states.linkedin === "available",
+            handshake: row.states.handshake === "built_in" || row.states.handshake === "available",
+            indeed: row.states.indeed === "built_in" || row.states.indeed === "available",
+            highlight: row.highlight,
+          })),
+      }));
+    })(),
   };
 
   const faqItems = [
@@ -258,92 +382,116 @@ export default function Home() {
           <div className="absolute bottom-0 left-0 right-0 h-80 overflow-hidden pointer-events-none">
             {/* Back layer - taller, slower, more transparent */}
             <div className="skyline-scroll-reverse flex absolute bottom-0 opacity-[0.15]">
-              <div className="flex items-end gap-14 pr-14">
-                {[280, 320, 300, 290, 270, 310, 275, 295, 260, 245].map((h, i) => (
-                  <div 
-                    key={`back-1-${i}`} 
-                    className="rounded-t-sm"
-                    style={{ 
-                      width: i % 3 === 0 ? '44px' : i % 3 === 1 ? '38px' : '50px',
-                      height: `${h}px`,
-                      backgroundColor: i % 4 === 0 ? '#cbd5e1' : i % 4 === 1 ? '#e0e7ff' : i % 4 === 2 ? '#c7d2fe' : '#d1d5db'
-                    }}
-                  />
-                ))}
-              </div>
-              <div className="flex items-end gap-14">
-                {[280, 320, 300, 290, 270, 310, 275, 295, 260, 245].map((h, i) => (
-                  <div 
-                    key={`back-2-${i}`} 
-                    className="rounded-t-sm"
-                    style={{ 
-                      width: i % 3 === 0 ? '44px' : i % 3 === 1 ? '38px' : '50px',
-                      height: `${h}px`,
-                      backgroundColor: i % 4 === 0 ? '#cbd5e1' : i % 4 === 1 ? '#e0e7ff' : i % 4 === 2 ? '#c7d2fe' : '#d1d5db'
-                    }}
-                  />
-                ))}
-              </div>
+              {(() => {
+                const colorPattern = ['bg-navy-300', 'bg-sky-200', 'bg-navy-400', 'bg-sky-300', 'bg-navy-200', 'bg-sky-200', 'bg-navy-300', 'bg-sky-300', 'bg-navy-200', 'bg-sky-200', 'bg-navy-400', 'bg-sky-300'];
+                const heights = [280, 320, 300, 290, 270, 310, 275, 295, 260, 245, 285, 305, 265, 315, 255, 300, 290, 280, 270, 310, 285, 295, 275, 265, 255, 320, 300, 290, 275, 285];
+                return (
+                  <>
+                    <div className="flex items-end gap-14">
+                      {heights.map((h, i) => (
+                        <div 
+                          key={`back-1-${i}`} 
+                          className={`rounded-t-sm ${colorPattern[i % colorPattern.length]}`}
+                          style={{ 
+                            width: i % 3 === 0 ? '44px' : i % 3 === 1 ? '38px' : '50px',
+                            height: `${h}px`,
+                            flexShrink: 0
+                          }}
+                        />
+                      ))}
+                    </div>
+                    <div className="flex items-end gap-14">
+                      {heights.map((h, i) => (
+                        <div 
+                          key={`back-2-${i}`} 
+                          className={`rounded-t-sm ${colorPattern[i % colorPattern.length]}`}
+                          style={{ 
+                            width: i % 3 === 0 ? '44px' : i % 3 === 1 ? '38px' : '50px',
+                            height: `${h}px`,
+                            flexShrink: 0
+                          }}
+                        />
+                      ))}
+                    </div>
+                  </>
+                );
+              })()}
             </div>
             
             {/* Middle layer */}
             <div className="skyline-scroll flex absolute bottom-0 opacity-[0.2]" style={{ animationDuration: '80s' }}>
-              <div className="flex items-end gap-16 pr-16">
-                {[220, 200, 250, 170, 240, 190, 230, 205, 215].map((h, i) => (
-                  <div 
-                    key={`mid-1-${i}`} 
-                    className="rounded-t-sm"
-                    style={{ 
-                      width: i % 2 === 0 ? '32px' : '40px',
-                      height: `${h}px`,
-                      backgroundColor: i % 3 === 0 ? '#94a3b8' : i % 3 === 1 ? '#a5b4fc' : '#9ca3af'
-                    }}
-                  />
-                ))}
-              </div>
-              <div className="flex items-end gap-16">
-                {[220, 200, 250, 170, 240, 190, 230, 205, 215].map((h, i) => (
-                  <div 
-                    key={`mid-2-${i}`} 
-                    className="rounded-t-sm"
-                    style={{ 
-                      width: i % 2 === 0 ? '32px' : '40px',
-                      height: `${h}px`,
-                      backgroundColor: i % 3 === 0 ? '#94a3b8' : i % 3 === 1 ? '#a5b4fc' : '#9ca3af'
-                    }}
-                  />
-                ))}
-              </div>
+              {(() => {
+                const colorPattern = ['bg-navy-300', 'bg-sky-200', 'bg-navy-400', 'bg-sky-300', 'bg-navy-200', 'bg-sky-200', 'bg-navy-300', 'bg-sky-300', 'bg-navy-200'];
+                const heights = [220, 200, 250, 170, 240, 190, 230, 205, 215, 225, 195, 245, 175, 235, 185, 225, 210, 200, 220, 195, 235, 205, 225, 195, 215, 240, 220, 210];
+                return (
+                  <>
+                    <div className="flex items-end gap-16">
+                      {heights.map((h, i) => (
+                        <div 
+                          key={`mid-1-${i}`} 
+                          className={`rounded-t-sm ${colorPattern[i % colorPattern.length]}`}
+                          style={{ 
+                            width: i % 2 === 0 ? '32px' : '40px',
+                            height: `${h}px`,
+                            flexShrink: 0
+                          }}
+                        />
+                      ))}
+                    </div>
+                    <div className="flex items-end gap-16">
+                      {heights.map((h, i) => (
+                        <div 
+                          key={`mid-2-${i}`} 
+                          className={`rounded-t-sm ${colorPattern[i % colorPattern.length]}`}
+                          style={{ 
+                            width: i % 2 === 0 ? '32px' : '40px',
+                            height: `${h}px`,
+                            flexShrink: 0
+                          }}
+                        />
+                      ))}
+                    </div>
+                  </>
+                );
+              })()}
             </div>
             
             {/* Front layer - shorter, faster, more visible */}
             <div className="skyline-scroll flex absolute bottom-0 opacity-[0.25]" style={{ animationDuration: '50s' }}>
-              <div className="flex items-end gap-10 pr-10">
-                {[130, 110, 140, 120, 135, 115, 145, 108, 138, 118, 128].map((h, i) => (
-                  <div 
-                    key={`front-1-${i}`} 
-                    className="rounded-t-sm"
-                    style={{ 
-                      width: i % 2 === 0 ? '26px' : '34px',
-                      height: `${h}px`,
-                      backgroundColor: i % 3 === 0 ? '#64748b' : i % 3 === 1 ? '#818cf8' : '#6b7280'
-                    }}
-                  />
-                ))}
-              </div>
-              <div className="flex items-end gap-10">
-                {[130, 110, 140, 120, 135, 115, 145, 108, 138, 118, 128].map((h, i) => (
-                  <div 
-                    key={`front-2-${i}`} 
-                    className="rounded-t-sm"
-                    style={{ 
-                      width: i % 2 === 0 ? '26px' : '34px',
-                      height: `${h}px`,
-                      backgroundColor: i % 3 === 0 ? '#64748b' : i % 3 === 1 ? '#818cf8' : '#6b7280'
-                    }}
-                  />
-                ))}
-              </div>
+              {(() => {
+                const colorPattern = ['bg-navy-200', 'bg-sky-200', 'bg-navy-300', 'bg-sky-300', 'bg-navy-200', 'bg-sky-200', 'bg-navy-300', 'bg-sky-300', 'bg-navy-200', 'bg-sky-200'];
+                const heights = [130, 110, 140, 120, 135, 115, 145, 108, 138, 118, 128, 125, 132, 118, 142, 113, 133, 123, 128, 138, 118, 143, 128, 133, 118, 138, 128, 123, 135, 125];
+                return (
+                  <>
+                    <div className="flex items-end gap-10">
+                      {heights.map((h, i) => (
+                        <div 
+                          key={`front-1-${i}`} 
+                          className={`rounded-t-sm ${colorPattern[i % colorPattern.length]}`}
+                          style={{ 
+                            width: i % 2 === 0 ? '26px' : '34px',
+                            height: `${h}px`,
+                            flexShrink: 0
+                          }}
+                        />
+                      ))}
+                    </div>
+                    <div className="flex items-end gap-10">
+                      {heights.map((h, i) => (
+                        <div 
+                          key={`front-2-${i}`} 
+                          className={`rounded-t-sm ${colorPattern[i % colorPattern.length]}`}
+                          style={{ 
+                            width: i % 2 === 0 ? '26px' : '34px',
+                            height: `${h}px`,
+                            flexShrink: 0
+                          }}
+                        />
+                      ))}
+                    </div>
+                  </>
+                );
+              })()}
             </div>
           </div>
 
@@ -565,9 +713,9 @@ export default function Home() {
         <section id="comparison" className="py-16 lg:py-20 bg-white">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-10 lg:mb-12">
-              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-navy-900 mb-4 tracking-tight">How HireMe Compares</h2>
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-navy-900 mb-4 tracking-tight">{comparisonCopy[comparisonView].title}</h2>
               <p className="text-base sm:text-lg lg:text-xl text-slate-600 max-w-2xl mx-auto mb-6 leading-relaxed">
-                All the essentials candidates and employers expect — plus verified intent and clear timelines.
+                {comparisonCopy[comparisonView].subtitle}
               </p>
               <div className="inline-flex items-center bg-slate-100 rounded-lg p-1 shadow-sm border border-slate-200">
                 <button
