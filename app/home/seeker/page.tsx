@@ -10,7 +10,8 @@ import {
   Eye, 
   Calendar,
   MapPin,
-  Star
+  Star,
+  X
 } from "lucide-react";
 import { getUserMessageThreads, getProfileViewCount, getDocument, getProfileViewers, updateDocument, getEndorsements } from '@/lib/firebase-firestore';
 import WelcomePopup from "@/components/WelcomePopup";
@@ -30,6 +31,7 @@ export default function SeekerHomePage() {
   // Tri-state for modal visibility to prevent flicker
   const [onboardingModalState, setOnboardingModalState] = useState<'unknown' | 'open' | 'closed'>('unknown');
   const [endorsements, setEndorsements] = useState<any[]>([]);
+  const [isProfileImageModalOpen, setIsProfileImageModalOpen] = useState(false);
 
   // Utility function to determine if onboarding should be shown
   const shouldShowOnboarding = useCallback((userProfile: UserProfile | null, localDismissed: string | null): boolean => {
@@ -184,6 +186,26 @@ export default function SeekerHomePage() {
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
+
+  // Close profile image modal on Escape key
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isProfileImageModalOpen) {
+        setIsProfileImageModalOpen(false);
+      }
+    };
+
+    if (isProfileImageModalOpen) {
+      document.addEventListener('keydown', handleEscape);
+      // Prevent body scroll when modal is open
+      document.body.style.overflow = 'hidden';
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleEscape);
+      document.body.style.overflow = 'unset';
+    };
+  }, [isProfileImageModalOpen]);
 
   // Fetch real-time data (optimized with parallel requests)
   useEffect(() => {
@@ -355,25 +377,64 @@ export default function SeekerHomePage() {
   );
 
   return (
+    <>
+      {/* Profile Image Modal */}
+      {isProfileImageModalOpen && userProfile?.profileImageUrl && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+          onClick={() => setIsProfileImageModalOpen(false)}
+        >
+          <div
+            className="relative max-w-4xl max-h-[90vh] w-full"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setIsProfileImageModalOpen(false)}
+              className="absolute top-4 right-4 z-10 bg-white/90 hover:bg-white text-navy-900 rounded-full p-2 shadow-lg transition-all hover:scale-110 focus:outline-none focus:ring-2 focus:ring-white"
+              aria-label="Close image"
+            >
+              <X className="h-6 w-6" />
+            </button>
+            <div className="relative w-full h-full bg-white rounded-2xl overflow-hidden shadow-2xl">
+              <Image
+                src={userProfile.profileImageUrl}
+                alt={`${profile?.firstName || 'User'}'s profile picture`}
+                width={800}
+                height={800}
+                className="w-full h-full object-contain"
+                style={{ maxHeight: '90vh' }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
     <main className="min-h-screen bg-slate-50 mobile-safe-top mobile-safe-bottom overflow-x-hidden w-full">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-8 sm:pt-16 sm:pb-10 lg:pt-20 lg:pb-12">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
           <div className="lg:col-span-2 space-y-6 lg:space-y-8">
             
             {/* Welcome Banner */}
-            <section className="bg-gradient-to-br from-navy-800 via-navy-800 to-navy-900 text-white p-6 sm:p-8 lg:p-10 rounded-2xl shadow-xl">
-              <div className="flex items-center gap-5 sm:gap-6">
+            <section className="bg-gradient-to-br from-navy-800 via-navy-800 to-navy-900 text-white p-4 sm:p-5 lg:p-6 rounded-2xl shadow-xl">
+              <div className="flex items-center gap-4 sm:gap-5">
                 {userProfile?.profileImageUrl ? (
-                  <Image
-                    src={userProfile.profileImageUrl}
-                    alt={`${profile?.firstName || 'User'}'s avatar`}
-                    width={80}
-                    height={80}
-                    className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-4 border-white/20 shadow-lg flex-shrink-0"
-                  />
+                  <button
+                    onClick={() => setIsProfileImageModalOpen(true)}
+                    className="flex-shrink-0 cursor-pointer hover:opacity-90 transition-opacity focus:outline-none focus:ring-2 focus:ring-white/50 rounded-full"
+                    aria-label="Enlarge profile picture"
+                  >
+                    <Image
+                      src={userProfile.profileImageUrl}
+                      alt={`${profile?.firstName || 'User'}'s avatar`}
+                      width={120}
+                      height={120}
+                      className="w-24 h-24 sm:w-[120px] sm:h-[120px] rounded-full border-4 border-white/20 shadow-lg object-cover"
+                      style={{ aspectRatio: '1 / 1' }}
+                    />
+                  </button>
                 ) : (
-                  <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-4 border-white/20 shadow-lg bg-white/10 flex items-center justify-center flex-shrink-0">
-                    <User className="h-8 w-8 sm:h-10 sm:w-10 text-white/80" />
+                  <div className="w-24 h-24 sm:w-[120px] sm:h-[120px] rounded-full border-4 border-white/20 shadow-lg bg-white/10 flex items-center justify-center flex-shrink-0">
+                    <User className="h-10 w-10 sm:h-14 sm:w-14 text-white/80" />
                   </div>
                 )}
                 <div className="flex-1 min-w-0">
@@ -405,31 +466,31 @@ export default function SeekerHomePage() {
 
             {/* Stats Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
-              <Link href="/messages/candidate" className="bg-white rounded-2xl shadow-xl border border-slate-100 p-6 sm:p-8 text-center group hover:shadow-2xl transition-shadow duration-300">
-                <div className="w-14 h-14 mx-auto rounded-lg bg-sky-100 flex items-center justify-center mb-4">
-                  <MessageSquare className="h-6 w-6 text-navy-700" />
+              <Link href="/messages/candidate" className="bg-white rounded-2xl shadow-xl border-2 border-slate-200 p-6 sm:p-8 text-center group hover:shadow-2xl hover:border-sky-200 hover:-translate-y-1 transition-all duration-300">
+                <div className="w-16 h-16 mx-auto rounded-xl bg-gradient-to-br from-sky-100 to-sky-50 flex items-center justify-center mb-5 group-hover:from-sky-200 group-hover:to-sky-100 transition-all duration-300 shadow-sm">
+                  <MessageSquare className="h-7 w-7 text-navy-700" />
                 </div>
-                <p className="text-4xl font-bold text-navy-900">{isLoadingStats ? '...' : threads.length}</p>
-                <p className="text-slate-600 font-medium mt-2">Messages</p>
+                <p className="text-5xl font-bold text-navy-900 mb-1">{isLoadingStats ? '...' : threads.length}</p>
+                <p className="text-slate-700 font-semibold mt-2">Messages</p>
               </Link>
 
-              <Link href="/home/seeker/profile-views" className="bg-white rounded-2xl shadow-xl border border-slate-100 p-6 sm:p-8 text-center group hover:shadow-2xl transition-shadow duration-300 block">
-                <div className="w-14 h-14 mx-auto rounded-lg bg-sky-100 flex items-center justify-center mb-4">
-                  <Eye className="h-6 w-6 text-navy-700" />
+              <Link href="/home/seeker/profile-views" className="bg-white rounded-2xl shadow-xl border-2 border-slate-200 p-6 sm:p-8 text-center group hover:shadow-2xl hover:border-sky-200 hover:-translate-y-1 transition-all duration-300 block">
+                <div className="w-16 h-16 mx-auto rounded-xl bg-gradient-to-br from-sky-100 to-sky-50 flex items-center justify-center mb-5 group-hover:from-sky-200 group-hover:to-sky-100 transition-all duration-300 shadow-sm">
+                  <Eye className="h-7 w-7 text-navy-700" />
                 </div>
-                <p className="text-4xl font-bold text-navy-900">{isLoadingStats ? '...' : profileViews}</p>
-                <p className="text-slate-600 font-medium mt-2">Profile Views</p>
+                <p className="text-5xl font-bold text-navy-900 mb-1">{isLoadingStats ? '...' : profileViews}</p>
+                <p className="text-slate-700 font-semibold mt-2">Profile Views</p>
               </Link>
 
-              <Link href="/endorsements" className="bg-white rounded-2xl shadow-xl border border-slate-100 p-6 sm:p-8 text-center group hover:shadow-2xl transition-shadow duration-300 relative">
-                <div className="w-14 h-14 mx-auto rounded-lg bg-sky-100 flex items-center justify-center mb-4 relative">
-                  <Star className="h-6 w-6 text-navy-700" />
+              <Link href="/endorsements" className="bg-white rounded-2xl shadow-xl border-2 border-slate-200 p-6 sm:p-8 text-center group hover:shadow-2xl hover:border-sky-200 hover:-translate-y-1 transition-all duration-300 relative">
+                <div className="w-16 h-16 mx-auto rounded-xl bg-gradient-to-br from-sky-100 to-sky-50 flex items-center justify-center mb-5 relative group-hover:from-sky-200 group-hover:to-sky-100 transition-all duration-300 shadow-sm">
+                  <Star className="h-7 w-7 text-navy-700" />
                   {!isLoadingStats && endorsements.length === 0 && (
-                    <span className="absolute -top-2 -right-2 bg-navy-800 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">NEW</span>
+                    <span className="absolute -top-2 -right-2 bg-navy-800 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-md">NEW</span>
                   )}
                 </div>
-                <p className="text-4xl font-bold text-navy-900">{isLoadingStats ? '...' : endorsements.length}</p>
-                <p className="text-slate-600 font-medium mt-2">Endorsements</p>
+                <p className="text-5xl font-bold text-navy-900 mb-1">{isLoadingStats ? '...' : endorsements.length}</p>
+                <p className="text-slate-700 font-semibold mt-2">Endorsements</p>
               </Link>
             </div>
 
@@ -517,5 +578,6 @@ export default function SeekerHomePage() {
         />
       )}
     </main>
+    </>
   );
 }

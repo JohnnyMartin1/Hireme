@@ -1048,7 +1048,7 @@ function LegalSection() {
           Legal & Compliance
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <a href="#" target="_blank" className="flex items-center justify-between p-4 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
+          <a href="/terms/candidates" className="flex items-center justify-between p-4 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
             <div className="flex items-center space-x-3">
               <i className="fa-solid fa-file-contract text-sky-500"></i>
               <span className="font-medium text-navy-900">Terms of Service</span>

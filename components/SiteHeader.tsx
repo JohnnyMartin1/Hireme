@@ -66,22 +66,22 @@ export default function SiteHeader() {
         ) : (
           <>
             {/* Desktop Navigation - Logged In */}
-            <nav className="hidden md:flex items-center gap-5 lg:gap-6">
+            <nav className="hidden md:flex items-center gap-3 lg:gap-4">
               <Link 
                 href={dashboardLink} 
-                className="text-sm text-slate-600 hover:text-navy-700 font-medium transition-colors duration-200"
+                className="text-sm text-navy-900 hover:text-navy-700 font-semibold px-4 py-2 rounded-lg hover:bg-sky-50 transition-all duration-200"
               >
                 Dashboard
               </Link>
               <Link 
                 href={`/account/${user?.uid}/settings`}
-                className="text-sm text-slate-600 hover:text-navy-700 font-medium transition-colors duration-200"
+                className="text-sm text-navy-900 hover:text-navy-700 font-semibold px-4 py-2 rounded-lg hover:bg-sky-50 transition-all duration-200"
               >
                 Settings
               </Link>
               <button
                 onClick={signOut}
-                className="text-sm text-slate-600 hover:text-navy-700 font-medium transition-colors duration-200"
+                className="text-sm text-navy-900 hover:text-navy-700 font-semibold px-4 py-2 rounded-lg hover:bg-sky-50 transition-all duration-200"
               >
                 Sign out
               </button>
