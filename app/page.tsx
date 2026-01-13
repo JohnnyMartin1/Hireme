@@ -360,7 +360,7 @@ export default function Home() {
             </Link>
             <nav className="hidden md:flex items-center space-x-5 lg:space-x-6">
               <a href="#personas" className="text-sm text-slate-600 hover:text-navy-700 font-medium transition-colors duration-200">For Teams</a>
-              <a href="#workflows" className="text-sm text-slate-600 hover:text-navy-700 font-medium transition-colors duration-200">Workflows</a>
+              <a href="#workflows" className="hidden lg:inline-block text-sm text-slate-600 hover:text-navy-700 font-medium transition-colors duration-200">Workflows</a>
               <a href="#comparison" className="text-sm text-slate-600 hover:text-navy-700 font-medium transition-colors duration-200">Comparison</a>
               <a href="#features" className="text-sm text-slate-600 hover:text-navy-700 font-medium transition-colors duration-200">Features</a>
               <a href="#faq" className="text-sm text-slate-600 hover:text-navy-700 font-medium transition-colors duration-200">FAQ</a>
@@ -612,7 +612,7 @@ export default function Home() {
         </section>
 
         {/* Workflows Section */}
-        <section id="workflows" className="py-16 lg:py-20 bg-slate-50 relative overflow-hidden">
+        <section id="workflows" className="hidden lg:block py-16 lg:py-20 bg-slate-50 relative overflow-hidden">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-12 lg:mb-16">
               <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-navy-900 mb-4 tracking-tight">Flexible Hiring Workflows</h2>

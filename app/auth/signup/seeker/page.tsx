@@ -6,6 +6,7 @@ import { signUpWithFirebase } from "@/lib/firebase-auth";
 import { createDocument } from "@/lib/firebase-firestore";
 import SearchableDropdown from '@/components/SearchableDropdown';
 import { UNIVERSITIES, MAJORS, MINORS, GRADUATION_YEARS } from '@/lib/profile-data';
+import TermsModal from '@/components/TermsModal';
 
 export default function SeekerSignupPage() {
   const [currentStep, setCurrentStep] = useState(1);
@@ -24,6 +25,8 @@ export default function SeekerSignupPage() {
   const [emailSent, setEmailSent] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [termsModalOpen, setTermsModalOpen] = useState(false);
   const router = useRouter();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -140,6 +143,11 @@ export default function SeekerSignupPage() {
       return;
     }
 
+    if (!termsAccepted) {
+      setError("You must accept the Terms of Service to create an account");
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -165,7 +173,8 @@ export default function SeekerSignupPage() {
           createdAt: new Date(),
           openToOpp: true,
           emailVerified: true, // Email is already verified with 6-digit code
-          emailVerifiedAt: new Date().toISOString()
+          emailVerifiedAt: new Date().toISOString(),
+          termsAcceptedAt: new Date().toISOString()
         };
 
         const { error: profileError } = await createDocument('users', profileData, user.uid);
@@ -469,13 +478,46 @@ export default function SeekerSignupPage() {
                   </div>
                 </div>
 
+                {/* Terms of Service Acceptance */}
+                <div className="bg-sky-50 border border-sky-200 rounded-xl p-4">
+                  <label className="flex items-start gap-3 cursor-pointer group">
+                    <input
+                      type="checkbox"
+                      checked={termsAccepted}
+                      onChange={(e) => setTermsAccepted(e.target.checked)}
+                      className="mt-1 w-5 h-5 text-navy-800 border-slate-300 rounded focus:ring-2 focus:ring-navy-800 focus:ring-offset-2 cursor-pointer flex-shrink-0"
+                      required
+                    />
+                    <div className="flex-1">
+                      <span className="text-sm text-slate-700 leading-relaxed">
+                        I have read and agree to the{" "}
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setTermsModalOpen(true);
+                          }}
+                          className="text-navy-800 hover:text-navy-700 font-semibold underline underline-offset-2"
+                        >
+                          Terms of Service
+                        </button>
+                        {" "}and{" "}
+                        <Link href="/terms/privacy" target="_blank" className="text-navy-800 hover:text-navy-700 font-semibold underline underline-offset-2">
+                          Privacy Policy
+                        </Link>
+                        .
+                      </span>
+                    </div>
+                  </label>
+                </div>
+
                 {error && (
                   <div className="text-sm text-error-red">{error}</div>
                 )}
 
                 <button 
                   type="submit"
-                  disabled={isLoading}
+                  disabled={isLoading || !termsAccepted}
                   className="w-full bg-navy-800 text-white py-4 rounded-xl font-semibold hover:bg-opacity-90 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isLoading ? 'Creating Account...' : 'Create Account'}
@@ -527,6 +569,13 @@ export default function SeekerSignupPage() {
           </div>
         </div>
       </div>
+
+      {/* Terms of Service Modal */}
+      <TermsModal 
+        isOpen={termsModalOpen} 
+        onClose={() => setTermsModalOpen(false)}
+        onAccept={() => setTermsAccepted(true)}
+      />
     </main>
   );
 }

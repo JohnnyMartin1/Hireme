@@ -164,7 +164,7 @@ export default function LoginPage() {
             <p className="text-xs text-slate-500 text-center leading-relaxed">
               By continuing, you agree to our{" "}
               <Link href="/terms/candidates" className="text-navy-800 hover:underline">Terms of Service</Link> and{" "}
-              <Link href="#" className="text-navy-800 hover:underline">Privacy Policy</Link>.
+              <Link href="/terms/privacy" className="text-navy-800 hover:underline">Privacy Policy</Link>.
             </p>
           </div>
         </div>
