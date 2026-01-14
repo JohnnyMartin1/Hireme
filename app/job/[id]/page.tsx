@@ -137,11 +137,11 @@ export default function JobDetailPage() {
   }
 
   return (
-    <main className="min-h-screen mobile-safe-top mobile-safe-bottom overflow-x-hidden w-full bg-gradient-to-b from-[#F0F8FF] to-[#E6F0FF] py-4 sm:py-6 md:py-12 px-0 sm:px-3 md:px-6">
-        <div className="w-full md:max-w-4xl md:mx-auto min-w-0">
+    <main className="min-h-screen mobile-safe-top mobile-safe-bottom overflow-x-hidden w-full bg-gradient-to-b from-[#F0F8FF] to-[#E6F0FF] py-4 sm:py-6 md:py-12 px-4 sm:px-6 md:px-8">
+        <div className="w-full max-w-4xl mx-auto min-w-0">
           
           {/* Page Header */}
-          <header className="mb-4 sm:mb-6 md:mb-8 px-2 sm:px-0">
+          <header className="mb-4 sm:mb-6 md:mb-8 w-full">
             <button
               onClick={() => router.back()}
               className="inline-flex items-center text-[#000080] font-semibold hover:text-blue-900 transition-all duration-300 bg-[#ADD8E6]/10 hover:bg-[#ADD8E6]/30 hover:shadow-md hover:scale-105 px-3 sm:px-4 py-2 rounded-full group mb-3 sm:mb-4 min-h-[44px] text-sm sm:text-base"
