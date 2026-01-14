@@ -489,7 +489,7 @@ function CandidateMessagesPageContent() {
                 
                 {/* Messages Area */}
                 <div className="flex-1 overflow-y-auto p-6">
-                  <div className="space-y-4">
+                  <div className="space-y-4 max-w-full">
                     {messages.length === 0 ? (
                       <div className="text-center py-12">
                         <MessageSquare className="h-12 w-12 text-slate-300 mx-auto mb-4" />
@@ -497,8 +497,8 @@ function CandidateMessagesPageContent() {
                       </div>
                     ) : (
                       messages.map((message, index) => (
-                        <div key={message.id} className={`flex ${message.senderId === user?.uid ? 'justify-end' : 'justify-start'}`}>
-                          <div className="max-w-xs lg:max-w-md">
+                        <div key={message.id} className={`flex ${message.senderId === user?.uid ? 'justify-end' : 'justify-start'} w-full`}>
+                          <div className="max-w-xs lg:max-w-md w-full">
                             {/* Job Details Card - Show above message if present */}
                             {message.jobDetails && (
                               <Link 
