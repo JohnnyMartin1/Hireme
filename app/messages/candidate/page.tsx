@@ -179,7 +179,8 @@ function CandidateMessagesPageContent() {
       const { data: threadData } = await getMessageThread(selectedThreadId);
       if (!threadData) return;
       
-      const archivedBy = threadData.archivedBy || [];
+      const thread = threadData as MessageThread;
+      const archivedBy = thread.archivedBy || [];
       const isArchived = archivedBy.includes(user.uid);
       
       // Toggle archive state
