@@ -309,7 +309,7 @@ function CandidateMessagesPageContent() {
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-4">
+      <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-4 w-full">
         
         {/* Mobile: Show list OR conversation, Desktop: Show both */}
         <div className="hidden md:grid md:grid-cols-12 md:gap-6 h-[calc(100vh-120px)]">
@@ -735,7 +735,7 @@ function CandidateMessagesPageContent() {
 
         {/* Mobile: Conversation View */}
         {mobileView === 'conversation' && selectedThread && (
-          <div className="md:hidden bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden flex flex-col" style={{height: 'calc(100vh - 120px)'}}>
+          <div className="md:hidden bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden flex flex-col mx-auto w-full max-w-full" style={{height: 'calc(100vh - 120px)', maxHeight: 'calc(100vh - 120px)'}}>
             {/* Conversation Header with Back Button */}
             <div className="p-4 sm:p-6 border-b border-slate-100">
               <div className="flex items-center justify-between mb-4">
@@ -784,7 +784,7 @@ function CandidateMessagesPageContent() {
             
             {/* Messages Area */}
             <div className="flex-1 overflow-y-auto p-4 sm:p-6 mobile-scroll">
-              <div className="space-y-4">
+              <div className="space-y-4 max-w-full">
                 {messages.length === 0 ? (
                   <div className="text-center py-12">
                     <MessageSquare className="h-12 w-12 text-slate-300 mx-auto mb-4" />
@@ -792,8 +792,8 @@ function CandidateMessagesPageContent() {
                   </div>
                 ) : (
                   messages.map((message) => (
-                    <div key={message.id} className={`flex ${message.senderId === user?.uid ? 'justify-end' : 'justify-start'}`}>
-                      <div className="max-w-[85%] sm:max-w-sm">
+                    <div key={message.id} className={`flex ${message.senderId === user?.uid ? 'justify-end' : 'justify-start'} w-full`}>
+                      <div className="max-w-[85%] sm:max-w-sm w-full">
                         {/* Job Details Card */}
                         {message.jobDetails && (
                           <Link 
