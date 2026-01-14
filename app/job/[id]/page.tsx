@@ -137,7 +137,7 @@ export default function JobDetailPage() {
   }
 
   return (
-    <main className="min-h-screen mobile-safe-top mobile-safe-bottom overflow-x-hidden w-full bg-gradient-to-b from-[#F0F8FF] to-[#E6F0FF] py-4 sm:py-6 md:py-12 px-4 sm:px-6 md:px-8">
+    <main className="min-h-screen mobile-safe-top mobile-safe-bottom overflow-x-hidden w-full bg-gradient-to-b from-[#F0F8FF] to-[#E6F0FF] pt-12 sm:pt-16 md:pt-20 pb-4 sm:pb-6 md:pb-12 px-4 sm:px-6 md:px-8">
         <div className="w-full max-w-4xl mx-auto min-w-0">
           
           {/* Page Header */}
