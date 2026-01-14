@@ -751,9 +751,9 @@ function NotificationsSection({ toast, profile }: { toast: (msg: string) => void
   };
 
   return (
-    <section className="space-y-6 ">
-      <div className="bg-white rounded-none sm:rounded-lg md:rounded-2xl shadow-xl border border-slate-100 p-8">
-        <h2 className="text-xl font-bold text-navy-900 mb-6 flex items-center">
+    <section className="space-y-8">
+      <div className="bg-white rounded-2xl shadow-xl border border-slate-100 p-8">
+        <h2 className="text-2xl font-bold text-navy-900 mb-6 flex items-center">
           <i className="fa-solid fa-bell text-sky-500 mr-3"></i>
           Notification Preferences
         </h2>
@@ -765,9 +765,9 @@ function NotificationsSection({ toast, profile }: { toast: (msg: string) => void
               <h3 className="text-lg font-bold text-navy-900 mb-4">Email Notifications</h3>
               <div className="space-y-4">
                 {notifications.map((notif, i) => (
-                  <div key={i} className="flex items-center justify-between">
+                  <div key={i} className="flex items-center justify-between p-4 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
                     <div className="flex-1 mr-4">
-                      <div className="text-navy-900 font-medium">{notif.label}</div>
+                      <div className="text-navy-900 font-semibold">{notif.label}</div>
                       {notif.description && (
                         <div className="text-sm text-slate-600 mt-1">{notif.description}</div>
                       )}
@@ -794,9 +794,9 @@ function NotificationsSection({ toast, profile }: { toast: (msg: string) => void
                 <h3 className="text-lg font-bold text-navy-900 mb-4">In-App Notifications</h3>
                 <div className="space-y-4">
                   {notifications.map((notif, i) => (
-                    <div key={i} className="flex items-center justify-between">
+                    <div key={i} className="flex items-center justify-between p-4 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
                       <div className="flex-1 mr-4">
-                        <div className="text-navy-900 font-medium">{notif.label}</div>
+                        <div className="text-navy-900 font-semibold">{notif.label}</div>
                       </div>
                       <div 
                         className={`toggle-switch ${inAppNotifs[i] ? 'active' : ''} ${i === 3 ? 'opacity-50 cursor-not-allowed' : ''}`}
@@ -829,12 +829,12 @@ function InformationSection({ profile }: { profile: any }) {
   // Show candidate-specific information for job seekers
   if (profile.role === 'JOB_SEEKER') {
     return (
-      <section className="space-y-14 ">
+      <section className="space-y-8">
       {/* Hero Banner */}
-      <div className="bg-gradient-to-r from-[#000080] via-blue-800 to-purple-700 text-white p-10 rounded-3xl shadow-lg">
+      <div className="bg-gradient-to-r from-navy-800 via-navy-700 to-navy-800 text-white p-10 rounded-2xl shadow-xl">
         <div className="max-w-4xl">
           <h1 className="text-4xl font-bold mb-4">How It Works — Candidates</h1>
-          <p className="text-blue-100 text-lg leading-relaxed">
+          <p className="text-sky-100 text-lg leading-relaxed">
             Flip the hiring script. Build your profile once—then let companies come to you.
           </p>
         </div>
@@ -843,16 +843,16 @@ function InformationSection({ profile }: { profile: any }) {
       {/* Step Cards */}
       <div className="space-y-6">
         {/* Step 1 - Build Your Complete Profile */}
-        <div className="bg-white/90 backdrop-blur-sm p-8 rounded-2xl shadow-xl border border-slate-100-l-4 border-[#ADD8E6] hover:shadow-lg transition-all duration-200">
+        <div className="bg-white p-8 rounded-2xl shadow-xl border border-slate-100 hover:shadow-2xl transition-shadow">
           <div className="flex items-start space-x-6">
-            <div className="w-12 h-12 bg-[#ADD8E6] text-white rounded-full flex items-center justify-center font-bold text-lg flex-shrink-0">1</div>
+            <div className="w-12 h-12 bg-sky-100 rounded-lg flex items-center justify-center font-bold text-lg flex-shrink-0 text-navy-900">1</div>
             <div className="flex-1">
               <h3 className="text-xl font-bold text-navy-900 mb-3">Build Your Complete Profile</h3>
-              <p className="text-gray-700 leading-relaxed mb-4">
+              <p className="text-slate-700 leading-relaxed mb-4">
                 Create a comprehensive professional profile that showcases your skills, education, experience, and personality. Upload your resume, add a brief video introduction, and highlight your achievements to stand out to potential employers.
               </p>
-              <div className="p-4 bg-[#ADD8E6]/20 rounded-lg border border-[#ADD8E6]/30">
-                <p className="text-sm font-medium text-navy-900 flex items-center space-x-2">
+              <div className="p-4 bg-sky-50 rounded-xl border border-sky-200">
+                <p className="text-sm font-semibold text-navy-900 flex items-center space-x-2">
                   <i className="fa-solid fa-star text-sky-500"></i>
                   <span>Pro tip: Complete profiles get 3x more employer views and messages</span>
                 </p>
@@ -862,25 +862,25 @@ function InformationSection({ profile }: { profile: any }) {
         </div>
 
         {/* Step 2 - Get Discovered by Employers */}
-        <div className="bg-white/90 backdrop-blur-sm p-8 rounded-2xl shadow-xl border border-slate-100-l-4 border-green-500 hover:shadow-lg transition-all duration-200">
+        <div className="bg-white p-8 rounded-2xl shadow-xl border border-slate-100 hover:shadow-2xl transition-shadow">
           <div className="flex items-start space-x-6">
-            <div className="w-12 h-12 bg-green-500 text-white rounded-full flex items-center justify-center font-bold text-lg flex-shrink-0">2</div>
+            <div className="w-12 h-12 bg-sky-100 rounded-lg flex items-center justify-center font-bold text-lg flex-shrink-0 text-navy-900">2</div>
             <div className="flex-1">
               <h3 className="text-xl font-bold text-navy-900 mb-3">Get Discovered by Employers</h3>
-              <p className="text-gray-700 leading-relaxed mb-4">
+              <p className="text-slate-700 leading-relaxed mb-4">
                 Once your profile is live, employers can find you through our advanced search and matching system. They'll browse verified candidate profiles and reach out directly to candidates who match their requirements—no more endless job applications.
               </p>
               <div className="space-y-2">
-                <div className="flex items-center space-x-3 text-gray-700">
-                  <i className="fa-solid fa-check text-green-500 text-sm"></i>
+                <div className="flex items-center space-x-3 text-slate-700">
+                  <i className="fa-solid fa-check text-sky-500 text-sm"></i>
                   <span>Employers search our verified database</span>
                 </div>
-                <div className="flex items-center space-x-3 text-gray-700">
-                  <i className="fa-solid fa-check text-green-500 text-sm"></i>
+                <div className="flex items-center space-x-3 text-slate-700">
+                  <i className="fa-solid fa-check text-sky-500 text-sm"></i>
                   <span>AI-powered matching connects you with relevant opportunities</span>
                 </div>
-                <div className="flex items-center space-x-3 text-gray-700">
-                  <i className="fa-solid fa-check text-green-500 text-sm"></i>
+                <div className="flex items-center space-x-3 text-slate-700">
+                  <i className="fa-solid fa-check text-sky-500 text-sm"></i>
                   <span>Get direct messages from interested companies</span>
                 </div>
               </div>
@@ -889,25 +889,25 @@ function InformationSection({ profile }: { profile: any }) {
         </div>
 
         {/* Step 3 - Connect & Interview */}
-        <div className="bg-white/90 backdrop-blur-sm p-8 rounded-2xl shadow-xl border border-slate-100-l-4 border-purple-500 hover:shadow-lg transition-all duration-200">
+        <div className="bg-white p-8 rounded-2xl shadow-xl border border-slate-100 hover:shadow-2xl transition-shadow">
           <div className="flex items-start space-x-6">
-            <div className="w-12 h-12 bg-purple-500 text-white rounded-full flex items-center justify-center font-bold text-lg flex-shrink-0">3</div>
+            <div className="w-12 h-12 bg-sky-100 rounded-lg flex items-center justify-center font-bold text-lg flex-shrink-0 text-navy-900">3</div>
             <div className="flex-1">
               <h3 className="text-xl font-bold text-navy-900 mb-3">Connect & Interview</h3>
-              <p className="text-gray-700 leading-relaxed mb-4">
+              <p className="text-slate-700 leading-relaxed mb-4">
                 Communicate directly with employers through our secure messaging platform. Track your conversations, schedule interviews, and manage your hiring pipeline all in one place. Our transparent process keeps you informed at every step.
               </p>
               <div className="space-y-2">
-                <div className="flex items-center space-x-3 text-gray-700">
-                  <i className="fa-solid fa-check text-purple-500 text-sm"></i>
+                <div className="flex items-center space-x-3 text-slate-700">
+                  <i className="fa-solid fa-check text-sky-500 text-sm"></i>
                   <span>Secure, direct messaging with employers</span>
                 </div>
-                <div className="flex items-center space-x-3 text-gray-700">
-                  <i className="fa-solid fa-check text-purple-500 text-sm"></i>
+                <div className="flex items-center space-x-3 text-slate-700">
+                  <i className="fa-solid fa-check text-sky-500 text-sm"></i>
                   <span>Track your application progress in real-time</span>
                 </div>
-                <div className="flex items-center space-x-3 text-gray-700">
-                  <i className="fa-solid fa-check text-purple-500 text-sm"></i>
+                <div className="flex items-center space-x-3 text-slate-700">
+                  <i className="fa-solid fa-check text-sky-500 text-sm"></i>
                   <span>Transparent hiring timeline and feedback</span>
                 </div>
               </div>
@@ -917,24 +917,24 @@ function InformationSection({ profile }: { profile: any }) {
       </div>
 
       {/* Trust & Safety Section */}
-      <div className="bg-white/90 backdrop-blur-sm p-8 rounded-2xl shadow-xl border border-slate-100-l-4 border-yellow-400" style={{background: 'linear-gradient(135deg, #FEF3C7 0%, #FEF9E7 100%)'}}>
+      <div className="bg-sky-50/50 p-8 rounded-2xl shadow-xl border border-slate-100">
         <div className="flex items-start space-x-4">
-          <div className="w-12 h-12 bg-yellow-400/30 rounded-lg flex items-center justify-center flex-shrink-0">
-            <i className="fa-solid fa-shield-check text-yellow-600 text-xl"></i>
+          <div className="w-12 h-12 bg-sky-100 rounded-lg flex items-center justify-center flex-shrink-0">
+            <i className="fa-solid fa-shield-check text-navy-700 text-xl"></i>
           </div>
           <div className="flex-1">
             <h3 className="text-xl font-bold text-navy-900 mb-4">Trust & Safety (your time matters)</h3>
             <div className="space-y-4">
               <div className="flex items-start space-x-3">
-                <i className="fa-solid fa-check text-yellow-600 text-sm mt-1"></i>
-                <p className="text-gray-700">
-                  <strong>Every company is screened:</strong> We verify all employer accounts and company information before they can access our candidate database, ensuring you only hear from legitimate opportunities.
+                <i className="fa-solid fa-check text-sky-500 text-sm mt-1"></i>
+                <p className="text-slate-700">
+                  <strong className="text-navy-900">Every company is screened:</strong> We verify all employer accounts and company information before they can access our candidate database, ensuring you only hear from legitimate opportunities.
                 </p>
               </div>
               <div className="flex items-start space-x-3">
-                <i className="fa-solid fa-star text-yellow-600 text-sm mt-1"></i>
-                <p className="text-gray-700">
-                  <strong>Company reviews by candidates:</strong> See ratings and reviews from other candidates who have interviewed with companies, helping you make informed decisions about potential employers.
+                <i className="fa-solid fa-star text-sky-500 text-sm mt-1"></i>
+                <p className="text-slate-700">
+                  <strong className="text-navy-900">Company reviews by candidates:</strong> See ratings and reviews from other candidates who have interviewed with companies, helping you make informed decisions about potential employers.
                 </p>
               </div>
             </div>
@@ -943,41 +943,41 @@ function InformationSection({ profile }: { profile: any }) {
       </div>
 
       {/* Want More Invites Section */}
-      <div className="bg-white/90 backdrop-blur-sm p-8 rounded-2xl shadow-xl border border-slate-100 border-slate-200" style={{background: 'linear-gradient(135deg, #E0F2FE 0%, #F0F9FF 100%)'}}>
+      <div className="bg-sky-50/50 p-8 rounded-2xl shadow-xl border border-slate-100">
         <div className="flex items-center space-x-3 mb-6">
-          <div className="w-10 h-10 bg-[#ADD8E6]/30 rounded-lg flex items-center justify-center">
-            <i className="fa-solid fa-arrow-trend-up text-navy-900 text-lg"></i>
+          <div className="w-10 h-10 bg-sky-100 rounded-lg flex items-center justify-center">
+            <i className="fa-solid fa-arrow-trend-up text-navy-700 text-lg"></i>
           </div>
           <h3 className="text-xl font-bold text-navy-900">Want more invites?</h3>
         </div>
         
         <div className="space-y-3">
-          <div className="flex items-center space-x-4 p-4 bg-white/60 rounded-lg border border-[#ADD8E6]/20 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer">
+          <div className="flex items-center space-x-4 p-4 bg-white rounded-xl border border-slate-200 hover:shadow-md hover:border-sky-200 transition-all duration-200">
             <i className="fa-solid fa-check text-sky-500"></i>
-            <span className="text-gray-700 font-medium">Finish everything in your profile (yes, everything)</span>
+            <span className="text-slate-700 font-medium">Finish everything in your profile (yes, everything)</span>
           </div>
           
-          <div className="flex items-center space-x-4 p-4 bg-white/60 rounded-lg border border-[#ADD8E6]/20 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer">
+          <div className="flex items-center space-x-4 p-4 bg-white rounded-xl border border-slate-200 hover:shadow-md hover:border-sky-200 transition-all duration-200">
             <i className="fa-solid fa-video text-sky-500"></i>
-            <span className="text-gray-700 font-medium">Add the video (0–30 seconds, friendly and clear)</span>
+            <span className="text-slate-700 font-medium">Add the video (0–30 seconds, friendly and clear)</span>
           </div>
           
-          <div className="flex items-center space-x-4 p-4 bg-white/60 rounded-lg border border-[#ADD8E6]/20 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer">
+          <div className="flex items-center space-x-4 p-4 bg-white rounded-xl border border-slate-200 hover:shadow-md hover:border-sky-200 transition-all duration-200">
             <i className="fa-solid fa-arrow-up text-sky-500"></i>
-            <span className="text-gray-700 font-medium">Keep it fresh with new skills, projects, and wins</span>
+            <span className="text-slate-700 font-medium">Keep it fresh with new skills, projects, and wins</span>
           </div>
         </div>
       </div>
 
       {/* Bottom CTA Section */}
-      <div className="bg-gradient-to-r from-[#000080] via-blue-800 to-purple-700 text-white p-10 rounded-3xl shadow-lg text-center">
+      <div className="bg-gradient-to-r from-navy-800 via-navy-700 to-navy-800 text-white p-10 rounded-2xl shadow-xl text-center">
         <h2 className="text-3xl font-bold mb-4">Bottom line</h2>
-        <p className="text-blue-100 text-lg mb-8 max-w-2xl mx-auto">
+        <p className="text-sky-100 text-lg mb-8 max-w-2xl mx-auto">
           Complete your profile, kick back, and let the interviews come to you.
         </p>
         <button 
           onClick={() => router.push('/account/profile')}
-          className="bg-white text-navy-900 px-8 py-4 rounded-full font-bold text-lg shadow-lg hover:scale-105 hover:shadow-xl transition-all duration-200 inline-flex items-center space-x-3"
+          className="bg-white text-navy-900 px-8 py-4 rounded-lg font-semibold text-lg shadow-md hover:bg-slate-50 hover:shadow-lg transition-all duration-300 inline-flex items-center space-x-3"
         >
           <span>Complete Your Profile</span>
           <i className="fa-solid fa-arrow-right"></i>
@@ -1512,54 +1512,54 @@ function AccessibilitySection({ toast }: { toast: (msg: string) => void }) {
 // Legal Section Component
 function LegalSection() {
   return (
-    <section className="space-y-6 ">
-      <div className="bg-white rounded-none sm:rounded-lg md:rounded-2xl shadow-xl border border-slate-100 p-8">
-        <h2 className="text-xl font-bold text-navy-900 mb-6 flex items-center">
+    <section className="space-y-8">
+      <div className="bg-white rounded-2xl shadow-xl border border-slate-100 p-8">
+        <h2 className="text-2xl font-bold text-navy-900 mb-6 flex items-center">
           <i className="fa-solid fa-gavel text-sky-500 mr-3"></i>
           Legal & Compliance
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <a href="/terms/candidates" className="flex items-center justify-between p-4 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
+          <a href="/terms/candidates" className="flex items-center justify-between p-4 border border-slate-200 rounded-lg hover:bg-slate-50 hover:border-sky-200 transition-colors">
             <div className="flex items-center space-x-3">
               <i className="fa-solid fa-file-contract text-sky-500"></i>
-              <span className="font-medium text-navy-900">Terms of Service</span>
+              <span className="font-semibold text-navy-900">Terms of Service</span>
             </div>
             <i className="fa-solid fa-external-link text-sky-500"></i>
           </a>
-          <a href="#" target="_blank" className="flex items-center justify-between p-4 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
+          <a href="/terms/privacy" className="flex items-center justify-between p-4 border border-slate-200 rounded-lg hover:bg-slate-50 hover:border-sky-200 transition-colors">
             <div className="flex items-center space-x-3">
               <i className="fa-solid fa-shield-check text-sky-500"></i>
-              <span className="font-medium text-navy-900">Privacy Policy</span>
+              <span className="font-semibold text-navy-900">Privacy Policy</span>
             </div>
             <i className="fa-solid fa-external-link text-sky-500"></i>
           </a>
-          <a href="#" target="_blank" className="flex items-center justify-between p-4 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
+          <a href="#" target="_blank" className="flex items-center justify-between p-4 border border-slate-200 rounded-lg hover:bg-slate-50 hover:border-sky-200 transition-colors">
             <div className="flex items-center space-x-3">
               <i className="fa-solid fa-cookie-bite text-sky-500"></i>
-              <span className="font-medium text-navy-900">Cookie Policy</span>
+              <span className="font-semibold text-navy-900">Cookie Policy</span>
             </div>
             <i className="fa-solid fa-external-link text-sky-500"></i>
           </a>
-          <a href="#" target="_blank" className="flex items-center justify-between p-4 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
+          <a href="#" target="_blank" className="flex items-center justify-between p-4 border border-slate-200 rounded-lg hover:bg-slate-50 hover:border-sky-200 transition-colors">
             <div className="flex items-center space-x-3">
               <i className="fa-solid fa-server text-sky-500"></i>
-              <span className="font-medium text-navy-900">Subprocessors</span>
+              <span className="font-semibold text-navy-900">Subprocessors</span>
             </div>
             <i className="fa-solid fa-external-link text-sky-500"></i>
           </a>
-          <a href="#" target="_blank" className="flex items-center justify-between p-4 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
+          <a href="#" target="_blank" className="flex items-center justify-between p-4 border border-slate-200 rounded-lg hover:bg-slate-50 hover:border-sky-200 transition-colors">
             <div className="flex items-center space-x-3">
               <i className="fa-solid fa-lock text-sky-500"></i>
-              <span className="font-medium text-navy-900">Security Overview</span>
+              <span className="font-semibold text-navy-900">Security Overview</span>
             </div>
             <i className="fa-solid fa-external-link text-sky-500"></i>
           </a>
           <div className="flex items-center justify-between p-4 border border-slate-200 rounded-lg">
             <div className="flex items-center space-x-3">
               <i className="fa-solid fa-certificate text-sky-500"></i>
-              <span className="font-medium text-navy-900">SOC2 Report</span>
+              <span className="font-semibold text-navy-900">SOC2 Report</span>
             </div>
-            <button className="px-6 py-3 bg-white border border-slate-200 text-navy-900 rounded-lg font-semibold shadow-sm hover:bg-slate-50 transition-colors px-4 py-1 rounded-lg font-semibold text-sm">Download</button>
+            <button className="px-4 py-2 bg-white border border-slate-200 text-navy-900 rounded-lg font-semibold shadow-sm hover:bg-slate-50 hover:border-sky-200 transition-colors text-sm">Download</button>
           </div>
         </div>
       </div>

@@ -180,7 +180,7 @@ export default function ProfileViewersPage() {
             <span className="text-sm font-semibold text-navy-900">Private to you</span>
           </div>
           <p className="text-sm text-slate-500 mb-4">Only you can see this list. Employers are not notified when you view this page.</p>
-          <Link href="#" className="text-sm font-semibold text-navy-800 hover:text-navy-600 transition-colors inline-flex items-center gap-1">
+          <Link href="/home/seeker/profile-views/interviews" className="text-sm font-semibold text-navy-800 hover:text-navy-600 transition-colors inline-flex items-center gap-1">
             How to turn views into interviews
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -389,7 +389,14 @@ export default function ProfileViewersPage() {
               </div>
               
               <div className="pt-6 border-t border-slate-100">
-                <button className="w-full bg-navy-800 hover:bg-navy-700 text-white py-3 rounded-lg font-semibold transition-colors shadow-md">
+                <button 
+                  onClick={() => {
+                    if (selectedCompany?.id) {
+                      router.push(`/company/${selectedCompany.id}`);
+                    }
+                  }}
+                  className="w-full bg-navy-800 hover:bg-navy-700 text-white py-3 rounded-lg font-semibold transition-colors shadow-md"
+                >
                   View Company Profile
                 </button>
               </div>

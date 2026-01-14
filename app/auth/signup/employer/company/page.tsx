@@ -190,36 +190,35 @@ export default function CompanySignupPage() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-brand-background text-brand-text-dark">
-      <main className="flex-grow flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-        <div className="w-full max-w-3xl">
-          <div className="bg-brand-card rounded-2xl shadow-xl p-8 md:p-12">
-            <div className="mb-8">
-              <Link 
-                href="/"
-                className="inline-flex items-center px-4 py-2 bg-blue-50 text-navy-800 rounded-full hover:bg-blue-100 hover:shadow-sm transition-all duration-200 hover:-translate-y-1"
-              >
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to home page
-              </Link>
-            </div>
+    <main className="min-h-screen bg-slate-50 flex flex-col items-center justify-center px-6 py-12 sm:py-16">
+      <div className="w-full max-w-3xl">
+        <div className="bg-white rounded-2xl shadow-xl border border-slate-100 p-8 md:p-12">
+          <div className="mb-8">
+            <Link 
+              href="/"
+              className="inline-flex items-center text-navy-800 font-semibold hover:text-navy-900 transition-all duration-300 bg-sky-200/10 hover:bg-sky-200/20 hover:shadow-md hover:scale-105 px-3 sm:px-4 py-2 rounded-full group"
+            >
+              <ArrowLeft className="h-4 w-4 mr-2 group-hover:-translate-x-1 transition-transform duration-300" />
+              Back to home page
+            </Link>
+          </div>
 
-            <div className="text-center mb-8">
-              <div className="flex justify-center mb-5">
-                <div className="w-16 h-16 bg-brand-icon-bg rounded-full flex items-center justify-center">
-                  <i className="fa-solid fa-building text-brand-primary text-3xl"></i>
-                </div>
+          <div className="text-center mb-8">
+            <div className="flex justify-center mb-5">
+              <div className="w-16 h-16 bg-sky-100 rounded-xl flex items-center justify-center">
+                <i className="fa-solid fa-building text-navy-700 text-3xl"></i>
               </div>
-              <h1 className="text-3xl md:text-4xl font-extrabold text-brand-text-dark mb-2">Create Company Profile</h1>
-              <p className="text-brand-text-light text-base">Set up your company and start hiring</p>
             </div>
+            <h1 className="text-3xl sm:text-4xl font-bold text-navy-900 mb-2 tracking-tight">Create Company Profile</h1>
+            <p className="text-slate-600 text-base sm:text-lg">Set up your company and start hiring</p>
+          </div>
 
             <form onSubmit={handleSubmit} className="space-y-8">
-              <div className="bg-gray-50/70 p-6 rounded-lg border border-gray-200/80">
-                <h2 className="text-lg font-bold text-brand-text-dark mb-4">Company Information</h2>
+              <div className="bg-sky-50/50 p-6 rounded-xl border border-slate-200">
+                <h2 className="text-xl font-bold text-navy-900 mb-4">Company Information</h2>
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-brand-text-dark mb-1.5">
+                    <label className="block text-sm font-medium text-navy-900 mb-1.5">
                       Company Name <span className="text-red-500">*</span>
                     </label>
                     <input
@@ -228,12 +227,12 @@ export default function CompanySignupPage() {
                       required
                       value={formData.companyName}
                       onChange={handleChange}
-                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-brand-primary transition-shadow duration-200"
+                      className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500 transition-all duration-200 text-navy-900 placeholder-slate-400"
                       placeholder="Your Company Name"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-brand-text-dark mb-1.5">
+                    <label className="block text-sm font-medium text-navy-900 mb-1.5">
                       Company Location <span className="text-red-500">*</span>
                     </label>
                     <div className="relative">
@@ -249,7 +248,7 @@ export default function CompanySignupPage() {
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-brand-text-dark mb-1.5">
+                    <label className="block text-sm font-medium text-navy-900 mb-1.5">
                       Company Website <span className="text-red-500">*</span>
                     </label>
                     <input
@@ -258,13 +257,13 @@ export default function CompanySignupPage() {
                       required
                       value={formData.website}
                       onChange={handleChange}
-                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-brand-primary transition-shadow duration-200"
+                      className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500 transition-all duration-200 text-navy-900 placeholder-slate-400"
                       placeholder="https://www.yourcompany.com"
                     />
-                    <p className="mt-2 text-xs text-brand-text-light">Enter your company's website URL</p>
+                    <p className="mt-2 text-xs text-slate-500">Enter your company's website URL</p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-brand-text-dark mb-1.5">
+                    <label className="block text-sm font-medium text-navy-900 mb-1.5">
                       Number of Employees <span className="text-red-500">*</span>
                     </label>
                     <select
@@ -272,7 +271,7 @@ export default function CompanySignupPage() {
                       required
                       value={formData.companySize}
                       onChange={handleChange}
-                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-brand-primary transition-shadow duration-200"
+                      className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500 transition-all duration-200 text-navy-900"
                     >
                       <option value="">Select company size</option>
                       <option value="1-10">1-10 employees</option>
@@ -287,11 +286,11 @@ export default function CompanySignupPage() {
                 </div>
               </div>
 
-              <div className="bg-gray-50/70 p-6 rounded-lg border border-gray-200/80">
-                <h2 className="text-lg font-bold text-brand-text-dark mb-4">Your Information</h2>
+              <div className="bg-sky-50/50 p-6 rounded-xl border border-slate-200">
+                <h2 className="text-xl font-bold text-navy-900 mb-4">Your Information</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-brand-text-dark mb-1.5">
+                    <label className="block text-sm font-medium text-navy-900 mb-1.5">
                       First Name <span className="text-red-500">*</span>
                     </label>
                     <input
@@ -300,12 +299,12 @@ export default function CompanySignupPage() {
                       required
                       value={formData.firstName}
                       onChange={handleChange}
-                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-brand-primary transition-shadow duration-200"
+                      className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500 transition-all duration-200 text-navy-900 placeholder-slate-400"
                       placeholder="John"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-brand-text-dark mb-1.5">
+                    <label className="block text-sm font-medium text-navy-900 mb-1.5">
                       Last Name <span className="text-red-500">*</span>
                     </label>
                     <input
@@ -314,13 +313,13 @@ export default function CompanySignupPage() {
                       required
                       value={formData.lastName}
                       onChange={handleChange}
-                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-brand-primary transition-shadow duration-200"
+                      className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500 transition-all duration-200 text-navy-900 placeholder-slate-400"
                       placeholder="Smith"
                     />
                   </div>
                 </div>
                 <div className="mt-4">
-                  <label className="block text-sm font-medium text-brand-text-dark mb-1.5">
+                  <label className="block text-sm font-medium text-navy-900 mb-1.5">
                     Email Address <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -329,17 +328,17 @@ export default function CompanySignupPage() {
                     required
                     value={formData.email}
                     onChange={handleChange}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-brand-primary transition-shadow duration-200"
+                    className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500 transition-all duration-200 text-navy-900 placeholder-slate-400"
                     placeholder="you@company.com"
                   />
                 </div>
               </div>
 
-              <div className="bg-gray-50/70 p-6 rounded-lg border border-gray-200/80">
-                <h2 className="text-lg font-bold text-brand-text-dark mb-4">Account Security</h2>
+              <div className="bg-sky-50/50 p-6 rounded-xl border border-slate-200">
+                <h2 className="text-xl font-bold text-navy-900 mb-4">Account Security</h2>
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-brand-text-dark mb-1.5">
+                    <label className="block text-sm font-medium text-navy-900 mb-1.5">
                       Password <span className="text-red-500">*</span>
                     </label>
                     <input
@@ -348,13 +347,13 @@ export default function CompanySignupPage() {
                       required
                       value={formData.password}
                       onChange={handleChange}
-                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-brand-primary transition-shadow duration-200"
+                      className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500 transition-all duration-200 text-navy-900 placeholder-slate-400"
                       placeholder="••••••••"
                     />
-                    <p className="mt-2 text-xs text-brand-text-light">Must be at least 8 characters long.</p>
+                    <p className="mt-2 text-xs text-slate-500">Must be at least 8 characters long.</p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-brand-text-dark mb-1.5">
+                    <label className="block text-sm font-medium text-navy-900 mb-1.5">
                       Confirm Password <span className="text-red-500">*</span>
                     </label>
                     <input
@@ -363,7 +362,7 @@ export default function CompanySignupPage() {
                       required
                       value={formData.confirmPassword}
                       onChange={handleChange}
-                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-brand-primary transition-shadow duration-200"
+                      className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500 transition-all duration-200 text-navy-900 placeholder-slate-400"
                       placeholder="••••••••"
                     />
                   </div>
@@ -371,8 +370,8 @@ export default function CompanySignupPage() {
               </div>
 
               {err && (
-                <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-                  <p className="text-sm text-red-600">{err}</p>
+                <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+                  <p className="text-sm text-red-600 font-medium">{err}</p>
                 </div>
               )}
 
@@ -380,7 +379,7 @@ export default function CompanySignupPage() {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full bg-brand-primary text-white font-bold py-3.5 px-4 rounded-lg hover:bg-brand-primary-dark focus:outline-none focus:ring-4 focus:ring-blue-300 transition-all duration-300 transform hover:scale-[1.01] disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full bg-navy-800 text-white font-semibold py-3.5 px-6 rounded-lg hover:bg-navy-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-sky-500/30 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed text-base"
                 >
                   {isLoading ? (
                     <div className="flex items-center justify-center">
@@ -395,9 +394,9 @@ export default function CompanySignupPage() {
             </form>
 
             <div className="text-center mt-8">
-              <p className="text-sm text-brand-text-light">
+              <p className="text-sm text-slate-600">
                 Already have an account?{" "}
-                <Link href="/auth/login" className="font-medium text-brand-primary hover:underline cursor-pointer">
+                <Link href="/auth/login" className="font-semibold text-navy-800 hover:text-navy-700 hover:underline transition-colors">
                   Log in
                 </Link>
               </p>
@@ -405,7 +404,6 @@ export default function CompanySignupPage() {
           </div>
         </div>
       </main>
-    </div>
-  );
-}
+    );
+  }
 

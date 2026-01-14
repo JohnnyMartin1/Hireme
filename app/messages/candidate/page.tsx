@@ -2,14 +2,16 @@
 import { useFirebaseAuth } from "@/components/FirebaseAuthProvider";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, useRef, Suspense } from "react";
-import { User, MessageSquare, ArrowRight, Loader2, Bell, CheckCircle, ArrowLeft, Send, Search, MoreHorizontal, Eye, Star } from "lucide-react";
-import { getUserMessageThreads, getDocument, getMessageThread, getThreadMessages, sendMessage, acceptMessageThread } from '@/lib/firebase-firestore';
+import { User, MessageSquare, ArrowRight, Loader2, Bell, CheckCircle, ArrowLeft, Send, Search, MoreHorizontal, Eye, Star, Archive, Trash2, BellOff } from "lucide-react";
+import { getUserMessageThreads, getDocument, getMessageThread, getThreadMessages, sendMessage, acceptMessageThread, updateDocument } from '@/lib/firebase-firestore';
 import Link from 'next/link';
 
 interface MessageThread {
   id: string;
   participantIds: string[];
   acceptedBy?: string[];
+  archivedBy?: string[];
+  mutedBy?: string[];
   createdAt: any;
   updatedAt: any;
   lastMessageAt: any;
@@ -55,7 +57,9 @@ function CandidateMessagesPageContent() {
   const [activeFilter, setActiveFilter] = useState<'all' | 'unread' | 'archived' | 'starred'>('all');
   const [showRecruiterInfo, setShowRecruiterInfo] = useState(false);
   const [mobileView, setMobileView] = useState<'list' | 'conversation'>('list');
+  const [showConversationMenu, setShowConversationMenu] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -134,6 +138,7 @@ function CandidateMessagesPageContent() {
     setSelectedThreadId(thread.thread.id);
     setSelectedThread(thread);
     setMobileView('conversation'); // Switch to conversation view on mobile
+    setShowConversationMenu(false); // Close menu when switching threads
     
     // Load messages for this thread
     try {
@@ -145,6 +150,154 @@ function CandidateMessagesPageContent() {
       setMessages((messagesData as Message[]) || []);
     } catch (err) {
       console.error('Error loading messages:', err);
+    }
+  };
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setShowConversationMenu(false);
+      }
+    };
+
+    if (showConversationMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showConversationMenu]);
+
+  // Handle conversation menu actions
+  const handleArchiveConversation = async () => {
+    if (!selectedThreadId || !user) return;
+    
+    try {
+      // Get current thread data
+      const { data: threadData } = await getMessageThread(selectedThreadId);
+      if (!threadData) return;
+      
+      const archivedBy = threadData.archivedBy || [];
+      const isArchived = archivedBy.includes(user.uid);
+      
+      // Toggle archive state
+      const updatedArchivedBy = isArchived
+        ? archivedBy.filter((id: string) => id !== user.uid)
+        : [...archivedBy, user.uid];
+      
+      // Update thread in Firestore
+      const { error } = await updateDocument('messageThreads', selectedThreadId, {
+        archivedBy: updatedArchivedBy
+      });
+      
+      if (error) {
+        console.error('Error archiving conversation:', error);
+        alert('Failed to archive conversation. Please try again.');
+        return;
+      }
+      
+      // Update local state
+      setThreads(prevThreads =>
+        prevThreads.map(t =>
+          t.thread.id === selectedThreadId
+            ? { ...t, thread: { ...t.thread, archivedBy: updatedArchivedBy } }
+            : t
+        )
+      );
+      
+      // If archived, close the conversation view
+      if (!isArchived) {
+        setSelectedThread(null);
+        setSelectedThreadId(null);
+        setMessages([]);
+      }
+      
+      setShowConversationMenu(false);
+    } catch (error) {
+      console.error('Error archiving conversation:', error);
+      alert('Failed to archive conversation. Please try again.');
+    }
+  };
+
+  const handleDeleteConversation = async () => {
+    if (!selectedThreadId) return;
+    if (confirm('Are you sure you want to delete this conversation? This action cannot be undone.')) {
+      // TODO: Implement delete functionality
+      setShowConversationMenu(false);
+      setSelectedThread(null);
+      setSelectedThreadId(null);
+      setMessages([]);
+      // Refresh threads list
+      if (user) {
+        const { data: threadsData } = await getUserMessageThreads(user.uid);
+        if (threadsData) {
+          const threadsWithParticipants = await Promise.all(
+            (threadsData as MessageThread[]).map(async (thread) => {
+              const otherId = thread.participantIds.find(id => id !== user.uid);
+              let otherParticipant = null;
+              if (otherId) {
+                const { data: otherProfile } = await getDocument('users', otherId);
+                otherParticipant = otherProfile;
+              }
+              return { thread, otherParticipant };
+            })
+          );
+          setThreads(threadsWithParticipants);
+        }
+      }
+    }
+  };
+
+  const handleMuteConversation = async () => {
+    if (!selectedThreadId || !user) return;
+    
+    try {
+      // Get current thread data
+      const { data: threadData } = await getMessageThread(selectedThreadId);
+      if (!threadData) return;
+      
+      const mutedBy = threadData.mutedBy || [];
+      const isMuted = mutedBy.includes(user.uid);
+      
+      // Toggle mute state
+      const updatedMutedBy = isMuted
+        ? mutedBy.filter((id: string) => id !== user.uid)
+        : [...mutedBy, user.uid];
+      
+      // Update thread in Firestore
+      const { error } = await updateDocument('messageThreads', selectedThreadId, {
+        mutedBy: updatedMutedBy
+      });
+      
+      if (error) {
+        console.error('Error muting conversation:', error);
+        alert('Failed to mute conversation. Please try again.');
+        return;
+      }
+      
+      // Update local state
+      setThreads(prevThreads =>
+        prevThreads.map(t =>
+          t.thread.id === selectedThreadId
+            ? { ...t, thread: { ...t.thread, mutedBy: updatedMutedBy } }
+            : t
+        )
+      );
+      
+      // Update selected thread state if it's the current one
+      if (selectedThread) {
+        setSelectedThread({
+          ...selectedThread,
+          thread: { ...selectedThread.thread, mutedBy: updatedMutedBy }
+        });
+      }
+      
+      setShowConversationMenu(false);
+    } catch (error) {
+      console.error('Error muting conversation:', error);
+      alert('Failed to mute conversation. Please try again.');
     }
   };
 
@@ -480,9 +633,44 @@ function CandidateMessagesPageContent() {
                       >
                         <Eye className="h-5 w-5" />
                       </button>
-                      <button className="p-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">
-                        <MoreHorizontal className="h-5 w-5" />
-                      </button>
+                      <div className="relative" ref={menuRef}>
+                        <button 
+                          onClick={() => setShowConversationMenu(!showConversationMenu)}
+                          className="p-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+                          title="More options"
+                        >
+                          <MoreHorizontal className="h-5 w-5" />
+                        </button>
+                        
+                          {showConversationMenu && selectedThread && (
+                            <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-xl shadow-xl border border-slate-200 z-50 overflow-hidden">
+                              <div className="py-1">
+                                <button
+                                  onClick={handleArchiveConversation}
+                                  className="w-full flex items-center gap-3 px-4 py-3 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
+                                >
+                                  <Archive className="h-4 w-4 text-slate-600" />
+                                  <span>{selectedThread.thread.archivedBy?.includes(user?.uid || '') ? 'Unarchive conversation' : 'Archive conversation'}</span>
+                                </button>
+                                <button
+                                  onClick={handleMuteConversation}
+                                  className="w-full flex items-center gap-3 px-4 py-3 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
+                                >
+                                  <BellOff className="h-4 w-4 text-slate-600" />
+                                  <span>{selectedThread.thread.mutedBy?.includes(user?.uid || '') ? 'Unmute notifications' : 'Mute notifications'}</span>
+                                </button>
+                                <div className="border-t border-slate-200 my-1"></div>
+                                <button
+                                  onClick={handleDeleteConversation}
+                                  className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                                >
+                                  <Trash2 className="h-4 w-4 text-red-600" />
+                                  <span>Delete conversation</span>
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -505,32 +693,28 @@ function CandidateMessagesPageContent() {
                                 href={`/job/${message.jobDetails.jobId}${selectedThreadId ? `?thread=${selectedThreadId}` : ''}`}
                                 className="block mb-2"
                               >
-                                <div className={`p-4 rounded-xl border-2 transition-all hover:shadow-md cursor-pointer ${
-                                  message.senderId === user?.uid
-                                    ? 'bg-blue-50 border-blue-200 hover:border-blue-300'
-                                    : 'bg-green-50 border-green-200 hover:border-green-300'
-                                }`}>
+                                <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-sm hover:shadow-md hover:border-sky-200 transition-all cursor-pointer">
                                   <div className="flex items-start space-x-3">
-                                    <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-[#000080] to-[#ADD8E6] rounded-lg flex items-center justify-center">
+                                    <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-navy-800 to-sky-500 rounded-lg flex items-center justify-center shadow-sm">
                                       <i className="fa-solid fa-briefcase text-white text-sm"></i>
                                     </div>
                                     <div className="flex-1 min-w-0">
                                       <div className="flex items-start justify-between">
-                                        <h4 className="text-sm font-bold text-[#000080] truncate">
+                                        <h4 className="text-sm font-semibold text-navy-900 truncate">
                                           {message.jobDetails.jobTitle}
                                         </h4>
                                       </div>
-                                      <div className="mt-2 space-y-1">
-                                        <div className="flex items-center text-xs text-gray-600">
-                                          <i className="fa-solid fa-clock mr-2 text-[#ADD8E6]"></i>
+                                      <div className="mt-2 space-y-1.5">
+                                        <div className="flex items-center text-xs text-slate-600">
+                                          <i className="fa-solid fa-clock mr-2 text-sky-500"></i>
                                           <span>{message.jobDetails.employmentType}</span>
                                         </div>
-                                        <div className="flex items-center text-xs text-gray-600">
-                                          <i className="fa-solid fa-location-dot mr-2 text-[#ADD8E6]"></i>
-                                          <span>{message.jobDetails.location}</span>
+                                        <div className="flex items-center text-xs text-slate-600">
+                                          <i className="fa-solid fa-location-dot mr-2 text-sky-500"></i>
+                                          <span className="truncate">{message.jobDetails.location}</span>
                                         </div>
                                       </div>
-                                      <div className="mt-2 flex items-center text-xs font-semibold text-[#000080] hover:text-[#ADD8E6] transition-colors">
+                                      <div className="mt-3 flex items-center text-xs font-semibold text-sky-600 hover:text-navy-700 transition-colors">
                                         <span>View full job description</span>
                                         <i className="fa-solid fa-arrow-right ml-2"></i>
                                       </div>
@@ -800,31 +984,27 @@ function CandidateMessagesPageContent() {
                               href={`/job/${message.jobDetails.jobId}${selectedThreadId ? `?thread=${selectedThreadId}` : ''}`}
                               className="block mb-2"
                             >
-                            <div className={`p-3 sm:p-4 rounded-xl border-2 transition-all active:scale-[0.98] ${
-                              message.senderId === user?.uid
-                                ? 'bg-blue-50 border-blue-200'
-                                : 'bg-green-50 border-green-200'
-                            }`}>
+                            <div className="p-3 sm:p-4 rounded-xl bg-white border border-slate-200 shadow-sm hover:shadow-md hover:border-sky-200 transition-all active:scale-[0.98]">
                               <div className="flex items-start space-x-3">
-                                <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-[#000080] to-[#ADD8E6] rounded-lg flex items-center justify-center">
+                                <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-navy-800 to-sky-500 rounded-lg flex items-center justify-center shadow-sm">
                                   <i className="fa-solid fa-briefcase text-white text-sm"></i>
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                  <h4 className="text-sm font-bold text-[#000080] truncate">
+                                  <h4 className="text-sm font-semibold text-navy-900 truncate">
                                     {message.jobDetails.jobTitle}
                                   </h4>
-                                  <div className="mt-2 space-y-1">
-                                    <div className="flex items-center text-xs text-gray-600">
-                                      <i className="fa-solid fa-clock mr-2 text-[#ADD8E6]"></i>
+                                  <div className="mt-2 space-y-1.5">
+                                    <div className="flex items-center text-xs text-slate-600">
+                                      <i className="fa-solid fa-clock mr-2 text-sky-500"></i>
                                       <span>{message.jobDetails.employmentType}</span>
                                     </div>
-                                    <div className="flex items-center text-xs text-gray-600">
-                                      <i className="fa-solid fa-location-dot mr-2 text-[#ADD8E6]"></i>
+                                    <div className="flex items-center text-xs text-slate-600">
+                                      <i className="fa-solid fa-location-dot mr-2 text-sky-500"></i>
                                       <span className="truncate">{message.jobDetails.location}</span>
                                     </div>
                                   </div>
-                                  <div className="mt-2 flex items-center text-xs font-semibold text-[#000080]">
-                                    <span>View job</span>
+                                  <div className="mt-3 flex items-center text-xs font-semibold text-sky-600 hover:text-navy-700 transition-colors">
+                                    <span>View full job description</span>
                                     <i className="fa-solid fa-arrow-right ml-2"></i>
                                   </div>
                                 </div>
@@ -909,24 +1089,21 @@ function CandidateMessagesPageContent() {
           onClick={() => setShowRecruiterInfo(false)}
         >
           <div 
-            className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto mobile-scroll"
+            className="bg-white rounded-2xl shadow-xl border border-slate-100 max-w-2xl w-full max-h-[90vh] overflow-y-auto mobile-scroll"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="relative h-24 sm:h-32 bg-gradient-to-br from-[#000080] to-[#ADD8E6] rounded-t-2xl">
+            <div className="relative bg-gradient-to-br from-sky-50 to-white border-b border-slate-100 rounded-t-2xl px-6 py-8">
               <button
                 onClick={() => setShowRecruiterInfo(false)}
-                className="absolute top-3 right-3 sm:top-4 sm:right-4 w-8 h-8 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full flex items-center justify-center text-white transition-colors min-h-[44px] min-w-[44px]"
+                className="absolute top-4 right-4 w-8 h-8 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-full flex items-center justify-center transition-colors min-h-[44px] min-w-[44px]"
               >
-                <i className="fa-solid fa-times"></i>
+                <i className="fa-solid fa-times text-lg"></i>
               </button>
-            </div>
-
-            {/* Profile Content */}
-            <div className="px-4 sm:px-8 pb-6 sm:pb-8 -mt-12 sm:-mt-16">
+              
               {/* Profile Picture */}
-              <div className="flex justify-center mb-4 sm:mb-6">
-                <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full bg-white p-2 shadow-xl">
+              <div className="flex justify-center">
+                <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full bg-white p-2 shadow-lg border-4 border-white">
                   {selectedThread.otherParticipant.profileImageUrl ? (
                     <img
                       src={selectedThread.otherParticipant.profileImageUrl}
@@ -934,7 +1111,7 @@ function CandidateMessagesPageContent() {
                       className="w-full h-full rounded-full object-cover"
                     />
                   ) : (
-                    <div className="w-full h-full rounded-full bg-gradient-to-br from-[#000080] to-[#ADD8E6] flex items-center justify-center">
+                    <div className="w-full h-full rounded-full bg-gradient-to-br from-navy-800 to-sky-500 flex items-center justify-center">
                       <span className="text-3xl sm:text-4xl font-bold text-white">
                         {selectedThread.otherParticipant.firstName?.[0]?.toUpperCase() || 'R'}
                       </span>
@@ -942,24 +1119,27 @@ function CandidateMessagesPageContent() {
                   )}
                 </div>
               </div>
+            </div>
 
+            {/* Profile Content */}
+            <div className="px-6 sm:px-8 pb-6 sm:pb-8 pt-4">
               {/* Name and Title */}
-              <div className="text-center mb-4 sm:mb-6">
-                <h2 className="text-2xl sm:text-3xl font-bold text-[#000080] mb-2">
+              <div className="text-center mb-6">
+                <h2 className="text-2xl sm:text-3xl font-bold text-navy-900 mb-2">
                   {`${selectedThread.otherParticipant.firstName || ''} ${selectedThread.otherParticipant.lastName || ''}`.trim() || 'Recruiter'}
                 </h2>
-                <p className="text-base sm:text-lg text-gray-600 mb-1">
+                <p className="text-base sm:text-lg text-slate-600 mb-1">
                   {selectedThread.otherParticipant.headline || selectedThread.otherParticipant.role || 'Recruiter'}
                 </p>
                 {selectedThread.otherParticipant.companyName && (
-                  <div className="flex items-center justify-center text-gray-600 mb-3">
-                    <i className="fa-solid fa-building mr-2 text-[#ADD8E6]"></i>
+                  <div className="flex items-center justify-center text-slate-600 mb-3">
+                    <i className="fa-solid fa-building mr-2 text-sky-500"></i>
                     <span className="font-semibold text-sm sm:text-base">{selectedThread.otherParticipant.companyName}</span>
                   </div>
                 )}
                 {selectedThread.otherParticipant.email && (
-                  <div className="flex items-center justify-center text-gray-600">
-                    <i className="fa-solid fa-envelope mr-2 text-[#ADD8E6]"></i>
+                  <div className="flex items-center justify-center text-slate-600">
+                    <i className="fa-solid fa-envelope mr-2 text-sky-500"></i>
                     <span className="text-xs sm:text-sm break-all">{selectedThread.otherParticipant.email}</span>
                   </div>
                 )}
@@ -967,51 +1147,57 @@ function CandidateMessagesPageContent() {
 
               {/* Bio Section */}
               {selectedThread.otherParticipant.bio && (
-                <div className="mb-4 sm:mb-6 p-4 bg-slate-50 rounded-xl">
-                  <h3 className="text-sm font-bold text-[#000080] mb-2 flex items-center">
-                    <i className="fa-solid fa-user mr-2"></i>
+                <div className="mb-6 p-4 bg-slate-50 border border-slate-200 rounded-xl">
+                  <h3 className="text-sm font-semibold text-navy-900 mb-2 flex items-center">
+                    <i className="fa-solid fa-user mr-2 text-sky-500"></i>
                     About
                   </h3>
-                  <p className="text-gray-700 text-sm leading-relaxed">
+                  <p className="text-slate-700 text-sm leading-relaxed">
                     {selectedThread.otherParticipant.bio}
                   </p>
                 </div>
               )}
 
               {/* Additional Info */}
-              <div className="grid grid-cols-1 gap-3 sm:gap-4">
+              <div className="grid grid-cols-1 gap-3 sm:gap-4 mb-6">
                 {selectedThread.otherParticipant.location && (
-                  <div className="flex items-center p-3 bg-slate-50 rounded-xl">
-                    <div className="w-10 h-10 bg-[#ADD8E6]/20 rounded-lg flex items-center justify-center mr-3 flex-shrink-0">
-                      <i className="fa-solid fa-location-dot text-[#000080]"></i>
+                  <div className="flex items-center p-4 bg-slate-50 border border-slate-200 rounded-xl">
+                    <div className="w-10 h-10 bg-sky-100 rounded-lg flex items-center justify-center mr-3 flex-shrink-0">
+                      <i className="fa-solid fa-location-dot text-sky-600"></i>
                     </div>
                     <div className="min-w-0">
-                      <p className="text-xs text-gray-500 font-semibold">Location</p>
-                      <p className="text-sm text-gray-700 truncate">{selectedThread.otherParticipant.location}</p>
+                      <p className="text-xs text-slate-500 font-semibold uppercase tracking-wide">Location</p>
+                      <p className="text-sm text-slate-700 truncate">{selectedThread.otherParticipant.location}</p>
                     </div>
                   </div>
                 )}
 
                 {selectedThread.otherParticipant.company && (
-                  <div className="flex items-center p-3 bg-slate-50 rounded-xl">
-                    <div className="w-10 h-10 bg-[#ADD8E6]/20 rounded-lg flex items-center justify-center mr-3 flex-shrink-0">
-                      <i className="fa-solid fa-briefcase text-[#000080]"></i>
+                  <div className="flex items-center p-4 bg-slate-50 border border-slate-200 rounded-xl">
+                    <div className="w-10 h-10 bg-sky-100 rounded-lg flex items-center justify-center mr-3 flex-shrink-0">
+                      <i className="fa-solid fa-briefcase text-sky-600"></i>
                     </div>
                     <div className="min-w-0">
-                      <p className="text-xs text-gray-500 font-semibold">Company</p>
-                      <p className="text-sm text-gray-700 truncate">{selectedThread.otherParticipant.company}</p>
+                      <p className="text-xs text-slate-500 font-semibold uppercase tracking-wide">Company</p>
+                      <p className="text-sm text-slate-700 truncate">{selectedThread.otherParticipant.company}</p>
                     </div>
                   </div>
                 )}
               </div>
 
-              {/* Action Buttons */}
-              <div className="mt-6 flex gap-3">
+              {/* Action Button */}
+              <div className="mt-6">
                 <button
-                  onClick={() => setShowRecruiterInfo(false)}
-                  className="flex-1 px-6 py-3 bg-gradient-to-r from-[#000080] to-[#ADD8E6] text-white font-semibold rounded-xl hover:shadow-lg transition-all min-h-[48px]"
+                  onClick={() => {
+                    const otherId = selectedThread.thread.participantIds.find(id => id !== user?.uid);
+                    if (otherId) {
+                      router.push(`/company/${otherId}`);
+                    }
+                    setShowRecruiterInfo(false);
+                  }}
+                  className="w-full px-6 py-3 bg-navy-800 text-white font-semibold rounded-lg hover:bg-navy-700 hover:shadow-lg transition-all min-h-[48px] text-base"
                 >
-                  Continue Conversation
+                  View Company Profile
                 </button>
               </div>
             </div>
