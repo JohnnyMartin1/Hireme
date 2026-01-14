@@ -502,7 +502,7 @@ function CandidateMessagesPageContent() {
                             {/* Job Details Card - Show above message if present */}
                             {message.jobDetails && (
                               <Link 
-                                href={`/job/${message.jobDetails.jobId}`}
+                                href={`/job/${message.jobDetails.jobId}${selectedThreadId ? `?thread=${selectedThreadId}` : ''}`}
                                 className="block mb-2"
                               >
                                 <div className={`p-4 rounded-xl border-2 transition-all hover:shadow-md cursor-pointer ${
@@ -795,11 +795,11 @@ function CandidateMessagesPageContent() {
                     <div key={message.id} className={`flex ${message.senderId === user?.uid ? 'justify-end' : 'justify-start'} w-full`}>
                       <div className="max-w-[85%] sm:max-w-sm w-full">
                         {/* Job Details Card */}
-                        {message.jobDetails && (
-                          <Link 
-                            href={`/job/${message.jobDetails.jobId}`}
-                            className="block mb-2"
-                          >
+                          {message.jobDetails && (
+                            <Link 
+                              href={`/job/${message.jobDetails.jobId}${selectedThreadId ? `?thread=${selectedThreadId}` : ''}`}
+                              className="block mb-2"
+                            >
                             <div className={`p-3 sm:p-4 rounded-xl border-2 transition-all active:scale-[0.98] ${
                               message.senderId === user?.uid
                                 ? 'bg-blue-50 border-blue-200'

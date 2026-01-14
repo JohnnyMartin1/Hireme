@@ -1,8 +1,8 @@
 "use client";
-import { useParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
 import { useFirebaseAuth } from "@/components/FirebaseAuthProvider";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { getDocument } from '@/lib/firebase-firestore';
 
 interface JobDetail {
@@ -31,11 +31,15 @@ interface JobDetail {
 
 export default function JobDetailPage() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const { user, profile, loading } = useFirebaseAuth();
   const router = useRouter();
   const [job, setJob] = useState<JobDetail | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // Get threadId from query parameter if coming from a message thread
+  const threadId = searchParams.get('thread');
 
   useEffect(() => {
     if (!loading && !user) {
@@ -143,7 +147,14 @@ export default function JobDetailPage() {
           {/* Page Header */}
           <header className="mb-4 sm:mb-6 md:mb-8 w-full">
             <button
-              onClick={() => router.back()}
+              onClick={() => {
+                // If threadId exists, navigate to the specific thread, otherwise go back
+                if (threadId) {
+                  router.push(`/messages/candidate?thread=${threadId}`);
+                } else {
+                  router.push('/messages/candidate');
+                }
+              }}
               className="inline-flex items-center text-[#000080] font-semibold hover:text-blue-900 transition-all duration-300 bg-[#ADD8E6]/10 hover:bg-[#ADD8E6]/30 hover:shadow-md hover:scale-105 px-3 sm:px-4 py-2 rounded-full group mb-3 sm:mb-4 min-h-[44px] text-sm sm:text-base"
             >
               <i className="fa-solid fa-arrow-left mr-2 group-hover:-translate-x-1 transition-transform duration-300"></i>
