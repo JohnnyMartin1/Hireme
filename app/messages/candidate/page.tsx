@@ -259,7 +259,8 @@ function CandidateMessagesPageContent() {
       const { data: threadData } = await getMessageThread(selectedThreadId);
       if (!threadData) return;
       
-      const mutedBy = threadData.mutedBy || [];
+      const thread = threadData as MessageThread;
+      const mutedBy = thread.mutedBy || [];
       const isMuted = mutedBy.includes(user.uid);
       
       // Toggle mute state
