@@ -223,7 +223,7 @@ export default function EmployerHomePage() {
                   <span>Post New Job</span>
                 </Link>
               </div>
-              <EmployerJobsList />
+              <EmployerJobsList limit={3} />
             </div>
 
             {/* Company Ratings Card */}

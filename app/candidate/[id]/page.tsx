@@ -408,7 +408,7 @@ export default function CandidateProfilePage() {
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <Link
             href={user?.uid === candidate.id ? "/home/seeker" : "/search/candidates"}
-            className="flex items-center gap-2 text-navy-800 hover:text-navy-600 transition-colors group"
+            className="flex items-center gap-2 text-navy-800 hover:text-navy-600 transition-all duration-200 group px-3 py-2 rounded-lg hover:bg-sky-50 hover:shadow-md min-h-[44px]"
           >
             <ArrowLeft className="h-5 w-5 group-hover:-translate-x-1 transition-transform" />
             <span className="font-medium">Back to Dashboard</span>

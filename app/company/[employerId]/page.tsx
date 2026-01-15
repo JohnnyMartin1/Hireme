@@ -94,7 +94,7 @@ export default function CompanyProfilePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
           <Link
             href="/home/seeker/profile-views"
-            className="flex items-center gap-2 text-navy-800 hover:text-navy-600 transition-colors group px-3 py-2 rounded-lg hover:bg-sky-50 min-h-[44px]"
+            className="flex items-center gap-2 text-navy-800 hover:text-navy-600 transition-all duration-200 group px-3 py-2 rounded-lg hover:bg-sky-50 hover:shadow-md min-h-[44px]"
           >
             <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform duration-200" />
             <span className="font-medium text-sm hidden sm:inline">Back to Profile Views</span>

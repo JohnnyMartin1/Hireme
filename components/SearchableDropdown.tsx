@@ -31,8 +31,8 @@ const SearchableDropdown = memo(function SearchableDropdown({
   const dropdownRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (isOpen && triggerRef.current) {
+  const updatePosition = () => {
+    if (triggerRef.current) {
       const rect = triggerRef.current.getBoundingClientRect();
       setPosition({
         top: rect.bottom + 4,
@@ -40,6 +40,32 @@ const SearchableDropdown = memo(function SearchableDropdown({
         width: rect.width
       });
     }
+  };
+
+  useEffect(() => {
+    if (isOpen) {
+      updatePosition();
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleScroll = () => {
+      updatePosition();
+    };
+
+    const handleResize = () => {
+      updatePosition();
+    };
+
+    window.addEventListener('scroll', handleScroll, true);
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll, true);
+      window.removeEventListener('resize', handleResize);
+    };
   }, [isOpen]);
 
   useEffect(() => {

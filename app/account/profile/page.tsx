@@ -298,19 +298,13 @@ export default function EditProfilePage() {
                 router.push('/home');
               }
             }}
-            className="flex items-center gap-2 text-navy-800 hover:text-navy-600 transition-colors group"
+            className="flex items-center gap-2 text-navy-800 hover:text-navy-600 transition-all duration-200 group px-3 py-2 rounded-lg hover:bg-sky-50 hover:shadow-md min-h-[44px]"
           >
             <ArrowLeft className="h-5 w-5 group-hover:-translate-x-1 transition-transform" />
             <span className="font-medium">Back to Dashboard</span>
           </button>
-          <Link href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-navy-800 rounded-lg flex items-center justify-center">
-              <svg width="20" height="20" viewBox="0 0 269 274" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M111.028 0C172.347 0.000238791 222.055 51.647 222.055 115.356C222.055 140.617 214.238 163.98 200.983 182.981L258.517 242.758L238.036 264.036L181.077 204.857C161.97 221.02 137.589 230.713 111.028 230.713C49.7092 230.713 2.76862e-05 179.066 0 115.356C0 51.6468 49.7092 0 111.028 0Z" fill="white"/>
-                <path d="M205.69 115.392C205.69 170.42 163.308 215.029 111.028 215.029C58.748 215.029 16.3666 170.42 16.3666 115.392C16.3666 60.3646 58.748 15.7559 111.028 15.7559C163.308 15.7559 205.69 60.3646 205.69 115.392Z" fill="#4F86F7"/>
-              </svg>
-            </div>
-            <span className="text-xl font-bold text-navy-900">HireMe</span>
+          <Link href="/" className="shrink-0" aria-label="HireMe home">
+            <img src="/logo.svg" alt="HireMe logo" className="h-7 sm:h-8 w-auto" role="img" aria-label="HireMe logo" />
           </Link>
         </div>
       </header>
@@ -330,14 +324,23 @@ export default function EditProfilePage() {
               <div className="flex items-center justify-center mb-4">
                 <div className="relative w-24 h-24">
                   <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
-                    <circle cx="50" cy="50" r="45" stroke="#e2e8f0" strokeWidth="8" fill="none" />
-                    <circle cx="50" cy="50" r="45" stroke="url(#gradient)" strokeWidth="8" fill="none" strokeLinecap="round" strokeDasharray={`${completion * 2.83} 283`} />
                     <defs>
-                      <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                      <linearGradient id="profileCompletionGradient" x1="0%" y1="0%" x2="100%" y2="0%">
                         <stop offset="0%" stopColor="#1e3a5f" />
                         <stop offset="100%" stopColor="#0ea5e9" />
                       </linearGradient>
                     </defs>
+                    <circle cx="50" cy="50" r="45" stroke="#e2e8f0" strokeWidth="8" fill="none" />
+                    <circle 
+                      cx="50" 
+                      cy="50" 
+                      r="45" 
+                      stroke="url(#profileCompletionGradient)" 
+                      strokeWidth="8" 
+                      fill="none" 
+                      strokeLinecap="round" 
+                      strokeDasharray={`${(completion / 100) * 282.74} 282.74`}
+                    />
                   </svg>
                   <div className="absolute inset-0 flex items-center justify-center">
                     <span className="text-2xl font-bold text-navy-900">{completion}%</span>

@@ -33,8 +33,8 @@ const MultiSelectDropdown = memo(function MultiSelectDropdown({
   const dropdownRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (isOpen && triggerRef.current) {
+  const updatePosition = () => {
+    if (triggerRef.current) {
       const rect = triggerRef.current.getBoundingClientRect();
       setPosition({
         top: rect.bottom + 4,
@@ -42,6 +42,32 @@ const MultiSelectDropdown = memo(function MultiSelectDropdown({
         width: rect.width
       });
     }
+  };
+
+  useEffect(() => {
+    if (isOpen) {
+      updatePosition();
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleScroll = () => {
+      updatePosition();
+    };
+
+    const handleResize = () => {
+      updatePosition();
+    };
+
+    window.addEventListener('scroll', handleScroll, true);
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll, true);
+      window.removeEventListener('resize', handleResize);
+    };
   }, [isOpen]);
 
   useEffect(() => {
@@ -112,7 +138,7 @@ const MultiSelectDropdown = memo(function MultiSelectDropdown({
   const isMaxReached = maxSelections ? values.length >= maxSelections : false;
 
   return (
-    <div className={`relative ${className}`} ref={dropdownRef}>
+    <div className={`relative ${className}`}>
       <label className="block text-sm font-medium text-gray-700 mb-2">
         {label}
         {required && <span className="text-red-500 ml-1">*</span>}

@@ -161,7 +161,7 @@ export default function MessageThreadPage() {
     }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
@@ -214,12 +214,18 @@ export default function MessageThreadPage() {
     }
   };
 
+  // Determine messages page and dashboard URL based on role
+  const messagesPageUrl = profile?.role === 'JOB_SEEKER' ? '/messages/candidate' : '/messages';
+  const dashboardUrl = profile?.role === 'JOB_SEEKER' 
+    ? '/home/seeker' 
+    : '/home/employer';
+
   if (loading || isLoading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 mobile-safe-top mobile-safe-bottom flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading conversation...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-navy-800 mx-auto mb-4"></div>
+          <p className="text-slate-600">Loading conversation...</p>
         </div>
       </div>
     );
@@ -231,12 +237,12 @@ export default function MessageThreadPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 mobile-safe-top mobile-safe-bottom flex items-center justify-center">
         <div className="text-center">
           <p className="text-red-600 mb-4">{error}</p>
           <Link 
-            href="/messages" 
-            className="text-blue-600 hover:text-blue-800 underline"
+            href={messagesPageUrl} 
+            className="text-sky-600 hover:text-navy-800 underline"
           >
             Back to messages
           </Link>
@@ -247,153 +253,169 @@ export default function MessageThreadPage() {
 
   if (!thread) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 mobile-safe-top mobile-safe-bottom flex items-center justify-center">
         <div className="text-center">
-          <p className="text-gray-600">Thread not found</p>
+          <p className="text-slate-600">Thread not found</p>
         </div>
       </div>
     );
   }
 
   return (
-    <main className="min-h-screen bg-slate-50 py-6">
-      <div className="max-w-7xl mx-auto px-4">
-        {/* Header */}
-        <div className="bg-white rounded-t-xl shadow-sm p-4 border-b">
-          <div className="flex items-center gap-4">
-            <Link 
-              href="/messages"
-              className="text-blue-600 hover:text-blue-800 transition-colors"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Link>
-            <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-              <User className="h-5 w-5 text-blue-600" />
-            </div>
-            <div>
-              <h1 className="text-lg font-semibold text-gray-900">
-                {otherParticipant ? `${otherParticipant.firstName || ''} ${otherParticipant.lastName || ''}`.trim() : 'Unknown User'}
-              </h1>
-              <p className="text-sm text-gray-600">Message thread</p>
-            </div>
-          </div>
+    <main className="min-h-screen bg-slate-50 mobile-safe-top mobile-safe-bottom">
+      {/* Header */}
+      <header className="sticky top-0 bg-white shadow-sm z-50 border-b border-slate-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
+          <Link
+            href={messagesPageUrl}
+            className="flex items-center gap-2 text-navy-800 hover:text-navy-600 transition-all duration-200 group px-3 py-2 rounded-lg hover:bg-sky-50 hover:shadow-md min-h-[44px]"
+          >
+            <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform duration-200" />
+            <span className="font-medium text-sm hidden sm:inline">Back to Messages</span>
+            <span className="font-medium text-sm sm:hidden">Back</span>
+          </Link>
+          <Link href="/" className="shrink-0" aria-label="HireMe home">
+            <img src="/logo.svg" alt="HireMe logo" className="h-7 sm:h-8 w-auto" role="img" aria-label="HireMe logo" />
+          </Link>
         </div>
+      </header>
 
+      <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-4 w-full">
         {/* Main Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-0 lg:gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Messages Section */}
-          <div className="lg:col-span-2 bg-white rounded-b-xl shadow-lg flex flex-col" style={{ height: '70vh' }}>
-            {/* Messages Container */}
-            <div className="flex-1 overflow-y-auto p-6">
-              <div className="flex flex-col justify-end min-h-full">
-                <div className="space-y-4">
-                  {messages.length === 0 ? (
-                    <div className="text-center py-8 text-gray-500">
-                      <MessageSquare className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                      <p>No messages yet. Start the conversation!</p>
-                    </div>
+          <div className="lg:col-span-2 bg-white rounded-2xl shadow-xl border border-slate-100 flex flex-col" style={{ height: 'calc(100vh - 160px)' }}>
+            {/* Conversation Header */}
+            <div className="p-6 border-b border-slate-100">
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 bg-slate-200 rounded-full flex items-center justify-center flex-shrink-0">
+                  {otherParticipant?.profileImageUrl ? (
+                    <img
+                      src={otherParticipant.profileImageUrl}
+                      alt="Avatar"
+                      className="w-12 h-12 rounded-full object-cover"
+                    />
                   ) : (
-                    messages.map((message) => (
-                    <div
-                      key={message.id}
-                      className={`flex ${message.senderId === user.uid ? 'justify-end' : 'justify-start'}`}
-                    >
-                      <div
-                        className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                          message.senderId === user.uid
-                            ? 'bg-blue-600 text-white'
-                            : 'bg-gray-100 text-gray-900'
-                        }`}
-                      >
-                        {/* Job Details Banner */}
-                        {message.jobDetails && (
-                          <div className={`mb-2 p-2 rounded text-xs ${
-                            message.senderId === user.uid
-                              ? 'bg-blue-500 text-white'
-                              : 'bg-green-100 text-green-800'
-                          }`}
-                          >
-                            <Link 
-                              href={`/job/${message.jobDetails.jobId}`}
-                              className="block hover:opacity-80 transition-opacity"
-                            >
-                              <div className="font-semibold">📋 Job Position: {message.jobDetails.jobTitle}</div>
-                              <div>💼 {message.jobDetails.employmentType}</div>
-                              <div>📍 {message.jobDetails.location}</div>
-                              <div className="mt-1 text-xs opacity-80">
-                                {message.jobDetails.jobDescription.substring(0, 100)}
-                                {message.jobDetails.jobDescription.length > 100 ? '...' : ''}
-                              </div>
-                              <div className="mt-1 text-xs font-medium">
-                                👆 Click to view full job details
-                              </div>
-                            </Link>
-                            
-                            {/* Rate Company Button - Only show for candidates receiving job messages */}
-                            {profile?.role === 'JOB_SEEKER' && message.senderId !== user.uid && (
-                              <button
-                                onClick={() => handleRateCompany(message)}
-                                className="mt-2 w-full px-3 py-1 bg-yellow-500 hover:bg-yellow-600 text-white rounded text-xs font-medium transition-colors flex items-center justify-center"
-                              >
-                                <Star className="h-3 w-3 mr-1" />
-                                Rate Company Experience
-                              </button>
-                            )}
-                          </div>
-                        )}
-                        
-                        <p className="text-sm">{message.content}</p>
-                        <p className={`text-xs mt-1 ${
-                          message.senderId === user.uid ? 'text-blue-100' : 'text-gray-500'
-                        }`}>
-                          {message.createdAt ? new Date(message.createdAt.toDate ? message.createdAt.toDate() : message.createdAt).toLocaleTimeString() : 'Now'}
-                        </p>
-                      </div>
-                    </div>
-                  ))
+                    <User className="h-6 w-6 text-slate-600" />
                   )}
-                  <div ref={messagesEndRef} />
+                </div>
+                <div>
+                  <h2 className="text-lg font-semibold text-navy-900">
+                    {otherParticipant 
+                      ? `${otherParticipant.firstName || ''} ${otherParticipant.lastName || ''}`.trim() || 'Unknown User'
+                      : 'Unknown User'
+                    }
+                  </h2>
+                  <p className="text-sm text-slate-600">
+                    {otherParticipant?.headline || otherParticipant?.role || 'User'}
+                  </p>
                 </div>
               </div>
             </div>
 
-            {/* Message Input - Fixed at bottom */}
-            <div className="border-t bg-gray-50 p-4">
-              <div className="flex gap-3">
-                <input
-                  type="text"
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  onKeyPress={handleKeyPress}
-                  placeholder="Type your message..."
-                  className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
-                  disabled={isSending}
-                />
+            {/* Messages Container */}
+            <div className="flex-1 overflow-y-auto p-6">
+              <div className="space-y-4 max-w-full">
+                {messages.length === 0 ? (
+                  <div className="text-center py-12">
+                    <MessageSquare className="h-12 w-12 text-slate-300 mx-auto mb-4" />
+                    <p className="text-slate-500">No messages yet. Start the conversation!</p>
+                  </div>
+                ) : (
+                  messages.map((message) => (
+                    <div key={message.id} className={`flex ${message.senderId === user.uid ? 'justify-end' : 'justify-start'} w-full`}>
+                      <div className="max-w-xs lg:max-w-md w-full">
+                        {/* Job Details Card - Show above message if present */}
+                        {message.jobDetails && (
+                          <Link 
+                            href={`/job/${message.jobDetails.jobId}`}
+                            className="block mb-2"
+                          >
+                            <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-sm hover:shadow-md hover:border-sky-200 transition-all cursor-pointer">
+                              <div className="flex items-start space-x-3">
+                                <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-navy-800 to-sky-500 rounded-lg flex items-center justify-center shadow-sm">
+                                  <i className="fa-solid fa-briefcase text-white text-sm"></i>
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-start justify-between">
+                                    <h4 className="text-sm font-semibold text-navy-900 truncate">
+                                      {message.jobDetails.jobTitle}
+                                    </h4>
+                                  </div>
+                                  <div className="mt-2 space-y-1.5">
+                                    <div className="flex items-center text-xs text-slate-600">
+                                      <i className="fa-solid fa-clock mr-2 text-sky-500"></i>
+                                      <span>{message.jobDetails.employmentType}</span>
+                                    </div>
+                                    <div className="flex items-center text-xs text-slate-600">
+                                      <i className="fa-solid fa-location-dot mr-2 text-sky-500"></i>
+                                      <span className="truncate">{message.jobDetails.location}</span>
+                                    </div>
+                                  </div>
+                                  <div className="mt-3 flex items-center text-xs font-semibold text-sky-600 hover:text-navy-700 transition-colors">
+                                    <span>View full job description</span>
+                                    <i className="fa-solid fa-arrow-right ml-2"></i>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </Link>
+                        )}
+                        
+                        {/* Message Content */}
+                        <div className={`px-4 py-3 rounded-2xl ${
+                          message.senderId === user.uid
+                            ? 'bg-navy-800 text-white'
+                            : 'bg-slate-100 text-slate-900'
+                        }`}>
+                          <p className="text-sm">{message.content}</p>
+                          <p className={`text-xs mt-1 ${
+                            message.senderId === user.uid ? 'text-blue-100' : 'text-slate-500'
+                          }`}>
+                            {message.createdAt ? new Date(message.createdAt.toDate ? message.createdAt.toDate() : message.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'Now'}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+                <div ref={messagesEndRef} />
+              </div>
+            </div>
+
+            {/* Message Composer */}
+            <div className="p-6 border-t border-slate-100">
+              <div className="flex items-end space-x-3">
+                <div className="flex-1">
+                  <textarea
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                    onKeyPress={handleKeyPress}
+                    placeholder="Send a message..."
+                    className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-sky-200 focus:border-sky-400 resize-none text-navy-900 placeholder-slate-400"
+                    rows={1}
+                    disabled={isSending}
+                  />
+                </div>
                 <button
                   onClick={handleSendMessage}
                   disabled={!newMessage.trim() || isSending}
-                  className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+                  className="bg-navy-800 text-white px-4 py-3 rounded-lg hover:bg-navy-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2 shadow-md"
                 >
                   {isSending ? (
-                    <>
-                      <Loader2 className="h-5 w-5 animate-spin" />
-                      Sending...
-                    </>
+                    <Loader2 className="h-5 w-5 animate-spin" />
                   ) : (
-                    <>
-                      <Send className="h-5 w-5" />
-                      Send
-                    </>
+                    <Send className="h-5 w-5" />
                   )}
                 </button>
               </div>
             </div>
           </div>
 
-          {/* Company Profile Sidebar - Only show for candidates */}
+          {/* Company/Candidate Profile Sidebar - Show for candidates viewing employers */}
           {profile.role === 'JOB_SEEKER' && otherParticipant && (
             <div className="lg:col-span-1 hidden lg:block">
-              <div className="bg-white rounded-xl shadow-lg overflow-y-auto" style={{ height: '70vh' }}>
+              <div className="bg-white rounded-2xl shadow-xl border border-slate-100 overflow-y-auto" style={{ height: 'calc(100vh - 160px)' }}>
                 <CompanyProfile employerId={otherParticipant.id || otherParticipant.uid} showDetails={true} clickable={true} />
               </div>
             </div>
