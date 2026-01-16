@@ -470,7 +470,7 @@ function CandidateMessagesPageContent() {
             <div className="p-6 border-b border-slate-100">
               <div className="mb-4">
                 <h1 className="text-2xl font-bold text-navy-900">Messages</h1>
-                <p className="text-sm text-slate-600">Your conversations with employers.</p>
+                <p className="text-sm text-slate-600">When employers reach out to you, your messages will appear here.</p>
               </div>
               
               {/* Search Bar */}
@@ -793,7 +793,7 @@ function CandidateMessagesPageContent() {
             <div className="p-4 sm:p-6 border-b border-slate-100">
               <div className="mb-4">
                 <h1 className="text-xl sm:text-2xl font-bold text-navy-900">Messages</h1>
-                <p className="text-xs sm:text-sm text-slate-600">Your conversations with employers.</p>
+                <p className="text-xs sm:text-sm text-slate-600">When employers reach out to you, your messages will appear here.</p>
               </div>
               
               {/* Search Bar */}

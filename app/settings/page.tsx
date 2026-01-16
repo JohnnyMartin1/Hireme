@@ -1069,27 +1069,6 @@ function LegalSection() {
             </div>
             <i className="fa-solid fa-external-link text-sky-500"></i>
           </a>
-          <a href="#" target="_blank" className="flex items-center justify-between p-4 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
-            <div className="flex items-center space-x-3">
-              <i className="fa-solid fa-server text-sky-500"></i>
-              <span className="font-medium text-navy-900">Subprocessors</span>
-            </div>
-            <i className="fa-solid fa-external-link text-sky-500"></i>
-          </a>
-          <a href="#" target="_blank" className="flex items-center justify-between p-4 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
-            <div className="flex items-center space-x-3">
-              <i className="fa-solid fa-lock text-sky-500"></i>
-              <span className="font-medium text-navy-900">Security Overview</span>
-            </div>
-            <i className="fa-solid fa-external-link text-sky-500"></i>
-          </a>
-          <div className="flex items-center justify-between p-4 border border-slate-200 rounded-lg">
-            <div className="flex items-center space-x-3">
-              <i className="fa-solid fa-certificate text-sky-500"></i>
-              <span className="font-medium text-navy-900">SOC2 Report</span>
-            </div>
-            <button className="px-6 py-3 bg-white border border-slate-200 text-navy-900 rounded-lg font-semibold shadow-sm hover:bg-slate-50 transition-colors px-4 py-1 rounded-lg font-semibold text-sm">Download</button>
-          </div>
         </div>
       </div>
     </section>

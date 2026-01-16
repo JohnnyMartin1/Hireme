@@ -5,13 +5,17 @@ import HireMeLogo from "@/components/brand/HireMeLogo";
 
 export default function Home() {
   // Comparison table state
-  const [comparisonView, setComparisonView] = useState<'employer' | 'candidate'>('employer');
+  const [comparisonView, setComparisonView] = useState<'employer' | 'candidate'>('candidate');
   
   // FAQ state
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
   
   // Workflow hover state
   const [hoveredWorkflowIndex, setHoveredWorkflowIndex] = useState<number | null>(null);
+  
+  // Get in Touch email display state
+  const [showEmail, setShowEmail] = useState(false);
+  const [emailCopied, setEmailCopied] = useState(false);
 
   // Position workflow nodes on mount
   useEffect(() => {
@@ -44,121 +48,221 @@ export default function Home() {
     { id: 'measure', icon: 'fa-chart-bar', title: 'Measure & Improve', description: 'Track hiring metrics and feedback to continuously improve sourcing, screening, and interview quality.' }
   ];
 
-  // Comparison content with truth-safe states
-  const comparisonRows = [
-    {
-      key: "timeline",
-      group: "Differentiators",
-      label: "Transparent timelines + status updates (anti-ghosting)",
-      employerDescription: "Set clear stages + expected response windows so candidates know what's next and when updates will happen.",
-      candidateDescription: "See your stage, what's next, and when to expect updates — fewer dead ends.",
-      states: {
-        hireme: "built_in",
-        linkedin: "varies",
-        handshake: "varies",
-        indeed: "varies",
+  // Comparison content with truth-safe states - Separate for employer and candidate views
+  const comparisonRowsByView = {
+    employer: [
+      {
+        key: "outreach_messaging",
+        group: "Core capabilities",
+        label: "Outreach messaging",
+        description: "Message candidates directly and manage conversations in one place.",
+        states: {
+          hireme: "built_in",
+          linkedin: "built_in",
+          handshake: "built_in",
+          indeed: "built_in",
+        },
+        highlight: false,
       },
-      highlight: true,
-    },
-    {
-      key: "verified_intent",
-      group: "Differentiators",
-      label: "Verified intent + outreach controls",
-      employerDescription: "Outreach stays high-signal: verified roles/timelines, guardrails, and quality controls that reduce spam.",
-      candidateDescription: "Fewer spammy messages — outreach is tied to real roles and clearer intent.",
-      states: {
-        hireme: "built_in",
-        linkedin: "available",
-        handshake: "available",
-        indeed: "available",
+      {
+        key: "young_professionals",
+        group: "Core capabilities",
+        label: "Designed for young professionals / early careers",
+        description: "Platform optimized for finding and connecting with early-career talent and recent graduates.",
+        states: {
+          hireme: "built_in",
+          linkedin: "built_in",
+          handshake: "built_in",
+          indeed: false,
+        },
+        highlight: false,
       },
-      highlight: true,
-    },
-    {
-      key: "structured_signals",
-      group: "Differentiators",
-      label: "Structured screening + interview signals (built-in)",
-      employerDescription: "Standardized screening criteria + interview scorecards keep teams aligned and make evaluations consistent.",
-      candidateDescription: "More consistent evaluation — clearer expectations and fairer comparison.",
-      states: {
-        hireme: "built_in",
-        linkedin: "available",
-        handshake: "available",
-        indeed: "available",
+      {
+        key: "talent_discovery",
+        group: "Core capabilities",
+        label: "Talent discovery: search & filters",
+        description: "Search and filter for candidates by role-relevant criteria to build targeted shortlists.",
+        states: {
+          hireme: "built_in",
+          linkedin: "built_in",
+          handshake: "built_in",
+          indeed: false,
+        },
+        highlight: false,
       },
-      highlight: true,
-    },
-    {
-      key: "closed_loop",
-      group: "Differentiators",
-      label: "Closed-loop workflow + insights (action → outcome)",
-      employerDescription: "Connect steps end-to-end and learn what actually drives successful hires so you can improve the process.",
-      candidateDescription: "A smoother connected process with fewer handoffs and surprises.",
-      states: {
-        hireme: "built_in",
-        linkedin: "available",
-        handshake: "available",
-        indeed: "available",
+      {
+        key: "transparent_timelines",
+        group: "Quality & Trust",
+        label: "Transparent timelines & status updates (anti-ghosting)",
+        description: "Set clear stages and expected response windows so candidates know what's next and when updates will happen.",
+        states: {
+          hireme: "built_in",
+          linkedin: false,
+          handshake: false,
+          indeed: false,
+        },
+        highlight: true,
       },
-      highlight: true,
-    },
-    {
-      key: "discovery",
-      group: "Core capabilities",
-      label: "Talent discovery: search + filters",
-      employerDescription: "Search and filter for candidates by role-relevant criteria to build targeted shortlists.",
-      candidateDescription: "Get discovered based on skills, interests, and fit signals.",
-      states: {
-        hireme: "built_in",
-        linkedin: "built_in",
-        handshake: "built_in",
-        indeed: "available",
+      {
+        key: "noise_reduction",
+        group: "Quality & Trust",
+        label: "Noise reduction: verified ecosystem + lower third-party recruiter/spam",
+        description: "Verified ecosystem with quality controls that reduce spam and ensure high-signal outreach.",
+        states: {
+          hireme: "built_in",
+          linkedin: false,
+          handshake: "built_in",
+          indeed: false,
+        },
+        highlight: true,
       },
-      highlight: false,
-    },
-    {
-      key: "messaging",
-      group: "Core capabilities",
-      label: "Outreach messaging",
-      employerDescription: "Message candidates directly and manage conversations in one place.",
-      candidateDescription: "Communicate with employers without losing context.",
-      states: {
-        hireme: "built_in",
-        linkedin: "built_in",
-        handshake: "built_in",
-        indeed: "available",
+      {
+        key: "standardized_template",
+        group: "Quality & Trust",
+        label: "Standardized candidate template (market yourself; no guessing)",
+        description: "Consistent profile format makes it easier to evaluate candidates fairly and efficiently.",
+        states: {
+          hireme: "built_in",
+          linkedin: "built_in",
+          handshake: false,
+          indeed: false,
+        },
+        highlight: false,
       },
-      highlight: false,
-    },
-    {
-      key: "pipeline",
-      group: "Core capabilities",
-      label: "Pipeline / tracking",
-      employerDescription: "Move candidates through stages and track decisions with shared visibility.",
-      candidateDescription: "Know where you stand as you move through the process.",
-      states: {
-        hireme: "built_in",
-        linkedin: "built_in",
-        handshake: "available",
-        indeed: "available",
+      {
+        key: "employer_led_model",
+        group: "Differentiators",
+        label: "Employer-led hiring model (employers find you)",
+        description: "Search, discover, and reach out to candidates proactively — no waiting for applications.",
+        states: {
+          hireme: "built_in",
+          linkedin: false,
+          handshake: false,
+          indeed: false,
+        },
+        highlight: true,
       },
-      highlight: false,
-    },
-    {
-      key: "profile_artifacts",
-      group: "Core capabilities",
-      label: "Candidate profile + artifacts (resume, transcript/portfolio)",
-      employerDescription: "A consistent profile format with reusable artifacts — fewer missing pieces when reviewing.",
-      candidateDescription: "One clean profile you can reuse — attach artifacts once, update anytime.",
-      states: {
-        hireme: "built_in",
-        linkedin: "built_in",
-        handshake: "built_in",
-        indeed: "available",
+      {
+        key: "no_resume_pile",
+        group: "Differentiators",
+        label: "No resume pile (no mass applying)",
+        description: "Quality candidates, not volume. No sifting through hundreds of generic applications.",
+        states: {
+          hireme: "built_in",
+          linkedin: false,
+          handshake: false,
+          indeed: false,
+        },
+        highlight: true,
       },
-      highlight: false,
-    },
-  ];
+    ],
+    candidate: [
+      {
+        key: "guided_profile",
+        group: "Core capabilities",
+        label: "Guided profile setup",
+        description: "Step-by-step guidance to create a complete, professional profile.",
+        states: {
+          hireme: "built_in",
+          linkedin: "built_in",
+          handshake: "built_in",
+          indeed: "built_in",
+        },
+        highlight: false,
+      },
+      {
+        key: "high_signal_profile",
+        group: "Core capabilities",
+        label: "High-signal candidate profile",
+        description: "Showcase your skills, experience, and achievements in a structured format.",
+        states: {
+          hireme: "built_in",
+          linkedin: "built_in",
+          handshake: "built_in",
+          indeed: false,
+        },
+        highlight: false,
+      },
+      {
+        key: "verified_endorsements",
+        group: "Core capabilities",
+        label: "Verified endorsements",
+        description: "Get endorsements from colleagues, managers, and peers to validate your skills.",
+        states: {
+          hireme: "built_in",
+          linkedin: "built_in",
+          handshake: false,
+          indeed: false,
+        },
+        highlight: false,
+      },
+      {
+        key: "profile_views",
+        group: "Core capabilities",
+        label: "Profile view visibility",
+        description: "See which employers have viewed your profile to track interest.",
+        states: {
+          hireme: "built_in",
+          linkedin: "built_in",
+          handshake: false,
+          indeed: false,
+        },
+        highlight: false,
+      },
+      {
+        key: "verified_employers",
+        group: "Quality & Trust",
+        label: "Verified employers (screened before outreach)",
+        description: "Only hear from verified, legitimate employers — no scammy companies.",
+        states: {
+          hireme: "built_in",
+          linkedin: false,
+          handshake: "built_in",
+          indeed: false,
+        },
+        highlight: true,
+      },
+      {
+        key: "real_jobs_only",
+        group: "Quality & Trust",
+        label: "Real jobs only (outreach tied to an active opening)",
+        description: "Every outreach is connected to a real, active job opportunity.",
+        states: {
+          hireme: "built_in",
+          linkedin: false,
+          handshake: "built_in",
+          indeed: false,
+        },
+        highlight: true,
+      },
+      {
+        key: "video_introductions",
+        group: "Differentiators",
+        label: "Video introductions",
+        description: "Stand out with a video introduction that showcases your personality and communication skills.",
+        states: {
+          hireme: "built_in",
+          linkedin: false,
+          handshake: false,
+          indeed: false,
+        },
+        highlight: true,
+      },
+      {
+        key: "one_and_done",
+        group: "Differentiators",
+        label: "One-and-done setup (set it once; no application grind)",
+        description: "Build your profile once — employers find and reach out to you. No endless application forms.",
+        states: {
+          hireme: "built_in",
+          linkedin: false,
+          handshake: false,
+          indeed: false,
+        },
+        highlight: true,
+      },
+    ],
+  };
 
   const comparisonCopy = {
     employer: {
@@ -171,18 +275,19 @@ export default function Home() {
     },
   };
 
-  // Transform comparisonRows into the format expected by the rendering code
+  // Transform comparisonRowsByView into the format expected by the rendering code
   const comparisonData = {
     employer: (() => {
-      const groups = Array.from(new Set(comparisonRows.map(r => r.group)));
+      const rows = comparisonRowsByView.employer;
+      const groups = Array.from(new Set(rows.map(r => r.group)));
       return groups.map(group => ({
         group,
-        rows: comparisonRows
+        rows: rows
           .filter(r => r.group === group)
           .map(row => ({
             key: row.key,
             label: row.label,
-            description: row.employerDescription,
+            description: row.description,
             hireme: row.states.hireme === "built_in" || row.states.hireme === "available",
             linkedin: row.states.linkedin === "built_in" || row.states.linkedin === "available",
             handshake: row.states.handshake === "built_in" || row.states.handshake === "available",
@@ -192,15 +297,16 @@ export default function Home() {
       }));
     })(),
     candidate: (() => {
-      const groups = Array.from(new Set(comparisonRows.map(r => r.group)));
+      const rows = comparisonRowsByView.candidate;
+      const groups = Array.from(new Set(rows.map(r => r.group)));
       return groups.map(group => ({
         group,
-        rows: comparisonRows
+        rows: rows
           .filter(r => r.group === group)
           .map(row => ({
             key: row.key,
             label: row.label,
-            description: row.candidateDescription,
+            description: row.description,
             hireme: row.states.hireme === "built_in" || row.states.hireme === "available",
             linkedin: row.states.linkedin === "built_in" || row.states.linkedin === "available",
             handshake: row.states.handshake === "built_in" || row.states.handshake === "available",
@@ -358,12 +464,12 @@ export default function Home() {
             <Link href="/" className="shrink-0" aria-label="HireMe home">
               <HireMeLogo variant="full" className="h-7 sm:h-8 w-auto" />
             </Link>
-            <nav className="hidden md:flex items-center space-x-5 lg:space-x-6">
-              <a href="#personas" className="text-sm text-slate-600 hover:text-navy-700 font-medium transition-colors duration-200">For Teams</a>
-              <a href="#workflows" className="text-sm text-slate-600 hover:text-navy-700 font-medium transition-colors duration-200">Workflows</a>
-              <a href="#comparison" className="text-sm text-slate-600 hover:text-navy-700 font-medium transition-colors duration-200">Comparison</a>
-              <a href="#features" className="text-sm text-slate-600 hover:text-navy-700 font-medium transition-colors duration-200">Features</a>
-              <a href="#faq" className="text-sm text-slate-600 hover:text-navy-700 font-medium transition-colors duration-200">FAQ</a>
+            <nav className="hidden md:flex items-center space-x-2 lg:space-x-3">
+              <a href="#personas" className="text-sm text-slate-600 hover:text-navy-700 font-medium transition-all duration-200 px-3 py-2 rounded-lg hover:bg-sky-50 hover:shadow-md hover:scale-105">For Teams</a>
+              <a href="#workflows" className="text-sm text-slate-600 hover:text-navy-700 font-medium transition-all duration-200 px-3 py-2 rounded-lg hover:bg-sky-50 hover:shadow-md hover:scale-105">Workflows</a>
+              <a href="#comparison" className="text-sm text-slate-600 hover:text-navy-700 font-medium transition-all duration-200 px-3 py-2 rounded-lg hover:bg-sky-50 hover:shadow-md hover:scale-105">Comparison</a>
+              <a href="#features" className="text-sm text-slate-600 hover:text-navy-700 font-medium transition-all duration-200 px-3 py-2 rounded-lg hover:bg-sky-50 hover:shadow-md hover:scale-105">Features</a>
+              <a href="#faq" className="text-sm text-slate-600 hover:text-navy-700 font-medium transition-all duration-200 px-3 py-2 rounded-lg hover:bg-sky-50 hover:shadow-md hover:scale-105">FAQ</a>
             </nav>
             <div className="flex items-center space-x-3">
               <Link href="/auth/login" className="text-sm text-slate-700 hover:text-navy-700 font-medium transition-colors duration-200">Log In</Link>
@@ -872,14 +978,62 @@ export default function Home() {
               ))}
             </div>
 
-            <div className="bg-gradient-to-br from-navy-50 to-white rounded-2xl p-6 lg:p-7 border-2 border-slate-200 flex flex-col md:flex-row items-center justify-between gap-4 shadow-md">
-              <div>
-                <h3 className="text-lg font-bold text-navy-900 mb-2">Still have questions?</h3>
-                <p className="text-slate-600 text-sm">Can't find the answer you're looking for? Please chat to our friendly team.</p>
+            <div className="bg-gradient-to-br from-navy-50 to-white rounded-2xl p-6 lg:p-7 border-2 border-slate-200 flex flex-col gap-4 shadow-md relative">
+              <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+                <div>
+                  <h3 className="text-lg font-bold text-navy-900 mb-2">Still have questions?</h3>
+                  <p className="text-slate-600 text-sm">Can't find the answer you're looking for? Please chat to our friendly team.</p>
+                </div>
+                <button 
+                  onClick={() => {
+                    setShowEmail(!showEmail);
+                    setEmailCopied(false);
+                  }}
+                  className="bg-navy-800 text-white px-6 py-3 rounded-lg font-semibold text-base hover:bg-navy-700 hover:shadow-xl transition-all duration-300 whitespace-nowrap shadow-md hover:scale-105"
+                >
+                  Get in Touch
+                </button>
               </div>
-              <a href="#" className="bg-navy-800 text-white px-6 py-3 rounded-lg font-semibold text-base hover:bg-navy-700 hover:shadow-xl transition-all duration-300 whitespace-nowrap shadow-md">
-                Get in Touch
-              </a>
+              {showEmail && (
+                <div className="mt-4 p-4 bg-white border-2 border-navy-200 rounded-lg shadow-lg animate-in fade-in slide-in-from-top-2 duration-300">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                    <div className="flex-1">
+                      <p className="text-sm text-slate-600 mb-1">Contact us at:</p>
+                      <a 
+                        href="mailto:officialhiremeapp@gmail.com" 
+                        className="text-navy-800 hover:text-navy-600 font-semibold text-base break-all"
+                      >
+                        officialhiremeapp@gmail.com
+                      </a>
+                    </div>
+                    <button
+                      onClick={async () => {
+                        try {
+                          await navigator.clipboard.writeText('officialhiremeapp@gmail.com');
+                          setEmailCopied(true);
+                          setTimeout(() => setEmailCopied(false), 2000);
+                        } catch (err) {
+                          console.error('Failed to copy email:', err);
+                        }
+                      }}
+                      className="px-4 py-2 bg-sky-100 text-navy-800 rounded-lg font-medium text-sm hover:bg-sky-200 transition-colors duration-200 whitespace-nowrap flex items-center gap-2"
+                    >
+                      {emailCopied ? (
+                        <>
+                          <span className="text-green-600">✓ Copied!</span>
+                        </>
+                      ) : (
+                        <>
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                          </svg>
+                          Copy Email
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </section>
@@ -956,7 +1110,7 @@ export default function Home() {
             </div>
 
             <div className="border-t border-navy-800 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
-              <p className="text-slate-500 text-xs">© 2024 HireMe. All rights reserved.</p>
+              <p className="text-slate-500 text-xs">© 2026 HireMe. All rights reserved.</p>
               <div className="flex items-center space-x-5">
                 <a href="#" className="text-slate-400 hover:text-white transition-colors duration-200">
                   <i className="fa-brands fa-twitter text-lg"></i>

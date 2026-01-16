@@ -925,12 +925,6 @@ function InformationSection({ profile }: { profile: any }) {
                   <strong className="text-navy-900">Every company is screened:</strong> We verify all employer accounts and company information before they can access our candidate database, ensuring you only hear from legitimate opportunities.
                 </p>
               </div>
-              <div className="flex items-start space-x-3">
-                <i className="fa-solid fa-star text-sky-500 text-sm mt-1"></i>
-                <p className="text-slate-700">
-                  <strong className="text-navy-900">Company reviews by candidates:</strong> See ratings and reviews from other candidates who have interviewed with companies, helping you make informed decisions about potential employers.
-                </p>
-              </div>
             </div>
           </div>
         </div>
@@ -1534,27 +1528,6 @@ function LegalSection() {
             </div>
             <i className="fa-solid fa-external-link text-sky-500"></i>
           </a>
-          <a href="#" target="_blank" className="flex items-center justify-between p-4 border border-slate-200 rounded-lg hover:bg-slate-50 hover:border-sky-200 transition-colors">
-            <div className="flex items-center space-x-3">
-              <i className="fa-solid fa-server text-sky-500"></i>
-              <span className="font-semibold text-navy-900">Subprocessors</span>
-            </div>
-            <i className="fa-solid fa-external-link text-sky-500"></i>
-          </a>
-          <a href="#" target="_blank" className="flex items-center justify-between p-4 border border-slate-200 rounded-lg hover:bg-slate-50 hover:border-sky-200 transition-colors">
-            <div className="flex items-center space-x-3">
-              <i className="fa-solid fa-lock text-sky-500"></i>
-              <span className="font-semibold text-navy-900">Security Overview</span>
-            </div>
-            <i className="fa-solid fa-external-link text-sky-500"></i>
-          </a>
-          <div className="flex items-center justify-between p-4 border border-slate-200 rounded-lg">
-            <div className="flex items-center space-x-3">
-              <i className="fa-solid fa-certificate text-sky-500"></i>
-              <span className="font-semibold text-navy-900">SOC2 Report</span>
-            </div>
-            <button className="px-4 py-2 bg-white border border-slate-200 text-navy-900 rounded-lg font-semibold shadow-sm hover:bg-slate-50 hover:border-sky-200 transition-colors text-sm">Download</button>
-          </div>
         </div>
       </div>
     </section>

@@ -132,9 +132,9 @@ export default function VerifyCompaniesPage() {
       <div className="max-w-6xl mx-auto p-6 py-12">
         <Link 
           href="/admin"
-          className="text-indigo-600 hover:text-indigo-700 flex items-center space-x-1 mb-6 font-medium"
+          className="inline-flex items-center gap-2 text-indigo-700 hover:text-indigo-800 transition-all duration-200 group px-3 py-2 rounded-lg hover:bg-indigo-50 hover:shadow-md mb-6 font-medium min-h-[44px] relative z-10"
         >
-          <ArrowLeft className="h-4 w-4" />
+          <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform duration-200" />
           <span>Back to Admin Dashboard</span>
         </Link>
 

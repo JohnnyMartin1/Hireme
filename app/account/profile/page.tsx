@@ -46,7 +46,11 @@ interface ProfileFormData {
   // Experience & Activities
   experience: string;
   extracurriculars: string[];
-  certifications: string[];
+  certifications: Array<{
+    name: string;
+    verificationLink?: string;
+    verificationCode?: string;
+  }>;
   languages: string[];
   // Career
   careerInterests: string[];
@@ -201,7 +205,9 @@ export default function EditProfilePage() {
               jobTypes: profile.jobTypes || [],
         experience: profile.experience || '',
         extracurriculars: profile.extracurriculars || [],
-        certifications: profile.certifications || [],
+        certifications: profile.certifications ? (Array.isArray(profile.certifications) && profile.certifications.length > 0 && typeof profile.certifications[0] === 'string'
+          ? (profile.certifications as string[]).map(name => ({ name })).filter(cert => cert.name.trim() !== '')
+          : (profile.certifications as Array<{name: string; verificationLink?: string; verificationCode?: string}>).filter(cert => cert.name && cert.name.trim() !== '')) as Array<{name: string; verificationLink?: string; verificationCode?: string}> : [],
         languages: profile.languages || [],
         careerInterests: profile.careerInterests || [],
         workAuthorization: profile.workAuthorization || {
@@ -235,7 +241,12 @@ export default function EditProfilePage() {
 
     setIsSubmitting(true);
     try {
-      const { error } = await updateDocument('users', user.uid, formData);
+      // Filter out empty certifications before saving
+      const dataToSave = {
+        ...formData,
+        certifications: formData.certifications.filter(cert => cert.name && cert.name.trim() !== '')
+      };
+      const { error } = await updateDocument('users', user.uid, dataToSave);
       
       if (error) {
         console.error('Error updating profile:', error);
@@ -243,8 +254,8 @@ export default function EditProfilePage() {
       } else {
         toast.success('Profile Updated', 'Your profile has been saved successfully!');
         
-        // Update the shared completion state with the saved data
-        updateCompletion(formData);
+        // Update the shared completion state with the saved data (use filtered data)
+        updateCompletion(dataToSave);
         
         // Refresh the profile data in the auth context (non-blocking)
         refreshProfile().catch((err) => {
@@ -312,7 +323,7 @@ export default function EditProfilePage() {
       <main className="max-w-4xl mx-auto px-6 py-10">
         {/* Page Header */}
         <div className="mb-10">
-          <h1 className="text-3xl sm:text-4xl font-bold text-navy-900 tracking-tight">Edit Profile</h1>
+          <h1 className="text-3xl sm:text-4xl font-bold text-navy-900 tracking-tight">Skills & Certifications</h1>
           <p className="text-slate-600 mt-2 text-lg">Complete your profile to increase visibility and connect with top employers.</p>
         </div>
         
@@ -647,6 +658,98 @@ export default function EditProfilePage() {
             />
           </div>
 
+          {/* Certifications */}
+          <div className="bg-white rounded-2xl shadow-xl border border-slate-100 p-8">
+            <div className="flex items-center mb-6">
+              <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mr-4">
+                <Award className="h-6 w-6 text-navy-700" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-xl font-bold text-navy-900">Certifications</h3>
+                <p className="text-slate-600 text-sm">Add professional certifications with verification proof</p>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              {formData.certifications.map((cert, index) => (
+                <div key={index} className="p-4 bg-slate-50 rounded-lg border border-slate-200">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex-1">
+                      <input
+                        type="text"
+                        value={cert.name}
+                        onChange={(e) => {
+                          const updated = [...formData.certifications];
+                          updated[index] = { ...updated[index], name: e.target.value };
+                          handleInputChange('certifications', updated);
+                        }}
+                        placeholder="Certification name (e.g., AWS Certified Solutions Architect)"
+                        className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-navy-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-200 focus:border-sky-400 text-sm font-medium"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const updated = formData.certifications.filter((_, i) => i !== index);
+                        handleInputChange('certifications', updated);
+                      }}
+                      className="ml-3 p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-medium text-slate-700 mb-1">Verification Link (optional)</label>
+                      <input
+                        type="url"
+                        value={cert.verificationLink || ''}
+                        onChange={(e) => {
+                          const updated = [...formData.certifications];
+                          updated[index] = { ...updated[index], verificationLink: e.target.value };
+                          handleInputChange('certifications', updated);
+                        }}
+                        placeholder="https://verify.example.com/cert/..."
+                        className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-navy-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-200 focus:border-sky-400 text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-slate-700 mb-1">Verification Code (optional)</label>
+                      <input
+                        type="text"
+                        value={cert.verificationCode || ''}
+                        onChange={(e) => {
+                          const updated = [...formData.certifications];
+                          updated[index] = { ...updated[index], verificationCode: e.target.value };
+                          handleInputChange('certifications', updated);
+                        }}
+                        placeholder="ABC-123-XYZ or Certificate ID"
+                        className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-navy-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-200 focus:border-sky-400 text-sm"
+                      />
+                    </div>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-2">Provide either a verification link or code to prove your certification</p>
+                </div>
+              ))}
+              
+              <button
+                type="button"
+                onClick={() => {
+                  const updated = [...formData.certifications, { name: '' }];
+                  handleInputChange('certifications', updated);
+                }}
+                className="w-full py-3 border-2 border-dashed border-slate-300 rounded-lg text-slate-600 hover:border-sky-400 hover:text-sky-600 hover:bg-sky-50 transition-all duration-200 flex items-center justify-center gap-2"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                <span className="font-medium">Add Certification</span>
+              </button>
+            </div>
+          </div>
+
           {/* Experience & Activities */}
           <div className="bg-white rounded-2xl shadow-xl border border-slate-100 p-8">
             <div className="flex items-center mb-6">
@@ -678,22 +781,13 @@ export default function EditProfilePage() {
               />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <MultiSelectDropdown
                 options={[]}
                 values={formData.extracurriculars}
                 onChange={(values) => handleInputChange('extracurriculars', values)}
                 placeholder="Add extracurricular activities"
                 label="Extracurricular Activities"
-                allowCustom
-              />
-              
-              <MultiSelectDropdown
-                options={ALL_CERTIFICATIONS}
-                values={formData.certifications}
-                onChange={(values) => handleInputChange('certifications', values)}
-                placeholder="Add certifications"
-                label="Certifications"
                 allowCustom
               />
               

@@ -105,7 +105,7 @@ export default function EndorsementsPage() {
             </div>
           </div>
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-navy-900 mb-4 tracking-tight">Your Endorsements</h1>
-          <p className="text-base sm:text-lg lg:text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed">Professional recommendations from colleagues, managers, and peers.</p>
+          <p className="text-base sm:text-lg lg:text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed">Professional recommendations from colleagues, managers, and peers. Adding endorsements significantly increases your chances of employers reaching out—candidates with 3+ endorsements are <span className="font-semibold text-navy-900">73% more likely</span> to receive employer outreach.</p>
         </div>
 
         {/* Endorsement Summary Card */}

@@ -91,7 +91,7 @@ export default function AdminDashboardPage() {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-blue-50">
+    <main className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-blue-50 pt-20 mobile-safe-top">
       {/* Admin Header */}
       <div className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-8 px-6 shadow-lg">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
