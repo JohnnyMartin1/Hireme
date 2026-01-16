@@ -455,6 +455,106 @@ export default function Home() {
           outline-offset: 2px;
           border-radius: 4px;
         }
+
+        /* Feature Card Styles */
+        .feature-card__content {
+          position: relative;
+          z-index: 3;
+          height: 100%;
+          display: flex;
+          flex-direction: column;
+        }
+
+        /* Layer 1: mesh/aurora gradient with slow drift - Adapted to HireMe Sky/Navy Palette */
+        .feature-card::before {
+          content: "";
+          position: absolute;
+          inset: -40%;
+          z-index: 1;
+          background:
+            radial-gradient(40% 40% at 20% 20%, rgba(14, 165, 233, 0.12) 0%, rgba(14, 165, 233, 0) 60%),
+            radial-gradient(45% 45% at 80% 30%, rgba(56, 189, 248, 0.10) 0%, rgba(56, 189, 248, 0) 55%),
+            radial-gradient(50% 50% at 45% 85%, rgba(186, 230, 253, 0.15) 0%, rgba(186, 230, 253, 0) 60%),
+            radial-gradient(45% 45% at 85% 85%, rgba(15, 23, 42, 0.05) 0%, rgba(15, 23, 42, 0) 55%);
+          filter: blur(10px);
+          transform: translate3d(0, 0, 0);
+          animation: aurora-drift 18s ease-in-out infinite;
+          opacity: 0.9;
+        }
+
+        /* Layer 2: diagonal hatch (darker/clearer) */
+        .feature-card::after {
+          content: "";
+          position: absolute;
+          inset: 0;
+          z-index: 2;
+          background-image:
+            repeating-linear-gradient(135deg,
+              rgba(15, 23, 42, 0.08) 0px,
+              rgba(15, 23, 42, 0.08) 1.2px,
+              rgba(15, 23, 42, 0) 1.2px,
+              rgba(15, 23, 42, 0) 16px
+            );
+          opacity: 0.6;
+          mix-blend-mode: multiply;
+          animation: hatch-drift 22s linear infinite;
+          transform: translate3d(0, 0, 0);
+        }
+
+        /* Hover polish */
+        .feature-card:hover {
+          box-shadow: 0 22px 70px rgba(15, 23, 42, 0.15);
+          transform: translateY(-4px);
+        }
+
+        /* Icon Badge Animation */
+        @keyframes float-badge {
+          0%, 100% {
+            transform: translateY(0);
+          }
+          50% {
+            transform: translateY(-6px);
+          }
+        }
+
+        .icon-badge {
+          animation: float-badge 6s ease-in-out infinite;
+        }
+
+        /* Animations */
+        @keyframes aurora-drift {
+          0% {
+            transform: translate(-2%, -2%) scale(1.02);
+          }
+          50% {
+            transform: translate(2%, 1%) scale(1.06);
+          }
+          100% {
+            transform: translate(-2%, -2%) scale(1.02);
+          }
+        }
+
+        @keyframes hatch-drift {
+          0% {
+            background-position: 0 0;
+          }
+          100% {
+            background-position: 120px 120px;
+          }
+        }
+
+        /* Accessibility */
+        @media (prefers-reduced-motion: reduce) {
+          .feature-card::before,
+          .feature-card::after,
+          .icon-badge {
+            animation: none;
+          }
+          .feature-card {
+            transform: none !important;
+            transition: none !important;
+          }
+        }
       `}</style>
 
       <div className="bg-slate-50">
@@ -910,39 +1010,170 @@ export default function Home() {
         </section>
 
         {/* Features Grid */}
-        <section id="features" className="py-16 lg:py-20 bg-slate-50">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-12 lg:mb-14">
-              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-navy-900 mb-4 tracking-tight">Everything You Need to Hire Smarter</h2>
-              <p className="text-base sm:text-lg lg:text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed">
-                A complete hiring ecosystem designed to eliminate friction and accelerate decisions.
+        <section id="features" className="py-16 lg:py-20 bg-slate-50 relative">
+          <div className="max-w-7xl mx-auto px-6 relative z-10">
+            <div className="text-center mb-20">
+              <h2 className="text-4xl md:text-5xl font-bold text-navy-900 mb-6 tracking-tight">
+                Everything You Need to <span className="relative inline-block">
+                  <span className="relative z-10">Hire Smarter</span>
+                  <span className="absolute bottom-2 left-0 w-full h-3 bg-sky-200/50 -rotate-1 rounded-full -z-0"></span>
+                </span>
+              </h2>
+              <p className="text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed">
+                A complete hiring ecosystem designed to eliminate friction, reduce ghosting, and accelerate your best decisions.
               </p>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 lg:gap-6">
-              {[
-                { icon: 'fa-search', title: 'Smart Sourcing', desc: 'AI-powered candidate discovery that finds the perfect match.', features: ['Multi-channel sourcing', 'AI candidate matching'], bg: 'from-sky-100 to-sky-50' },
-                { icon: 'fa-filter', title: 'Intelligent Screening', desc: 'Automate resume parsing and skills assessment.', features: ['Automated resume parsing', 'Skills-based filtering'], bg: 'from-navy-50 to-slate-50' },
-                { icon: 'fa-users', title: 'Team Collaboration', desc: 'Keep everyone aligned with shared scorecards and feedback.', features: ['Shared scorecards', 'Real-time feedback loops'], bg: 'from-sky-100 to-sky-50' },
-                { icon: 'fa-calendar-check', title: 'Interview Management', desc: 'Streamline scheduling and automate reminders.', features: ['One-click scheduling', 'Automated reminders'], bg: 'from-navy-50 to-slate-50' },
-                { icon: 'fa-chart-line', title: 'Analytics & Insights', desc: 'Track every metric that matters. From time-to-hire to source effectiveness.', features: ['Real-time dashboards', 'Predictive analytics'], bg: 'from-sky-100 to-sky-50' },
-                { icon: 'fa-rocket', title: 'Seamless Onboarding', desc: 'Turn accepted offers into day-one success.', features: ['Digital offer letters', 'Document management'], bg: 'from-navy-50 to-slate-50' }
-              ].map((feature, index) => (
-                <div key={index} className="bg-white rounded-2xl p-6 lg:p-7 card-hover border-2 border-slate-100 shadow-sm">
-                  <div className={`w-12 h-12 bg-gradient-to-br ${feature.bg} rounded-xl flex items-center justify-center mb-4 shadow-sm`}>
-                    <i className={`fa-solid ${feature.icon} text-navy-700 text-lg`}></i>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {/* Card 1 */}
+              <div className="feature-card group bg-white rounded-2xl border-2 border-slate-100 shadow-sm overflow-hidden relative transition-all duration-300">
+                <div className="feature-card__content p-8">
+                  <div className="icon-badge w-16 h-16 bg-white rounded-2xl border border-slate-100 shadow-sm flex items-center justify-center mb-6">
+                    <i className="fa-solid fa-search text-2xl text-sky-600"></i>
                   </div>
-                  <h3 className="text-lg lg:text-xl font-bold text-navy-900 mb-3">{feature.title}</h3>
-                  <p className="text-sm text-slate-600 mb-4 leading-relaxed">{feature.desc}</p>
-                  <ul className="space-y-2">
-                    {feature.features.map((item, i) => (
-                      <li key={i} className="flex items-center text-sm text-slate-700">
-                        <i className="fa-solid fa-check text-sky-600 mr-2"></i>
-                        <span>{item}</span>
+
+                  <h3 className="text-2xl font-bold text-navy-900 mb-3">Smart Sourcing</h3>
+                  <p className="text-slate-600 mb-6 leading-relaxed">AI-powered candidate discovery that finds the perfect match across multiple channels automatically.</p>
+
+                  <div className="mt-auto pt-4 border-t border-slate-200/50">
+                    <ul className="space-y-3">
+                      <li className="flex items-center text-sm font-semibold text-navy-700">
+                        <span className="w-1.5 h-1.5 rounded-full bg-sky-500 mr-3 shadow-[0_0_8px_rgba(14,165,233,0.6)]"></span>
+                        Multi-channel sourcing
                       </li>
-                    ))}
-                  </ul>
+                      <li className="flex items-center text-sm font-semibold text-navy-700">
+                        <span className="w-1.5 h-1.5 rounded-full bg-sky-500 mr-3 shadow-[0_0_8px_rgba(14,165,233,0.6)]"></span>
+                        AI candidate matching
+                      </li>
+                    </ul>
+                  </div>
                 </div>
-              ))}
+              </div>
+
+              {/* Card 2 */}
+              <div className="feature-card group bg-white rounded-2xl border-2 border-slate-100 shadow-sm overflow-hidden relative transition-all duration-300">
+                <div className="feature-card__content p-8">
+                  <div className="icon-badge w-16 h-16 bg-white rounded-2xl border border-slate-100 shadow-sm flex items-center justify-center mb-6" style={{animationDelay: '1.5s'}}>
+                    <i className="fa-solid fa-filter text-2xl text-navy-600"></i>
+                  </div>
+
+                  <h3 className="text-2xl font-bold text-navy-900 mb-3">Intelligent Screening</h3>
+                  <p className="text-slate-600 mb-6 leading-relaxed">Automate resume parsing and skills assessment to filter out unqualified candidates instantly.</p>
+
+                  <div className="mt-auto pt-4 border-t border-slate-200/50">
+                    <ul className="space-y-3">
+                      <li className="flex items-center text-sm font-semibold text-navy-700">
+                        <span className="w-1.5 h-1.5 rounded-full bg-navy-500 mr-3 shadow-[0_0_8px_rgba(51,78,104,0.4)]"></span>
+                        Automated resume parsing
+                      </li>
+                      <li className="flex items-center text-sm font-semibold text-navy-700">
+                        <span className="w-1.5 h-1.5 rounded-full bg-navy-500 mr-3 shadow-[0_0_8px_rgba(51,78,104,0.4)]"></span>
+                        Skills-based filtering
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              {/* Card 3 */}
+              <div className="feature-card group bg-white rounded-2xl border-2 border-slate-100 shadow-sm overflow-hidden relative transition-all duration-300">
+                <div className="feature-card__content p-8">
+                  <div className="icon-badge w-16 h-16 bg-white rounded-2xl border border-slate-100 shadow-sm flex items-center justify-center mb-6" style={{animationDelay: '0.5s'}}>
+                    <i className="fa-solid fa-users text-2xl text-sky-600"></i>
+                  </div>
+
+                  <h3 className="text-2xl font-bold text-navy-900 mb-3">Team Collaboration</h3>
+                  <p className="text-slate-600 mb-6 leading-relaxed">Keep hiring managers and recruiters aligned with shared scorecards and centralized feedback.</p>
+
+                  <div className="mt-auto pt-4 border-t border-slate-200/50">
+                    <ul className="space-y-3">
+                      <li className="flex items-center text-sm font-semibold text-navy-700">
+                        <span className="w-1.5 h-1.5 rounded-full bg-sky-500 mr-3 shadow-[0_0_8px_rgba(14,165,233,0.6)]"></span>
+                        Shared scorecards
+                      </li>
+                      <li className="flex items-center text-sm font-semibold text-navy-700">
+                        <span className="w-1.5 h-1.5 rounded-full bg-sky-500 mr-3 shadow-[0_0_8px_rgba(14,165,233,0.6)]"></span>
+                        Real-time feedback loops
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              {/* Card 4 */}
+              <div className="feature-card group bg-white rounded-2xl border-2 border-slate-100 shadow-sm overflow-hidden relative transition-all duration-300">
+                <div className="feature-card__content p-8">
+                  <div className="icon-badge w-16 h-16 bg-white rounded-2xl border border-slate-100 shadow-sm flex items-center justify-center mb-6" style={{animationDelay: '2s'}}>
+                    <i className="fa-solid fa-calendar-check text-2xl text-navy-600"></i>
+                  </div>
+
+                  <h3 className="text-2xl font-bold text-navy-900 mb-3">Interview Management</h3>
+                  <p className="text-slate-600 mb-6 leading-relaxed">Streamline scheduling with smart calendar integration and automate candidate reminders.</p>
+
+                  <div className="mt-auto pt-4 border-t border-slate-200/50">
+                    <ul className="space-y-3">
+                      <li className="flex items-center text-sm font-semibold text-navy-700">
+                        <span className="w-1.5 h-1.5 rounded-full bg-navy-500 mr-3 shadow-[0_0_8px_rgba(51,78,104,0.4)]"></span>
+                        One-click scheduling
+                      </li>
+                      <li className="flex items-center text-sm font-semibold text-navy-700">
+                        <span className="w-1.5 h-1.5 rounded-full bg-navy-500 mr-3 shadow-[0_0_8px_rgba(51,78,104,0.4)]"></span>
+                        Automated reminders
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              {/* Card 5 */}
+              <div className="feature-card group bg-white rounded-2xl border-2 border-slate-100 shadow-sm overflow-hidden relative transition-all duration-300">
+                <div className="feature-card__content p-8">
+                  <div className="icon-badge w-16 h-16 bg-white rounded-2xl border border-slate-100 shadow-sm flex items-center justify-center mb-6" style={{animationDelay: '1s'}}>
+                    <i className="fa-solid fa-chart-line text-2xl text-sky-600"></i>
+                  </div>
+
+                  <h3 className="text-2xl font-bold text-navy-900 mb-3">Analytics & Insights</h3>
+                  <p className="text-slate-600 mb-6 leading-relaxed">Track every metric that matters. Understand time-to-hire, source effectiveness, and pipeline health.</p>
+
+                  <div className="mt-auto pt-4 border-t border-slate-200/50">
+                    <ul className="space-y-3">
+                      <li className="flex items-center text-sm font-semibold text-navy-700">
+                        <span className="w-1.5 h-1.5 rounded-full bg-sky-500 mr-3 shadow-[0_0_8px_rgba(14,165,233,0.6)]"></span>
+                        Real-time dashboards
+                      </li>
+                      <li className="flex items-center text-sm font-semibold text-navy-700">
+                        <span className="w-1.5 h-1.5 rounded-full bg-sky-500 mr-3 shadow-[0_0_8px_rgba(14,165,233,0.6)]"></span>
+                        Predictive analytics
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              {/* Card 6 */}
+              <div className="feature-card group bg-white rounded-2xl border-2 border-slate-100 shadow-sm overflow-hidden relative transition-all duration-300">
+                <div className="feature-card__content p-8">
+                  <div className="icon-badge w-16 h-16 bg-white rounded-2xl border border-slate-100 shadow-sm flex items-center justify-center mb-6" style={{animationDelay: '2.5s'}}>
+                    <i className="fa-solid fa-rocket text-2xl text-navy-600"></i>
+                  </div>
+
+                  <h3 className="text-2xl font-bold text-navy-900 mb-3">Seamless Onboarding</h3>
+                  <p className="text-slate-600 mb-6 leading-relaxed">Turn accepted offers into day-one success with digital offer letters and automated paperwork.</p>
+
+                  <div className="mt-auto pt-4 border-t border-slate-200/50">
+                    <ul className="space-y-3">
+                      <li className="flex items-center text-sm font-semibold text-navy-700">
+                        <span className="w-1.5 h-1.5 rounded-full bg-navy-500 mr-3 shadow-[0_0_8px_rgba(51,78,104,0.4)]"></span>
+                        Digital offer letters
+                      </li>
+                      <li className="flex items-center text-sm font-semibold text-navy-700">
+                        <span className="w-1.5 h-1.5 rounded-full bg-navy-500 mr-3 shadow-[0_0_8px_rgba(51,78,104,0.4)]"></span>
+                        Document management
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </section>
