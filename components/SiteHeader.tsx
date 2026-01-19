@@ -10,12 +10,6 @@ export default function SiteHeader() {
   const { user, profile, signOut } = useFirebaseAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const dashboardLink = profile?.role === 'JOB_SEEKER' 
-    ? '/home/seeker' 
-    : profile?.role === 'EMPLOYER' || profile?.role === 'RECRUITER'
-    ? '/home/employer'
-    : '/';
-
   return (
     <header className="fixed top-0 left-0 right-0 bg-white/95 backdrop-blur-md shadow-sm z-50 border-b border-slate-100 mobile-safe-top">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
@@ -68,12 +62,6 @@ export default function SiteHeader() {
             {/* Desktop Navigation - Logged In */}
             <nav className="hidden md:flex items-center gap-3 lg:gap-4">
               <Link 
-                href={dashboardLink} 
-                className="text-sm text-navy-900 hover:text-navy-700 font-semibold px-4 py-2 rounded-lg hover:bg-sky-50 transition-all duration-200"
-              >
-                Dashboard
-              </Link>
-              <Link 
                 href={`/account/${user?.uid}/settings`}
                 className="text-sm text-navy-900 hover:text-navy-700 font-semibold px-4 py-2 rounded-lg hover:bg-sky-50 transition-all duration-200"
               >
@@ -108,13 +96,6 @@ export default function SiteHeader() {
             {/* Mobile Menu - Logged In */}
             <MobileNav isOpen={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)}>
               <nav className="flex flex-col w-full">
-                <Link 
-                  href={dashboardLink}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center justify-center px-4 py-4 text-base font-medium text-navy-900 hover:bg-sky-50 active:bg-sky-100 transition-colors border-b border-slate-100 min-h-[56px] w-full text-center"
-                >
-                  Dashboard
-                </Link>
                 <Link 
                   href={`/account/${user?.uid}/settings`}
                   onClick={() => setMobileMenuOpen(false)}

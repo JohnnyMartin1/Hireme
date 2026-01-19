@@ -1,9 +1,22 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import { Menu } from "lucide-react";
+import { useFirebaseAuth } from "@/components/FirebaseAuthProvider";
 import HireMeLogo from "@/components/brand/HireMeLogo";
+import MobileNav from "@/components/mobile/MobileNav";
 
 export default function Home() {
+  const { user, profile, signOut } = useFirebaseAuth();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Determine dashboard link based on user role
+  const dashboardLink = profile?.role === 'JOB_SEEKER' 
+    ? '/home/seeker' 
+    : profile?.role === 'EMPLOYER' || profile?.role === 'RECRUITER'
+    ? '/home/employer'
+    : '/';
+
   // Comparison table state
   const [comparisonView, setComparisonView] = useState<'employer' | 'candidate'>('candidate');
   
@@ -564,17 +577,94 @@ export default function Home() {
             <Link href="/" className="shrink-0" aria-label="HireMe home">
               <HireMeLogo variant="full" className="h-7 sm:h-8 w-auto" />
             </Link>
-            <nav className="hidden md:flex items-center space-x-2 lg:space-x-3">
-              <a href="#personas" className="text-sm text-slate-600 hover:text-navy-700 font-medium transition-all duration-200 px-3 py-2 rounded-lg hover:bg-sky-50 hover:shadow-md hover:scale-105">For Teams</a>
-              <a href="#workflows" className="text-sm text-slate-600 hover:text-navy-700 font-medium transition-all duration-200 px-3 py-2 rounded-lg hover:bg-sky-50 hover:shadow-md hover:scale-105">Workflows</a>
-              <a href="#comparison" className="text-sm text-slate-600 hover:text-navy-700 font-medium transition-all duration-200 px-3 py-2 rounded-lg hover:bg-sky-50 hover:shadow-md hover:scale-105">Comparison</a>
-              <a href="#features" className="text-sm text-slate-600 hover:text-navy-700 font-medium transition-all duration-200 px-3 py-2 rounded-lg hover:bg-sky-50 hover:shadow-md hover:scale-105">Features</a>
-              <a href="#faq" className="text-sm text-slate-600 hover:text-navy-700 font-medium transition-all duration-200 px-3 py-2 rounded-lg hover:bg-sky-50 hover:shadow-md hover:scale-105">FAQ</a>
-            </nav>
-            <div className="flex items-center space-x-3">
-              <Link href="/auth/login" className="text-sm text-slate-700 hover:text-navy-700 font-medium transition-colors duration-200">Log In</Link>
-              <Link href="/auth/signup" className="bg-navy-800 text-white px-5 py-2 rounded-lg text-sm font-semibold hover:bg-navy-700 hover:shadow-lg transition-all duration-300">Sign Up</Link>
-            </div>
+
+            {!user ? (
+              <>
+                {/* Desktop Navigation - Not Logged In */}
+                <nav className="hidden md:flex items-center space-x-2 lg:space-x-3">
+                  <a href="#personas" className="text-sm text-slate-600 hover:text-navy-700 font-medium transition-all duration-200 px-3 py-2 rounded-lg hover:bg-sky-50 hover:shadow-md hover:scale-105">For Teams</a>
+                  <a href="#workflows" className="text-sm text-slate-600 hover:text-navy-700 font-medium transition-all duration-200 px-3 py-2 rounded-lg hover:bg-sky-50 hover:shadow-md hover:scale-105">Workflows</a>
+                  <a href="#comparison" className="text-sm text-slate-600 hover:text-navy-700 font-medium transition-all duration-200 px-3 py-2 rounded-lg hover:bg-sky-50 hover:shadow-md hover:scale-105">Comparison</a>
+                  <a href="#features" className="text-sm text-slate-600 hover:text-navy-700 font-medium transition-all duration-200 px-3 py-2 rounded-lg hover:bg-sky-50 hover:shadow-md hover:scale-105">Features</a>
+                  <a href="#faq" className="text-sm text-slate-600 hover:text-navy-700 font-medium transition-all duration-200 px-3 py-2 rounded-lg hover:bg-sky-50 hover:shadow-md hover:scale-105">FAQ</a>
+                </nav>
+                <div className="flex items-center space-x-3">
+                  <Link href="/auth/login" className="text-sm text-slate-700 hover:text-navy-700 font-medium transition-colors duration-200">Log In</Link>
+                  <Link href="/auth/signup" className="bg-navy-800 text-white px-5 py-2 rounded-lg text-sm font-semibold hover:bg-navy-700 hover:shadow-lg transition-all duration-300">Sign Up</Link>
+                </div>
+              </>
+            ) : (
+              <>
+                {/* Desktop Navigation - Logged In */}
+                <nav className="hidden md:flex items-center gap-3 lg:gap-4">
+                  <Link 
+                    href={dashboardLink}
+                    className="text-sm text-navy-900 hover:text-navy-700 font-semibold px-4 py-2 rounded-lg hover:bg-sky-50 transition-all duration-200"
+                  >
+                    Dashboard
+                  </Link>
+                  <Link 
+                    href={`/account/${user?.uid}/settings`}
+                    className="text-sm text-navy-900 hover:text-navy-700 font-semibold px-4 py-2 rounded-lg hover:bg-sky-50 transition-all duration-200"
+                  >
+                    Settings
+                  </Link>
+                  <button
+                    onClick={signOut}
+                    className="text-sm text-navy-900 hover:text-navy-700 font-semibold px-4 py-2 rounded-lg hover:bg-sky-50 transition-all duration-200"
+                  >
+                    Sign out
+                  </button>
+                </nav>
+
+                {/* Mobile Hamburger Button - Logged In */}
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setMobileMenuOpen(true);
+                  }}
+                  onTouchStart={(e) => {
+                    e.stopPropagation();
+                  }}
+                  className="md:hidden p-2.5 hover:bg-slate-100 active:bg-slate-200 rounded-lg transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center z-50 relative touch-manipulation"
+                  aria-label="Open menu"
+                  aria-expanded={mobileMenuOpen}
+                  type="button"
+                >
+                  <Menu className="h-6 w-6 text-slate-700 pointer-events-none" />
+                </button>
+
+                {/* Mobile Menu - Logged In */}
+                <MobileNav isOpen={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)}>
+                  <nav className="flex flex-col w-full">
+                    <Link 
+                      href={dashboardLink}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="flex items-center justify-center px-4 py-4 text-base font-medium text-navy-900 hover:bg-sky-50 active:bg-sky-100 transition-colors border-b border-slate-100 min-h-[56px] w-full text-center"
+                    >
+                      Dashboard
+                    </Link>
+                    <Link 
+                      href={`/account/${user?.uid}/settings`}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="flex items-center justify-center px-4 py-4 text-base font-medium text-navy-900 hover:bg-sky-50 active:bg-sky-100 transition-colors border-b border-slate-100 min-h-[56px] w-full text-center"
+                    >
+                      Settings
+                    </Link>
+                    <button
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        signOut();
+                      }}
+                      className="flex items-center justify-center px-4 py-4 text-base font-medium text-red-600 hover:bg-red-50 active:bg-red-100 transition-colors w-full min-h-[56px] text-center"
+                    >
+                      Sign out
+                    </button>
+                  </nav>
+                </MobileNav>
+              </>
+            )}
           </div>
         </header>
 
@@ -1288,74 +1378,6 @@ export default function Home() {
             </div>
           </div>
         </section>
-
-        {/* Footer */}
-        <footer className="bg-navy-950 text-slate-300 py-12 lg:py-14">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 lg:gap-8 mb-8">
-              <div className="col-span-2 md:col-span-3 lg:col-span-1">
-                <div className="flex items-center space-x-2 mb-4">
-                  <div className="w-8 h-8 bg-navy-800 rounded-lg flex items-center justify-center shadow-md">
-                    <i className="fa-solid fa-users text-white text-base"></i>
-                  </div>
-                  <span className="text-xl font-bold text-white">HireMe</span>
-                </div>
-                <p className="text-sm text-slate-400 leading-relaxed mb-4">The complete hiring system that closes the loop.</p>
-              </div>
-
-              <div>
-                <h4 className="text-white font-semibold mb-3 text-sm">Product</h4>
-                <ul className="space-y-2">
-                  <li><a href="#" className="text-sm hover:text-white transition-colors duration-200">Features</a></li>
-                  <li><a href="#" className="text-sm hover:text-white transition-colors duration-200">Pricing</a></li>
-                  <li><a href="#" className="text-sm hover:text-white transition-colors duration-200">Integrations</a></li>
-                </ul>
-              </div>
-
-              <div>
-                <h4 className="text-white font-semibold mb-3 text-sm">Solutions</h4>
-                <ul className="space-y-2">
-                  <li><a href="#" className="text-sm hover:text-white transition-colors duration-200">For Recruiters</a></li>
-                  <li><a href="#" className="text-sm hover:text-white transition-colors duration-200">For Hiring Managers</a></li>
-                  <li><a href="#" className="text-sm hover:text-white transition-colors duration-200">For HR Leaders</a></li>
-                </ul>
-              </div>
-
-              <div>
-                <h4 className="text-white font-semibold mb-3 text-sm">Resources</h4>
-                <ul className="space-y-2">
-                  <li><a href="#" className="text-sm hover:text-white transition-colors duration-200">Blog</a></li>
-                  <li><a href="#" className="text-sm hover:text-white transition-colors duration-200">Guides</a></li>
-                  <li><a href="#" className="text-sm hover:text-white transition-colors duration-200">Help Center</a></li>
-                </ul>
-              </div>
-
-              <div>
-                <h4 className="text-white font-semibold mb-3 text-sm">Company</h4>
-                <ul className="space-y-2">
-                  <li><a href="#" className="text-sm hover:text-white transition-colors duration-200">About</a></li>
-                  <li><a href="#" className="text-sm hover:text-white transition-colors duration-200">Careers</a></li>
-                  <li><a href="#" className="text-sm hover:text-white transition-colors duration-200">Contact</a></li>
-                </ul>
-              </div>
-            </div>
-
-            <div className="border-t border-navy-800 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
-              <p className="text-slate-500 text-xs">© 2026 HireMe. All rights reserved.</p>
-              <div className="flex items-center space-x-5">
-                <a href="#" className="text-slate-400 hover:text-white transition-colors duration-200">
-                  <i className="fa-brands fa-twitter text-lg"></i>
-                </a>
-                <a href="#" className="text-slate-400 hover:text-white transition-colors duration-200">
-                  <i className="fa-brands fa-linkedin text-lg"></i>
-                </a>
-                <a href="#" className="text-slate-400 hover:text-white transition-colors duration-200">
-                  <i className="fa-brands fa-facebook text-lg"></i>
-                </a>
-              </div>
-            </div>
-          </div>
-        </footer>
       </div>
     </>
   );

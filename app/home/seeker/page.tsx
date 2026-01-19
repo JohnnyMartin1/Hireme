@@ -444,24 +444,95 @@ export default function SeekerHomePage() {
               </div>
             </section>
 
-            {/* Profile Completion Card */}
-            <div className="bg-white rounded-2xl shadow-xl border border-slate-100 p-6 sm:p-8 hover:shadow-2xl transition-shadow duration-300">
+            {/* Profile Completion Card - Prominent Alert */}
+            <div className={`rounded-2xl shadow-xl border-2 p-6 sm:p-8 hover:shadow-2xl transition-all duration-300 ${
+              completion < 80 
+                ? 'bg-gradient-to-br from-amber-50 to-orange-50 border-amber-300' 
+                : 'bg-gradient-to-br from-green-50 to-emerald-50 border-green-300'
+            }`}>
+              {/* Alert Banner */}
+              {completion < 80 && (
+                <div className="bg-amber-500 text-white rounded-xl p-4 mb-6 shadow-lg">
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0 mt-0.5">
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                      </svg>
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-bold text-lg mb-1">Profile Visibility Requirement</h3>
+                      <p className="text-amber-50 text-sm leading-relaxed">
+                        <strong className="text-white">Your profile must be at least 80% complete</strong> for employers to view it. Complete your profile now to start receiving opportunities from top companies!
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className="flex justify-between items-center mb-5">
-                <h2 className="text-xl font-bold text-navy-900">Profile Completion</h2>
-                <span className="text-2xl font-bold text-navy-900 bg-sky-50 px-4 py-1.5 rounded-full border border-sky-100">{completion}%</span>
+                <h2 className="text-2xl font-bold text-navy-900">Profile Completion</h2>
+                <span className={`text-3xl font-bold px-5 py-2 rounded-full border-2 ${
+                  completion < 80 
+                    ? 'bg-white text-amber-600 border-amber-300' 
+                    : 'bg-white text-green-600 border-green-300'
+                }`}>{completion}%</span>
               </div>
-              <div className="w-full bg-slate-100 rounded-full h-3 mb-4">
+              
+              <div className="w-full bg-slate-200 rounded-full h-4 mb-6 shadow-inner">
                 <div 
-                  className="bg-gradient-to-r from-navy-800 to-sky-500 h-3 rounded-full transition-all duration-500 ease-out" 
+                  className={`h-4 rounded-full transition-all duration-500 ease-out shadow-sm ${
+                    completion < 80 
+                      ? 'bg-gradient-to-r from-amber-500 to-orange-500' 
+                      : 'bg-gradient-to-r from-green-500 to-emerald-500'
+                  }`}
                   style={{ width: `${completion}%` }}
                 />
               </div>
-              <p className="text-slate-600 leading-relaxed">
-                Complete your profile to increase your visibility to top employers.{' '}
-                <Link href="/account/profile" className="font-semibold text-navy-800 hover:text-navy-600 transition-colors">
-                  Finish profile →
-                </Link>
-              </p>
+
+              {completion < 80 ? (
+                <>
+                  <div className="bg-white/80 rounded-xl p-5 mb-6 border border-amber-200">
+                    <h4 className="font-bold text-navy-900 mb-4 text-lg">Why complete your profile?</h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      <div className="text-center">
+                        <div className="text-3xl font-bold text-amber-600 mb-1">73%</div>
+                        <p className="text-sm text-slate-700">More likely to receive employer outreach with 80%+ completion</p>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-3xl font-bold text-amber-600 mb-1">3x</div>
+                        <p className="text-sm text-slate-700">Higher profile views compared to incomplete profiles</p>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-3xl font-bold text-amber-600 mb-1">5x</div>
+                        <p className="text-sm text-slate-700">More interview requests with complete profiles</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <p className="text-slate-700 leading-relaxed text-base">
+                      <span className="font-semibold text-amber-700">{80 - completion}% more to go!</span> Complete your profile to unlock employer visibility and maximize your job search opportunities.
+                    </p>
+                    <Link 
+                      href="/account/profile" 
+                      className="bg-amber-500 hover:bg-amber-600 text-white font-bold px-8 py-3 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 whitespace-nowrap"
+                    >
+                      Complete Profile Now →
+                    </Link>
+                  </div>
+                </>
+              ) : (
+                <div className="bg-white/80 rounded-xl p-5">
+                  <p className="text-slate-700 leading-relaxed text-base mb-4">
+                    🎉 Great job! Your profile is visible to employers. Keep it updated to maximize your opportunities.
+                  </p>
+                  <Link 
+                    href="/account/profile" 
+                    className="inline-block font-semibold text-navy-800 hover:text-navy-600 transition-colors"
+                  >
+                    Update profile →
+                  </Link>
+                </div>
+              )}
             </div>
 
             {/* Stats Grid */}

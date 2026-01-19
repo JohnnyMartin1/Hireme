@@ -9,6 +9,7 @@ import SearchableDropdown from '@/components/SearchableDropdown';
 import MultiSelectDropdown from '@/components/MultiSelectDropdown';
 import { UNIVERSITIES, MAJORS, LOCATIONS, SKILLS, TOP_25_UNIVERSITIES, CAREER_INTERESTS } from '@/lib/profile-data';
 import { getEmployerJobs } from '@/lib/firebase-firestore';
+import { calculateCompletion } from '@/components/ProfileCompletionProvider';
 
 interface Candidate {
   id: string;
@@ -97,12 +98,16 @@ export default function SearchCandidatesPage() {
       if (error || !candidateProfiles) {
         setCandidates([]);
       } else {
-        // Filter out profiles without basic information
-        const validCandidates = candidateProfiles.filter((candidate: any) => 
-          candidate.firstName && 
-          candidate.lastName && 
-          candidate.email
-        ) as Candidate[];
+        // Filter out profiles without basic information and ensure 80%+ completion
+        const validCandidates = candidateProfiles.filter((candidate: any) => {
+          if (!candidate.firstName || !candidate.lastName || !candidate.email) {
+            return false;
+          }
+          // Calculate completion percentage
+          const completion = calculateCompletion(candidate);
+          // Only show candidates with 80% or more completion
+          return completion >= 80;
+        }) as Candidate[];
         setCandidates(validCandidates);
       }
     } catch (error) {
@@ -216,12 +221,16 @@ export default function SearchCandidatesPage() {
           );
         }
 
-        // Filter out profiles without basic information
-        const validCandidates = filteredCandidates.filter((candidate: any) => 
-          candidate.firstName && 
-          candidate.lastName && 
-          candidate.email
-        ) as Candidate[];
+        // Filter out profiles without basic information and ensure 80%+ completion
+        const validCandidates = filteredCandidates.filter((candidate: any) => {
+          if (!candidate.firstName || !candidate.lastName || !candidate.email) {
+            return false;
+          }
+          // Calculate completion percentage
+          const completion = calculateCompletion(candidate);
+          // Only show candidates with 80% or more completion
+          return completion >= 80;
+        }) as Candidate[];
         
         setCandidates(validCandidates);
       }

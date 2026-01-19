@@ -18,7 +18,7 @@ export function useProfileCompletion() {
 }
 
 // Helper function to calculate completion from profile data
-const calculateCompletion = (profileData: any): number => {
+export const calculateCompletion = (profileData: any): number => {
   if (!profileData) return 0;
   
   const p = profileData;

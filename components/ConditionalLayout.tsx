@@ -6,11 +6,12 @@ import EmailVerificationBanner from "@/components/EmailVerificationBanner";
 export default function ConditionalLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isLandingPage = pathname === '/';
+  const isSignupPage = pathname?.startsWith('/auth/signup');
 
   return (
     <>
-      {!isLandingPage && <SiteHeader />}
-      {!isLandingPage && <EmailVerificationBanner />}
+      {!isLandingPage && !isSignupPage && <SiteHeader />}
+      {!isLandingPage && !isSignupPage && <EmailVerificationBanner />}
       {children}
     </>
   );

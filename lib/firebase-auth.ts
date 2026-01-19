@@ -15,6 +15,16 @@ export const signInWithFirebase = async (email: string, password: string) => {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     return { user: userCredential.user, error: null };
   } catch (error: any) {
+    // Map Firebase error codes to user-friendly messages
+    const errorCode = error?.code;
+    
+    if (errorCode === 'auth/invalid-credential' || 
+        errorCode === 'auth/wrong-password' || 
+        errorCode === 'auth/user-not-found') {
+      return { user: null, error: 'Error: wrong username or password' };
+    }
+    
+    // Return the original error message for other cases
     return { user: null, error: error.message };
   }
 };

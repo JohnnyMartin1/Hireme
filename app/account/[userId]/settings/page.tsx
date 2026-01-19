@@ -1521,7 +1521,7 @@ function LegalSection() {
             </div>
             <i className="fa-solid fa-external-link text-sky-500"></i>
           </a>
-          <a href="#" target="_blank" className="flex items-center justify-between p-4 border border-slate-200 rounded-lg hover:bg-slate-50 hover:border-sky-200 transition-colors">
+          <a href="/terms/cookie" className="flex items-center justify-between p-4 border border-slate-200 rounded-lg hover:bg-slate-50 hover:border-sky-200 transition-colors">
             <div className="flex items-center space-x-3">
               <i className="fa-solid fa-cookie-bite text-sky-500"></i>
               <span className="font-semibold text-navy-900">Cookie Policy</span>

@@ -8,6 +8,7 @@ import { getDocument, getOrCreateThread, sendMessage, saveCandidate, isCandidate
 import Link from 'next/link';
 import { trackProfileView } from '@/lib/firebase-firestore';
 import { getEmployerJobs, getCompanyJobs } from '@/lib/firebase-firestore';
+import { calculateCompletion } from '@/components/ProfileCompletionProvider';
 
 interface CandidateProfile {
   id: string;
@@ -111,10 +112,20 @@ export default function CandidateProfilePage() {
             return;
           }
 
+          // If user is an employer/recruiter viewing someone else's profile, check completion
+          if (user && user.uid !== params.id && (profile?.role === 'EMPLOYER' || profile?.role === 'RECRUITER')) {
+            const completion = calculateCompletion(data);
+            if (completion < 80) {
+              setError('This candidate profile is not yet complete. Profiles must be at least 80% complete to be visible to employers.');
+              return;
+            }
+          }
+
           setCandidate(data);
         }
 
         // Track profile view if user is logged in and viewing someone else's profile
+        // Only track for employers/recruiters if profile is 80%+ complete (already checked above)
         if (user && user.uid !== params.id) {
           await trackProfileView(params.id as string, user.uid);
         }

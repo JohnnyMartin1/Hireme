@@ -88,6 +88,11 @@ export default function CompanySignupPage() {
       return;
     }
 
+    if (!formData.phone.trim()) {
+      setErr("Phone number is required");
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -331,6 +336,21 @@ export default function CompanySignupPage() {
                     className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500 transition-all duration-200 text-navy-900 placeholder-slate-400"
                     placeholder="you@company.com"
                   />
+                </div>
+                <div className="mt-4">
+                  <label className="block text-sm font-medium text-navy-900 mb-1.5">
+                    Phone Number <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    name="phone"
+                    type="tel"
+                    required
+                    value={formData.phone}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500 transition-all duration-200 text-navy-900 placeholder-slate-400"
+                    placeholder="(555) 123-4567"
+                  />
+                  <p className="mt-2 text-xs text-slate-500">Your business phone number</p>
                 </div>
               </div>
 
