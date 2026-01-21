@@ -1042,9 +1042,52 @@ export default function EditProfilePage() {
                 </div>
               )}
             </div>
+
+            {/* Prominent Call-to-Action Box */}
+            {!isVideoComplete() && (
+              <div className="mb-6 bg-gradient-to-br from-sky-50 to-blue-50 border-2 border-sky-300 rounded-xl p-6">
+                <div className="flex items-start gap-4">
+                  <div className="flex-shrink-0">
+                    <div className="w-12 h-12 bg-sky-500 rounded-full flex items-center justify-center">
+                      <Video className="h-6 w-6 text-white" />
+                    </div>
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="text-lg font-bold text-navy-900 mb-2">⭐ Add Your Profile Video to Stand Out</h4>
+                    <p className="text-navy-800 text-base leading-relaxed mb-3">
+                      <strong>Your video is how employers will gauge your personality, communication skills, and professionalism.</strong> Candidates with profile videos are <strong className="text-sky-600">significantly more likely</strong> to be contacted by employers looking for the perfect fit.
+                    </p>
+                    <div className="bg-white/60 rounded-lg p-4 border border-sky-200">
+                      <p className="text-sm font-semibold text-navy-900 mb-2">Why it matters:</p>
+                      <ul className="text-sm text-navy-800 space-y-1.5">
+                        <li className="flex items-start">
+                          <Check className="h-4 w-4 text-sky-600 mr-2 mt-0.5 flex-shrink-0" />
+                          <span>Employers can see your communication style and personality firsthand</span>
+                        </li>
+                        <li className="flex items-start">
+                          <Check className="h-4 w-4 text-sky-600 mr-2 mt-0.5 flex-shrink-0" />
+                          <span>You demonstrate professionalism and initiative by adding a video</span>
+                        </li>
+                        <li className="flex items-start">
+                          <Check className="h-4 w-4 text-sky-600 mr-2 mt-0.5 flex-shrink-0" />
+                          <span>Profiles with videos receive 3x more messages from employers</span>
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
             
             <div>
-              <label className="block text-sm font-medium text-navy-900 mb-4">Profile Video (Max 30 seconds)</label>
+              <label className="block text-sm font-medium text-navy-900 mb-4">
+                Profile Video {!isVideoComplete() && <span className="text-sky-600 font-semibold">(Highly Recommended)</span>} (Max 30 seconds)
+              </label>
+              {!isVideoComplete() && (
+                <p className="text-sm text-slate-600 mb-4">
+                  Record a brief introduction highlighting your skills, experience, and what makes you a great candidate. Keep it under 30 seconds and be yourself!
+                </p>
+              )}
               <VideoUpload
                 currentVideo={formData.videoUrl}
                 onUploadComplete={(url) => handleInputChange('videoUrl', url)}
