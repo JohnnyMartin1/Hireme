@@ -83,18 +83,24 @@ export default function UsersManagementPage() {
       if (response.ok) {
         const { validUserIds } = await response.json();
         
-        // Now get Firestore data only for valid users
+        // Now get Firestore data only for valid users - optimized with parallel batch requests
         const validUsers: User[] = [];
         
-        for (const userId of validUserIds) {
-          try {
-            const { data: userData, error } = await getDocument('users', userId);
+        // Process in batches to avoid overwhelming Firestore and improve performance
+        const batchSize = 20;
+        for (let i = 0; i < validUserIds.length; i += batchSize) {
+          const batch = validUserIds.slice(i, i + batchSize);
+          
+          // Fetch all users in parallel for this batch
+          const userPromises = batch.map((userId: string) => getDocument('users', userId));
+          const userResults = await Promise.all(userPromises);
+          
+          // Process results
+          userResults.forEach(({ data: userData, error }) => {
             if (!error && userData) {
               validUsers.push(userData as User);
             }
-          } catch (error) {
-            console.error(`Error loading user ${userId}:`, error);
-          }
+          });
         }
 
         // Sort users by creation date (newest first)

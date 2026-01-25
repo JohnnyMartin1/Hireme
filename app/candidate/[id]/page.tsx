@@ -379,21 +379,21 @@ export default function CandidateProfilePage() {
               <div className="flex items-center gap-3 w-full sm:w-auto">
                 <button
                   onClick={handleOpenMessageDialog}
-                  className="bg-navy-800 text-white px-6 py-2.5 rounded-lg font-semibold hover:bg-navy-700 transition-all flex items-center justify-center gap-2 text-sm flex-1 sm:flex-initial"
+                  className="bg-navy-800 text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg font-semibold hover:bg-navy-700 transition-all flex items-center justify-center gap-2 text-sm sm:text-base flex-1 sm:flex-initial min-h-[48px]"
                 >
-                  <MessageSquare className="h-4 w-4" />
+                  <MessageSquare className="h-4 w-4 sm:h-5 sm:w-5" />
                   <span>Message</span>
                 </button>
                 <button
                   onClick={handleSaveCandidate}
                   disabled={isSaving}
-                  className={`p-2.5 rounded-lg transition-all w-10 h-10 flex items-center justify-center ${
+                  className={`p-2.5 sm:p-3 rounded-lg transition-all w-12 h-12 sm:w-10 sm:h-10 flex items-center justify-center min-h-[48px] sm:min-h-0 ${
                     isSaved 
                       ? 'bg-green-50 text-green-600 border-2 border-green-600' 
                       : 'bg-white border border-slate-200 text-slate-700 hover:border-navy-800 hover:text-navy-900'
                   }`}
                 >
-                  <Heart className={`h-5 w-5 ${isSaved ? 'fill-current' : ''}`} />
+                  <Heart className={`h-5 w-5 sm:h-4 sm:w-4 ${isSaved ? 'fill-current' : ''}`} />
                 </button>
                 {candidate.resumeUrl && (
                   <button
@@ -402,9 +402,9 @@ export default function CandidateProfilePage() {
                       setResumePreviewError(false);
                       setUseGoogleViewer(false);
                     }}
-                    className="bg-white border border-slate-200 text-navy-900 px-4 py-2.5 rounded-lg font-semibold hover:bg-slate-50 transition-all flex items-center justify-center gap-2 text-sm"
+                    className="bg-white border border-slate-200 text-navy-900 px-4 py-2.5 sm:py-3 rounded-lg font-semibold hover:bg-slate-50 transition-all flex items-center justify-center gap-2 text-sm sm:text-base min-h-[48px]"
                   >
-                    <FileText className="h-4 w-4" />
+                    <FileText className="h-4 w-4 sm:h-5 sm:w-5" />
                     <span className="hidden sm:inline">Resume</span>
                   </button>
                 )}
@@ -416,13 +416,14 @@ export default function CandidateProfilePage() {
 
       {/* Header */}
       <header className="sticky top-0 bg-white shadow-sm z-50 border-b border-slate-100">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
           <Link
             href={user?.uid === candidate.id ? "/home/seeker" : "/search/candidates"}
-            className="flex items-center gap-2 text-navy-800 hover:text-navy-600 transition-all duration-200 group px-3 py-2 rounded-lg hover:bg-sky-50 hover:shadow-md min-h-[44px]"
+            className="flex items-center gap-2 text-navy-800 hover:text-navy-600 transition-all duration-200 group px-3 py-2 rounded-lg hover:bg-sky-50 hover:shadow-md min-h-[48px]"
           >
-            <ArrowLeft className="h-5 w-5 group-hover:-translate-x-1 transition-transform" />
-            <span className="font-medium">Back to Dashboard</span>
+            <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5 group-hover:-translate-x-1 transition-transform" />
+            <span className="font-medium text-sm sm:text-base hidden sm:inline">Back to Dashboard</span>
+            <span className="font-medium text-sm sm:text-base sm:hidden">Back</span>
           </Link>
           <Link href="/" className="flex items-center gap-2">
             <div className="w-8 h-8 bg-navy-800 rounded-lg flex items-center justify-center">
@@ -436,7 +437,7 @@ export default function CandidateProfilePage() {
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-6 py-8 sm:py-10 lg:py-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 lg:py-10 xl:py-12">
 
         {/* Hero Summary Card */}
         <section ref={heroCardRef} className="bg-white rounded-2xl shadow-xl border border-slate-100 p-8 mb-8">

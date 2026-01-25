@@ -1,10 +1,11 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Loader2 } from "lucide-react";
 import { signInWithFirebase } from "@/lib/firebase-auth";
 import { getDocument } from "@/lib/firebase-firestore";
+import { useFirebaseAuth } from "@/components/FirebaseAuthProvider";
 import type { UserProfile } from "@/types/user";
 
 
@@ -14,6 +15,25 @@ export default function LoginPage() {
   const [err, setErr] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const { user, profile, loading: authLoading } = useFirebaseAuth();
+
+  // Redirect if already logged in (only once)
+  useEffect(() => {
+    if (!authLoading && user && profile) {
+      const redirect = () => {
+        if (user.email === 'officialhiremeapp@gmail.com' || profile.role === 'ADMIN') {
+          router.replace("/admin");
+        } else if (profile.role === 'EMPLOYER' || profile.role === 'RECRUITER') {
+          router.replace("/home/employer");
+        } else if (profile.role === 'JOB_SEEKER') {
+          router.replace("/home/seeker");
+        }
+      };
+      // Small delay to prevent rapid redirects
+      const timeoutId = setTimeout(redirect, 100);
+      return () => clearTimeout(timeoutId);
+    }
+  }, [user, profile, authLoading, router]);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -32,6 +52,7 @@ export default function LoginPage() {
           
           if (profileError) {
             setErr("Error fetching user profile. Please try again.");
+            setIsLoading(false);
             return;
           }
 
@@ -64,6 +85,18 @@ export default function LoginPage() {
     } finally {
       setIsLoading(false);
     }
+  }
+
+  // Show loading state while checking auth (but don't block forever)
+  if (authLoading && !user) {
+    return (
+      <main className="min-h-screen bg-slate-50 flex flex-col items-center justify-center px-6 py-12 sm:py-16">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin text-navy-800 mx-auto mb-4" />
+          <p className="text-slate-600">Loading...</p>
+        </div>
+      </main>
+    );
   }
 
   return (

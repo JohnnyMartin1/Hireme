@@ -7,13 +7,14 @@ import { createDocument, updateDocument } from '@/lib/firebase-firestore';
 import FileUpload from '@/components/FileUpload';
 import VideoUpload from '@/components/VideoUpload';
 import MultiSelectDropdown from '@/components/MultiSelectDropdown';
-import { LOCATIONS, WORK_PREFERENCES, JOB_TYPES, SKILLS, CAREER_INTERESTS } from '@/lib/profile-data';
+import { LOCATIONS, WORK_PREFERENCES, JOB_TYPES, SKILLS, CAREER_INTERESTS, LANGUAGES } from '@/lib/profile-data';
 
 interface ProfileData {
   workLocations: string[];
-  workArrangements: string;
+  workArrangements: string[];
   jobTypes: string[];
   skills: string[];
+  languages: string[];
   experience: string;
   industries: string[];
   linkedin: string;
@@ -50,7 +51,7 @@ const slideContents = [
   },
   {
     title: 'Bio Video',
-    description: 'Record a brief introduction (optional)'
+    description: 'Stand out with a personal introduction (highly recommended)'
   },
   {
     title: 'Review & Submit',
@@ -74,14 +75,15 @@ const industries = [
 
 export default function NextStepsOnboarding() {
   const router = useRouter();
-  const { user, profile } = useFirebaseAuth();
+  const { user, profile, loading } = useFirebaseAuth();
   const [currentSlide, setCurrentSlide] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [profileData, setProfileData] = useState<ProfileData>({
     workLocations: [],
-    workArrangements: '',
+    workArrangements: [],
     jobTypes: [],
     skills: [],
+    languages: [],
     experience: '',
     industries: [],
     linkedin: '',
@@ -93,12 +95,19 @@ export default function NextStepsOnboarding() {
 
   const totalSlides = 8;
 
-  // Redirect if user is already onboarded
+  // Redirect if user is not authenticated or already onboarded
   useEffect(() => {
-    if (user && profile?.onboardingComplete) {
-      router.push('/home/seeker');
+    if (!loading) {
+      if (!user) {
+        // User not authenticated, redirect to signup
+        router.push('/auth/signup/seeker');
+        return;
+      }
+      if (user && profile?.onboardingComplete) {
+        router.push('/home/seeker');
+      }
     }
-  }, [user, profile, router]);
+  }, [user, profile, loading, router]);
 
   const updateSlideContent = () => {
     const content = slideContents[currentSlide - 1];
@@ -121,12 +130,13 @@ export default function NextStepsOnboarding() {
       // Save current slide data to user profile
       const currentData = {
         locations: profileData.workLocations,
-        workPreferences: profileData.workArrangements ? [profileData.workArrangements] : [],
+        workPreferences: profileData.workArrangements,
         jobTypes: profileData.jobTypes,
         skills: profileData.skills,
+        languages: profileData.languages,
         experience: profileData.experience,
         careerInterests: profileData.industries,
-        linkedinUrl: profileData.linkedin,
+        linkedinUrl: profileData.linkedin ? normalizeLinkedInUrl(profileData.linkedin) : '',
         portfolioUrl: profileData.portfolio,
         profileImageUrl: profileData.avatar,
         resumeUrl: profileData.resume,
@@ -139,12 +149,16 @@ export default function NextStepsOnboarding() {
     }
   };
 
-  const nextSlide = () => {
+  const nextSlide = async () => {
     if (currentSlide < totalSlides) {
       if (validateCurrentSlide()) {
         // Save current slide data before moving to next slide
-        saveCurrentSlideData();
+        await saveCurrentSlideData();
         setCurrentSlide(currentSlide + 1);
+        // Scroll to top on mobile
+        if (typeof window !== 'undefined') {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
       }
     } else {
       submitProfile();
@@ -154,6 +168,10 @@ export default function NextStepsOnboarding() {
   const prevSlide = () => {
     if (currentSlide > 1) {
       setCurrentSlide(currentSlide - 1);
+      // Scroll to top on mobile
+      if (typeof window !== 'undefined') {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
     }
   };
 
@@ -178,12 +196,13 @@ export default function NextStepsOnboarding() {
       // Create or update profile with the collected data
       const profileUpdate = {
         locations: profileData.workLocations,
-        workPreferences: profileData.workArrangements ? [profileData.workArrangements] : [],
+        workPreferences: profileData.workArrangements,
         jobTypes: profileData.jobTypes,
         skills: profileData.skills,
+        languages: profileData.languages,
         experience: profileData.experience,
         careerInterests: profileData.industries,
-        linkedinUrl: profileData.linkedin,
+        linkedinUrl: profileData.linkedin ? normalizeLinkedInUrl(profileData.linkedin) : '',
         portfolioUrl: profileData.portfolio,
         profileImageUrl: profileData.avatar,
         resumeUrl: profileData.resume,
@@ -206,19 +225,69 @@ export default function NextStepsOnboarding() {
 
   const isValidUrl = (string: string) => {
     try {
-      new URL(string);
+      // If the string doesn't start with http:// or https://, add https://
+      const urlToTest = string.startsWith('http://') || string.startsWith('https://') 
+        ? string 
+        : `https://${string}`;
+      new URL(urlToTest);
       return true;
     } catch (_) {
       return false;
     }
   };
 
+  const normalizeLinkedInUrl = (url: string): string => {
+    if (!url || !url.trim()) return url;
+    
+    let normalized = url.trim();
+    
+    // Remove trailing slash if present
+    normalized = normalized.replace(/\/$/, '');
+    
+    // Add https:// if no protocol is present
+    if (!normalized.startsWith('http://') && !normalized.startsWith('https://')) {
+      normalized = `https://${normalized}`;
+    }
+    
+    return normalized;
+  };
+
   const isValidLinkedInUrl = (string: string) => {
-    return isValidUrl(string) && string.includes('linkedin.com');
+    if (!string || !string.trim()) return true; // Empty is valid (optional field)
+    
+    // Normalize the URL for validation
+    const normalized = normalizeLinkedInUrl(string);
+    
+    // Check if it's a valid URL and contains linkedin.com
+    return isValidUrl(normalized) && normalized.includes('linkedin.com');
   };
 
   const currentContent = updateSlideContent();
   const progressPercentage = updateProgress();
+
+  // Show loading state while checking authentication
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-navy-800 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show redirecting message if user is not authenticated (will redirect)
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-navy-800 mx-auto mb-4"></div>
+          <p className="text-gray-600">Redirecting to signup...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 relative mobile-safe-top mobile-safe-bottom">
@@ -274,12 +343,12 @@ export default function NextStepsOnboarding() {
                 <div>
                   <MultiSelectDropdown
                     options={WORK_PREFERENCES}
-                    values={profileData.workArrangements ? [profileData.workArrangements] : []}
-                    onChange={(values) => setProfileData({...profileData, workArrangements: values[0] || ''})}
+                    values={profileData.workArrangements}
+                    onChange={(values) => setProfileData({...profileData, workArrangements: values})}
                     placeholder="Select work arrangements"
                     label="Work Arrangements"
                     allowCustom
-                    maxSelections={1}
+                    maxSelections={5}
                   />
                 </div>
 
@@ -300,16 +369,29 @@ export default function NextStepsOnboarding() {
 
             {/* Slide 2: Skills & Expertise */}
             {currentSlide === 2 && (
-              <div>
-                <MultiSelectDropdown
-                  options={SKILLS}
-                  values={profileData.skills}
-                  onChange={(values) => setProfileData({...profileData, skills: values})}
-                  placeholder="Select your skills"
-                  label="Technical & Professional Skills"
-                  allowCustom
-                  maxSelections={10}
-                />
+              <div className="space-y-6">
+                <div>
+                  <MultiSelectDropdown
+                    options={SKILLS}
+                    values={profileData.skills}
+                    onChange={(values) => setProfileData({...profileData, skills: values})}
+                    placeholder="Select your skills"
+                    label="Technical & Professional Skills"
+                    allowCustom
+                    maxSelections={10}
+                  />
+                </div>
+                <div>
+                  <MultiSelectDropdown
+                    options={LANGUAGES}
+                    values={profileData.languages}
+                    onChange={(values) => setProfileData({...profileData, languages: values})}
+                    placeholder="Select languages you speak"
+                    label="Languages"
+                    allowCustom
+                    maxSelections={10}
+                  />
+                </div>
               </div>
             )}
 
@@ -360,6 +442,13 @@ export default function NextStepsOnboarding() {
                     type="url"
                     value={profileData.linkedin}
                     onChange={(e) => setProfileData({...profileData, linkedin: e.target.value})}
+                    onBlur={(e) => {
+                      // Normalize the URL when user leaves the field
+                      if (e.target.value.trim()) {
+                        const normalized = normalizeLinkedInUrl(e.target.value);
+                        setProfileData({...profileData, linkedin: normalized});
+                      }
+                    }}
                     placeholder="https://linkedin.com/in/yourprofile"
                     className="w-full h-12 bg-blue-50/50 rounded-xl border border-gray-200 px-4 py-4 focus:border-navy-800 focus:ring-2 focus:ring-navy/20 focus:outline-none transition-all"
                   />
@@ -408,7 +497,29 @@ export default function NextStepsOnboarding() {
             {/* Slide 7: Bio Video */}
             {currentSlide === 7 && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3">Bio Video (Optional)</label>
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Bio Video <span className="text-navy-800 font-semibold">(Optional but Highly Recommended)</span>
+                  </label>
+                  <div className="bg-gradient-to-br from-sky-50 to-blue-50 border-2 border-sky-200 rounded-xl p-4 mb-4">
+                    <div className="flex items-start space-x-3">
+                      <div className="flex-shrink-0 w-8 h-8 bg-sky-500 rounded-full flex items-center justify-center">
+                        <i className="fa-solid fa-video text-white text-sm"></i>
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-gray-900 mb-2">Why add a video?</h4>
+                        <p className="text-sm text-gray-700 mb-3">
+                          Your resume tells employers what you've done, but a video shows them <span className="font-semibold">who you are</span>. 
+                          Employers can see your personality, communication skills, and enthusiasm—things that don't come through on paper.
+                        </p>
+                        <p className="text-sm text-gray-700">
+                          <span className="font-semibold text-sky-700">Candidates with intro videos receive significantly more messages from employers</span> and have much better hiring outcomes. 
+                          Take just a minute to introduce yourself and stand out from the crowd!
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
                 <VideoUpload
                   currentVideo={profileData.video || ''}
                   onUploadComplete={(url) => setProfileData({...profileData, video: url})}
@@ -440,7 +551,7 @@ export default function NextStepsOnboarding() {
                     </div>
                     <div className="space-y-2 text-sm text-gray-600">
                       <p><span className="font-medium">Locations:</span> {profileData.workLocations.length > 0 ? profileData.workLocations.join(', ') : 'Not specified'}</p>
-                      <p><span className="font-medium">Arrangements:</span> {profileData.workArrangements || 'Not specified'}</p>
+                      <p><span className="font-medium">Arrangements:</span> {profileData.workArrangements.length > 0 ? profileData.workArrangements.join(', ') : 'Not specified'}</p>
                       <p><span className="font-medium">Job Types:</span> {profileData.jobTypes.length > 0 ? profileData.jobTypes.join(', ') : 'Not specified'}</p>
                     </div>
                   </div>
@@ -456,8 +567,9 @@ export default function NextStepsOnboarding() {
                         Edit
                       </button>
                     </div>
-                    <div className="text-sm text-gray-600">
-                      {profileData.skills.length > 0 ? profileData.skills.join(', ') : 'Not specified'}
+                    <div className="space-y-2 text-sm text-gray-600">
+                      <p><span className="font-medium">Technical & Professional Skills:</span> {profileData.skills.length > 0 ? profileData.skills.join(', ') : 'Not specified'}</p>
+                      <p><span className="font-medium">Languages:</span> {profileData.languages.length > 0 ? profileData.languages.join(', ') : 'Not specified'}</p>
                     </div>
                   </div>
 
@@ -534,30 +646,35 @@ export default function NextStepsOnboarding() {
         </div>
 
         {/* Pinned Footer Controls */}
-        <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-20">
-          <div className="flex items-center space-x-4 bg-white/90 backdrop-blur-sm rounded-2xl p-4 shadow-lg border border-white/60">
-            <button 
-              onClick={prevSlide}
-              disabled={currentSlide === 1}
-              className="flex items-center px-6 py-3 text-navy-800 border border-navy-800 rounded-xl font-medium transition-all hover:bg-navy/5 disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              <i className="fa-solid fa-chevron-left mr-2"></i>
-              Back
-            </button>
-            <button 
-              onClick={nextSlide}
-              disabled={isSubmitting}
-              className="px-8 py-3 bg-navy-800 text-white rounded-xl font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              {isSubmitting ? (
-                <>
-                  <i className="fa-solid fa-spinner animate-spin mr-2"></i>
-                  Submitting...
-                </>
-              ) : (
-                currentSlide === totalSlides ? 'Submit Profile' : 'Next'
-              )}
-            </button>
+        <div className="fixed bottom-0 left-0 right-0 z-20 bg-white/95 backdrop-blur-sm border-t border-gray-200/30 shadow-lg">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 py-4">
+            <div className="flex items-center justify-between space-x-4">
+              <button 
+                onClick={prevSlide}
+                disabled={currentSlide === 1}
+                className="flex items-center justify-center px-6 py-3 text-navy-800 border-2 border-navy-800 rounded-xl font-semibold transition-all hover:bg-navy-50 disabled:opacity-40 disabled:cursor-not-allowed min-h-[48px] min-w-[100px]"
+              >
+                <i className="fa-solid fa-chevron-left mr-2"></i>
+                <span>Back</span>
+              </button>
+              <button 
+                onClick={nextSlide}
+                disabled={isSubmitting}
+                className="flex items-center justify-center px-8 py-3 bg-navy-800 text-white rounded-xl font-semibold transition-all hover:bg-navy-700 disabled:opacity-40 disabled:cursor-not-allowed min-h-[48px] min-w-[120px] shadow-md"
+              >
+                {isSubmitting ? (
+                  <>
+                    <i className="fa-solid fa-spinner animate-spin mr-2"></i>
+                    <span>Submitting...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>{currentSlide === totalSlides ? 'Submit Profile' : 'Next'}</span>
+                    {currentSlide !== totalSlides && <i className="fa-solid fa-chevron-right ml-2"></i>}
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </div>
       </main>

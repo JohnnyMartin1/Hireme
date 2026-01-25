@@ -104,11 +104,11 @@ export default function SettingsPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
           <Link
             href={dashboardUrl}
-            className="flex items-center gap-2 text-navy-900 hover:text-navy-600 transition-all duration-200 group px-3 py-2 rounded-lg hover:bg-sky-50 hover:shadow-md min-h-[44px]"
+            className="flex items-center gap-2 text-navy-900 hover:text-navy-600 transition-all duration-200 group px-3 py-2 rounded-lg hover:bg-sky-50 hover:shadow-md min-h-[48px]"
           >
-            <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform duration-200" />
-            <span className="font-medium text-sm hidden sm:inline">Back to Dashboard</span>
-            <span className="font-medium text-sm sm:hidden">Back</span>
+            <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5 group-hover:-translate-x-1 transition-transform duration-200" />
+            <span className="font-medium text-sm sm:text-base hidden sm:inline">Back to Dashboard</span>
+            <span className="font-medium text-sm sm:text-base sm:hidden">Back</span>
           </Link>
           <Link href="/" className="flex items-center gap-2">
             <div className="w-8 h-8 bg-navy-800 rounded-lg flex items-center justify-center shadow-md">
@@ -133,12 +133,41 @@ export default function SettingsPage() {
       )}
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-6 py-12 lg:py-16">
-        <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-navy-900 mb-12 tracking-tight">Settings</h1>
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12 lg:py-16">
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold text-navy-900 mb-6 sm:mb-12 tracking-tight">Settings</h1>
 
-        <div className="flex flex-col lg:flex-row gap-8">
-          {/* Sidebar */}
-          <aside className="lg:w-80 shrink-0">
+        <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
+          {/* Mobile: Dropdown selector */}
+          <div className="lg:hidden">
+            <select
+              value={activeTab}
+              onChange={(e) => handleTabClick(e.target.value)}
+              className="w-full px-4 py-3 text-base bg-white border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 text-navy-900 font-semibold min-h-[48px]"
+              aria-label="Select settings section"
+            >
+              {[
+                { id: 'account', icon: 'user', label: 'Account' },
+                { id: 'security', icon: 'shield-halved', label: 'Security' },
+                { id: 'privacy', icon: 'eye', label: 'Privacy & Visibility' },
+                { id: 'notifications', icon: 'bell', label: 'Notifications' },
+                { id: 'billing', icon: 'credit-card', label: 'Billing' },
+                { id: 'team', icon: 'users', label: 'Team & Recruiters' },
+                { id: 'company', icon: 'building', label: 'Company Profile' },
+                { id: 'integrations', icon: 'plug', label: 'Integrations' },
+                { id: 'data', icon: 'database', label: 'Data & Export' },
+                { id: 'accessibility', icon: 'universal-access', label: 'Accessibility' },
+                { id: 'legal', icon: 'gavel', label: 'Legal' },
+                { id: 'danger', icon: 'triangle-exclamation', label: 'Danger Zone' },
+              ].map((tab) => (
+                <option key={tab.id} value={tab.id}>
+                  {tab.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Desktop: Sidebar */}
+          <aside className="hidden lg:block lg:w-80 shrink-0">
             <div className="bg-white rounded-2xl shadow-xl border border-slate-100 p-6 sticky top-24">
               <nav className="space-y-2">
                 {[
@@ -158,7 +187,7 @@ export default function SettingsPage() {
                   <button
                     key={tab.id}
                     onClick={() => handleTabClick(tab.id)}
-                    className={`w-full text-left px-4 py-3 rounded-lg font-semibold transition-all duration-200 ${
+                    className={`w-full text-left px-4 py-3 rounded-lg font-semibold transition-all duration-200 min-h-[48px] ${
                       activeTab === tab.id
                         ? 'bg-navy-800 text-white'
                         : 'bg-white text-navy-900 hover:bg-sky-50 border border-transparent hover:border-sky-100'

@@ -34,8 +34,19 @@ const SearchableDropdown = memo(function SearchableDropdown({
   const updatePosition = () => {
     if (triggerRef.current) {
       const rect = triggerRef.current.getBoundingClientRect();
+      const viewportHeight = window.innerHeight;
+      const dropdownHeight = 240; // Approximate max height of dropdown
+      const spaceBelow = viewportHeight - rect.bottom;
+      const spaceAbove = rect.top;
+      
+      // If not enough space below, position above the trigger
+      let top = rect.bottom + 4;
+      if (spaceBelow < dropdownHeight && spaceAbove > spaceBelow) {
+        top = rect.top - dropdownHeight - 4;
+      }
+      
       setPosition({
-        top: rect.bottom + 4,
+        top: Math.max(8, Math.min(top, viewportHeight - dropdownHeight - 8)), // Keep within viewport
         left: rect.left,
         width: rect.width
       });
@@ -44,8 +55,53 @@ const SearchableDropdown = memo(function SearchableDropdown({
 
   useEffect(() => {
     if (isOpen) {
-      updatePosition();
+      // On mobile, prevent body scroll to keep dropdown visible
+      if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+        const scrollY = window.scrollY;
+        document.body.style.overflow = 'hidden';
+        document.body.style.position = 'fixed';
+        document.body.style.top = `-${scrollY}px`;
+        document.body.style.width = '100%';
+        
+        // Store scroll position to restore later
+        (document.body as any).__scrollY = scrollY;
+        
+        // Update position after a brief delay to account for any layout changes
+        setTimeout(() => {
+          updatePosition();
+        }, 50);
+      } else {
+        updatePosition();
+      }
+    } else {
+      // Restore body scroll
+      if (typeof window !== 'undefined') {
+        const scrollY = (document.body as any).__scrollY || 0;
+        document.body.style.overflow = '';
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.width = '';
+        delete (document.body as any).__scrollY;
+        if (scrollY) {
+          window.scrollTo(0, scrollY);
+        }
+      }
     }
+    
+    return () => {
+      // Cleanup: restore body scroll
+      if (typeof window !== 'undefined') {
+        const scrollY = (document.body as any).__scrollY || 0;
+        document.body.style.overflow = '';
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.width = '';
+        delete (document.body as any).__scrollY;
+        if (scrollY) {
+          window.scrollTo(0, scrollY);
+        }
+      }
+    };
   }, [isOpen]);
 
   useEffect(() => {
@@ -130,7 +186,15 @@ const SearchableDropdown = memo(function SearchableDropdown({
       <div className="relative" ref={triggerRef}>
         <div
           className="w-full px-4 py-3 bg-white border border-light-gray rounded-xl text-navy placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-navy focus:border-navy transition-all duration-200 cursor-pointer"
-          onClick={() => setIsOpen(!isOpen)}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setIsOpen(!isOpen);
+          }}
+          onTouchStart={(e) => {
+            // Prevent default touch behavior that might cause scrolling
+            e.stopPropagation();
+          }}
         >
           <div className="flex items-center justify-between">
             <span className={value ? 'text-navy' : 'text-gray-400'}>
@@ -173,8 +237,8 @@ const SearchableDropdown = memo(function SearchableDropdown({
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  className="w-full pl-10 pr-4 py-2 border border-light-gray rounded-lg focus:ring-2 focus:ring-navy focus:border-navy"
-                  autoFocus
+                  className="w-full pl-10 pr-4 py-2 border border-light-gray rounded-lg focus:ring-2 focus:ring-navy focus:border-navy text-base"
+                  autoFocus={typeof window !== 'undefined' && window.innerWidth >= 1024}
                 />
               </div>
             </div>

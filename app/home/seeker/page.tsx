@@ -160,16 +160,18 @@ export default function SeekerHomePage() {
       }
     };
 
-    window.addEventListener('focus', handleFocus);
-    document.addEventListener('visibilitychange', () => {
+    const handleVisibilityChange = () => {
       if (!document.hidden) {
         handleFocus();
       }
-    });
+    };
+
+    window.addEventListener('focus', handleFocus);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
       window.removeEventListener('focus', handleFocus);
-      document.removeEventListener('visibilitychange', handleFocus);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [user, profile, updateCompletion]);
 
@@ -410,13 +412,13 @@ export default function SeekerHomePage() {
       )}
 
     <main className="min-h-screen bg-slate-50 mobile-safe-top mobile-safe-bottom overflow-x-hidden w-full">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-8 sm:pt-16 sm:pb-10 lg:pt-20 lg:pb-12">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
-          <div className="lg:col-span-2 space-y-6 lg:space-y-8">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 xl:px-8 pt-32 sm:pt-20 pb-6 sm:pb-8 lg:pb-10 lg:pt-20 lg:pb-12">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
+          <div className="lg:col-span-2 space-y-4 sm:space-y-6 lg:space-y-8">
             
             {/* Welcome Banner */}
-            <section className="bg-gradient-to-br from-navy-800 via-navy-800 to-navy-900 text-white p-4 sm:p-5 lg:p-6 rounded-2xl shadow-xl">
-              <div className="flex items-center gap-4 sm:gap-5">
+            <section className="bg-gradient-to-br from-navy-800 via-navy-800 to-navy-900 text-white p-4 sm:p-5 lg:p-6 rounded-xl sm:rounded-2xl shadow-xl">
+              <div className="flex items-center gap-3 sm:gap-4 lg:gap-5">
                 {userProfile?.profileImageUrl ? (
                   <button
                     onClick={() => setIsProfileImageModalOpen(true)}
@@ -428,59 +430,59 @@ export default function SeekerHomePage() {
                       alt={`${profile?.firstName || 'User'}'s avatar`}
                       width={120}
                       height={120}
-                      className="w-24 h-24 sm:w-[120px] sm:h-[120px] rounded-full border-4 border-white/20 shadow-lg object-cover"
+                      className="w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 xl:w-[120px] xl:h-[120px] rounded-full border-2 sm:border-4 border-white/20 shadow-lg object-cover"
                       style={{ aspectRatio: '1 / 1' }}
                     />
                   </button>
                 ) : (
-                  <div className="w-24 h-24 sm:w-[120px] sm:h-[120px] rounded-full border-4 border-white/20 shadow-lg bg-white/10 flex items-center justify-center flex-shrink-0">
-                    <User className="h-10 w-10 sm:h-14 sm:w-14 text-white/80" />
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 xl:w-[120px] xl:h-[120px] rounded-full border-2 sm:border-4 border-white/20 shadow-lg bg-white/10 flex items-center justify-center flex-shrink-0">
+                    <User className="h-8 w-8 sm:h-10 sm:w-10 lg:h-12 lg:w-12 xl:h-14 xl:w-14 text-white/80" />
                   </div>
                 )}
                 <div className="flex-1 min-w-0">
-                  <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight">Welcome back, {profile?.firstName || 'Job Seeker'}!</h1>
-                  <p className="text-sky-200 mt-2 text-base sm:text-lg">Here's your dashboard overview for today.</p>
+                  <h1 className="text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-bold tracking-tight break-words">Welcome back, {profile?.firstName || 'Job Seeker'}!</h1>
+                  <p className="text-sky-200 mt-1 sm:mt-2 text-sm sm:text-base lg:text-lg">Here's your dashboard overview for today.</p>
                 </div>
               </div>
             </section>
 
             {/* Profile Completion Card - Prominent Alert */}
-            <div className={`rounded-2xl shadow-xl border-2 p-6 sm:p-8 hover:shadow-2xl transition-all duration-300 ${
+            <div className={`rounded-xl sm:rounded-2xl shadow-xl border-2 p-4 sm:p-6 lg:p-8 hover:shadow-2xl transition-all duration-300 ${
               completion < 80 
                 ? 'bg-gradient-to-br from-amber-50 to-orange-50 border-amber-300' 
                 : 'bg-gradient-to-br from-green-50 to-emerald-50 border-green-300'
             }`}>
               {/* Alert Banner */}
               {completion < 80 && (
-                <div className="bg-amber-500 text-white rounded-xl p-4 mb-6 shadow-lg">
-                  <div className="flex items-start gap-3">
+                <div className="bg-amber-500 text-white rounded-lg sm:rounded-xl p-3 sm:p-4 mb-4 sm:mb-6 shadow-lg">
+                  <div className="flex items-start gap-2 sm:gap-3">
                     <div className="flex-shrink-0 mt-0.5">
-                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                       </svg>
                     </div>
-                    <div className="flex-1">
-                      <h3 className="font-bold text-lg mb-1">Profile Visibility Requirement</h3>
-                      <p className="text-amber-50 text-sm leading-relaxed">
-                        <strong className="text-white">Your profile must be at least 80% complete</strong> for employers to view it. Complete your profile now to start receiving opportunities from top companies!
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-bold text-base sm:text-lg mb-1">Profile Visibility Requirement</h3>
+                      <p className="text-amber-50 text-xs sm:text-sm leading-relaxed">
+                        <strong className="text-white">Your profile must be at least 80% complete</strong> for employers to view it. Complete your profile now!
                       </p>
                     </div>
                   </div>
                 </div>
               )}
 
-              <div className="flex justify-between items-center mb-5">
-                <h2 className="text-2xl font-bold text-navy-900">Profile Completion</h2>
-                <span className={`text-3xl font-bold px-5 py-2 rounded-full border-2 ${
+              <div className="flex justify-between items-center mb-4 sm:mb-5">
+                <h2 className="text-xl sm:text-2xl font-bold text-navy-900">Profile Completion</h2>
+                <span className={`text-2xl sm:text-3xl font-bold px-3 sm:px-5 py-1.5 sm:py-2 rounded-full border-2 ${
                   completion < 80 
                     ? 'bg-white text-amber-600 border-amber-300' 
                     : 'bg-white text-green-600 border-green-300'
                 }`}>{completion}%</span>
               </div>
               
-              <div className="w-full bg-slate-200 rounded-full h-4 mb-6 shadow-inner">
+              <div className="w-full bg-slate-200 rounded-full h-3 sm:h-4 mb-4 sm:mb-6 shadow-inner">
                 <div 
-                  className={`h-4 rounded-full transition-all duration-500 ease-out shadow-sm ${
+                  className={`h-3 sm:h-4 rounded-full transition-all duration-500 ease-out shadow-sm ${
                     completion < 80 
                       ? 'bg-gradient-to-r from-amber-500 to-orange-500' 
                       : 'bg-gradient-to-r from-green-500 to-emerald-500'
@@ -491,43 +493,43 @@ export default function SeekerHomePage() {
 
               {completion < 80 ? (
                 <>
-                  <div className="bg-white/80 rounded-xl p-5 mb-6 border border-amber-200">
-                    <h4 className="font-bold text-navy-900 mb-4 text-lg">Why complete your profile?</h4>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="bg-white/80 rounded-lg sm:rounded-xl p-4 sm:p-5 mb-4 sm:mb-6 border border-amber-200">
+                    <h4 className="font-bold text-navy-900 mb-3 sm:mb-4 text-base sm:text-lg">Why complete your profile?</h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
                       <div className="text-center">
-                        <div className="text-3xl font-bold text-amber-600 mb-1">73%</div>
-                        <p className="text-sm text-slate-700">More likely to receive employer outreach with 80%+ completion</p>
+                        <div className="text-2xl sm:text-3xl font-bold text-amber-600 mb-1">73%</div>
+                        <p className="text-xs sm:text-sm text-slate-700">More likely to receive employer outreach</p>
                       </div>
                       <div className="text-center">
-                        <div className="text-3xl font-bold text-amber-600 mb-1">3x</div>
-                        <p className="text-sm text-slate-700">Higher profile views compared to incomplete profiles</p>
+                        <div className="text-2xl sm:text-3xl font-bold text-amber-600 mb-1">3x</div>
+                        <p className="text-xs sm:text-sm text-slate-700">Higher profile views</p>
                       </div>
                       <div className="text-center">
-                        <div className="text-3xl font-bold text-amber-600 mb-1">5x</div>
-                        <p className="text-sm text-slate-700">More interview requests with complete profiles</p>
+                        <div className="text-2xl sm:text-3xl font-bold text-amber-600 mb-1">5x</div>
+                        <p className="text-xs sm:text-sm text-slate-700">More interview requests</p>
                       </div>
                     </div>
                   </div>
-                  <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                    <p className="text-slate-700 leading-relaxed text-base">
-                      <span className="font-semibold text-amber-700">{80 - completion}% more to go!</span> Complete your profile to unlock employer visibility and maximize your job search opportunities.
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4">
+                    <p className="text-slate-700 leading-relaxed text-sm sm:text-base flex-1">
+                      <span className="font-semibold text-amber-700">{80 - completion}% more to go!</span> Complete your profile to unlock employer visibility.
                     </p>
                     <Link 
                       href="/account/profile" 
-                      className="bg-amber-500 hover:bg-amber-600 text-white font-bold px-8 py-3 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 whitespace-nowrap"
+                      className="bg-amber-500 hover:bg-amber-600 text-white font-bold px-6 sm:px-8 py-2.5 sm:py-3 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 whitespace-nowrap text-center text-sm sm:text-base min-h-[44px] flex items-center justify-center"
                     >
                       Complete Profile Now →
                     </Link>
                   </div>
                 </>
               ) : (
-                <div className="bg-white/80 rounded-xl p-5">
-                  <p className="text-slate-700 leading-relaxed text-base mb-4">
+                <div className="bg-white/80 rounded-lg sm:rounded-xl p-4 sm:p-5">
+                  <p className="text-slate-700 leading-relaxed text-sm sm:text-base mb-3 sm:mb-4">
                     🎉 Great job! Your profile is visible to employers. Keep it updated to maximize your opportunities.
                   </p>
                   <Link 
                     href="/account/profile" 
-                    className="inline-block font-semibold text-navy-800 hover:text-navy-600 transition-colors"
+                    className="inline-block font-semibold text-navy-800 hover:text-navy-600 transition-colors text-sm sm:text-base"
                   >
                     Update profile →
                   </Link>
@@ -536,50 +538,50 @@ export default function SeekerHomePage() {
             </div>
 
             {/* Stats Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
-              <Link href="/messages/candidate" className="bg-white rounded-2xl shadow-xl border-2 border-slate-200 p-6 sm:p-8 text-center group hover:shadow-2xl hover:border-sky-200 hover:-translate-y-1 transition-all duration-300">
-                <div className="w-16 h-16 mx-auto rounded-xl bg-gradient-to-br from-sky-100 to-sky-50 flex items-center justify-center mb-5 group-hover:from-sky-200 group-hover:to-sky-100 transition-all duration-300 shadow-sm">
-                  <MessageSquare className="h-7 w-7 text-navy-700" />
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
+              <Link href="/messages/candidate" className="bg-white rounded-xl sm:rounded-2xl shadow-lg sm:shadow-xl border-2 border-slate-200 p-5 sm:p-6 lg:p-8 text-center group hover:shadow-2xl hover:border-sky-200 hover:-translate-y-1 transition-all duration-300 active:scale-[0.98] flex flex-col items-center justify-center">
+                <div className="w-14 h-14 sm:w-16 sm:h-16 lg:w-20 lg:h-20 mx-auto rounded-xl bg-gradient-to-br from-sky-100 to-sky-50 flex items-center justify-center mb-4 sm:mb-5 group-hover:from-sky-200 group-hover:to-sky-100 transition-all duration-300 shadow-sm">
+                  <MessageSquare className="h-6 w-6 sm:h-7 sm:w-7 lg:h-8 lg:w-8 text-navy-700" />
                 </div>
-                <p className="text-5xl font-bold text-navy-900 mb-1">{isLoadingStats ? '...' : threads.length}</p>
-                <p className="text-slate-700 font-semibold mt-2">Messages</p>
+                <p className="text-4xl sm:text-5xl lg:text-6xl font-bold text-navy-900 mb-2">{isLoadingStats ? '...' : threads.length}</p>
+                <p className="text-sm sm:text-base lg:text-lg text-slate-700 font-semibold">Messages</p>
               </Link>
 
-              <Link href="/home/seeker/profile-views" className="bg-white rounded-2xl shadow-xl border-2 border-slate-200 p-6 sm:p-8 text-center group hover:shadow-2xl hover:border-sky-200 hover:-translate-y-1 transition-all duration-300 block">
-                <div className="w-16 h-16 mx-auto rounded-xl bg-gradient-to-br from-sky-100 to-sky-50 flex items-center justify-center mb-5 group-hover:from-sky-200 group-hover:to-sky-100 transition-all duration-300 shadow-sm">
-                  <Eye className="h-7 w-7 text-navy-700" />
+              <Link href="/home/seeker/profile-views" className="bg-white rounded-xl sm:rounded-2xl shadow-lg sm:shadow-xl border-2 border-slate-200 p-5 sm:p-6 lg:p-8 text-center group hover:shadow-2xl hover:border-sky-200 hover:-translate-y-1 transition-all duration-300 active:scale-[0.98] flex flex-col items-center justify-center">
+                <div className="w-14 h-14 sm:w-16 sm:h-16 lg:w-20 lg:h-20 mx-auto rounded-xl bg-gradient-to-br from-sky-100 to-sky-50 flex items-center justify-center mb-4 sm:mb-5 group-hover:from-sky-200 group-hover:to-sky-100 transition-all duration-300 shadow-sm">
+                  <Eye className="h-6 w-6 sm:h-7 sm:w-7 lg:h-8 lg:w-8 text-navy-700" />
                 </div>
-                <p className="text-5xl font-bold text-navy-900 mb-1">{isLoadingStats ? '...' : profileViews}</p>
-                <p className="text-slate-700 font-semibold mt-2">Profile Views</p>
+                <p className="text-4xl sm:text-5xl lg:text-6xl font-bold text-navy-900 mb-2">{isLoadingStats ? '...' : profileViews}</p>
+                <p className="text-sm sm:text-base lg:text-lg text-slate-700 font-semibold">Profile Views</p>
               </Link>
 
-              <Link href="/endorsements" className="bg-white rounded-2xl shadow-xl border-2 border-slate-200 p-6 sm:p-8 text-center group hover:shadow-2xl hover:border-sky-200 hover:-translate-y-1 transition-all duration-300 relative">
-                <div className="w-16 h-16 mx-auto rounded-xl bg-gradient-to-br from-sky-100 to-sky-50 flex items-center justify-center mb-5 relative group-hover:from-sky-200 group-hover:to-sky-100 transition-all duration-300 shadow-sm">
-                  <Star className="h-7 w-7 text-navy-700" />
+              <Link href="/endorsements" className="bg-white rounded-xl sm:rounded-2xl shadow-lg sm:shadow-xl border-2 border-slate-200 p-5 sm:p-6 lg:p-8 text-center group hover:shadow-2xl hover:border-sky-200 hover:-translate-y-1 transition-all duration-300 relative active:scale-[0.98] flex flex-col items-center justify-center">
+                <div className="w-14 h-14 sm:w-16 sm:h-16 lg:w-20 lg:h-20 mx-auto rounded-xl bg-gradient-to-br from-sky-100 to-sky-50 flex items-center justify-center mb-4 sm:mb-5 relative group-hover:from-sky-200 group-hover:to-sky-100 transition-all duration-300 shadow-sm">
+                  <Star className="h-6 w-6 sm:h-7 sm:w-7 lg:h-8 lg:w-8 text-navy-700" />
                   {!isLoadingStats && endorsements.length === 0 && (
-                    <span className="absolute -top-2 -right-2 bg-navy-800 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-md">NEW</span>
+                    <span className="absolute -top-2 -right-2 sm:-top-2.5 sm:-right-2.5 bg-navy-800 text-white text-[10px] sm:text-xs font-bold px-2 py-1 rounded-full shadow-md">NEW</span>
                   )}
                 </div>
-                <p className="text-5xl font-bold text-navy-900 mb-1">{isLoadingStats ? '...' : endorsements.length}</p>
-                <p className="text-slate-700 font-semibold mt-2">Endorsements</p>
+                <p className="text-4xl sm:text-5xl lg:text-6xl font-bold text-navy-900 mb-2">{isLoadingStats ? '...' : endorsements.length}</p>
+                <p className="text-sm sm:text-base lg:text-lg text-slate-700 font-semibold">Endorsements</p>
               </Link>
             </div>
 
             {/* Endorsement Promo Card */}
             {!isLoadingStats && endorsements.length === 0 && (
-              <div className="bg-gradient-to-br from-sky-50 to-white rounded-2xl shadow-xl border border-sky-100 p-6 sm:p-8 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
-                <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 bg-white rounded-lg flex items-center justify-center shadow-md flex-shrink-0 border border-sky-100">
-                    <Star className="h-7 w-7 text-navy-700" />
+              <div className="bg-gradient-to-br from-sky-50 to-white rounded-xl sm:rounded-2xl shadow-xl border border-sky-100 p-4 sm:p-6 lg:p-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-6">
+                <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
+                  <div className="w-12 h-12 sm:w-14 sm:h-14 bg-white rounded-lg flex items-center justify-center shadow-md flex-shrink-0 border border-sky-100">
+                    <Star className="h-6 w-6 sm:h-7 sm:w-7 text-navy-700" />
                   </div>
-                  <div>
-                    <h3 className="text-xl font-bold text-navy-900">Get Your First Endorsement</h3>
-                    <p className="text-slate-600 mt-1">Boost your profile credibility and stand out from the crowd.</p>
+                  <div className="min-w-0 flex-1">
+                    <h3 className="text-lg sm:text-xl font-bold text-navy-900">Get Your First Endorsement</h3>
+                    <p className="text-slate-600 mt-1 text-sm sm:text-base">Boost your profile credibility and stand out from the crowd.</p>
                   </div>
                 </div>
                 <Link
                   href="/endorsements"
-                  className="bg-navy-800 text-white font-semibold py-4 px-8 rounded-lg hover:bg-navy-700 transition-all duration-200 shadow-md hover:shadow-lg text-center whitespace-nowrap"
+                  className="bg-navy-800 text-white font-semibold py-3 sm:py-4 px-6 sm:px-8 rounded-lg hover:bg-navy-700 transition-all duration-200 shadow-md hover:shadow-lg text-center whitespace-nowrap text-sm sm:text-base min-h-[44px] flex items-center justify-center"
                 >
                   Get Endorsements
                 </Link>

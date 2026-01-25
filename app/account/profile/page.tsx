@@ -298,7 +298,7 @@ export default function EditProfilePage() {
     <div className="min-h-screen bg-slate-50">
       {/* Header */}
       <header className="sticky top-0 bg-white shadow-sm z-50 border-b border-slate-100">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
           <button
             onClick={() => {
               if (profile?.role === 'JOB_SEEKER') {
@@ -309,10 +309,11 @@ export default function EditProfilePage() {
                 router.push('/home');
               }
             }}
-            className="flex items-center gap-2 text-navy-800 hover:text-navy-600 transition-all duration-200 group px-3 py-2 rounded-lg hover:bg-sky-50 hover:shadow-md min-h-[44px]"
+            className="flex items-center gap-2 text-navy-800 hover:text-navy-600 transition-all duration-200 group px-3 py-2 rounded-lg hover:bg-sky-50 hover:shadow-md min-h-[48px]"
           >
-            <ArrowLeft className="h-5 w-5 group-hover:-translate-x-1 transition-transform" />
-            <span className="font-medium">Back to Dashboard</span>
+            <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5 group-hover:-translate-x-1 transition-transform" />
+            <span className="font-medium text-sm sm:text-base hidden sm:inline">Back to Dashboard</span>
+            <span className="font-medium text-sm sm:text-base sm:hidden">Back</span>
           </button>
           <Link href="/" className="shrink-0" aria-label="HireMe home">
             <img src="/logo.svg" alt="HireMe logo" className="h-7 sm:h-8 w-auto" role="img" aria-label="HireMe logo" />
@@ -320,20 +321,20 @@ export default function EditProfilePage() {
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-6 py-10">
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 py-4 sm:py-6 lg:py-10">
         {/* Page Header */}
-        <div className="mb-10">
-          <h1 className="text-3xl sm:text-4xl font-bold text-navy-900 tracking-tight">Skills & Certifications</h1>
-          <p className="text-slate-600 mt-2 text-lg">Complete your profile to increase visibility and connect with top employers.</p>
+        <div className="mb-4 sm:mb-6 lg:mb-10">
+          <h1 className="text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-bold text-navy-900 tracking-tight">Skills & Certifications</h1>
+          <p className="text-slate-600 mt-1 sm:mt-2 text-sm sm:text-base lg:text-lg">Complete your profile to increase visibility and connect with top employers.</p>
         </div>
         
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
           {/* Sidebar - Profile Completion */}
-          <div className="lg:col-span-1">
-            <div className="bg-white rounded-2xl shadow-xl border border-slate-100 p-6 sticky top-24">
-              <h2 className="text-lg font-bold text-navy-900 mb-4">Profile Completion</h2>
-              <div className="flex items-center justify-center mb-4">
-                <div className="relative w-24 h-24">
+          <div className="lg:col-span-1 order-2 lg:order-1">
+            <div className="bg-white rounded-2xl shadow-xl border border-slate-100 p-4 sm:p-5 lg:p-6 lg:sticky lg:top-24">
+              <h2 className="text-base sm:text-lg font-bold text-navy-900 mb-3 sm:mb-4">Profile Completion</h2>
+              <div className="flex items-center justify-center mb-3 sm:mb-4">
+                <div className="relative w-20 h-20 sm:w-24 sm:h-24">
                   <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
                     <defs>
                       <linearGradient id="profileCompletionGradient" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -354,91 +355,91 @@ export default function EditProfilePage() {
                     />
                   </svg>
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-2xl font-bold text-navy-900">{completion}%</span>
+                    <span className="text-xl sm:text-2xl font-bold text-navy-900">{completion}%</span>
                   </div>
                 </div>
               </div>
-              <p className="text-slate-600 text-sm text-center">{Math.floor(completion / 10)} of 10 sections completed</p>
+              <p className="text-slate-600 text-xs sm:text-sm text-center">{Math.floor(completion / 10)} of 10 sections completed</p>
             </div>
           </div>
 
           {/* Main Form Area */}
-          <div className="lg:col-span-3">
+          <div className="lg:col-span-3 order-1 lg:order-2">
 
-        <form onSubmit={handleSubmit} className="space-y-8">
+        <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6 lg:space-y-8">
           {/* Basic Information */}
-          <div className="bg-white rounded-2xl shadow-xl border border-slate-100 p-8">
-            <div className="flex items-center mb-6">
-              <div className="w-12 h-12 bg-sky-100 rounded-lg flex items-center justify-center mr-4">
-                <User className="h-6 w-6 text-navy-700" />
+          <div className="bg-white rounded-2xl shadow-xl border border-slate-100 p-4 sm:p-6 lg:p-8">
+            <div className="flex items-center mb-4 sm:mb-6">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-sky-100 rounded-lg flex items-center justify-center mr-3 sm:mr-4">
+                <User className="h-5 w-5 sm:h-6 sm:w-6 text-navy-700" />
               </div>
               <div className="flex-1">
-                <h3 className="text-xl font-bold text-navy-900">Basic Information</h3>
-                <p className="text-slate-600 text-sm">Your core personal details</p>
+                <h3 className="text-lg sm:text-xl font-bold text-navy-900">Basic Information</h3>
+                <p className="text-slate-600 text-xs sm:text-sm">Your core personal details</p>
               </div>
               {isBasicInfoComplete() && (
-                <div className="w-7 h-7 bg-green-500 rounded-full flex items-center justify-center">
-                  <Check className="h-4 w-4 text-white" />
+                <div className="w-6 h-6 sm:w-7 sm:h-7 bg-green-500 rounded-full flex items-center justify-center">
+                  <Check className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
                 </div>
               )}
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-6">
               <div>
-                <label className="block text-sm font-medium text-navy-900 mb-2">First Name *</label>
+                <label className="block text-xs sm:text-sm font-medium text-navy-900 mb-2">First Name *</label>
                 <input
                   type="text"
                   required
                   value={formData.firstName}
                   onChange={(e) => handleInputChange('firstName', e.target.value)}
-                  className="w-full h-12 px-4 rounded-lg bg-white border border-slate-200 text-navy-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-200 focus:border-sky-400 transition-all"
+                  className="w-full h-11 sm:h-12 px-4 rounded-lg bg-white border border-slate-200 text-navy-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-200 focus:border-sky-400 transition-all text-base"
                   placeholder="John"
                 />
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-navy-900 mb-2">Last Name *</label>
+                <label className="block text-xs sm:text-sm font-medium text-navy-900 mb-2">Last Name *</label>
                 <input
                   type="text"
                   required
                   value={formData.lastName}
                   onChange={(e) => handleInputChange('lastName', e.target.value)}
-                  className="w-full h-12 px-4 rounded-lg bg-white border border-slate-200 text-navy-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-200 focus:border-sky-400 transition-all"
+                  className="w-full h-11 sm:h-12 px-4 rounded-lg bg-white border border-slate-200 text-navy-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-200 focus:border-sky-400 transition-all text-base"
                   placeholder="Doe"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-navy-900 mb-2">Professional Headline</label>
+              <label className="block text-xs sm:text-sm font-medium text-navy-900 mb-2">Professional Headline</label>
               <input
                 type="text"
                 value={formData.headline}
                 onChange={(e) => handleInputChange('headline', e.target.value)}
-                className="w-full h-12 px-4 rounded-lg bg-white border border-slate-200 text-navy-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-200 focus:border-sky-400 transition-all"
+                className="w-full h-11 sm:h-12 px-4 rounded-lg bg-white border border-slate-200 text-navy-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-200 focus:border-sky-400 transition-all text-base"
                 placeholder="e.g., Computer Science Student | Full-Stack Developer"
               />
             </div>
           </div>
 
           {/* Education */}
-          <div className="bg-white rounded-2xl shadow-xl border border-slate-100 p-8">
-            <div className="flex items-center mb-6">
-              <div className="w-12 h-12 bg-sky-100 rounded-lg flex items-center justify-center mr-4">
-                <GraduationCap className="h-6 w-6 text-navy-700" />
+          <div className="bg-white rounded-2xl shadow-xl border border-slate-100 p-4 sm:p-6 lg:p-8">
+            <div className="flex items-center mb-4 sm:mb-6">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-sky-100 rounded-lg flex items-center justify-center mr-3 sm:mr-4">
+                <GraduationCap className="h-5 w-5 sm:h-6 sm:w-6 text-navy-700" />
               </div>
               <div className="flex-1">
-                <h3 className="text-xl font-bold text-navy-900">Education</h3>
-                <p className="text-slate-600 text-sm">Your academic background and achievements</p>
+                <h3 className="text-lg sm:text-xl font-bold text-navy-900">Education</h3>
+                <p className="text-slate-600 text-xs sm:text-sm">Your academic background and achievements</p>
               </div>
               {isEducationComplete() && (
-                <div className="w-7 h-7 bg-green-500 rounded-full flex items-center justify-center">
-                  <Check className="h-4 w-4 text-white" />
+                <div className="w-6 h-6 sm:w-7 sm:h-7 bg-green-500 rounded-full flex items-center justify-center">
+                  <Check className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
                 </div>
               )}
             </div>
             
-            <div className="flex justify-end mb-6">
+            <div className="flex justify-end mb-4 sm:mb-6">
               <button
                 type="button"
                 onClick={() => {
@@ -452,16 +453,16 @@ export default function EditProfilePage() {
                   }];
                   handleInputChange('education', newEducation);
                 }}
-                className="px-5 py-2.5 bg-navy-800 text-white text-sm font-semibold rounded-lg hover:bg-navy-700 transition-colors shadow-sm"
+                className="px-4 py-2 sm:px-5 sm:py-2.5 bg-navy-800 text-white text-xs sm:text-sm font-semibold rounded-lg hover:bg-navy-700 transition-colors shadow-sm min-h-[44px]"
               >
                 Add Education
               </button>
             </div>
             
             {formData.education.map((edu, index) => (
-              <div key={index} className="border border-slate-200 rounded-xl p-6 mb-4 bg-slate-50">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-navy-900">Education {index + 1}</h3>
+              <div key={index} className="border border-slate-200 rounded-xl p-4 sm:p-6 mb-4 bg-slate-50">
+                <div className="flex items-center justify-between mb-3 sm:mb-4">
+                  <h3 className="text-base sm:text-lg font-semibold text-navy-900">Education {index + 1}</h3>
                   {formData.education.length > 1 && (
                     <button
                       type="button"
@@ -469,14 +470,14 @@ export default function EditProfilePage() {
                         const newEducation = formData.education.filter((_, i) => i !== index);
                         handleInputChange('education', newEducation);
                       }}
-                      className="text-red-600 hover:text-red-700 text-sm font-medium transition-colors"
+                      className="text-red-600 hover:text-red-700 text-xs sm:text-sm font-medium transition-colors min-h-[44px] px-2"
                     >
                       Remove
                     </button>
                   )}
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 mb-3 sm:mb-4">
                   <SearchableDropdown
                     options={UNIVERSITIES}
                     value={edu.school}
@@ -536,7 +537,7 @@ export default function EditProfilePage() {
                   />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
                   <SearchableDropdown
                     options={GRADUATION_YEARS}
                     value={edu.graduationYear}
@@ -1027,50 +1028,49 @@ export default function EditProfilePage() {
           </div>
 
           {/* Profile Video */}
-          <div className="bg-white rounded-2xl shadow-xl border border-slate-100 p-8">
-            <div className="flex items-center mb-6">
-              <div className="w-12 h-12 bg-sky-100 rounded-lg flex items-center justify-center mr-4">
-                <Video className="h-6 w-6 text-navy-700" />
+          <div className="bg-white rounded-2xl shadow-xl border border-slate-100 p-4 sm:p-6 lg:p-8">
+            <div className="flex items-center mb-4 sm:mb-6">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-sky-100 rounded-lg flex items-center justify-center mr-3 sm:mr-4">
+                <Video className="h-5 w-5 sm:h-6 sm:w-6 text-navy-700" />
               </div>
               <div className="flex-1">
-                <h3 className="text-xl font-bold text-navy-900">Profile Video</h3>
-                <p className="text-slate-600 text-sm">Record a short video to introduce yourself</p>
+                <h3 className="text-lg sm:text-xl font-bold text-navy-900">Profile Video</h3>
+                <p className="text-slate-600 text-xs sm:text-sm">Record a short video to introduce yourself</p>
               </div>
               {isVideoComplete() && (
-                <div className="w-7 h-7 bg-green-500 rounded-full flex items-center justify-center">
-                  <Check className="h-4 w-4 text-white" />
+                <div className="w-6 h-6 sm:w-7 sm:h-7 bg-green-500 rounded-full flex items-center justify-center">
+                  <Check className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
                 </div>
               )}
             </div>
 
-            {/* Prominent Call-to-Action Box */}
+            {/* Prominent Call-to-Action Box - Optimized for Mobile */}
             {!isVideoComplete() && (
-              <div className="mb-6 bg-gradient-to-br from-sky-50 to-blue-50 border-2 border-sky-300 rounded-xl p-6">
-                <div className="flex items-start gap-4">
+              <div className="mb-4 sm:mb-6 bg-gradient-to-br from-sky-50 to-blue-50 border-2 border-sky-300 rounded-xl p-4 sm:p-6">
+                <div className="flex items-start gap-3 sm:gap-4">
                   <div className="flex-shrink-0">
-                    <div className="w-12 h-12 bg-sky-500 rounded-full flex items-center justify-center">
-                      <Video className="h-6 w-6 text-white" />
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-sky-500 rounded-full flex items-center justify-center">
+                      <Video className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
                     </div>
                   </div>
-                  <div className="flex-1">
-                    <h4 className="text-lg font-bold text-navy-900 mb-2">⭐ Add Your Profile Video to Stand Out</h4>
-                    <p className="text-navy-800 text-base leading-relaxed mb-3">
-                      <strong>Your video is how employers will gauge your personality, communication skills, and professionalism.</strong> Candidates with profile videos are <strong className="text-sky-600">significantly more likely</strong> to be contacted by employers looking for the perfect fit.
+                  <div className="flex-1 min-w-0">
+                    <h4 className="text-base sm:text-lg font-bold text-navy-900 mb-2">⭐ Add Your Profile Video</h4>
+                    <p className="text-sm sm:text-base text-navy-800 leading-relaxed mb-3">
+                      Your video helps employers gauge your personality and communication skills. Candidates with videos are <strong className="text-sky-600">significantly more likely</strong> to be contacted.
                     </p>
-                    <div className="bg-white/60 rounded-lg p-4 border border-sky-200">
-                      <p className="text-sm font-semibold text-navy-900 mb-2">Why it matters:</p>
-                      <ul className="text-sm text-navy-800 space-y-1.5">
+                    <div className="bg-white/60 rounded-lg p-3 sm:p-4 border border-sky-200">
+                      <ul className="text-xs sm:text-sm text-navy-800 space-y-1.5">
                         <li className="flex items-start">
-                          <Check className="h-4 w-4 text-sky-600 mr-2 mt-0.5 flex-shrink-0" />
-                          <span>Employers can see your communication style and personality firsthand</span>
+                          <Check className="h-3 w-3 sm:h-4 sm:w-4 text-sky-600 mr-2 mt-0.5 flex-shrink-0" />
+                          <span>See your communication style firsthand</span>
                         </li>
                         <li className="flex items-start">
-                          <Check className="h-4 w-4 text-sky-600 mr-2 mt-0.5 flex-shrink-0" />
-                          <span>You demonstrate professionalism and initiative by adding a video</span>
+                          <Check className="h-3 w-3 sm:h-4 sm:w-4 text-sky-600 mr-2 mt-0.5 flex-shrink-0" />
+                          <span>Demonstrates professionalism</span>
                         </li>
                         <li className="flex items-start">
-                          <Check className="h-4 w-4 text-sky-600 mr-2 mt-0.5 flex-shrink-0" />
-                          <span>Profiles with videos receive 3x more messages from employers</span>
+                          <Check className="h-3 w-3 sm:h-4 sm:w-4 text-sky-600 mr-2 mt-0.5 flex-shrink-0" />
+                          <span>3x more messages from employers</span>
                         </li>
                       </ul>
                     </div>
@@ -1080,12 +1080,12 @@ export default function EditProfilePage() {
             )}
             
             <div>
-              <label className="block text-sm font-medium text-navy-900 mb-4">
-                Profile Video {!isVideoComplete() && <span className="text-sky-600 font-semibold">(Highly Recommended)</span>} (Max 30 seconds)
+              <label className="block text-xs sm:text-sm font-medium text-navy-900 mb-2 sm:mb-4">
+                Profile Video {!isVideoComplete() && <span className="text-sky-600 font-semibold">(Highly Recommended)</span>} <span className="text-slate-500 font-normal">(Max 30 seconds)</span>
               </label>
               {!isVideoComplete() && (
-                <p className="text-sm text-slate-600 mb-4">
-                  Record a brief introduction highlighting your skills, experience, and what makes you a great candidate. Keep it under 30 seconds and be yourself!
+                <p className="text-xs sm:text-sm text-slate-600 mb-3 sm:mb-4">
+                  Record a brief introduction highlighting your skills and experience. Keep it under 30 seconds!
                 </p>
               )}
               <VideoUpload

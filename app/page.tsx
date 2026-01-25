@@ -925,30 +925,28 @@ export default function Home() {
                     <div 
                       key={step.id} 
                       id={`step-${step.id}`} 
-                      className={`transition-all duration-300 cursor-pointer ${isHovered ? 'opacity-100' : 'opacity-60 hover:opacity-80'}`}
+                      className={`transition-all duration-300 cursor-pointer opacity-100 lg:${isHovered ? 'opacity-100' : 'opacity-60'} lg:hover:opacity-80`}
                       onMouseEnter={() => setHoveredWorkflowIndex(index)}
                       onMouseLeave={() => setHoveredWorkflowIndex(null)}
                     >
-                      <div className={`flex items-start space-x-3 p-4 rounded-xl transition-all duration-300 ${
+                      <div className={`flex items-start space-x-3 p-4 rounded-xl transition-all duration-300 bg-white shadow-md lg:bg-transparent lg:shadow-none lg:${
                         isHovered 
                           ? 'bg-white shadow-lg' 
-                          : 'hover:bg-white/50'
-                      }`}>
+                          : ''
+                      } lg:hover:bg-white/50`}>
                         <div 
-                          className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 transition-all duration-300 ${
-                            isHovered 
-                              ? 'bg-gradient-to-br from-navy-600 to-navy-700' 
-                              : 'bg-gradient-to-br from-sky-100 to-sky-50 shadow-sm'
+                          className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 transition-all duration-300 bg-gradient-to-br from-navy-600 to-navy-700 lg:bg-gradient-to-br lg:from-sky-100 lg:to-sky-50 lg:shadow-sm workflow-icon-mobile ${
+                            isHovered ? 'lg:from-navy-600 lg:to-navy-700' : ''
                           }`}
                           style={isHovered ? { animation: 'iconPulse 2s ease-in-out infinite' } : {}}
                         >
-                          <i className={`fa-solid ${step.icon} text-base transition-colors duration-300 ${
-                            isHovered ? 'text-white' : 'text-navy-700'
+                          <i className={`fa-solid ${step.icon} text-base transition-colors duration-300 text-white lg:text-navy-700 ${
+                            isHovered ? 'lg:text-white' : ''
                           }`}></i>
                         </div>
                         <div>
                           <h3 className="text-lg lg:text-xl font-bold text-navy-900 mb-2">{step.title}</h3>
-                          <p className="text-sm text-slate-600 leading-relaxed">{step.description}</p>
+                          <p className="text-sm text-slate-700 lg:text-slate-600 leading-relaxed">{step.description}</p>
                         </div>
                       </div>
                     </div>
@@ -956,7 +954,7 @@ export default function Home() {
                 })}
               </div>
 
-              <div className="w-full lg:w-1/2 flex items-center justify-center">
+              <div className="hidden lg:flex w-full lg:w-1/2 items-center justify-center">
                 <div className="relative w-[300px] h-[300px] lg:w-[375px] lg:h-[375px]">
                   <div className="absolute inset-0 flex items-center justify-center">
                     <div className="w-24 h-24 bg-gradient-to-br from-navy-800 to-navy-900 rounded-full flex items-center justify-center shadow-2xl z-10">
@@ -1034,7 +1032,8 @@ export default function Home() {
                 </button>
               </div>
             </div>
-            <div className="bg-white rounded-2xl shadow-xl overflow-hidden border-2 border-slate-100">
+            {/* Desktop Table View - Hidden on mobile */}
+            <div className="hidden lg:block bg-white rounded-2xl shadow-xl overflow-hidden border-2 border-slate-100">
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
@@ -1095,6 +1094,53 @@ export default function Home() {
                   </tbody>
                 </table>
               </div>
+            </div>
+
+            {/* Mobile Card View - Hidden on desktop */}
+            <div className="lg:hidden space-y-4">
+              {comparisonData[comparisonView].map((section, sectionIndex) => (
+                <div key={sectionIndex} className="space-y-3">
+                  <div className="px-4 py-2 bg-slate-100 rounded-lg">
+                    <h3 className="text-xs font-semibold tracking-wider text-slate-600 uppercase">{section.group}</h3>
+                  </div>
+                  {section.rows.map((row) => (
+                    <div key={row.key} className="bg-white rounded-xl border-2 border-slate-100 shadow-sm overflow-hidden">
+                      <div className="p-4 border-b border-slate-100">
+                        <h4 className="font-semibold text-navy-900 text-sm mb-1.5">{row.label}</h4>
+                        <p className="text-xs text-slate-600 leading-relaxed">{row.description}</p>
+                      </div>
+                      <div className="p-4 grid grid-cols-2 gap-3">
+                        {/* HireMe */}
+                        <div className={`flex items-center justify-between p-3 rounded-lg ${row.highlight ? 'bg-sky-50 border-2 border-sky-200' : 'bg-slate-50'}`}>
+                          <div className="flex items-center space-x-2">
+                            <span className="inline-flex items-center space-x-1 bg-gradient-to-r from-navy-800 to-navy-900 text-white px-2 py-0.5 rounded text-[10px] font-bold">
+                              <i className="fa-solid fa-star text-sky-300"></i>
+                              <span>Best</span>
+                            </span>
+                            <span className="font-semibold text-navy-900 text-xs">HireMe</span>
+                          </div>
+                          <i className={`fa-solid ${row.hireme ? 'fa-check text-green-500' : 'fa-times text-red-500'} text-lg`}></i>
+                        </div>
+                        {/* LinkedIn */}
+                        <div className="flex items-center justify-between p-3 rounded-lg bg-white border border-slate-200">
+                          <span className="font-medium text-slate-700 text-xs">LinkedIn</span>
+                          <i className={`fa-solid ${row.linkedin ? 'fa-check text-green-500' : 'fa-times text-red-500'} text-lg`}></i>
+                        </div>
+                        {/* Handshake */}
+                        <div className="flex items-center justify-between p-3 rounded-lg bg-white border border-slate-200">
+                          <span className="font-medium text-slate-700 text-xs">Handshake</span>
+                          <i className={`fa-solid ${row.handshake ? 'fa-check text-green-500' : 'fa-times text-red-500'} text-lg`}></i>
+                        </div>
+                        {/* Indeed */}
+                        <div className="flex items-center justify-between p-3 rounded-lg bg-white border border-slate-200">
+                          <span className="font-medium text-slate-700 text-xs">Indeed</span>
+                          <i className={`fa-solid ${row.indeed ? 'fa-check text-green-500' : 'fa-times text-red-500'} text-lg`}></i>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ))}
             </div>
           </div>
         </section>

@@ -7,11 +7,12 @@ export default function ConditionalLayout({ children }: { children: React.ReactN
   const pathname = usePathname();
   const isLandingPage = pathname === '/';
   const isSignupPage = pathname?.startsWith('/auth/signup');
+  const isLoginPage = pathname === '/auth/login';
 
   return (
     <>
-      {!isLandingPage && !isSignupPage && <SiteHeader />}
-      {!isLandingPage && !isSignupPage && <EmailVerificationBanner />}
+      {!isLandingPage && !isSignupPage && !isLoginPage && <SiteHeader />}
+      {!isLandingPage && !isSignupPage && !isLoginPage && <EmailVerificationBanner />}
       {children}
     </>
   );

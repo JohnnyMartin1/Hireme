@@ -17,7 +17,7 @@ export default function SeekerSignupPage() {
     password: "",
     confirmPassword: "",
     school: "",
-    major: "",
+    majors: [""], // Array to support up to 2 majors
     minor: "",
     graduationYear: "",
   });
@@ -40,6 +40,32 @@ export default function SeekerSignupPage() {
     setFormData(prev => ({
       ...prev,
       [field]: value
+    }));
+  };
+
+  const handleMajorChange = (index: number, value: string) => {
+    setFormData(prev => {
+      const newMajors = [...prev.majors];
+      newMajors[index] = value;
+      // If first major is filled and we don't have a second slot, add it
+      if (index === 0 && value && newMajors.length === 1) {
+        newMajors.push("");
+      }
+      // Remove empty majors at the end (but keep at least one)
+      while (newMajors.length > 1 && newMajors[newMajors.length - 1] === "" && newMajors[newMajors.length - 2] === "") {
+        newMajors.pop();
+      }
+      return {
+        ...prev,
+        majors: newMajors
+      };
+    });
+  };
+
+  const removeMajor = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      majors: prev.majors.filter((_, i) => i !== index)
     }));
   };
 
@@ -138,8 +164,9 @@ export default function SeekerSignupPage() {
       return;
     }
 
-    if (!formData.school || !formData.major || !formData.graduationYear) {
-      setError("University, major, and graduation year are required");
+    const validMajors = formData.majors.filter(m => m.trim() !== "");
+    if (!formData.school || validMajors.length === 0 || !formData.graduationYear) {
+      setError("University, at least one major, and graduation year are required");
       return;
     }
 
@@ -161,13 +188,15 @@ export default function SeekerSignupPage() {
 
       if (user) {
         // Create user profile in Firestore
+        const validMajors = formData.majors.filter(m => m.trim() !== "");
         const profileData = {
           firstName: formData.firstName,
           lastName: formData.lastName,
           email: formData.email,
           role: 'JOB_SEEKER',
           school: formData.school,
-          major: formData.major,
+          major: validMajors[0] || '', // Keep first major for backward compatibility
+          majors: validMajors, // Store as array
           minor: formData.minor || '',
           graduationYear: formData.graduationYear,
           createdAt: new Date(),
@@ -209,7 +238,7 @@ export default function SeekerSignupPage() {
     <main className="min-h-screen sm:h-screen flex flex-col lg:flex-row bg-brand-gray overflow-hidden mobile-safe-top mobile-safe-bottom">
       {/* Left Column - Content & Form */}
       <div className="w-full lg:w-[48%] flex flex-col justify-center p-4 sm:p-6 md:p-8 bg-white relative overflow-y-auto">
-        <div className="flex-grow flex flex-col justify-center w-full max-w-[560px] mx-auto py-6 sm:py-0">
+        <div className="flex-grow flex flex-col justify-center w-full max-w-[560px] mx-auto py-6 sm:py-0 pb-20 sm:pb-0">
           {/* Progress Stepper */}
           <div className="flex flex-wrap items-center gap-2 sm:flex-nowrap sm:gap-4 text-xs sm:text-sm mb-6 sm:mb-8">
             <div className={`flex items-center ${currentStep >= 1 ? 'text-navy-800 font-semibold' : 'text-text-secondary'} whitespace-nowrap gap-2`}>
@@ -285,22 +314,28 @@ export default function SeekerSignupPage() {
                 <p className="text-sm text-text-secondary">We'll email a 6-digit code to verify your address.</p>
                 
                 {emailSent && (
-                  <div className="space-y-6">
+                  <div className="space-y-6 pb-32 sm:pb-6">
                     <div className="text-sm text-success-green">Code sent to {formData.email}</div>
-                    <div className="grid grid-cols-6 gap-2 sm:gap-3">
+                    <div className="grid grid-cols-6 gap-2 sm:gap-3 justify-center">
                       {[1, 2, 3, 4, 5, 6].map((digit) => (
                         <input 
                           key={digit}
-                          type="text" 
+                          type="tel"
+                          inputMode="numeric"
+                          pattern="[0-9]*"
                           maxLength={1}
                           value={verificationCode[digit - 1] || ''}
                           onChange={(e) => {
+                            // Only allow numeric input
+                            const value = e.target.value.replace(/[^0-9]/g, '');
+                            if (value.length > 1) return; // Only single digit
+                            
                             const newCode = verificationCode.split('');
-                            newCode[digit - 1] = e.target.value;
+                            newCode[digit - 1] = value;
                             setVerificationCode(newCode.join(''));
                             
                             // Auto-advance to next input if a digit was entered
-                            if (e.target.value && digit < 6) {
+                            if (value && digit < 6) {
                               const nextInput = document.querySelector(`input[data-digit="${digit + 1}"]`) as HTMLInputElement;
                               if (nextInput) {
                                 nextInput.focus();
@@ -321,6 +356,10 @@ export default function SeekerSignupPage() {
                             }
                           }}
                           onKeyDown={(e) => {
+                            // Only allow numeric keys, backspace, delete, arrow keys
+                            if (!/[0-9]/.test(e.key) && !['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab', 'Enter'].includes(e.key)) {
+                              e.preventDefault();
+                            }
                             // Handle backspace to go to previous input
                             if (e.key === 'Backspace' && !e.currentTarget.value && digit > 1) {
                               const prevInput = document.querySelector(`input[data-digit="${digit - 1}"]`) as HTMLInputElement;
@@ -334,7 +373,7 @@ export default function SeekerSignupPage() {
                             }
                           }}
                           data-digit={digit}
-                          className="w-10 h-12 sm:w-12 sm:h-14 text-center text-lg sm:text-xl font-bold border border-slate-200 rounded-xl focus:border-navy-800 focus:outline-none transition-all duration-200"
+                          className="w-12 h-14 sm:w-12 sm:h-14 text-center text-xl sm:text-xl font-bold border-2 border-slate-200 rounded-xl focus:border-navy-800 focus:outline-none transition-all duration-200 min-h-[56px]"
                         />
                       ))}
                     </div>
@@ -343,7 +382,7 @@ export default function SeekerSignupPage() {
                       type="button" 
                       onClick={verifyCode}
                       disabled={isLoading || verificationCode.length !== 6}
-                      className="w-full bg-navy-800 text-white py-4 rounded-xl font-semibold hover:bg-opacity-90 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-full bg-navy-800 text-white py-4 rounded-xl font-semibold hover:bg-opacity-90 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed min-h-[48px]"
                     >
                       {isLoading ? (
                         <i className="fa-solid fa-spinner animate-spin"></i>
@@ -401,7 +440,9 @@ export default function SeekerSignupPage() {
                   </span>
                 </div>
 
+                {/* College Section */}
                 <div>
+                  <label className="block text-xs font-medium text-slate-500 mb-2 uppercase tracking-wide">College</label>
                   <SearchableDropdown
                     options={UNIVERSITIES}
                     value={formData.school}
@@ -413,28 +454,64 @@ export default function SeekerSignupPage() {
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <SearchableDropdown
-                      options={MAJORS}
-                      value={formData.major}
-                      onChange={(value) => handleDropdownChange('major', value)}
-                      placeholder="Select your major"
-                      label="Major"
-                      required
-                      allowCustom
-                    />
+                {/* Majors Section */}
+                <div>
+                  <label className="block text-xs font-medium text-slate-500 mb-2 uppercase tracking-wide">Majors</label>
+                  <div className="space-y-3">
+                    {formData.majors.map((major, index) => (
+                      <div key={index} className="flex items-start gap-2">
+                        <div className="flex-1">
+                          <SearchableDropdown
+                            options={MAJORS}
+                            value={major}
+                            onChange={(value) => handleMajorChange(index, value)}
+                            placeholder={index === 0 ? "Select your major" : "Select second major (optional)"}
+                            label={index === 0 ? "Major" : `Major ${index + 1}`}
+                            required={index === 0}
+                            allowCustom
+                          />
+                        </div>
+                        {index > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => removeMajor(index)}
+                            className="mt-8 p-2 text-slate-400 hover:text-red-500 transition-colors"
+                            aria-label="Remove major"
+                          >
+                            <i className="fa-solid fa-times"></i>
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                    {formData.majors.length < 2 && formData.majors[0] && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setFormData(prev => ({
+                            ...prev,
+                            majors: [...prev.majors, ""]
+                          }));
+                        }}
+                        className="text-sm text-navy-800 hover:text-navy-600 font-medium flex items-center gap-2"
+                      >
+                        <i className="fa-solid fa-plus"></i>
+                        Add Second Major
+                      </button>
+                    )}
                   </div>
-                  <div>
-                    <SearchableDropdown
-                      options={MINORS}
-                      value={formData.minor}
-                      onChange={(value) => handleDropdownChange('minor', value)}
-                      placeholder="Select your minor (optional)"
-                      label="Minor"
-                      allowCustom
-                    />
-                  </div>
+                </div>
+
+                {/* Minor Section */}
+                <div>
+                  <label className="block text-xs font-medium text-slate-500 mb-2 uppercase tracking-wide">Minor</label>
+                  <SearchableDropdown
+                    options={MINORS}
+                    value={formData.minor}
+                    onChange={(value) => handleDropdownChange('minor', value)}
+                    placeholder="Select your minor (optional)"
+                    label="Minor"
+                    allowCustom
+                  />
                 </div>
 
                 <div>
@@ -534,10 +611,18 @@ export default function SeekerSignupPage() {
                   Welcome, {formData.firstName} — ready to get hired?
                 </h1>
                 <p className="text-lg text-text-secondary">
-                  Let's finish setting up your profile so employers can discover your amazing potential.
+                  Let's finish setting up your profile so<br />employers can discover your amazing<br />potential.
                 </p>
                 <button 
-                  onClick={() => router.push("/auth/signup/seeker/steps")}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    try {
+                      router.replace("/auth/signup/seeker/steps");
+                    } catch (err) {
+                      console.error('Navigation error:', err);
+                      window.location.href = "/auth/signup/seeker/steps";
+                    }
+                  }}
                   className="bg-navy-800 text-white px-8 py-4 rounded-xl font-semibold hover:bg-opacity-90 transition-all duration-200"
                 >
                   Start profile setup
