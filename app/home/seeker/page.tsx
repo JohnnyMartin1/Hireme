@@ -412,10 +412,9 @@ export default function SeekerHomePage() {
       )}
 
     <main className="min-h-screen bg-slate-50 mobile-safe-top mobile-safe-bottom overflow-x-hidden w-full">
-      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 xl:px-8 pt-32 sm:pt-20 pb-6 sm:pb-8 lg:pb-10 lg:pt-20 lg:pb-12">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 xl:px-8 pt-20 sm:pt-18 lg:pt-22 pb-6 sm:pb-8 lg:pb-10 lg:pb-12">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
           <div className="lg:col-span-2 space-y-4 sm:space-y-6 lg:space-y-8">
-            
             {/* Welcome Banner */}
             <section className="bg-gradient-to-br from-navy-800 via-navy-800 to-navy-900 text-white p-4 sm:p-5 lg:p-6 rounded-xl sm:rounded-2xl shadow-xl">
               <div className="flex items-center gap-3 sm:gap-4 lg:gap-5">
@@ -448,12 +447,12 @@ export default function SeekerHomePage() {
 
             {/* Profile Completion Card - Prominent Alert */}
             <div className={`rounded-xl sm:rounded-2xl shadow-xl border-2 p-4 sm:p-6 lg:p-8 hover:shadow-2xl transition-all duration-300 ${
-              completion < 80 
+              completion < 70 
                 ? 'bg-gradient-to-br from-amber-50 to-orange-50 border-amber-300' 
                 : 'bg-gradient-to-br from-green-50 to-emerald-50 border-green-300'
             }`}>
               {/* Alert Banner */}
-              {completion < 80 && (
+              {completion < 70 && (
                 <div className="bg-amber-500 text-white rounded-lg sm:rounded-xl p-3 sm:p-4 mb-4 sm:mb-6 shadow-lg">
                   <div className="flex items-start gap-2 sm:gap-3">
                     <div className="flex-shrink-0 mt-0.5">
@@ -464,7 +463,7 @@ export default function SeekerHomePage() {
                     <div className="flex-1 min-w-0">
                       <h3 className="font-bold text-base sm:text-lg mb-1">Profile Visibility Requirement</h3>
                       <p className="text-amber-50 text-xs sm:text-sm leading-relaxed">
-                        <strong className="text-white">Your profile must be at least 80% complete</strong> for employers to view it. Complete your profile now!
+                        <strong className="text-white">Your profile must be at least 70% complete</strong> for employers to view it. Complete your profile now!
                       </p>
                     </div>
                   </div>
@@ -474,7 +473,7 @@ export default function SeekerHomePage() {
               <div className="flex justify-between items-center mb-4 sm:mb-5">
                 <h2 className="text-xl sm:text-2xl font-bold text-navy-900">Profile Completion</h2>
                 <span className={`text-2xl sm:text-3xl font-bold px-3 sm:px-5 py-1.5 sm:py-2 rounded-full border-2 ${
-                  completion < 80 
+                  completion < 70 
                     ? 'bg-white text-amber-600 border-amber-300' 
                     : 'bg-white text-green-600 border-green-300'
                 }`}>{completion}%</span>
@@ -483,7 +482,7 @@ export default function SeekerHomePage() {
               <div className="w-full bg-slate-200 rounded-full h-3 sm:h-4 mb-4 sm:mb-6 shadow-inner">
                 <div 
                   className={`h-3 sm:h-4 rounded-full transition-all duration-500 ease-out shadow-sm ${
-                    completion < 80 
+                    completion < 70 
                       ? 'bg-gradient-to-r from-amber-500 to-orange-500' 
                       : 'bg-gradient-to-r from-green-500 to-emerald-500'
                   }`}
@@ -491,7 +490,7 @@ export default function SeekerHomePage() {
                 />
               </div>
 
-              {completion < 80 ? (
+              {completion < 70 ? (
                 <>
                   <div className="bg-white/80 rounded-lg sm:rounded-xl p-4 sm:p-5 mb-4 sm:mb-6 border border-amber-200">
                     <h4 className="font-bold text-navy-900 mb-3 sm:mb-4 text-base sm:text-lg">Why complete your profile?</h4>
@@ -512,7 +511,7 @@ export default function SeekerHomePage() {
                   </div>
                   <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4">
                     <p className="text-slate-700 leading-relaxed text-sm sm:text-base flex-1">
-                      <span className="font-semibold text-amber-700">{80 - completion}% more to go!</span> Complete your profile to unlock employer visibility.
+                      <span className="font-semibold text-amber-700">{70 - completion}% more to go!</span> Complete your profile to unlock employer visibility.
                     </p>
                     <Link 
                       href="/account/profile" 

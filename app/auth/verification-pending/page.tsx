@@ -2,7 +2,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useFirebaseAuth } from "@/components/FirebaseAuthProvider";
-import { Clock, Mail, CheckCircle, Building2 } from "lucide-react";
+import { Clock, Mail, CheckCircle, Building2, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 
 export default function VerificationPendingPage() {
@@ -34,19 +34,37 @@ export default function VerificationPendingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-      <div className="max-w-2xl w-full bg-white rounded-xl shadow-lg p-8">
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-orange-100 rounded-full mb-4">
-            <Clock className="h-8 w-8 text-orange-600" />
-          </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Registration Under Review
-          </h1>
-          <p className="text-gray-600">
-            Your company registration has been submitted successfully!
-          </p>
+    <div className="min-h-screen bg-slate-50 mobile-safe-top mobile-safe-bottom">
+      {/* Header */}
+      <header className="sticky top-0 bg-white shadow-sm z-50 border-b border-slate-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
+          <Link
+            href="/"
+            className="flex items-center gap-2 text-navy-800 hover:text-navy-600 transition-all duration-200 group px-3 py-2 rounded-lg hover:bg-sky-50 hover:shadow-md min-h-[44px]"
+          >
+            <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform duration-200" />
+            <span className="font-medium text-sm hidden sm:inline">Back to Home</span>
+            <span className="font-medium text-sm sm:hidden">Back</span>
+          </Link>
+          <Link href="/" className="shrink-0" aria-label="HireMe home">
+            <img src="/logo.svg" alt="HireMe logo" className="h-7 sm:h-8 w-auto" role="img" aria-label="HireMe logo" />
+          </Link>
         </div>
+      </header>
+
+      <div className="flex items-center justify-center p-4 min-h-[calc(100vh-80px)]">
+        <div className="max-w-2xl w-full bg-white rounded-xl shadow-lg p-8">
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-orange-100 rounded-full mb-4">
+              <Clock className="h-8 w-8 text-orange-600" />
+            </div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              Registration Under Review
+            </h1>
+            <p className="text-gray-600">
+              Your company registration has been submitted successfully!
+            </p>
+          </div>
 
         <div className="space-y-6 mb-8">
           {/* Email Verification Step */}
@@ -132,6 +150,7 @@ export default function VerificationPendingPage() {
           >
             Return to Home
           </Link>
+        </div>
         </div>
       </div>
     </div>

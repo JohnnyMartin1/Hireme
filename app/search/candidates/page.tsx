@@ -98,15 +98,22 @@ export default function SearchCandidatesPage() {
       if (error || !candidateProfiles) {
         setCandidates([]);
       } else {
-        // Filter out profiles without basic information and ensure 80%+ completion
+        // Check if user is admin - admins can see all profiles regardless of completion
+        const isAdmin = user?.email === 'officialhiremeapp@gmail.com' || profile?.role === 'ADMIN';
+        
+        // Filter out profiles without basic information and ensure 70%+ completion (unless admin)
         const validCandidates = candidateProfiles.filter((candidate: any) => {
           if (!candidate.firstName || !candidate.lastName || !candidate.email) {
             return false;
           }
+          // Admins can see all profiles, others need 70%+ completion
+          if (isAdmin) {
+            return true;
+          }
           // Calculate completion percentage
           const completion = calculateCompletion(candidate);
-          // Only show candidates with 80% or more completion
-          return completion >= 80;
+          // Only show candidates with 70% or more completion
+          return completion >= 70;
         }) as Candidate[];
         setCandidates(validCandidates);
       }
@@ -221,15 +228,22 @@ export default function SearchCandidatesPage() {
           );
         }
 
-        // Filter out profiles without basic information and ensure 80%+ completion
+        // Check if user is admin - admins can see all profiles regardless of completion
+        const isAdmin = user?.email === 'officialhiremeapp@gmail.com' || profile?.role === 'ADMIN';
+        
+        // Filter out profiles without basic information and ensure 70%+ completion (unless admin)
         const validCandidates = filteredCandidates.filter((candidate: any) => {
           if (!candidate.firstName || !candidate.lastName || !candidate.email) {
             return false;
           }
+          // Admins can see all profiles, others need 70%+ completion
+          if (isAdmin) {
+            return true;
+          }
           // Calculate completion percentage
           const completion = calculateCompletion(candidate);
-          // Only show candidates with 80% or more completion
-          return completion >= 80;
+          // Only show candidates with 70% or more completion
+          return completion >= 70;
         }) as Candidate[];
         
         setCandidates(validCandidates);

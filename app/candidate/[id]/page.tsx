@@ -113,11 +113,16 @@ export default function CandidateProfilePage() {
           }
 
           // If user is an employer/recruiter viewing someone else's profile, check completion
+          // Admins can view any profile regardless of completion
           if (user && user.uid !== params.id && (profile?.role === 'EMPLOYER' || profile?.role === 'RECRUITER')) {
-            const completion = calculateCompletion(data);
-            if (completion < 80) {
-              setError('This candidate profile is not yet complete. Profiles must be at least 80% complete to be visible to employers.');
-              return;
+            // Allow admins to bypass completion check
+            const isAdmin = user.email === 'officialhiremeapp@gmail.com' || profile?.role === 'ADMIN';
+            if (!isAdmin) {
+              const completion = calculateCompletion(data);
+              if (completion < 70) {
+                setError('This candidate profile is not yet complete. Profiles must be at least 70% complete to be visible to employers.');
+                return;
+              }
             }
           }
 
@@ -125,7 +130,7 @@ export default function CandidateProfilePage() {
         }
 
         // Track profile view if user is logged in and viewing someone else's profile
-        // Only track for employers/recruiters if profile is 80%+ complete (already checked above)
+        // Only track for employers/recruiters if profile is 70%+ complete (already checked above)
         if (user && user.uid !== params.id) {
           await trackProfileView(params.id as string, user.uid);
         }
