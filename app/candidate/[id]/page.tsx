@@ -114,10 +114,12 @@ export default function CandidateProfilePage() {
 
           // If user is an employer/recruiter viewing someone else's profile, check completion
           // Admins can view any profile regardless of completion
-          if (user && user.uid !== params.id && (profile?.role === 'EMPLOYER' || profile?.role === 'RECRUITER')) {
-            // Allow admins to bypass completion check
+          if (user && user.uid !== params.id) {
+            // Check if user is admin (by email or role)
             const isAdmin = user.email === 'officialhiremeapp@gmail.com' || profile?.role === 'ADMIN';
-            if (!isAdmin) {
+            
+            // Only check completion for employers/recruiters (not admins)
+            if (!isAdmin && (profile?.role === 'EMPLOYER' || profile?.role === 'RECRUITER')) {
               const completion = calculateCompletion(data);
               if (completion < 70) {
                 setError('This candidate profile is not yet complete. Profiles must be at least 70% complete to be visible to employers.');
