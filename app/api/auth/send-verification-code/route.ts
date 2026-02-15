@@ -85,6 +85,11 @@ export async function POST(request: NextRequest) {
               <p style="margin: 20px 0 0; color: #6b7280; font-size: 14px; line-height: 1.6;">
                 This code will expire in <strong>10 minutes</strong> for security reasons.
               </p>
+              
+              <!-- Hidden text for browser autofill (Web OTP API) -->
+              <p style="margin: 20px 0 0; color: transparent; font-size: 1px; line-height: 1px; opacity: 0; position: absolute; left: -9999px;">
+                @hireme.com #${code}
+              </p>
             </td>
           </tr>
 
@@ -118,6 +123,8 @@ This code will expire in 10 minutes.
 If you didn't request this code, you can safely ignore this email.
 
 © ${new Date().getFullYear()} HireMe. All rights reserved.
+
+@hireme.com #${code}
       `
     });
 

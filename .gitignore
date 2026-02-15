@@ -22,3 +22,10 @@ coverage
 .prisma
 prisma/*.db
 prisma/*.db-journal
+
+# Capacitor iOS
+ios/
+*.xcworkspace
+!default.xcworkspace
+**/ios/Pods/
+**/ios/.xcode.env.local

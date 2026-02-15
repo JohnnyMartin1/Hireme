@@ -98,11 +98,18 @@ export default function EndorseFormPage() {
       <header className="sticky top-0 bg-white shadow-sm z-50 border-b border-slate-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
           <button
-            onClick={() => router.back()}
+            onClick={() => {
+              if (typeof window !== 'undefined' && window.history.length > 1) {
+                router.back();
+              } else {
+                router.push('/');
+              }
+            }}
             className="flex items-center gap-2 text-navy-800 hover:text-navy-600 transition-all duration-200 group px-3 py-2 rounded-lg hover:bg-sky-50 hover:shadow-md min-h-[44px]"
           >
-            <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform duration-200" />
-            <span className="font-medium text-sm hidden sm:inline">Back</span>
+            <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5 group-hover:-translate-x-1 transition-transform duration-200" />
+            <span className="font-medium text-sm sm:text-base hidden sm:inline">Back</span>
+            <span className="font-medium text-sm sm:text-base sm:hidden">Back</span>
           </button>
           <Link href="/" className="shrink-0" aria-label="HireMe home">
             <img src="/logo.svg" alt="HireMe logo" className="h-7 sm:h-8 w-auto" role="img" aria-label="HireMe logo" />

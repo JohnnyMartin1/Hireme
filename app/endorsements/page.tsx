@@ -96,7 +96,7 @@ export default function EndorsementsPage() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-6 py-12 lg:py-16">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-12 lg:py-16">
         {/* Page Header */}
         <div className="text-center mb-12 lg:mb-14">
           <div className="flex items-center justify-center mb-4">
@@ -110,12 +110,12 @@ export default function EndorsementsPage() {
 
         {/* Endorsement Summary Card */}
         <section className="bg-white rounded-2xl shadow-xl border border-slate-100 p-8 mb-8 hover:shadow-2xl transition-shadow duration-300">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
-            <div className="flex-1">
+          <div className="flex flex-col sm:flex-row items-center sm:items-center justify-center sm:justify-between gap-6">
+            <div className="flex-1 text-center sm:text-left">
               <h2 className="text-xl font-bold text-navy-900 mb-2">Endorsement Summary</h2>
               <p className="text-slate-600 leading-relaxed">You have received <span className="font-bold text-navy-900">{endorsements.length}</span> endorsements.</p>
             </div>
-            <div className="text-center sm:text-right">
+            <div className="text-center">
               <p className="text-5xl font-bold text-navy-900">{endorsements.length}</p>
               <p className="text-xs font-semibold tracking-wider text-slate-500 uppercase mt-1">Total Endorsements</p>
             </div>
@@ -124,11 +124,11 @@ export default function EndorsementsPage() {
         
         {/* Share Link Promo Card */}
         <section className="bg-gradient-to-br from-navy-800 to-navy-900 text-white p-8 lg:p-10 rounded-2xl shadow-xl mb-8 hover:shadow-2xl transition-shadow duration-300">
-          <div className="flex items-start space-x-4 mb-6">
+          <div className="flex flex-col sm:flex-row items-center sm:items-start space-y-4 sm:space-y-0 sm:space-x-4 mb-6">
             <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center flex-shrink-0">
               <MessageSquare className="w-6 h-6 text-white" />
             </div>
-            <div className="flex-1">
+            <div className="flex-1 text-center sm:text-left">
               <h2 className="text-2xl font-bold mb-2">Share Your Endorsement Link</h2>
               <p className="text-sky-200 leading-relaxed">Send this link to colleagues, managers, professors, or anyone who can vouch for your skills and experience.</p>
             </div>

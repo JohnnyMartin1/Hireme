@@ -7,6 +7,7 @@ import { signInWithFirebase } from "@/lib/firebase-auth";
 import { getDocument } from "@/lib/firebase-firestore";
 import { useFirebaseAuth } from "@/components/FirebaseAuthProvider";
 import type { UserProfile } from "@/types/user";
+import { isCapacitor } from "@/lib/capacitor";
 
 
 export default function LoginPage() {
@@ -16,6 +17,14 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const { user, profile, loading: authLoading } = useFirebaseAuth();
+
+  // If in Capacitor app and not logged in, redirect to home to show mobile landing
+  useEffect(() => {
+    if (isCapacitor() && !authLoading && !user) {
+      console.log('In Capacitor app, redirecting to home for mobile landing page');
+      router.replace('/');
+    }
+  }, [isCapacitor(), authLoading, user, router]);
 
   // Redirect if already logged in (only once)
   useEffect(() => {

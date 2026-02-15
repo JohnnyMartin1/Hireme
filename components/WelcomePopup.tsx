@@ -149,11 +149,11 @@ export default function WelcomePopup({ isVisible, onClose }: WelcomePopupProps) 
             Complete your profile to start receiving messages from employers.
           </p>
           <Link 
-            href="/account/profile"
+            href="/home/seeker"
             onClick={handleClose}
             className="inline-flex items-center px-5 py-2.5 sm:px-8 sm:py-4 bg-white text-navy-800 font-bold rounded-lg shadow-lg hover:bg-sky-50 hover:scale-105 transition-all duration-300 text-sm sm:text-base md:text-lg min-h-[44px]"
           >
-            Start Building Your Profile <ArrowRight className="ml-2 h-4 w-4 sm:h-5 sm:w-5" />
+            Finish
           </Link>
         </div>
       </div>

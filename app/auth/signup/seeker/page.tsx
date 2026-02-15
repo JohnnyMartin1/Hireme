@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { signUpWithFirebase } from "@/lib/firebase-auth";
@@ -27,9 +27,15 @@ export default function SeekerSignupPage() {
   const [error, setError] = useState<string | null>(null);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [termsModalOpen, setTermsModalOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const firstInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Clear error when user starts typing
+    if (error) {
+      setError(null);
+    }
     setFormData(prev => ({
       ...prev,
       [e.target.name]: e.target.value
@@ -37,6 +43,10 @@ export default function SeekerSignupPage() {
   };
 
   const handleDropdownChange = (field: string, value: string) => {
+    // Clear error when user makes a selection
+    if (error) {
+      setError(null);
+    }
     setFormData(prev => ({
       ...prev,
       [field]: value
@@ -183,6 +193,7 @@ export default function SeekerSignupPage() {
 
       if (error) {
         setError(error);
+        setIsLoading(false);
         return;
       }
 
@@ -233,6 +244,25 @@ export default function SeekerSignupPage() {
   const getProgressPercentage = () => {
     return (currentStep / 3) * 100;
   };
+
+  // Detect mobile device
+  useEffect(() => {
+    const checkMobile = () => {
+      if (typeof window !== 'undefined') {
+        // Check screen width
+        const isMobileWidth = window.innerWidth < 1024; // lg breakpoint
+        // Check user agent for mobile devices
+        const isMobileUA = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+          navigator.userAgent
+        );
+        setIsMobile(isMobileWidth || isMobileUA);
+      }
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   return (
     <main className="min-h-screen sm:h-screen flex flex-col lg:flex-row bg-brand-gray overflow-hidden mobile-safe-top mobile-safe-bottom">
@@ -316,19 +346,52 @@ export default function SeekerSignupPage() {
                 {emailSent && (
                   <div className="space-y-6 pb-32 sm:pb-6">
                     <div className="text-sm text-success-green">Code sent to {formData.email}</div>
+                    {/* Hidden inputs for autofill support */}
+                    <input
+                      type="email"
+                      value={formData.email}
+                      autoComplete="email"
+                      readOnly
+                      style={{ position: 'absolute', left: '-9999px', opacity: 0, pointerEvents: 'none' }}
+                      tabIndex={-1}
+                      aria-hidden="true"
+                    />
                     <div className="grid grid-cols-6 gap-2 sm:gap-3 justify-center">
-                      {[1, 2, 3, 4, 5, 6].map((digit) => (
+                      {[1, 2, 3, 4, 5, 6].map((digit) => {
+                        const isFirstInput = digit === 1;
+                        return (
                         <input 
                           key={digit}
+                          ref={isFirstInput ? firstInputRef : null}
                           type="tel"
                           inputMode="numeric"
                           pattern="[0-9]*"
-                          maxLength={1}
+                          maxLength={isFirstInput ? 6 : 1}
+                          autoComplete={isFirstInput ? "one-time-code" : "off"}
                           value={verificationCode[digit - 1] || ''}
                           onChange={(e) => {
                             // Only allow numeric input
                             const value = e.target.value.replace(/[^0-9]/g, '');
-                            if (value.length > 1) return; // Only single digit
+                            
+                            // If browser autofills or user pastes multiple digits in first input
+                            if (value.length > 1 && isFirstInput) {
+                              const fullCode = value.slice(0, 6).padEnd(6, '');
+                              setVerificationCode(fullCode);
+                              // Clear the first input and show only the first digit
+                              if (firstInputRef.current) {
+                                firstInputRef.current.value = fullCode[0] || '';
+                              }
+                              // Focus the last input after autofill
+                              setTimeout(() => {
+                                const lastInput = document.querySelector(`input[data-digit="6"]`) as HTMLInputElement;
+                                if (lastInput) {
+                                  lastInput.focus();
+                                }
+                              }, 100);
+                              return;
+                            }
+                            
+                            if (value.length > 1 && !isFirstInput) return; // Only single digit for other inputs
                             
                             const newCode = verificationCode.split('');
                             newCode[digit - 1] = value;
@@ -375,7 +438,8 @@ export default function SeekerSignupPage() {
                           data-digit={digit}
                           className="w-12 h-14 sm:w-12 sm:h-14 text-center text-xl sm:text-xl font-bold border-2 border-slate-200 rounded-xl focus:border-navy-800 focus:outline-none transition-all duration-200 min-h-[56px]"
                         />
-                      ))}
+                        );
+                      })}
                     </div>
                     {error && <div className="text-sm text-error-red">{error}</div>}
                     <button 
@@ -404,6 +468,9 @@ export default function SeekerSignupPage() {
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                      First name <span className="text-red-500">*</span>
+                    </label>
                     <input 
                       type="text" 
                       name="firstName"
@@ -415,6 +482,9 @@ export default function SeekerSignupPage() {
                     />
                   </div>
                   <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                      Last name <span className="text-red-500">*</span>
+                    </label>
                     <input 
                       type="text" 
                       name="lastName"
@@ -427,22 +497,29 @@ export default function SeekerSignupPage() {
                   </div>
                 </div>
                 
-                <div className="relative">
-                  <input 
-                    type="email" 
-                    name="email"
-                    value={formData.email}
-                    readOnly
-                    className="w-full bg-gray-50 border-2 border-success-green rounded-xl py-4 px-6 pr-20 text-text-primary"
-                  />
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 bg-success-green text-white px-3 py-1 rounded-full text-xs font-medium">
-                    <i className="fa-solid fa-check mr-1"></i>Verified
-                  </span>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Email <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <input 
+                      type="email" 
+                      name="email"
+                      value={formData.email}
+                      readOnly
+                      className="w-full bg-gray-50 border-2 border-success-green rounded-xl py-4 px-6 pr-20 text-text-primary"
+                    />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 bg-success-green text-white px-3 py-1 rounded-full text-xs font-medium">
+                      <i className="fa-solid fa-check mr-1"></i>Verified
+                    </span>
+                  </div>
                 </div>
 
                 {/* College Section */}
                 <div>
-                  <label className="block text-xs font-medium text-slate-500 mb-2 uppercase tracking-wide">College</label>
+                  <label className="block text-xs font-medium text-slate-500 mb-2 uppercase tracking-wide">
+                    College <span className="text-red-500">*</span>
+                  </label>
                   <SearchableDropdown
                     options={UNIVERSITIES}
                     value={formData.school}
@@ -456,7 +533,9 @@ export default function SeekerSignupPage() {
 
                 {/* Majors Section */}
                 <div>
-                  <label className="block text-xs font-medium text-slate-500 mb-2 uppercase tracking-wide">Majors</label>
+                  <label className="block text-xs font-medium text-slate-500 mb-2 uppercase tracking-wide">
+                    Majors <span className="text-red-500">*</span>
+                  </label>
                   <div className="space-y-3">
                     {formData.majors.map((major, index) => (
                       <div key={index} className="flex items-start gap-2">
@@ -526,16 +605,21 @@ export default function SeekerSignupPage() {
                 </div>
 
                 <div className="space-y-4">
-                  <div className="relative">
-                    <input 
-                      type="password" 
-                      name="password"
-                      placeholder="Password"
-                      value={formData.password}
-                      onChange={handleChange}
-                      className="w-full bg-white border border-slate-200 rounded-xl py-4 px-6 text-text-primary focus:border-navy-800 focus:outline-none transition-all duration-200"
-                      required
-                    />
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                      Password <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <input 
+                        type="password" 
+                        name="password"
+                        placeholder="Password"
+                        value={formData.password}
+                        onChange={handleChange}
+                        className="w-full bg-white border border-slate-200 rounded-xl py-4 px-6 text-text-primary focus:border-navy-800 focus:outline-none transition-all duration-200"
+                        required
+                      />
+                    </div>
                   </div>
                   <div className="relative">
                     <input 
@@ -589,7 +673,12 @@ export default function SeekerSignupPage() {
                 </div>
 
                 {error && (
-                  <div className="text-sm text-error-red">{error}</div>
+                  <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700 flex items-start gap-3">
+                    <i className="fa-solid fa-circle-exclamation text-red-600 mt-0.5 flex-shrink-0"></i>
+                    <div className="flex-1">
+                      <strong className="font-semibold">Error:</strong> {error}
+                    </div>
+                  </div>
                 )}
 
                 <button 
@@ -613,6 +702,29 @@ export default function SeekerSignupPage() {
                 <p className="text-lg text-text-secondary">
                   Let's finish setting up your profile so<br />employers can discover your amazing<br />potential.
                 </p>
+
+                {/* Mobile Device Message */}
+                {isMobile && (
+                  <div className="bg-sky-50 border-2 border-sky-200 rounded-xl p-6 text-left">
+                    <div className="flex items-start gap-3">
+                      <div className="flex-shrink-0 mt-1">
+                        <i className="fa-solid fa-mobile-screen-button text-sky-600 text-2xl"></i>
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-navy-900 mb-2 text-lg">
+                          Complete Your Profile on Desktop
+                        </h3>
+                        <p className="text-slate-700 text-sm leading-relaxed">
+                          We've noticed you're on a mobile device. While you can complete your profile setup here, 
+                          many users find it easier and create more detailed profiles when using a computer. 
+                          Feel free to skip the next sections by pressing "Next" on each step, and we'll send you 
+                          a friendly reminder email to finish your profile setup when you're at your computer.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 <button 
                   onClick={(e) => {
                     e.preventDefault();

@@ -5,33 +5,108 @@ import { Menu } from "lucide-react";
 import { useFirebaseAuth } from "@/components/FirebaseAuthProvider";
 import HireMeLogo from "@/components/brand/HireMeLogo";
 import MobileNav from "@/components/mobile/MobileNav";
+import { isCapacitor } from "@/lib/capacitor";
+import MobileLanding from "@/components/landing/MobileLanding";
 
 export default function Home() {
-  const { user, profile, signOut } = useFirebaseAuth();
+  // IMPORTANT: All hooks must be called BEFORE any conditional returns
+  // This prevents "Rendered fewer hooks than expected" errors
+  
+  // Check Capacitor immediately (client-side only, safe for SSR)
+  // Only detect as app when actually in Capacitor/WebView, not regular browsers
+  const checkIsApp = () => {
+    if (typeof window === 'undefined') return false;
+    
+    const href = window.location.href;
+    const ua = navigator.userAgent || '';
+    
+    // Method 1: Check Capacitor directly (most reliable)
+    try {
+      const win = window as any;
+      if (win.Capacitor?.isNativePlatform?.()) return true;
+      if (isCapacitor()) return true;
+    } catch (e) {
+      // Ignore errors
+    }
+    
+    // Method 2: Check for WebView (iOS/Android apps use WebView)
+    // iOS WebView doesn't have Safari in user agent
+    const isIOSWebView = /(iPhone|iPod|iPad).*AppleWebKit(?!.*Safari)/i.test(ua);
+    // Android WebView has "wv" in user agent
+    const isAndroidWebView = /Android.*wv/i.test(ua);
+    
+    // Only detect as app if it's a WebView AND loading from local network IP
+    // Regular browsers on localhost should NOT be detected as app
+    if ((isIOSWebView || isAndroidWebView) && href.includes('192.168.')) {
+      return true; // WebView + local IP = definitely the app
+    }
+    
+    // Method 3: If loading from 192.168.x.x (not localhost), it's likely the app
+    // But only if we can't detect it's a regular browser
+    if (href.includes('192.168.') && !href.includes('localhost')) {
+      // Additional check: make sure it's not a regular browser
+      const isRegularBrowser = /Safari/i.test(ua) && !isIOSWebView;
+      if (!isRegularBrowser) {
+        return true; // IP address access from non-browser = likely app
+      }
+    }
+    
+    return false;
+  };
+  
+  const isApp = typeof window !== 'undefined' ? checkIsApp() : false;
+  
+  // Debug logging (will appear in Safari Web Inspector, not Xcode console)
+  if (typeof window !== 'undefined') {
+    console.log('[Home] App detection check:', {
+      href: window.location.href,
+      userAgent: navigator.userAgent,
+      isApp,
+      hasCapacitor: typeof (window as any).Capacitor !== 'undefined',
+      capacitorNative: (window as any).Capacitor?.isNativePlatform?.(),
+    });
+  }
+  
+  // All state hooks
+  const [showMobile, setShowMobile] = React.useState(isApp); // Initialize with detection result
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
-  // Determine dashboard link based on user role
-  const dashboardLink = profile?.role === 'JOB_SEEKER' 
-    ? '/home/seeker' 
-    : profile?.role === 'EMPLOYER' || profile?.role === 'RECRUITER'
-    ? '/home/employer'
-    : '/';
-
-  // Comparison table state
   const [comparisonView, setComparisonView] = useState<'employer' | 'candidate'>('candidate');
-  
-  // FAQ state
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
-  
-  // Workflow hover state
   const [hoveredWorkflowIndex, setHoveredWorkflowIndex] = useState<number | null>(null);
-  
-  // Get in Touch email display state
   const [showEmail, setShowEmail] = useState(false);
   const [emailCopied, setEmailCopied] = useState(false);
+  
+  // All context hooks
+  const { user, profile, signOut } = useFirebaseAuth();
+  
+  // All effect hooks
+  // Double-check Capacitor on mount (in case it loads asynchronously)
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const checkCapacitor = () => {
+        const appCheck = isCapacitor();
+        console.log('Home page - isCapacitor:', appCheck);
+        console.log('User Agent:', navigator.userAgent);
+        console.log('Window.Capacitor:', (window as any).Capacitor);
+        if (appCheck && !showMobile) {
+          setShowMobile(true);
+        }
+      };
+      
+      // Check immediately
+      checkCapacitor();
+      
+      // Also check after a short delay in case Capacitor loads asynchronously
+      const timeoutId = setTimeout(checkCapacitor, 100);
+      return () => clearTimeout(timeoutId);
+    }
+  }, [showMobile]);
 
-  // Position workflow nodes on mount
+  // Position workflow nodes on mount (only for website version)
   useEffect(() => {
+    // Only run this effect if we're showing the website version
+    if (showMobile) return;
+    
     const nodes = ['source', 'screen', 'interview', 'decide', 'onboard', 'measure'];
     const radius = 158;
     const angleStep = 360 / 6;
@@ -50,7 +125,42 @@ export default function Home() {
         element.style.transform = `translate(-50%, -50%) translate(${x}px, ${y}px)`;
       }
     });
-  }, []);
+  }, [showMobile]);
+
+  // NOW we can do conditional returns - all hooks have been called
+  // If in app, show mobile landing (check both state and immediate detection)
+  // Use isApp directly since it's checked immediately and reliably
+  const shouldShowMobile = showMobile || isApp;
+  
+  // Debug logging (check Safari Web Inspector console, not Xcode)
+  if (typeof window !== 'undefined') {
+    console.log('[Home] Render decision:', {
+      showMobile,
+      isApp,
+      shouldShowMobile,
+      href: window.location.href,
+      userAgent: navigator.userAgent.substring(0, 50)
+    });
+  }
+  
+  if (shouldShowMobile) {
+    if (typeof window !== 'undefined') {
+      console.log('[Home] ✅ Rendering MobileLanding component');
+    }
+    return <MobileLanding />;
+  }
+  
+  if (typeof window !== 'undefined') {
+    console.log('[Home] 🌐 Rendering website landing page');
+  }
+
+  // Website landing page (always render this first to prevent hydration mismatch)
+  // Determine dashboard link based on user role
+  const dashboardLink = profile?.role === 'JOB_SEEKER' 
+    ? '/home/seeker' 
+    : profile?.role === 'EMPLOYER' || profile?.role === 'RECRUITER'
+    ? '/home/employer'
+    : '/';
 
   const workflowSteps = [
     { id: 'source', icon: 'fa-search', title: 'Source Candidates', description: 'Discover talent from multiple channels. AI-powered matching ensures you find the right people fast.' },

@@ -108,13 +108,24 @@
   --ease-out: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+html {
+  font-size: 16px;
+  -webkit-text-size-adjust: 100%;
+  -moz-text-size-adjust: 100%;
+  -ms-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
 html, body, #__next {
   height: 100%;
   overflow-x: hidden;
   width: 100%;
-  max-width: 100vw;
+  max-width: 100%;
   overscroll-behavior-y: none;
   -webkit-overflow-scrolling: touch;
+  position: relative;
+  margin: 0;
+  padding: 0;
 }
 
 html {
@@ -170,6 +181,14 @@ body {
 
 /* Mobile Optimization for iPhone */
 @media (max-width: 768px) {
+  html {
+    font-size: 16px !important;
+    -webkit-text-size-adjust: 100% !important;
+    -moz-text-size-adjust: 100% !important;
+    -ms-text-size-adjust: 100% !important;
+    text-size-adjust: 100% !important;
+  }
+  
   /* Safe area support for iPhone notches */
   .mobile-safe-top {
     padding-top: calc(0.75rem + env(safe-area-inset-top));
@@ -182,14 +201,28 @@ body {
   }
   
   /* Prevent horizontal scroll */
-  body {
-    overflow-x: hidden;
+  html, body {
+    overflow-x: hidden !important;
     position: relative;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  
+  body {
+    font-size: 16px !important;
   }
   
   .container, main, section {
-    max-width: 100vw;
-    overflow-x: hidden;
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+  
+  * {
+    box-sizing: border-box;
   }
   
   /* iOS-specific touch optimizations */
@@ -254,7 +287,7 @@ body {
   .break-words, p, span, div {
     word-break: break-word;
     overflow-wrap: break-word;
-    hyphens: auto;
+    hyphens: none;
   }
   
   /* Prevent text selection on buttons (better UX) */

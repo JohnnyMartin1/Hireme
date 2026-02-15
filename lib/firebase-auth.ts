@@ -34,7 +34,36 @@ export const signUpWithFirebase = async (email: string, password: string) => {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     return { user: userCredential.user, error: null };
   } catch (error: any) {
-    return { user: null, error: error.message };
+    // Map Firebase error codes to user-friendly messages
+    const errorCode = error?.code;
+    
+    if (errorCode === 'auth/email-already-in-use') {
+      return { user: null, error: 'This email is already registered. Please use a different email or try logging in.' };
+    }
+    
+    if (errorCode === 'auth/invalid-email') {
+      return { user: null, error: 'Please enter a valid email address.' };
+    }
+    
+    if (errorCode === 'auth/operation-not-allowed') {
+      return { user: null, error: 'Email/password accounts are not enabled. Please contact support.' };
+    }
+    
+    if (errorCode === 'auth/weak-password') {
+      return { user: null, error: 'Password is too weak. Please use a stronger password (at least 8 characters).' };
+    }
+    
+    if (errorCode === 'auth/network-request-failed') {
+      return { user: null, error: 'Network error. Please check your internet connection and try again.' };
+    }
+    
+    if (errorCode === 'auth/too-many-requests') {
+      return { user: null, error: 'Too many signup attempts. Please wait a few minutes and try again.' };
+    }
+    
+    // Return a user-friendly message for unknown errors
+    console.error('Firebase signup error:', errorCode, error.message);
+    return { user: null, error: 'Unable to create account. Please check your information and try again.' };
   }
 };
 

@@ -3,7 +3,7 @@ import { useParams } from 'next/navigation';
 import { useFirebaseAuth } from "@/components/FirebaseAuthProvider";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
-import { User, MapPin, GraduationCap, Star, MessageSquare, Heart, Loader2, ArrowLeft, Send, Video, FileText, Download, X, Code, Briefcase, Plane, Calendar, Copy, Check, Building2, UserCircle, Award, Globe } from "lucide-react";
+import { User, MapPin, GraduationCap, Star, MessageSquare, Heart, Loader2, ArrowLeft, Send, Video, FileText, Download, X, Code, Briefcase, Plane, Calendar, Copy, Check, Building2, UserCircle, Award, Globe, ZoomIn, ZoomOut, RotateCcw } from "lucide-react";
 import { getDocument, getOrCreateThread, sendMessage, saveCandidate, isCandidateSaved, getEndorsements } from '@/lib/firebase-firestore';
 import Link from 'next/link';
 import { trackProfileView } from '@/lib/firebase-firestore';
@@ -70,6 +70,39 @@ export default function CandidateProfilePage() {
   const [showResumeModal, setShowResumeModal] = useState(false);
   const [resumePreviewError, setResumePreviewError] = useState(false);
   const [useGoogleViewer, setUseGoogleViewer] = useState(false);
+  const [zoomLevel, setZoomLevel] = useState(100);
+  const [isResumeLoading, setIsResumeLoading] = useState(true);
+  const resumeContainerRef = useRef<HTMLDivElement>(null);
+
+  // Function to force download of resume
+  const handleDownloadResume = async (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
+    if (!candidate.resumeUrl) return;
+
+    try {
+      // Fetch the file
+      const response = await fetch(candidate.resumeUrl);
+      const blob = await response.blob();
+      
+      // Create a blob URL
+      const blobUrl = window.URL.createObjectURL(blob);
+      
+      // Create a temporary anchor element and trigger download
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = `${candidate.firstName || 'candidate'}_${candidate.lastName || 'resume'}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      
+      // Clean up
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      console.error('Error downloading resume:', error);
+      // Fallback to regular download if fetch fails
+      window.open(candidate.resumeUrl, '_blank');
+    }
+  };
   const [endorsements, setEndorsements] = useState<any[]>([]);
   const [experienceExpanded, setExperienceExpanded] = useState(false);
   const [stickyBarVisible, setStickyBarVisible] = useState(false);
@@ -404,10 +437,24 @@ export default function CandidateProfilePage() {
                 </button>
                 {candidate.resumeUrl && (
                   <button
-                    onClick={() => {
+                    onClick={async () => {
                       setShowResumeModal(true);
                       setResumePreviewError(false);
                       setUseGoogleViewer(false);
+                      setIsResumeLoading(true);
+                      
+                      // Verify PDF is accessible
+                      try {
+                        const response = await fetch(candidate.resumeUrl, { method: 'HEAD' });
+                        if (!response.ok) {
+                          setResumePreviewError(true);
+                        }
+                      } catch (error) {
+                        console.error('Error checking resume accessibility:', error);
+                        // Don't set error immediately, let the embed/iframe try first
+                      } finally {
+                        setIsResumeLoading(false);
+                      }
                     }}
                     className="bg-white border border-slate-200 text-navy-900 px-4 py-2.5 sm:py-3 rounded-lg font-semibold hover:bg-slate-50 transition-all flex items-center justify-center gap-2 text-sm sm:text-base min-h-[48px]"
                   >
@@ -504,10 +551,24 @@ export default function CandidateProfilePage() {
                 </button>
                 {candidate.resumeUrl && (
                   <button
-                    onClick={() => {
+                    onClick={async () => {
                       setShowResumeModal(true);
                       setResumePreviewError(false);
                       setUseGoogleViewer(false);
+                      setIsResumeLoading(true);
+                      
+                      // Verify PDF is accessible
+                      try {
+                        const response = await fetch(candidate.resumeUrl, { method: 'HEAD' });
+                        if (!response.ok) {
+                          setResumePreviewError(true);
+                        }
+                      } catch (error) {
+                        console.error('Error checking resume accessibility:', error);
+                        // Don't set error immediately, let the embed/iframe try first
+                      } finally {
+                        setIsResumeLoading(false);
+                      }
                     }}
                     className="bg-white border border-slate-200 text-navy-900 px-8 py-4 rounded-lg font-semibold shadow-sm hover:bg-slate-50 transition-all flex items-center justify-center gap-2"
                   >
@@ -602,10 +663,24 @@ export default function CandidateProfilePage() {
                 </div>
               </div>
               <button
-                onClick={() => {
+                onClick={async () => {
                   setShowResumeModal(true);
                   setResumePreviewError(false);
                   setUseGoogleViewer(false);
+                  setIsResumeLoading(true);
+                  
+                  // Verify PDF is accessible
+                  try {
+                    const response = await fetch(candidate.resumeUrl, { method: 'HEAD' });
+                    if (!response.ok) {
+                      setResumePreviewError(true);
+                    }
+                  } catch (error) {
+                    console.error('Error checking resume accessibility:', error);
+                    // Don't set error immediately, let the embed/iframe try first
+                  } finally {
+                    setIsResumeLoading(false);
+                  }
                 }}
                 className="bg-navy-800 text-white px-6 py-3 rounded-lg font-semibold hover:bg-navy-700 transition-all flex items-center gap-2"
               >
@@ -1083,8 +1158,8 @@ export default function CandidateProfilePage() {
               <div className="flex items-center gap-3">
                 <a
                   href={candidate.resumeUrl}
-                  download
-                  className="px-4 py-2 bg-navy-800 text-white rounded-lg font-semibold hover:bg-navy-700 transition-all flex items-center gap-2 text-sm"
+                  onClick={handleDownloadResume}
+                  className="px-4 py-2 bg-navy-800 text-white rounded-lg font-semibold hover:bg-navy-700 transition-all flex items-center gap-2 text-sm cursor-pointer"
                 >
                   <Download className="h-4 w-4" />
                   Download Resume
@@ -1094,6 +1169,8 @@ export default function CandidateProfilePage() {
                     setShowResumeModal(false);
                     setResumePreviewError(false);
                     setUseGoogleViewer(false);
+                    setZoomLevel(100); // Reset zoom when closing
+                    setIsResumeLoading(false);
                   }}
                   className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
                 >
@@ -1103,51 +1180,132 @@ export default function CandidateProfilePage() {
             </div>
 
             {/* Modal Body - Resume Preview */}
-            <div className="flex-1 overflow-hidden p-4 bg-slate-50">
-              {!resumePreviewError ? (
-                <iframe
-                  src={useGoogleViewer ? `https://docs.google.com/viewer?url=${encodeURIComponent(candidate.resumeUrl)}&embedded=true` : candidate.resumeUrl}
-                  className="w-full h-full border-0 rounded-lg bg-white"
-                  title="Resume Preview"
-                  frameBorder="0"
-                  allowFullScreen
-                  onError={() => {
-                    if (!useGoogleViewer) {
-                      // Try Google Docs viewer as fallback
-                      setUseGoogleViewer(true);
-                    } else {
-                      // Both methods failed
-                      setResumePreviewError(true);
-                    }
-                  }}
-                  onLoad={(e) => {
-                    // Check if iframe loaded successfully
-                    const iframe = e.target as HTMLIFrameElement;
-                    setTimeout(() => {
-                      try {
-                        // If we can't access the iframe content, it might have failed to load
-                        if (!iframe.contentDocument || iframe.contentDocument.body.children.length === 0) {
-                          if (!useGoogleViewer) {
-                            // Try Google Docs viewer as fallback
+            <div className="flex-1 overflow-hidden p-4 bg-slate-50 flex flex-col">
+              {/* Zoom Controls */}
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setZoomLevel(prev => Math.max(50, prev - 25))}
+                    className="p-2 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
+                    title="Zoom Out"
+                    disabled={zoomLevel <= 50}
+                  >
+                    <ZoomOut className="h-4 w-4 text-slate-600" />
+                  </button>
+                  <span className="text-sm font-medium text-slate-700 min-w-[60px] text-center">
+                    {zoomLevel}%
+                  </span>
+                  <button
+                    onClick={() => setZoomLevel(prev => Math.min(300, prev + 25))}
+                    className="p-2 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
+                    title="Zoom In"
+                    disabled={zoomLevel >= 300}
+                  >
+                    <ZoomIn className="h-4 w-4 text-slate-600" />
+                  </button>
+                  <button
+                    onClick={() => setZoomLevel(100)}
+                    className="p-2 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors ml-2"
+                    title="Reset Zoom"
+                  >
+                    <RotateCcw className="h-4 w-4 text-slate-600" />
+                  </button>
+                </div>
+              </div>
+              
+              {/* Resume Container with Zoom */}
+              <div 
+                ref={resumeContainerRef}
+                className="flex-1 overflow-auto bg-white rounded-lg border border-slate-200"
+                style={{ 
+                  touchAction: 'pan-x pan-y pinch-zoom',
+                  WebkitOverflowScrolling: 'touch',
+                  position: 'relative',
+                }}
+              >
+                {isResumeLoading && !resumePreviewError ? (
+                  <div className="w-full h-full flex items-center justify-center min-h-[400px]">
+                    <div className="text-center">
+                      <Loader2 className="h-8 w-8 animate-spin text-navy-800 mx-auto mb-4" />
+                      <p className="text-slate-600">Loading resume preview...</p>
+                    </div>
+                  </div>
+                ) : !resumePreviewError ? (
+                  <div 
+                    className="w-full h-full flex items-center justify-center"
+                    style={{
+                      transform: `scale(${zoomLevel / 100})`,
+                      transformOrigin: 'top left',
+                      width: `${100 / (zoomLevel / 100)}%`,
+                      height: `${100 / (zoomLevel / 100)}%`,
+                      transition: 'transform 0.2s ease-out',
+                    }}
+                  >
+                    {useGoogleViewer ? (
+                      // Fallback: Google Docs Viewer
+                      <iframe
+                        src={`https://docs.google.com/viewer?url=${encodeURIComponent(candidate.resumeUrl)}&embedded=true`}
+                        className="w-full h-full border-0 rounded-lg"
+                        title="Resume Preview"
+                        frameBorder="0"
+                        allowFullScreen
+                        style={{
+                          minHeight: '800px',
+                          display: 'block',
+                        }}
+                        onError={() => {
+                          setResumePreviewError(true);
+                          setIsResumeLoading(false);
+                        }}
+                        onLoad={() => {
+                          setIsResumeLoading(false);
+                        }}
+                      />
+                    ) : (
+                      // Primary: Use object tag for PDFs (most reliable across browsers)
+                      <object
+                        data={`${candidate.resumeUrl}#toolbar=0&navpanes=0&scrollbar=1&zoom=page-width`}
+                        type="application/pdf"
+                        className="w-full h-full border-0 rounded-lg"
+                        style={{
+                          minHeight: '800px',
+                          display: 'block',
+                        }}
+                        onError={() => {
+                          // If object fails, try Google Viewer
+                          setUseGoogleViewer(true);
+                        }}
+                        onLoad={() => {
+                          setIsResumeLoading(false);
+                        }}
+                      >
+                        {/* Fallback content if object doesn't load */}
+                        <iframe
+                          src={candidate.resumeUrl}
+                          className="w-full h-full border-0 rounded-lg"
+                          title="Resume Preview"
+                          frameBorder="0"
+                          allowFullScreen
+                          style={{
+                            minHeight: '800px',
+                            display: 'block',
+                          }}
+                          onError={() => {
                             setUseGoogleViewer(true);
-                          } else {
-                            // Both methods failed
-                            setResumePreviewError(true);
-                          }
-                        }
-                      } catch (error) {
-                        // Cross-origin restrictions might prevent access, but that's okay
-                        // The iframe might still be working
-                      }
-                    }, 2000); // Wait 2 seconds before checking
-                  }}
-                />
-              ) : (
+                          }}
+                          onLoad={() => {
+                            setIsResumeLoading(false);
+                          }}
+                        />
+                      </object>
+                    )}
+                  </div>
+                ) : (
                 <div className="w-full h-full flex flex-col items-center justify-center bg-white rounded-lg border-2 border-dashed border-slate-200">
                   <FileText className="h-16 w-16 text-slate-400 mb-4" />
                   <h3 className="text-lg font-semibold text-navy-900 mb-2">Resume Preview Unavailable</h3>
                   <p className="text-sm text-slate-600 mb-6 text-center max-w-md">
-                    The resume preview couldn't be loaded. This is common in development environments (localhost) due to browser security restrictions. Use the options below to view the resume.
+                    The resume preview couldn't be loaded due to browser security restrictions. Use the options below to view or download the resume.
                   </p>
                   <div className="flex gap-3">
                     <a
@@ -1161,37 +1319,54 @@ export default function CandidateProfilePage() {
                     </a>
                     <a
                       href={candidate.resumeUrl}
-                      download
-                      className="px-6 py-3 bg-white border border-slate-200 text-navy-900 rounded-lg font-semibold shadow-sm hover:bg-slate-50 transition-all flex items-center gap-2"
+                      onClick={handleDownloadResume}
+                      className="px-6 py-3 bg-white border border-slate-200 text-navy-900 rounded-lg font-semibold shadow-sm hover:bg-slate-50 transition-all flex items-center gap-2 cursor-pointer"
                     >
                       <Download className="h-4 w-4" />
                       Download Resume
                     </a>
                   </div>
                   <button
-                    onClick={() => {
+                    onClick={async () => {
                       setResumePreviewError(false);
                       setUseGoogleViewer(false);
+                      setZoomLevel(100); // Reset zoom when retrying
+                      setIsResumeLoading(true);
+                      
+                      // Verify PDF is accessible
+                      try {
+                        const response = await fetch(candidate.resumeUrl, { method: 'HEAD' });
+                        if (!response.ok) {
+                          setResumePreviewError(true);
+                        }
+                      } catch (error) {
+                        console.error('Error checking resume accessibility:', error);
+                      } finally {
+                        setIsResumeLoading(false);
+                      }
                     }}
                     className="mt-3 text-sm text-blue-600 hover:text-blue-800 underline"
                   >
                     Try Preview Again
                   </button>
                 </div>
-              )}
+                )}
+              </div>
             </div>
 
             {/* Modal Footer */}
             <div className="p-4 border-t bg-gray-50">
               <div className="flex justify-between items-center">
                 <p className="text-sm text-gray-600">
-                  💡 Tip: Use scroll to navigate through the resume
+                  💡 Tip: Use zoom controls above or pinch-to-zoom to view the resume in detail
                 </p>
                 <button
                   onClick={() => {
                     setShowResumeModal(false);
                     setResumePreviewError(false);
                     setUseGoogleViewer(false);
+                    setZoomLevel(100); // Reset zoom when closing
+                    setIsResumeLoading(false);
                   }}
                   className="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
                 >

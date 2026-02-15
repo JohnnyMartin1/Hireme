@@ -2,10 +2,9 @@
 import { useFirebaseAuth } from "@/components/FirebaseAuthProvider";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { User, MessageSquare, ArrowRight, Loader2, Calendar } from "lucide-react";
+import { User, MessageSquare, ArrowRight, Loader2, Calendar, ArrowLeft } from "lucide-react";
 import { getUserMessageThreads, getDocument } from '@/lib/firebase-firestore';
 import Link from 'next/link';
-import BackButton from '@/components/BackButton';
 
 interface ContactedCandidate {
   id: string;
@@ -137,30 +136,56 @@ export default function ContactedCandidatesPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50 flex items-center justify-center mobile-safe-top mobile-safe-bottom">
         <div className="text-center">
           <p className="text-red-600 mb-4">{error}</p>
-          <BackButton fallback="/home/employer" />
+          <Link
+            href="/home/employer"
+            className="flex items-center gap-2 text-navy-800 hover:text-navy-600 transition-all duration-200 group px-3 py-2 rounded-lg hover:bg-sky-50 hover:shadow-md min-h-[44px] justify-center"
+          >
+            <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5 group-hover:-translate-x-1 transition-transform duration-200" />
+            <span className="font-medium text-sm sm:text-base">Back to Dashboard</span>
+          </Link>
         </div>
       </div>
     );
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50">
-      <div className="max-w-6xl mx-auto p-6">
-        {/* Header */}
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
-          <div className="flex items-center gap-4">
-            <BackButton fallback="/home/employer" />
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-green-100 rounded-lg">
-                <User className="h-6 w-6 text-green-600" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">Candidates Contacted</h1>
-                <p className="text-gray-600">{candidates.length} candidates you've reached out to</p>
-              </div>
+    <main className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50 mobile-safe-top mobile-safe-bottom">
+      {/* Header */}
+      <header className="sticky top-0 bg-white shadow-sm z-50 border-b border-slate-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
+          <Link
+            href="/home/employer"
+            className="flex items-center gap-2 text-navy-800 hover:text-navy-600 transition-all duration-200 group px-3 py-2 rounded-lg hover:bg-sky-50 hover:shadow-md min-h-[44px]"
+          >
+            <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5 group-hover:-translate-x-1 transition-transform duration-200" />
+            <span className="font-medium text-sm sm:text-base hidden sm:inline">Back to Dashboard</span>
+            <span className="font-medium text-sm sm:text-base sm:hidden">Back</span>
+          </Link>
+          <Link href="/" className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-navy-800 rounded-lg flex items-center justify-center">
+              <svg width="20" height="20" viewBox="0 0 269 274" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M111.028 0C172.347 0.000238791 222.055 51.647 222.055 115.356C222.055 140.617 214.238 163.98 200.983 182.981L258.517 242.758L238.036 264.036L181.077 204.857C161.97 221.02 137.589 230.713 111.028 230.713C49.7092 230.713 2.76862e-05 179.066 0 115.356C0 51.6468 49.7092 0 111.028 0Z" fill="white"/>
+                <path d="M205.69 115.392C205.69 170.42 163.308 215.029 111.028 215.029C58.748 215.029 16.3666 170.42 16.3666 115.392C16.3666 60.3646 58.748 15.7559 111.028 15.7559C163.308 15.7559 205.69 60.3646 205.69 115.392Z" fill="#4F86F7"/>
+              </svg>
+            </div>
+            <span className="text-xl font-bold text-navy-900">HireMe</span>
+          </Link>
+        </div>
+      </header>
+
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 p-6">
+        {/* Page Title */}
+        <div className="mb-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2 bg-green-100 rounded-lg">
+              <User className="h-6 w-6 text-green-600" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Candidates Contacted</h1>
+              <p className="text-gray-600">{candidates.length} candidates you've reached out to</p>
             </div>
           </div>
         </div>
