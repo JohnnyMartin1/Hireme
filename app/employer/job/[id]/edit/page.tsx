@@ -138,7 +138,13 @@ export default function EditJobPage({ params }: { params: { id: string } }) {
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center">
           <p className="text-red-600 mb-4">{error}</p>
-          <BackButton />
+          <Link
+            href="/home/employer"
+            className="inline-flex items-center gap-2 text-navy-800 hover:text-navy-600 transition-all duration-200 group px-3 py-2 rounded-lg hover:bg-sky-50 hover:shadow-md"
+          >
+            <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform duration-200" />
+            <span>Back to Dashboard</span>
+          </Link>
         </div>
       </div>
     );

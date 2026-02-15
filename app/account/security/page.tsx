@@ -58,19 +58,20 @@ export default function SecurityPage() {
 
       <div className="max-w-md mx-auto px-4 sm:px-6 py-8">
         <h2 className="text-2xl font-bold mb-4">Security Settings</h2>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium mb-1" htmlFor="current">Current password</label>
-          <input id="current" type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} className="w-full px-3 py-2 border rounded" />
-        </div>
-        <div>
-          <label className="block text-sm font-medium mb-1" htmlFor="new">New password</label>
-          <input id="new" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="w-full px-3 py-2 border rounded" />
-        </div>
-        <button type="submit" disabled={loading} className="px-4 py-2 bg-blue-600 text-white rounded disabled:opacity-50">
-          {loading ? 'Updating...' : 'Update password'}
-        </button>
-      </form>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium mb-1" htmlFor="current">Current password</label>
+            <input id="current" type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} className="w-full px-3 py-2 border rounded" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1" htmlFor="new">New password</label>
+            <input id="new" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="w-full px-3 py-2 border rounded" />
+          </div>
+          <button type="submit" disabled={loading} className="px-4 py-2 bg-blue-600 text-white rounded disabled:opacity-50">
+            {loading ? 'Updating...' : 'Update password'}
+          </button>
+        </form>
+      </div>
     </div>
   );
 }

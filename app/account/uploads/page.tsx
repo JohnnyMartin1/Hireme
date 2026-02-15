@@ -59,16 +59,17 @@ export default function UploadsPage() {
 
       <div className="max-w-xl mx-auto px-4 sm:px-6 py-8">
         <h2 className="text-2xl font-bold mb-4">Uploads</h2>
-      <div className="space-y-8">
-        <div>
-          <h3 className="text-lg font-semibold mb-2">Resume (PDF)</h3>
-          <input type="file" accept="application/pdf" onChange={(e) => setResumeFile(e.target.files?.[0] || null)} />
-          <button onClick={handleResumeUpload} disabled={!resumeFile || loading} className="ml-2 px-4 py-2 bg-blue-600 text-white rounded disabled:opacity-50">Upload</button>
-        </div>
-        <div>
-          <h3 className="text-lg font-semibold mb-2">Introduction Video (MP4)</h3>
-          <input type="file" accept="video/mp4" onChange={(e) => setVideoFile(e.target.files?.[0] || null)} />
-          <button onClick={handleVideoUpload} disabled={!videoFile || loading} className="ml-2 px-4 py-2 bg-blue-600 text-white rounded disabled:opacity-50">Upload</button>
+        <div className="space-y-8">
+          <div>
+            <h3 className="text-lg font-semibold mb-2">Resume (PDF)</h3>
+            <input type="file" accept="application/pdf" onChange={(e) => setResumeFile(e.target.files?.[0] || null)} />
+            <button onClick={handleResumeUpload} disabled={!resumeFile || loading} className="ml-2 px-4 py-2 bg-blue-600 text-white rounded disabled:opacity-50">Upload</button>
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold mb-2">Introduction Video (MP4)</h3>
+            <input type="file" accept="video/mp4" onChange={(e) => setVideoFile(e.target.files?.[0] || null)} />
+            <button onClick={handleVideoUpload} disabled={!videoFile || loading} className="ml-2 px-4 py-2 bg-blue-600 text-white rounded disabled:opacity-50">Upload</button>
+          </div>
         </div>
       </div>
     </div>
