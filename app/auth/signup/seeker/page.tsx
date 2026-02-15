@@ -353,12 +353,14 @@ export default function SeekerSignupPage() {
                   <div className="space-y-6 pb-32 sm:pb-6">
                     <div className="text-sm text-success-green">Code sent to {formData.email}</div>
                     {/* Hidden inputs for autofill support */}
+                    {/* Hidden email input for mobile autofill - must be visible to browser but not to user */}
                     <input
                       type="email"
+                      name="email"
                       value={formData.email}
                       autoComplete="email"
                       readOnly
-                      style={{ position: 'absolute', left: '-9999px', opacity: 0, pointerEvents: 'none' }}
+                      style={{ position: 'absolute', left: '-9999px', opacity: 0, pointerEvents: 'none', width: '1px', height: '1px' }}
                       tabIndex={-1}
                       aria-hidden="true"
                     />

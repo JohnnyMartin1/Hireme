@@ -35,16 +35,7 @@ export async function POST(request: NextRequest) {
 
     console.log('Generated verification code for:', email, 'Code:', code);
 
-    // Store code in database using Admin SDK
-    await adminDb.collection('verificationCodes').add({
-      email,
-      code,
-      expiresAt: expiresAt.toISOString(),
-      createdAt: new Date().toISOString(),
-      used: false
-    });
-
-    // Check if Resend is configured
+    // Check if Resend is configured first
     const resend = getResendInstance();
     if (!resend) {
       console.error('Resend API key not configured');
@@ -54,8 +45,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Send email via Resend
-    const { data, error } = await resend.emails.send({
+    // Store code in database and send email in parallel for faster response
+    const [dbResult, emailResult] = await Promise.allSettled([
+      adminDb.collection('verificationCodes').add({
+        email,
+        code,
+        expiresAt: expiresAt.toISOString(),
+        createdAt: new Date().toISOString(),
+        used: false
+      }),
+      resend.emails.send({
       from: process.env.EMAIL_FROM || 'HireMe <onboarding@resend.dev>',
       to: [email],
       subject: 'Your HireMe verification code',
@@ -142,9 +141,28 @@ If you didn't request this code, you can safely ignore this email.
 
 © ${new Date().getFullYear()} HireMe. All rights reserved.
 
+Your verification code: ${code}
 @hireme.com #${code}
       `
-    });
+      })
+    ]);
+
+    // Check database result
+    if (dbResult.status === 'rejected') {
+      console.error('Failed to store verification code:', dbResult.reason);
+      // Continue anyway - email might still be sent
+    }
+
+    // Check email result
+    if (emailResult.status === 'rejected') {
+      console.error('Failed to send email:', emailResult.reason);
+      return NextResponse.json(
+        { error: 'Failed to send verification email' },
+        { status: 500 }
+      );
+    }
+
+    const { data, error } = emailResult.value;
 
     if (error) {
       console.error('Resend error:', error);
