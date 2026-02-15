@@ -2,7 +2,15 @@ import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
 import { adminDb } from '@/lib/firebase-admin';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Initialize Resend with API key, handle missing key gracefully
+const getResendInstance = () => {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) {
+    console.error('RESEND_API_KEY is not set in environment variables');
+    return null;
+  }
+  return new Resend(apiKey);
+};
 
 // Generate a 6-digit verification code
 function generateVerificationCode(): string {
@@ -35,6 +43,16 @@ export async function POST(request: NextRequest) {
       createdAt: new Date().toISOString(),
       used: false
     });
+
+    // Check if Resend is configured
+    const resend = getResendInstance();
+    if (!resend) {
+      console.error('Resend API key not configured');
+      return NextResponse.json(
+        { error: 'Email service not configured. Please contact support.' },
+        { status: 500 }
+      );
+    }
 
     // Send email via Resend
     const { data, error } = await resend.emails.send({
@@ -130,11 +148,25 @@ If you didn't request this code, you can safely ignore this email.
 
     if (error) {
       console.error('Resend error:', error);
+      console.error('Resend error details:', JSON.stringify(error, null, 2));
       return NextResponse.json(
-        { error: 'Failed to send verification email' },
+        { 
+          error: 'Failed to send verification email',
+          details: error.message || 'Unknown error'
+        },
         { status: 500 }
       );
     }
+
+    if (!data) {
+      console.error('Resend returned no data');
+      return NextResponse.json(
+        { error: 'Failed to send verification email - no response from email service' },
+        { status: 500 }
+      );
+    }
+
+    console.log('Email sent successfully:', data);
 
     return NextResponse.json({ 
       success: true,

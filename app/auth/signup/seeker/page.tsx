@@ -105,6 +105,12 @@ export default function SeekerSignupPage() {
 
       const data = await response.json();
 
+      if (!response.ok) {
+        console.error('Verification code API error:', data);
+        setError(data.error || 'Failed to send verification code. Please try again.');
+        return;
+      }
+
       if (data.success) {
         setEmailSent(true);
       } else {
