@@ -320,12 +320,12 @@ export default function Home() {
     : '/';
 
   const workflowSteps = [
-    { id: 'source', icon: 'fa-search', title: 'Source Candidates', description: 'Discover talent from multiple channels. AI-powered matching ensures you find the right people fast.' },
-    { id: 'screen', icon: 'fa-filter', title: 'Screen & Qualify', description: 'Automated resume parsing and skills assessment filter out unqualified candidates.' },
-    { id: 'interview', icon: 'fa-calendar-check', title: 'Interview & Evaluate', description: 'Structured interview guides and shared scorecards keep everyone aligned.' },
-    { id: 'decide', icon: 'fa-check-circle', title: 'Make Decisions', description: 'Collaborative decision-making with transparent scoring. Compare candidates side-by-side.' },
-    { id: 'onboard', icon: 'fa-rocket', title: 'Onboard & Engage', description: 'Send digital offer letters, automate paperwork, and create personalized onboarding experiences.' },
-    { id: 'measure', icon: 'fa-chart-bar', title: 'Measure & Improve', description: 'Track hiring metrics and feedback to continuously improve sourcing, screening, and interview quality.' }
+    { id: 'source', icon: 'fa-search', title: 'Source Candidates', description: 'Search by what actually matters most' },
+    { id: 'screen', icon: 'fa-filter', title: 'Screen & Qualify', description: 'Smart filters to narrow top candidates' },
+    { id: 'interview', icon: 'fa-calendar-check', title: 'Interview & Evaluate', description: 'Hire based on real role needs' },
+    { id: 'decide', icon: 'fa-check-circle', title: 'Make Decisions', description: 'Less guesswork, more confident hiring decisions' },
+    { id: 'onboard', icon: 'fa-rocket', title: 'Onboard & Engage', description: 'One thread from first message onward' },
+    { id: 'measure', icon: 'fa-chart-bar', title: 'Measure & Improve', description: 'Continuous learning from hiring performance' }
   ];
 
   // Comparison content with truth-safe states - Separate for employer and candidate views
@@ -345,19 +345,6 @@ export default function Home() {
         highlight: false,
       },
       {
-        key: "young_professionals",
-        group: "Core capabilities",
-        label: "Designed for young professionals / early careers",
-        description: "Platform optimized for finding and connecting with early-career talent and recent graduates.",
-        states: {
-          hireme: "built_in",
-          linkedin: "built_in",
-          handshake: "built_in",
-          indeed: false,
-        },
-        highlight: false,
-      },
-      {
         key: "talent_discovery",
         group: "Core capabilities",
         label: "Talent discovery: search & filters",
@@ -371,10 +358,10 @@ export default function Home() {
         highlight: false,
       },
       {
-        key: "transparent_timelines",
+        key: "see_the_person",
         group: "Quality & Trust",
-        label: "Transparent timelines & status updates (anti-ghosting)",
-        description: "Set clear stages and expected response windows so candidates know what's next and when updates will happen.",
+        label: "See the person, not just the resume",
+        description: "Background, interests, and a video introduction that brings the candidate to life.",
         states: {
           hireme: "built_in",
           linkedin: false,
@@ -384,22 +371,9 @@ export default function Home() {
         highlight: true,
       },
       {
-        key: "noise_reduction",
-        group: "Quality & Trust",
-        label: "Noise reduction: verified ecosystem + lower third-party recruiter/spam",
-        description: "Verified ecosystem with quality controls that reduce spam and ensure high-signal outreach.",
-        states: {
-          hireme: "built_in",
-          linkedin: false,
-          handshake: "built_in",
-          indeed: false,
-        },
-        highlight: true,
-      },
-      {
         key: "standardized_template",
         group: "Quality & Trust",
-        label: "Standardized candidate template (market yourself; no guessing)",
+        label: "Standardized candidate template",
         description: "Consistent profile format makes it easier to evaluate candidates fairly and efficiently.",
         states: {
           hireme: "built_in",
@@ -412,7 +386,7 @@ export default function Home() {
       {
         key: "employer_led_model",
         group: "Differentiators",
-        label: "Employer-led hiring model (employers find you)",
+        label: "Employer-led hiring model",
         description: "Search, discover, and reach out to candidates proactively — no waiting for applications.",
         states: {
           hireme: "built_in",
@@ -438,22 +412,9 @@ export default function Home() {
     ],
     candidate: [
       {
-        key: "guided_profile",
-        group: "Core capabilities",
-        label: "Guided profile setup",
-        description: "Step-by-step guidance to create a complete, professional profile.",
-        states: {
-          hireme: "built_in",
-          linkedin: "built_in",
-          handshake: "built_in",
-          indeed: "built_in",
-        },
-        highlight: false,
-      },
-      {
         key: "high_signal_profile",
         group: "Core capabilities",
-        label: "High-signal candidate profile",
+        label: "Structured Candidate Profile",
         description: "Showcase your skills, experience, and achievements in a structured format.",
         states: {
           hireme: "built_in",
@@ -468,19 +429,6 @@ export default function Home() {
         group: "Core capabilities",
         label: "Verified endorsements",
         description: "Get endorsements from colleagues, managers, and peers to validate your skills.",
-        states: {
-          hireme: "built_in",
-          linkedin: "built_in",
-          handshake: false,
-          indeed: false,
-        },
-        highlight: false,
-      },
-      {
-        key: "profile_views",
-        group: "Core capabilities",
-        label: "Profile view visibility",
-        description: "See which employers have viewed your profile to track interest.",
         states: {
           hireme: "built_in",
           linkedin: "built_in",
@@ -546,12 +494,12 @@ export default function Home() {
 
   const comparisonCopy = {
     employer: {
-      title: "How HireMe Compares",
-      subtitle: "All the essentials employers expect — plus verified intent and clearer timelines.",
+      title: "Designed to be Different",
+      subtitle: "Focused on being the best way to hire for all parties involved",
     },
     candidate: {
-      title: "How HireMe Compares",
-      subtitle: "All the essentials candidates expect — plus fewer dead ends and higher-signal outreach.",
+      title: "Designed to be Different",
+      subtitle: "Focused on being the best way to hire for all parties involved",
     },
   };
 
@@ -571,7 +519,7 @@ export default function Home() {
             hireme: row.states.hireme === "built_in" || row.states.hireme === "available",
             linkedin: row.states.linkedin === "built_in" || row.states.linkedin === "available",
             handshake: row.states.handshake === "built_in" || row.states.handshake === "available",
-            indeed: row.states.indeed === "built_in" || row.states.indeed === "available",
+            indeed: typeof row.states.indeed === "string" && (row.states.indeed === "built_in" || row.states.indeed === "available"),
             highlight: row.highlight,
           })),
       }));
@@ -590,7 +538,7 @@ export default function Home() {
             hireme: row.states.hireme === "built_in" || row.states.hireme === "available",
             linkedin: row.states.linkedin === "built_in" || row.states.linkedin === "available",
             handshake: row.states.handshake === "built_in" || row.states.handshake === "available",
-            indeed: row.states.indeed === "built_in" || row.states.indeed === "available",
+            indeed: typeof row.states.indeed === "string" && (row.states.indeed === "built_in" || row.states.indeed === "available"),
             highlight: row.highlight,
           })),
       }));
@@ -1246,7 +1194,7 @@ export default function Home() {
                 </span>
               </h2>
               <p className="text-base sm:text-lg lg:text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed">
-                Whether you're a solo recruiter, a growing startup, or an enterprise HR team.
+                Providing value to all shapes and sizes
               </p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 lg:gap-6 reveal-stagger">
@@ -1257,23 +1205,23 @@ export default function Home() {
                 </div>
                 <h3 className="text-xl lg:text-2xl font-bold text-navy-900 mb-3">Candidates</h3>
                 <p className="text-sm text-slate-600 mb-4 leading-relaxed">
-                  Manage multiple roles, track candidate pipelines, and collaborate with hiring managers.
+                  One Profile, endless opportunities
                 </p>
                 <ul className="text-left space-y-2 mb-5 flex-grow">
                   <li className="flex items-center text-sm text-slate-700">
                     <i className="fa-solid fa-check text-navy-600 mr-2"></i>
-                    <span>Pipeline management</span>
+                    <span>Advanced profile options to stand out</span>
                   </li>
                   <li className="flex items-center text-sm text-slate-700">
                     <i className="fa-solid fa-check text-navy-600 mr-2"></i>
-                    <span>Candidate tracking</span>
+                    <span>Simple setup</span>
                   </li>
                   <li className="flex items-center text-sm text-slate-700">
                     <i className="fa-solid fa-check text-navy-600 mr-2"></i>
-                    <span>Automated workflows</span>
+                    <span>No Applications</span>
                   </li>
                 </ul>
-                <Link href="/auth/signup/seeker" className="inline-block bg-navy-50 text-navy-800 px-5 py-2 rounded-lg text-sm font-semibold hover:bg-navy-100 transition-all duration-200 mt-auto">Get Started</Link>
+                <Link href="/auth/signup/seeker" className="inline-block bg-navy-50 text-navy-800 px-5 py-2 rounded-lg text-sm font-semibold hover:bg-navy-100 transition-all duration-200 mt-auto">Learn More</Link>
               </div>
 
               {/* Employer Card */}
@@ -1281,25 +1229,25 @@ export default function Home() {
                 <div className="w-16 h-16 bg-gradient-to-br from-sky-100 to-sky-50 rounded-xl flex items-center justify-center mx-auto mb-4 shadow-sm">
                   <i className="fa-solid fa-building text-navy-800 text-2xl"></i>
                 </div>
-                <h3 className="text-xl lg:text-2xl font-bold text-navy-900 mb-3">Employer</h3>
+                <h3 className="text-xl lg:text-2xl font-bold text-navy-900 mb-3">Employers</h3>
                 <p className="text-sm text-slate-600 mb-4 leading-relaxed">
-                  Review candidates, provide feedback, and make hiring decisions with full context.
+                  Hire with less noise
                 </p>
                 <ul className="text-left space-y-2 mb-5 flex-grow">
                   <li className="flex items-center text-sm text-slate-700">
                     <i className="fa-solid fa-check text-navy-600 mr-2"></i>
-                    <span>Shared scorecards</span>
+                    <span>Identify Talent Effectively</span>
                   </li>
                   <li className="flex items-center text-sm text-slate-700">
                     <i className="fa-solid fa-check text-navy-600 mr-2"></i>
-                    <span>Real-time updates</span>
+                    <span>Message candidates Directly</span>
                   </li>
                   <li className="flex items-center text-sm text-slate-700">
                     <i className="fa-solid fa-check text-navy-600 mr-2"></i>
-                    <span>Collaborative feedback</span>
+                    <span>Dynamic Platform</span>
                   </li>
                 </ul>
-                <Link href="/auth/signup/employer/company" className="inline-block bg-navy-50 text-navy-800 px-5 py-2 rounded-lg text-sm font-semibold hover:bg-navy-100 transition-all duration-200 mt-auto">Get Started</Link>
+                <Link href="/auth/signup/employer/company" className="inline-block bg-navy-50 text-navy-800 px-5 py-2 rounded-lg text-sm font-semibold hover:bg-navy-100 transition-all duration-200 mt-auto">Learn More</Link>
               </div>
 
               {/* Recruiters Card */}
@@ -1309,23 +1257,23 @@ export default function Home() {
                 </div>
                 <h3 className="text-xl lg:text-2xl font-bold text-navy-900 mb-3">Recruiters</h3>
                 <p className="text-sm text-slate-600 mb-4 leading-relaxed">
-                  Get visibility into every hiring metric that matters. Track performance and identify bottlenecks.
+                  Turning talent pools to team members
                 </p>
                 <ul className="text-left space-y-2 mb-5 flex-grow">
                   <li className="flex items-center text-sm text-slate-700">
                     <i className="fa-solid fa-check text-navy-600 mr-2"></i>
-                    <span>Advanced analytics</span>
+                    <span>Efficient Hiring Process</span>
                   </li>
                   <li className="flex items-center text-sm text-slate-700">
                     <i className="fa-solid fa-check text-navy-600 mr-2"></i>
-                    <span>Compliance tracking</span>
+                    <span>Team access and shared visibility</span>
                   </li>
                   <li className="flex items-center text-sm text-slate-700">
                     <i className="fa-solid fa-check text-navy-600 mr-2"></i>
-                    <span>Team performance</span>
+                    <span>Manage multiple roles in one place</span>
                   </li>
                 </ul>
-                <Link href="/auth/signup/employer/recruiter" className="inline-block bg-navy-50 text-navy-800 px-5 py-2 rounded-lg text-sm font-semibold hover:bg-navy-100 transition-all duration-200 mt-auto">Get Started</Link>
+                <Link href="/auth/signup/employer/recruiter" className="inline-block bg-navy-50 text-navy-800 px-5 py-2 rounded-lg text-sm font-semibold hover:bg-navy-100 transition-all duration-200 mt-auto">Learn More</Link>
               </div>
             </div>
           </div>
@@ -1335,9 +1283,9 @@ export default function Home() {
         <section id="workflows" className="py-16 lg:py-20 bg-slate-50 relative overflow-hidden">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-12 lg:mb-16 reveal">
-              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-navy-900 mb-4 tracking-tight">Flexible Hiring Workflows</h2>
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-navy-900 mb-4 tracking-tight">Hiring Re-Engineered</h2>
               <p className="text-base sm:text-lg lg:text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed">
-                HireMe isn't a job board. It's a closed-loop hiring system where everything connects.
+                HireMe flips hiring from "spray-and-pray applications" to a verified, intent-driven talent marketplace where employers find candidates
               </p>
             </div>
             <div className="flex flex-col lg:flex-row items-center justify-between gap-8">
@@ -1574,13 +1522,10 @@ export default function Home() {
           <div className="max-w-7xl mx-auto px-6 relative z-10">
             <div className="text-center mb-20 reveal">
               <h2 className="text-4xl md:text-5xl font-bold text-navy-900 mb-6 tracking-tight">
-                Everything You Need to <span className="relative inline-block">
-                  <span className="relative z-10">Hire Smarter</span>
-                  <span className="absolute bottom-2 left-0 w-full h-3 bg-sky-200/50 -rotate-1 rounded-full -z-0"></span>
-                </span>
+                Addressing the Hiring Crisis
               </h2>
               <p className="text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed">
-                A complete hiring ecosystem designed to eliminate friction, reduce ghosting, and accelerate your best decisions.
+                Our features offer a complete ecosystem designed to eliminate AI applications, ghosting, and vague processes.
               </p>
             </div>
 
@@ -1589,24 +1534,11 @@ export default function Home() {
               <div className="reveal feature-card group bg-white rounded-2xl border-2 border-slate-100 shadow-sm overflow-hidden relative transition-all duration-300">
                 <div className="feature-card__content p-8">
                   <div className="icon-badge w-16 h-16 bg-white rounded-2xl border border-slate-100 shadow-sm flex items-center justify-center mb-6">
-                    <i className="fa-solid fa-search text-2xl text-sky-600"></i>
+                    <i className="fa-solid fa-bullseye text-2xl text-sky-600"></i>
                   </div>
 
                   <h3 className="text-2xl font-bold text-navy-900 mb-3">Smart Sourcing</h3>
-                  <p className="text-slate-600 mb-6 leading-relaxed">AI-powered candidate discovery that finds the perfect match across multiple channels automatically.</p>
-
-                  <div className="mt-auto pt-4 border-t border-slate-200/50">
-                    <ul className="space-y-3">
-                      <li className="flex items-center text-sm font-semibold text-navy-700">
-                        <span className="w-1.5 h-1.5 rounded-full bg-sky-500 mr-3 shadow-[0_0_8px_rgba(14,165,233,0.6)]"></span>
-                        Multi-channel sourcing
-                      </li>
-                      <li className="flex items-center text-sm font-semibold text-navy-700">
-                        <span className="w-1.5 h-1.5 rounded-full bg-sky-500 mr-3 shadow-[0_0_8px_rgba(14,165,233,0.6)]"></span>
-                        AI candidate matching
-                      </li>
-                    </ul>
-                  </div>
+                  <p className="text-slate-600 leading-relaxed">Find the right people faster with structured profiles and focused filters—without digging through stacks of resumes.</p>
                 </div>
               </div>
 
@@ -1614,24 +1546,11 @@ export default function Home() {
               <div className="reveal feature-card group bg-white rounded-2xl border-2 border-slate-100 shadow-sm overflow-hidden relative transition-all duration-300">
                 <div className="feature-card__content p-8">
                   <div className="icon-badge w-16 h-16 bg-white rounded-2xl border border-slate-100 shadow-sm flex items-center justify-center mb-6" style={{animationDelay: '1.5s'}}>
-                    <i className="fa-solid fa-filter text-2xl text-navy-600"></i>
+                    <i className="fa-solid fa-id-card text-2xl text-slate-600"></i>
                   </div>
 
-                  <h3 className="text-2xl font-bold text-navy-900 mb-3">Intelligent Screening</h3>
-                  <p className="text-slate-600 mb-6 leading-relaxed">Automate resume parsing and skills assessment to filter out unqualified candidates instantly.</p>
-
-                  <div className="mt-auto pt-4 border-t border-slate-200/50">
-                    <ul className="space-y-3">
-                      <li className="flex items-center text-sm font-semibold text-navy-700">
-                        <span className="w-1.5 h-1.5 rounded-full bg-navy-500 mr-3 shadow-[0_0_8px_rgba(51,78,104,0.4)]"></span>
-                        Automated resume parsing
-                      </li>
-                      <li className="flex items-center text-sm font-semibold text-navy-700">
-                        <span className="w-1.5 h-1.5 rounded-full bg-navy-500 mr-3 shadow-[0_0_8px_rgba(51,78,104,0.4)]"></span>
-                        Skills-based filtering
-                      </li>
-                    </ul>
-                  </div>
+                  <h3 className="text-2xl font-bold text-navy-900 mb-3">Verified Profiles</h3>
+                  <p className="text-slate-600 leading-relaxed">Access screened candidates and vetted employers who are ready to hire.</p>
                 </div>
               </div>
 
@@ -1639,24 +1558,11 @@ export default function Home() {
               <div className="reveal feature-card group bg-white rounded-2xl border-2 border-slate-100 shadow-sm overflow-hidden relative transition-all duration-300">
                 <div className="feature-card__content p-8">
                   <div className="icon-badge w-16 h-16 bg-white rounded-2xl border border-slate-100 shadow-sm flex items-center justify-center mb-6" style={{animationDelay: '0.5s'}}>
-                    <i className="fa-solid fa-users text-2xl text-sky-600"></i>
+                    <i className="fa-solid fa-handshake text-2xl text-sky-600"></i>
                   </div>
 
                   <h3 className="text-2xl font-bold text-navy-900 mb-3">Team Collaboration</h3>
-                  <p className="text-slate-600 mb-6 leading-relaxed">Keep hiring managers and recruiters aligned with shared scorecards and centralized feedback.</p>
-
-                  <div className="mt-auto pt-4 border-t border-slate-200/50">
-                    <ul className="space-y-3">
-                      <li className="flex items-center text-sm font-semibold text-navy-700">
-                        <span className="w-1.5 h-1.5 rounded-full bg-sky-500 mr-3 shadow-[0_0_8px_rgba(14,165,233,0.6)]"></span>
-                        Shared scorecards
-                      </li>
-                      <li className="flex items-center text-sm font-semibold text-navy-700">
-                        <span className="w-1.5 h-1.5 rounded-full bg-sky-500 mr-3 shadow-[0_0_8px_rgba(14,165,233,0.6)]"></span>
-                        Real-time feedback loops
-                      </li>
-                    </ul>
-                  </div>
+                  <p className="text-slate-600 leading-relaxed">Align HR and hiring managers on one platform for faster, better decisions.</p>
                 </div>
               </div>
 
@@ -1664,24 +1570,11 @@ export default function Home() {
               <div className="reveal feature-card group bg-white rounded-2xl border-2 border-slate-100 shadow-sm overflow-hidden relative transition-all duration-300">
                 <div className="feature-card__content p-8">
                   <div className="icon-badge w-16 h-16 bg-white rounded-2xl border border-slate-100 shadow-sm flex items-center justify-center mb-6" style={{animationDelay: '2s'}}>
-                    <i className="fa-solid fa-calendar-check text-2xl text-navy-600"></i>
+                    <i className="fa-solid fa-route text-2xl text-slate-600"></i>
                   </div>
 
-                  <h3 className="text-2xl font-bold text-navy-900 mb-3">Interview Management</h3>
-                  <p className="text-slate-600 mb-6 leading-relaxed">Streamline scheduling with smart calendar integration and automate candidate reminders.</p>
-
-                  <div className="mt-auto pt-4 border-t border-slate-200/50">
-                    <ul className="space-y-3">
-                      <li className="flex items-center text-sm font-semibold text-navy-700">
-                        <span className="w-1.5 h-1.5 rounded-full bg-navy-500 mr-3 shadow-[0_0_8px_rgba(51,78,104,0.4)]"></span>
-                        One-click scheduling
-                      </li>
-                      <li className="flex items-center text-sm font-semibold text-navy-700">
-                        <span className="w-1.5 h-1.5 rounded-full bg-navy-500 mr-3 shadow-[0_0_8px_rgba(51,78,104,0.4)]"></span>
-                        Automated reminders
-                      </li>
-                    </ul>
-                  </div>
+                  <h3 className="text-2xl font-bold text-navy-900 mb-3">Removing Middlemen</h3>
+                  <p className="text-slate-600 leading-relaxed">Move from first interest to interview with fewer steps, clearer actions, and faster coordination.</p>
                 </div>
               </div>
 
@@ -1689,24 +1582,11 @@ export default function Home() {
               <div className="reveal feature-card group bg-white rounded-2xl border-2 border-slate-100 shadow-sm overflow-hidden relative transition-all duration-300">
                 <div className="feature-card__content p-8">
                   <div className="icon-badge w-16 h-16 bg-white rounded-2xl border border-slate-100 shadow-sm flex items-center justify-center mb-6" style={{animationDelay: '1s'}}>
-                    <i className="fa-solid fa-chart-line text-2xl text-sky-600"></i>
+                    <i className="fa-solid fa-compass text-2xl text-sky-600"></i>
                   </div>
 
-                  <h3 className="text-2xl font-bold text-navy-900 mb-3">Analytics & Insights</h3>
-                  <p className="text-slate-600 mb-6 leading-relaxed">Track every metric that matters. Understand time-to-hire, source effectiveness, and pipeline health.</p>
-
-                  <div className="mt-auto pt-4 border-t border-slate-200/50">
-                    <ul className="space-y-3">
-                      <li className="flex items-center text-sm font-semibold text-navy-700">
-                        <span className="w-1.5 h-1.5 rounded-full bg-sky-500 mr-3 shadow-[0_0_8px_rgba(14,165,233,0.6)]"></span>
-                        Real-time dashboards
-                      </li>
-                      <li className="flex items-center text-sm font-semibold text-navy-700">
-                        <span className="w-1.5 h-1.5 rounded-full bg-sky-500 mr-3 shadow-[0_0_8px_rgba(14,165,233,0.6)]"></span>
-                        Predictive analytics
-                      </li>
-                    </ul>
-                  </div>
+                  <h3 className="text-2xl font-bold text-navy-900 mb-3">Simplified Metrics</h3>
+                  <p className="text-slate-600 leading-relaxed">Track what's working with clear, practical visibility into hiring activity and progress.</p>
                 </div>
               </div>
 
@@ -1714,24 +1594,11 @@ export default function Home() {
               <div className="reveal feature-card group bg-white rounded-2xl border-2 border-slate-100 shadow-sm overflow-hidden relative transition-all duration-300">
                 <div className="feature-card__content p-8">
                   <div className="icon-badge w-16 h-16 bg-white rounded-2xl border border-slate-100 shadow-sm flex items-center justify-center mb-6" style={{animationDelay: '2.5s'}}>
-                    <i className="fa-solid fa-rocket text-2xl text-navy-600"></i>
+                    <i className="fa-solid fa-hourglass-half text-2xl text-slate-600"></i>
                   </div>
 
-                  <h3 className="text-2xl font-bold text-navy-900 mb-3">Seamless Onboarding</h3>
-                  <p className="text-slate-600 mb-6 leading-relaxed">Turn accepted offers into day-one success with digital offer letters and automated paperwork.</p>
-
-                  <div className="mt-auto pt-4 border-t border-slate-200/50">
-                    <ul className="space-y-3">
-                      <li className="flex items-center text-sm font-semibold text-navy-700">
-                        <span className="w-1.5 h-1.5 rounded-full bg-navy-500 mr-3 shadow-[0_0_8px_rgba(51,78,104,0.4)]"></span>
-                        Digital offer letters
-                      </li>
-                      <li className="flex items-center text-sm font-semibold text-navy-700">
-                        <span className="w-1.5 h-1.5 rounded-full bg-navy-500 mr-3 shadow-[0_0_8px_rgba(51,78,104,0.4)]"></span>
-                        Document management
-                      </li>
-                    </ul>
-                  </div>
+                  <h3 className="text-2xl font-bold text-navy-900 mb-3">Time is Money</h3>
+                  <p className="text-slate-600 leading-relaxed">Give professionals their time back to focus on growth—not endless applications.</p>
                 </div>
               </div>
             </div>
