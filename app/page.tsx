@@ -127,6 +127,162 @@ export default function Home() {
     });
   }, [showMobile]);
 
+  // Scroll reveal animation system (only for website version)
+  useEffect(() => {
+    if (showMobile || typeof window === 'undefined') return;
+
+    // Check for reduced motion preference
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    
+    // Function to show an element (add is-visible class)
+    const showElement = (el: Element) => {
+      (el as HTMLElement).classList.add('is-visible');
+    };
+
+    // Function to check if element is in viewport (with buffer)
+    const isInViewport = (el: Element, buffer: number = 0): boolean => {
+      const rect = el.getBoundingClientRect();
+      const windowHeight = window.innerHeight || document.documentElement.clientHeight;
+      return (
+        rect.top >= -buffer &&
+        rect.top <= windowHeight + buffer &&
+        rect.left >= 0 &&
+        rect.left <= (window.innerWidth || document.documentElement.clientWidth)
+      );
+    };
+
+    // Function to get element's vertical position for sorting
+    const getElementTop = (el: Element): number => {
+      const rect = el.getBoundingClientRect();
+      return rect.top + window.scrollY;
+    };
+
+    if (prefersReducedMotion) {
+      // Instantly show all reveal elements
+      document.querySelectorAll('.reveal, .reveal-up, .reveal-left, .reveal-scale, .reveal-stagger > *').forEach(showElement);
+      return;
+    }
+
+    // Create IntersectionObserver for scroll reveal (for sections below the fold)
+    const observerOptions: IntersectionObserverInit = {
+      threshold: 0.2, // Trigger when 20% visible
+      rootMargin: '0px 0px -10% 0px', // Trigger slightly before entering viewport
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          showElement(entry.target);
+          observer.unobserve(entry.target);
+        }
+      });
+    }, observerOptions);
+
+    // Select all reveal elements including variants
+    const revealSelectors = '.reveal, .reveal-up, .reveal-left, .reveal-scale';
+
+    // Function to animate visible sections in sequence
+    const animateInitialVisibleSections = () => {
+      // Find hero section element (the reveal-up in hero section)
+      const heroSection = document.getElementById('hero');
+      const heroElement = heroSection?.querySelector('.reveal-up, .reveal');
+      
+      // Get all reveal elements
+      const allRevealElements = document.querySelectorAll(revealSelectors);
+      const visibleElements: Element[] = [];
+      
+      // Collect all visible elements (excluding hero)
+      allRevealElements.forEach((el) => {
+        // Skip hero element
+        if (el === heroElement) return;
+        
+        // Skip if element is inside hero section
+        if (heroSection && heroSection.contains(el)) return;
+        
+        // Check if element is visible in viewport (with buffer)
+        if (isInViewport(el, 150)) {
+          visibleElements.push(el);
+        }
+      });
+
+      // Sort elements by their top position (top to bottom)
+      visibleElements.sort((a, b) => getElementTop(a) - getElementTop(b));
+
+      // Step 1: Animate hero first - start immediately (opacity 0 -> 1)
+      if (heroElement) {
+        // Use requestAnimationFrame to ensure smooth start
+        requestAnimationFrame(() => {
+          showElement(heroElement);
+        });
+      }
+
+      // Step 2: Start next section ("Built For Everyone") fading in while hero is still fading
+      // Start it 300ms after hero starts (so they overlap slightly for seamless feel)
+      const heroStartDelay = 0;
+      const nextSectionStartDelay = 300; // Start next section while hero is still animating
+      const delayBetweenSections = 200; // 200ms between each subsequent section
+      
+      visibleElements.forEach((el, index) => {
+        setTimeout(() => {
+          showElement(el);
+        }, heroStartDelay + nextSectionStartDelay + (index * delayBetweenSections));
+      });
+
+      // Step 3: Handle stagger children for visible sections
+      const visibleStaggerContainers = document.querySelectorAll('.reveal-stagger');
+      // Start stagger children after all visible sections have started (with some overlap)
+      let staggerStartDelay = nextSectionStartDelay + (visibleElements.length * delayBetweenSections);
+      
+      visibleStaggerContainers.forEach((container) => {
+        if (isInViewport(container, 150)) {
+          const children = Array.from(container.children);
+          children.forEach((child, childIndex) => {
+            setTimeout(() => {
+              showElement(child);
+            }, staggerStartDelay + childIndex * 100);
+          });
+          staggerStartDelay += children.length * 100;
+        }
+      });
+    };
+
+    // Function to set up scroll observer for below-the-fold sections
+    const setupScrollObserver = () => {
+      const allRevealElements = document.querySelectorAll(revealSelectors);
+      const staggerChildren = document.querySelectorAll('.reveal-stagger > *');
+      
+      const allElements = Array.from(allRevealElements).concat(Array.from(staggerChildren));
+      
+      allElements.forEach((el) => {
+        // Only observe elements that aren't already visible and aren't in viewport
+        if (!isInViewport(el, 150) && !(el as HTMLElement).classList.contains('is-visible')) {
+          observer.observe(el);
+        }
+      });
+    };
+
+    // Animate initial visible sections immediately (no delay to prevent flash)
+    // Hero fades in first, then sections below fade in sequentially
+    animateInitialVisibleSections();
+
+    // Set up scroll observer for below-the-fold sections after a short delay
+    setTimeout(() => {
+      setupScrollObserver();
+    }, 100);
+
+    // Re-check on resize (in case viewport changes)
+    const handleResize = () => {
+      setupScrollObserver();
+    };
+    window.addEventListener('resize', handleResize);
+
+    // Cleanup
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      observer.disconnect();
+    };
+  }, [showMobile]);
+
   // NOW we can do conditional returns - all hooks have been called
   // If in app, show mobile landing (check both state and immediate detection)
   // Use isApp directly since it's checked immediately and reliably
@@ -474,39 +630,140 @@ export default function Home() {
   return (
     <>
       <style jsx global>{`
+        /* ========== SCROLL REVEAL ANIMATIONS ========== */
+        /* CRITICAL: Elements must start hidden from initial render to prevent flash */
+        /* No transition on initial state - prevents any visible flash */
+        .reveal:not(.is-visible) {
+          opacity: 0 !important;
+          transform: translate3d(0, 30px, 0) !important;
+          visibility: hidden !important;
+          transition: none !important;
+        }
+
+        /* Only add transition when element becomes visible */
+        .reveal.is-visible {
+          opacity: 1 !important;
+          transform: translate3d(0, 0, 0) !important;
+          visibility: visible !important;
+          transition: opacity 0.75s cubic-bezier(0.22, 1, 0.36, 1),
+                      transform 0.75s cubic-bezier(0.22, 1, 0.36, 1),
+                      visibility 0s 0s !important;
+        }
+
+        /* Stagger delays for child elements - smoother cascade */
+        /* Ensure stagger children also start hidden with no transition */
+        .reveal-stagger > *:not(.is-visible) {
+          opacity: 0 !important;
+          transform: translate3d(0, 30px, 0) !important;
+          visibility: hidden !important;
+          transition: none !important;
+        }
+        .reveal-stagger > *.is-visible {
+          opacity: 1 !important;
+          transform: translate3d(0, 0, 0) !important;
+          visibility: visible !important;
+          transition: opacity 0.75s cubic-bezier(0.22, 1, 0.36, 1),
+                      transform 0.75s cubic-bezier(0.22, 1, 0.36, 1),
+                      visibility 0s 0s !important;
+        }
+        .reveal-stagger > *.is-visible:nth-child(1) { transition-delay: 0ms, 0ms, 0ms; }
+        .reveal-stagger > *.is-visible:nth-child(2) { transition-delay: 80ms, 80ms, 0ms; }
+        .reveal-stagger > *.is-visible:nth-child(3) { transition-delay: 160ms, 160ms, 0ms; }
+        .reveal-stagger > *.is-visible:nth-child(4) { transition-delay: 240ms, 240ms, 0ms; }
+        .reveal-stagger > *.is-visible:nth-child(5) { transition-delay: 320ms, 320ms, 0ms; }
+        .reveal-stagger > *.is-visible:nth-child(6) { transition-delay: 400ms, 400ms, 0ms; }
+        .reveal-stagger > *.is-visible:nth-child(n+7) { transition-delay: 480ms, 480ms, 0ms; }
+
+        /* Reveal variants - all start hidden, no transition until visible */
+        .reveal-up:not(.is-visible) {
+          opacity: 0 !important;
+          transform: translate3d(0, 30px, 0) !important;
+          visibility: hidden !important;
+          transition: none !important;
+        }
+        .reveal-up.is-visible {
+          opacity: 1 !important;
+          transform: translate3d(0, 0, 0) !important;
+          visibility: visible !important;
+          transition: opacity 0.75s cubic-bezier(0.22, 1, 0.36, 1),
+                      transform 0.75s cubic-bezier(0.22, 1, 0.36, 1),
+                      visibility 0s 0s !important;
+        }
+
+        .reveal-left:not(.is-visible) {
+          opacity: 0 !important;
+          transform: translate3d(-30px, 0, 0) !important;
+          visibility: hidden !important;
+          transition: none !important;
+        }
+        .reveal-left.is-visible {
+          opacity: 1 !important;
+          transform: translate3d(0, 0, 0) !important;
+          visibility: visible !important;
+          transition: opacity 0.75s cubic-bezier(0.22, 1, 0.36, 1),
+                      transform 0.75s cubic-bezier(0.22, 1, 0.36, 1),
+                      visibility 0s 0s !important;
+        }
+
+        .reveal-scale:not(.is-visible) {
+          opacity: 0 !important;
+          transform: translate3d(0, 0, 0) scale(0.96) !important;
+          visibility: hidden !important;
+          transition: none !important;
+        }
+        .reveal-scale.is-visible {
+          opacity: 1 !important;
+          transform: translate3d(0, 0, 0) scale(1) !important;
+          visibility: visible !important;
+          transition: opacity 0.75s cubic-bezier(0.22, 1, 0.36, 1),
+                      transform 0.75s cubic-bezier(0.22, 1, 0.36, 1),
+                      visibility 0s 0s !important;
+        }
+        
+        /* Ensure elements stay visible once revealed - prevent any fade-out */
+        .reveal.is-visible,
+        .reveal-up.is-visible,
+        .reveal-left.is-visible,
+        .reveal-scale.is-visible,
+        .reveal-stagger > *.is-visible {
+          opacity: 1 !important;
+          pointer-events: auto !important;
+          visibility: visible !important;
+        }
+
         @keyframes float {
-          0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-20px); }
+          0%, 100% { transform: translate3d(0, 0, 0); }
+          50% { transform: translate3d(0, -20px, 0); }
         }
 
         @keyframes slideLeft {
-          0% { transform: translateX(0); }
-          100% { transform: translateX(-50%); }
+          0% { transform: translate3d(0, 0, 0); }
+          100% { transform: translate3d(-50%, 0, 0); }
         }
 
         @keyframes slideRight {
-          0% { transform: translateX(-50%); }
-          100% { transform: translateX(0); }
+          0% { transform: translate3d(-50%, 0, 0); }
+          100% { transform: translate3d(0, 0, 0); }
         }
 
         @keyframes workflowPulse {
           0%, 100% {
-            transform: scale(1);
+            transform: scale3d(1, 1, 1);
             box-shadow: 0 0 20px rgba(186, 230, 253, 0.4);
           }
           50% {
-            transform: scale(1.12);
+            transform: scale3d(1.12, 1.12, 1);
             box-shadow: 0 0 40px rgba(186, 230, 253, 0.8);
           }
         }
 
         @keyframes pulseRing {
           0% {
-            transform: translate(-50%, -50%) scale(1);
+            transform: translate3d(-50%, -50%, 0) scale(1);
             opacity: 0.8;
           }
           100% {
-            transform: translate(-50%, -50%) scale(1.6);
+            transform: translate3d(-50%, -50%, 0) scale(1.6);
             opacity: 0;
           }
         }
@@ -553,20 +810,24 @@ export default function Home() {
         .skyline-scroll {
           animation: slideLeft 60s linear infinite;
           will-change: transform;
+          transform: translate3d(0, 0, 0);
         }
 
         .skyline-scroll-reverse {
           animation: slideRight 120s linear infinite;
           will-change: transform;
+          transform: translate3d(0, 0, 0);
         }
 
         .card-hover {
-          transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+          transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+                      box-shadow 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+          will-change: transform;
         }
 
         .card-hover:hover {
-          transform: translateY(-10px);
-          box-shadow: 0 24px 48px rgba(16, 42, 67, 0.12);
+          transform: translate3d(0, -12px, 0);
+          box-shadow: 0 28px 56px rgba(16, 42, 67, 0.14);
         }
 
         html {
@@ -666,16 +927,49 @@ export default function Home() {
           }
         }
 
-        /* Accessibility */
+        /* Parallax effect for hero background */
+        .parallax-slow {
+          transform: translate3d(0, 0, 0);
+          will-change: transform;
+        }
+
+        /* Accessibility - Respect reduced motion preference */
         @media (prefers-reduced-motion: reduce) {
+          .reveal,
+          .reveal-up,
+          .reveal-left,
+          .reveal-scale {
+            opacity: 1 !important;
+            transform: none !important;
+            transition: none !important;
+          }
+          
+          .reveal-stagger > * {
+            transition-delay: 0ms !important;
+          }
+
           .feature-card::before,
           .feature-card::after,
           .icon-badge {
-            animation: none;
+            animation: none !important;
           }
+          
           .feature-card {
             transform: none !important;
             transition: none !important;
+          }
+
+          .skyline-scroll,
+          .skyline-scroll-reverse {
+            animation: none !important;
+          }
+
+          *,
+          *::before,
+          *::after {
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.01ms !important;
           }
         }
       `}</style>
@@ -779,7 +1073,7 @@ export default function Home() {
         </header>
 
         {/* Hero Section */}
-        <section className="relative pt-24 pb-32 lg:pb-40 overflow-hidden bg-sky-50 min-h-[600px]">
+        <section id="hero" className="relative pt-24 pb-32 lg:pb-40 overflow-hidden bg-sky-50 min-h-[600px]">
           <div className="absolute inset-0 bg-gradient-to-br from-sky-50 via-white to-slate-50"></div>
           
           {/* Skyline Animation - Multiple Layers */}
@@ -900,7 +1194,7 @@ export default function Home() {
           </div>
 
           <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 h-full flex items-center">
-            <div className="max-w-2xl">
+            <div className="max-w-2xl reveal-up">
               <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-navy-900 leading-tight mb-4 tracking-tight">
                 The Complete Hiring System That
                 <span className="block text-navy-600 mt-1">Closes The Loop</span>
@@ -929,15 +1223,15 @@ export default function Home() {
         {/* Personas Section */}
         <section id="personas" className="py-16 lg:py-20 bg-white">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-12 lg:mb-14">
+            <div className="text-center mb-12 lg:mb-14 reveal">
               <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-navy-900 mb-4 tracking-tight">Built For Everyone</h2>
               <p className="text-base sm:text-lg lg:text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed">
                 Whether you're a solo recruiter, a growing startup, or an enterprise HR team.
               </p>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 lg:gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 lg:gap-6 reveal-stagger">
               {/* Candidates Card */}
-              <div className="bg-white border-2 border-slate-100 rounded-2xl p-6 lg:p-7 card-hover text-center shadow-sm flex flex-col">
+              <div className="reveal bg-white border-2 border-slate-100 rounded-2xl p-6 lg:p-7 card-hover text-center shadow-sm flex flex-col">
                 <div className="w-16 h-16 bg-gradient-to-br from-sky-100 to-sky-50 rounded-xl flex items-center justify-center mx-auto mb-4 shadow-sm">
                   <i className="fa-solid fa-user-tie text-navy-800 text-2xl"></i>
                 </div>
@@ -963,7 +1257,7 @@ export default function Home() {
               </div>
 
               {/* Employer Card */}
-              <div className="bg-white border-2 border-slate-100 rounded-2xl p-6 lg:p-7 card-hover text-center shadow-sm flex flex-col">
+              <div className="reveal bg-white border-2 border-slate-100 rounded-2xl p-6 lg:p-7 card-hover text-center shadow-sm flex flex-col">
                 <div className="w-16 h-16 bg-gradient-to-br from-sky-100 to-sky-50 rounded-xl flex items-center justify-center mx-auto mb-4 shadow-sm">
                   <i className="fa-solid fa-building text-navy-800 text-2xl"></i>
                 </div>
@@ -989,7 +1283,7 @@ export default function Home() {
               </div>
 
               {/* Recruiters Card */}
-              <div className="bg-white border-2 border-slate-100 rounded-2xl p-6 lg:p-7 card-hover text-center shadow-sm md:col-span-2 lg:col-span-1 flex flex-col">
+              <div className="reveal bg-white border-2 border-slate-100 rounded-2xl p-6 lg:p-7 card-hover text-center shadow-sm md:col-span-2 lg:col-span-1 flex flex-col">
                 <div className="w-16 h-16 bg-gradient-to-br from-sky-100 to-sky-50 rounded-xl flex items-center justify-center mx-auto mb-4 shadow-sm">
                   <i className="fa-solid fa-chart-line text-navy-800 text-2xl"></i>
                 </div>
@@ -1020,7 +1314,7 @@ export default function Home() {
         {/* Workflows Section */}
         <section id="workflows" className="py-16 lg:py-20 bg-slate-50 relative overflow-hidden">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-12 lg:mb-16">
+            <div className="text-center mb-12 lg:mb-16 reveal">
               <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-navy-900 mb-4 tracking-tight">Flexible Hiring Workflows</h2>
               <p className="text-base sm:text-lg lg:text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed">
                 HireMe isn't a job board. It's a closed-loop hiring system where everything connects.
@@ -1113,7 +1407,7 @@ export default function Home() {
 
         {/* Comparison Section */}
         <section id="comparison" className="py-16 lg:py-20 bg-white">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 reveal">
             <div className="text-center mb-10 lg:mb-12">
               <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-navy-900 mb-4 tracking-tight">{comparisonCopy[comparisonView].title}</h2>
               <p className="text-base sm:text-lg lg:text-xl text-slate-600 max-w-2xl mx-auto mb-6 leading-relaxed">
@@ -1258,7 +1552,7 @@ export default function Home() {
         {/* Features Grid */}
         <section id="features" className="py-16 lg:py-20 bg-slate-50 relative">
           <div className="max-w-7xl mx-auto px-6 relative z-10">
-            <div className="text-center mb-20">
+            <div className="text-center mb-20 reveal">
               <h2 className="text-4xl md:text-5xl font-bold text-navy-900 mb-6 tracking-tight">
                 Everything You Need to <span className="relative inline-block">
                   <span className="relative z-10">Hire Smarter</span>
@@ -1270,9 +1564,9 @@ export default function Home() {
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 reveal-stagger">
               {/* Card 1 */}
-              <div className="feature-card group bg-white rounded-2xl border-2 border-slate-100 shadow-sm overflow-hidden relative transition-all duration-300">
+              <div className="reveal feature-card group bg-white rounded-2xl border-2 border-slate-100 shadow-sm overflow-hidden relative transition-all duration-300">
                 <div className="feature-card__content p-8">
                   <div className="icon-badge w-16 h-16 bg-white rounded-2xl border border-slate-100 shadow-sm flex items-center justify-center mb-6">
                     <i className="fa-solid fa-search text-2xl text-sky-600"></i>
@@ -1297,7 +1591,7 @@ export default function Home() {
               </div>
 
               {/* Card 2 */}
-              <div className="feature-card group bg-white rounded-2xl border-2 border-slate-100 shadow-sm overflow-hidden relative transition-all duration-300">
+              <div className="reveal feature-card group bg-white rounded-2xl border-2 border-slate-100 shadow-sm overflow-hidden relative transition-all duration-300">
                 <div className="feature-card__content p-8">
                   <div className="icon-badge w-16 h-16 bg-white rounded-2xl border border-slate-100 shadow-sm flex items-center justify-center mb-6" style={{animationDelay: '1.5s'}}>
                     <i className="fa-solid fa-filter text-2xl text-navy-600"></i>
@@ -1322,7 +1616,7 @@ export default function Home() {
               </div>
 
               {/* Card 3 */}
-              <div className="feature-card group bg-white rounded-2xl border-2 border-slate-100 shadow-sm overflow-hidden relative transition-all duration-300">
+              <div className="reveal feature-card group bg-white rounded-2xl border-2 border-slate-100 shadow-sm overflow-hidden relative transition-all duration-300">
                 <div className="feature-card__content p-8">
                   <div className="icon-badge w-16 h-16 bg-white rounded-2xl border border-slate-100 shadow-sm flex items-center justify-center mb-6" style={{animationDelay: '0.5s'}}>
                     <i className="fa-solid fa-users text-2xl text-sky-600"></i>
@@ -1347,7 +1641,7 @@ export default function Home() {
               </div>
 
               {/* Card 4 */}
-              <div className="feature-card group bg-white rounded-2xl border-2 border-slate-100 shadow-sm overflow-hidden relative transition-all duration-300">
+              <div className="reveal feature-card group bg-white rounded-2xl border-2 border-slate-100 shadow-sm overflow-hidden relative transition-all duration-300">
                 <div className="feature-card__content p-8">
                   <div className="icon-badge w-16 h-16 bg-white rounded-2xl border border-slate-100 shadow-sm flex items-center justify-center mb-6" style={{animationDelay: '2s'}}>
                     <i className="fa-solid fa-calendar-check text-2xl text-navy-600"></i>
@@ -1372,7 +1666,7 @@ export default function Home() {
               </div>
 
               {/* Card 5 */}
-              <div className="feature-card group bg-white rounded-2xl border-2 border-slate-100 shadow-sm overflow-hidden relative transition-all duration-300">
+              <div className="reveal feature-card group bg-white rounded-2xl border-2 border-slate-100 shadow-sm overflow-hidden relative transition-all duration-300">
                 <div className="feature-card__content p-8">
                   <div className="icon-badge w-16 h-16 bg-white rounded-2xl border border-slate-100 shadow-sm flex items-center justify-center mb-6" style={{animationDelay: '1s'}}>
                     <i className="fa-solid fa-chart-line text-2xl text-sky-600"></i>
@@ -1397,7 +1691,7 @@ export default function Home() {
               </div>
 
               {/* Card 6 */}
-              <div className="feature-card group bg-white rounded-2xl border-2 border-slate-100 shadow-sm overflow-hidden relative transition-all duration-300">
+              <div className="reveal feature-card group bg-white rounded-2xl border-2 border-slate-100 shadow-sm overflow-hidden relative transition-all duration-300">
                 <div className="feature-card__content p-8">
                   <div className="icon-badge w-16 h-16 bg-white rounded-2xl border border-slate-100 shadow-sm flex items-center justify-center mb-6" style={{animationDelay: '2.5s'}}>
                     <i className="fa-solid fa-rocket text-2xl text-navy-600"></i>
@@ -1426,7 +1720,7 @@ export default function Home() {
 
         {/* FAQ Section */}
         <section id="faq" className="py-16 lg:py-20 bg-white">
-          <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 reveal">
             <div className="text-center mb-12 lg:mb-14">
               <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-navy-900 mb-4 tracking-tight">Frequently Asked Questions</h2>
               <p className="text-base sm:text-lg text-slate-600 leading-relaxed">Answers to our most frequently asked questions are just one click away.</p>
@@ -1522,7 +1816,7 @@ export default function Home() {
             <div className="absolute bottom-0 left-0 w-72 h-72 bg-sky-600 rounded-full blur-3xl"></div>
           </div>
 
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10 reveal">
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-6 lg:mb-7 tracking-tight leading-tight">Want to get hired?</h2>
             <p className="text-lg sm:text-xl lg:text-2xl text-sky-100 mb-8 lg:mb-10 leading-relaxed max-w-2xl mx-auto">
               Join Applicants and Employers from around the world with HireMe
