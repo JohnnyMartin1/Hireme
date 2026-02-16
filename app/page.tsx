@@ -7,6 +7,7 @@ import HireMeLogo from "@/components/brand/HireMeLogo";
 import MobileNav from "@/components/mobile/MobileNav";
 import { isCapacitor } from "@/lib/capacitor";
 import MobileLanding from "@/components/landing/MobileLanding";
+import { RotatingWord } from "@/components/RotatingWord";
 
 export default function Home() {
   // IMPORTANT: All hooks must be called BEFORE any conditional returns
@@ -1224,7 +1225,23 @@ export default function Home() {
         <section id="personas" className="py-16 lg:py-20 bg-white">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-12 lg:mb-14 reveal">
-              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-navy-900 mb-4 tracking-tight">Built For Everyone</h2>
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-navy-900 mb-4 tracking-tight">
+                Built For{" "}
+                <RotatingWord
+                  words={[
+                    "Everyone",
+                    "College Students",
+                    "New Grads",
+                    "Young Professionals",
+                    "Career Changers",
+                    "Startups",
+                    "Growing Teams",
+                    "Enterprise"
+                  ]}
+                  intervalMs={3000}
+                  wordClassName="text-navy-600"
+                />
+              </h2>
               <p className="text-base sm:text-lg lg:text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed">
                 Whether you're a solo recruiter, a growing startup, or an enterprise HR team.
               </p>
