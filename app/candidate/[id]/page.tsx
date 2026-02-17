@@ -9,6 +9,7 @@ import Link from 'next/link';
 import { trackProfileView } from '@/lib/firebase-firestore';
 import { getEmployerJobs, getCompanyJobs } from '@/lib/firebase-firestore';
 import { calculateCompletion } from '@/components/ProfileCompletionProvider';
+import { LanguageSkill } from '@/components/LanguageSelector';
 
 interface CandidateProfile {
   id: string;
@@ -27,8 +28,8 @@ interface CandidateProfile {
   jobTypes?: string[];
   extracurriculars?: string[];
   experience?: string;
-  certifications?: string[];
-  languages?: string[];
+  certifications?: string[] | Array<{name: string; verificationLink?: string; verificationCode?: string}>;
+  languages?: string[] | LanguageSkill[];
   careerInterests?: string[];
   workAuthorization?: {
     authorizedToWork: boolean | null;
@@ -104,7 +105,6 @@ export default function CandidateProfilePage() {
     }
   };
   const [endorsements, setEndorsements] = useState<any[]>([]);
-  const [experienceExpanded, setExperienceExpanded] = useState(false);
   const [stickyBarVisible, setStickyBarVisible] = useState(false);
   const [copyLinkSuccess, setCopyLinkSuccess] = useState(false);
   const heroCardRef = useRef<HTMLDivElement>(null);
@@ -645,6 +645,43 @@ export default function CandidateProfilePage() {
           </section>
         ) : null}
 
+        {/* Extracurricular Activities Card */}
+        {candidate.experience && (
+          <section className="bg-white rounded-2xl shadow-xl border border-slate-100 p-8 mb-8">
+            <div className="flex items-center mb-6">
+              <div className="w-12 h-12 bg-sky-100 rounded-lg flex items-center justify-center mr-4">
+                <Star className="h-6 w-6 text-navy-700" />
+              </div>
+              <h2 className="text-xl font-bold text-navy-900">Extracurricular Activities</h2>
+            </div>
+            <div className="text-slate-600 leading-relaxed">
+              <p className="whitespace-pre-wrap">{candidate.experience}</p>
+            </div>
+          </section>
+        )}
+
+        {/* Extracurricular Activities (array) Card */}
+        {candidate.extracurriculars && candidate.extracurriculars.length > 0 && (
+          <section className="bg-white rounded-2xl shadow-xl border border-slate-100 p-8 mb-8">
+            <div className="flex items-center mb-6">
+              <div className="w-12 h-12 bg-sky-100 rounded-lg flex items-center justify-center mr-4">
+                <Star className="h-6 w-6 text-navy-700" />
+              </div>
+              <h2 className="text-xl font-bold text-navy-900">Extracurricular Activities</h2>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              {candidate.extracurriculars.map((activity: string, index: number) => (
+                <span
+                  key={index}
+                  className="bg-sky-50 border border-sky-200 text-navy-900 px-4 py-2 rounded-full text-sm font-medium"
+                >
+                  {activity}
+                </span>
+              ))}
+            </div>
+          </section>
+        )}
+
         {/* Resume Card */}
         {candidate.resumeUrl && (
           <section className="bg-white rounded-2xl shadow-xl border border-slate-100 p-8 mb-8">
@@ -733,142 +770,109 @@ export default function CandidateProfilePage() {
           </section>
         )}
 
-        {/* Skills Card */}
-        {candidate.skills && candidate.skills.length > 0 && (
+        {/* Skills & Languages Card */}
+        {(candidate.skills && candidate.skills.length > 0) || (candidate.languages && candidate.languages.length > 0) ? (
           <section className="bg-white rounded-2xl shadow-xl border border-slate-100 p-8 mb-8">
             <div className="flex items-center mb-6">
               <div className="w-12 h-12 bg-sky-100 rounded-lg flex items-center justify-center mr-4">
                 <Code className="h-6 w-6 text-navy-700" />
               </div>
-              <h2 className="text-xl font-bold text-navy-900">Skills</h2>
+              <h2 className="text-xl font-bold text-navy-900">Skills & Languages</h2>
             </div>
-            <div className="flex flex-wrap gap-3">
-              {candidate.skills.map((skill: string, index: number) => (
-                <span
-                  key={index}
-                  className="bg-sky-50 border border-sky-200 text-navy-900 px-4 py-2 rounded-full text-sm font-medium"
-                >
-                  {skill}
-                </span>
-              ))}
-            </div>
+            {candidate.skills && candidate.skills.length > 0 && (
+              <div className="mb-4">
+                <h3 className="text-sm font-semibold text-navy-700 mb-2">Technical & Professional Skills</h3>
+                <div className="flex flex-wrap gap-3">
+                  {candidate.skills.map((skill: string, index: number) => (
+                    <span
+                      key={index}
+                      className="bg-sky-50 border border-sky-200 text-navy-900 px-4 py-2 rounded-full text-sm font-medium"
+                    >
+                      {skill}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+            {candidate.languages && candidate.languages.length > 0 && (
+              <div>
+                <h3 className="text-sm font-semibold text-navy-700 mb-2">Languages</h3>
+                <div className="flex flex-wrap gap-3">
+                  {candidate.languages.map((lang: string | LanguageSkill, index: number) => {
+                    // Handle both old format (string) and new format (LanguageSkill object)
+                    const languageName = typeof lang === 'string' ? lang : lang.language;
+                    return (
+                      <span
+                        key={index}
+                        className="bg-sky-50 border border-sky-200 text-navy-900 px-4 py-2 rounded-full text-sm font-medium"
+                      >
+                        {languageName}
+                      </span>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </section>
-        )}
+        ) : null}
 
-        {/* Work Preferences Card */}
-        {candidate.workPreferences && candidate.workPreferences.length > 0 && (
+        {/* Location & Work Preferences Card */}
+        {(candidate.locations && candidate.locations.length > 0) || (candidate.workPreferences && candidate.workPreferences.length > 0) || (candidate.jobTypes && candidate.jobTypes.length > 0) ? (
           <section className="bg-white rounded-2xl shadow-xl border border-slate-100 p-8 mb-8">
             <div className="flex items-center mb-6">
               <div className="w-12 h-12 bg-sky-100 rounded-lg flex items-center justify-center mr-4">
                 <Briefcase className="h-6 w-6 text-navy-700" />
               </div>
-              <h2 className="text-xl font-bold text-navy-900">Work Preferences</h2>
+              <h2 className="text-xl font-bold text-navy-900">Location & Work Preferences</h2>
             </div>
-            <div className="flex flex-wrap gap-3">
-              {candidate.workPreferences.map((pref: string, index: number) => (
-                <span
-                  key={index}
-                  className="bg-sky-50 border border-sky-200 text-navy-900 px-4 py-2 rounded-full text-sm font-medium"
-                >
-                  {pref}
-                </span>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* Preferred Job Types Card */}
-        {candidate.jobTypes && candidate.jobTypes.length > 0 && (
-          <section className="bg-white rounded-2xl shadow-xl border border-slate-100 p-8 mb-8">
-            <div className="flex items-center mb-6">
-              <div className="w-12 h-12 bg-sky-100 rounded-lg flex items-center justify-center mr-4">
-                <UserCircle className="h-6 w-6 text-navy-700" />
+            {candidate.locations && candidate.locations.length > 0 && (
+              <div className="mb-4">
+                <h3 className="text-sm font-semibold text-navy-700 mb-2">Preferred Work Locations</h3>
+                <div className="flex flex-wrap gap-3">
+                  {candidate.locations.map((location: string, index: number) => (
+                    <span
+                      key={index}
+                      className="bg-sky-50 border border-sky-200 text-navy-900 px-4 py-2 rounded-full text-sm font-medium flex items-center gap-2"
+                    >
+                      <MapPin className="h-3 w-3" />
+                      <span>{location}</span>
+                    </span>
+                  ))}
+                </div>
               </div>
-              <h2 className="text-xl font-bold text-navy-900">Preferred Job Types</h2>
-            </div>
-            <div className="flex flex-wrap gap-3">
-              {candidate.jobTypes.map((type: string, index: number) => (
-                <span
-                  key={index}
-                  className="bg-sky-50 border border-sky-200 text-navy-900 px-4 py-2 rounded-full text-sm font-medium"
-                >
-                  {type}
-                </span>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* Relevant Experience Card */}
-        {candidate.experience && (
-          <section className="bg-white rounded-2xl shadow-xl border border-slate-100 p-8 mb-8">
-            <div className="flex items-center mb-6">
-              <div className="w-12 h-12 bg-sky-100 rounded-lg flex items-center justify-center mr-4">
-                <Star className="h-6 w-6 text-navy-700" />
+            )}
+            {candidate.workPreferences && candidate.workPreferences.length > 0 && (
+              <div className="mb-4">
+                <h3 className="text-sm font-semibold text-navy-700 mb-2">Work Arrangements</h3>
+                <div className="flex flex-wrap gap-3">
+                  {candidate.workPreferences.map((pref: string, index: number) => (
+                    <span
+                      key={index}
+                      className="bg-sky-50 border border-sky-200 text-navy-900 px-4 py-2 rounded-full text-sm font-medium"
+                    >
+                      {pref}
+                    </span>
+                  ))}
+                </div>
               </div>
-              <h2 className="text-xl font-bold text-navy-900">Relevant Experience</h2>
-            </div>
-            <div className={`text-slate-600 leading-relaxed ${experienceExpanded ? 'expanded' : ''}`} style={{maxHeight: experienceExpanded ? '50rem' : '8rem', overflow: 'hidden', transition: 'max-height 0.22s ease'}}>
-              <p className="whitespace-pre-wrap">{candidate.experience}</p>
-            </div>
-            <button
-              onClick={() => setExperienceExpanded(!experienceExpanded)}
-              className="mt-4 text-navy-900 font-semibold hover:text-navy-700 transition-colors flex items-center gap-2"
-            >
-              <span>{experienceExpanded ? 'Read less' : 'Read more'}</span>
-              {experienceExpanded ? (
-                <ArrowLeft className="h-4 w-4 rotate-90" />
-              ) : (
-                <ArrowLeft className="h-4 w-4 -rotate-90" />
-              )}
-            </button>
-          </section>
-        )}
-
-        {/* Preferred Work Locations Card */}
-        {candidate.locations && candidate.locations.length > 0 && (
-          <section className="bg-white rounded-2xl shadow-xl border border-slate-100 p-8 mb-8">
-            <div className="flex items-center mb-6">
-              <div className="w-12 h-12 bg-sky-100 rounded-lg flex items-center justify-center mr-4">
-                <MapPin className="h-6 w-6 text-navy-700" />
+            )}
+            {candidate.jobTypes && candidate.jobTypes.length > 0 && (
+              <div>
+                <h3 className="text-sm font-semibold text-navy-700 mb-2">Preferred Job Types</h3>
+                <div className="flex flex-wrap gap-3">
+                  {candidate.jobTypes.map((type: string, index: number) => (
+                    <span
+                      key={index}
+                      className="bg-sky-50 border border-sky-200 text-navy-900 px-4 py-2 rounded-full text-sm font-medium"
+                    >
+                      {type}
+                    </span>
+                  ))}
+                </div>
               </div>
-              <h2 className="text-xl font-bold text-navy-900">Preferred Work Locations</h2>
-            </div>
-            <div className="flex flex-wrap gap-3">
-              {candidate.locations.map((location: string, index: number) => (
-                <span
-                  key={index}
-                  className="bg-sky-50 border border-sky-200 text-navy-900 px-4 py-2 rounded-full text-sm font-medium flex items-center gap-2"
-                >
-                  <MapPin className="h-3 w-3" />
-                  <span>{location}</span>
-                </span>
-              ))}
-            </div>
+            )}
           </section>
-        )}
-
-        {/* Extracurricular Activities Card */}
-        {candidate.extracurriculars && candidate.extracurriculars.length > 0 && (
-          <section className="bg-white rounded-2xl shadow-xl border border-slate-100 p-8 mb-8">
-            <div className="flex items-center mb-6">
-              <div className="w-12 h-12 bg-sky-100 rounded-lg flex items-center justify-center mr-4">
-                <Star className="h-6 w-6 text-navy-700" />
-              </div>
-              <h2 className="text-xl font-bold text-navy-900">Extracurricular Activities</h2>
-            </div>
-            <div className="flex flex-wrap gap-3">
-              {candidate.extracurriculars.map((activity: string, index: number) => (
-                <span
-                  key={index}
-                  className="bg-sky-50 border border-sky-200 text-navy-900 px-4 py-2 rounded-full text-sm font-medium"
-                >
-                  {activity}
-                </span>
-              ))}
-            </div>
-          </section>
-        )}
+        ) : null}
 
         {/* Certifications Card */}
         {candidate.certifications && candidate.certifications.length > 0 && (
@@ -880,36 +884,18 @@ export default function CandidateProfilePage() {
               <h2 className="text-xl font-bold text-navy-900">Certifications</h2>
             </div>
             <div className="flex flex-wrap gap-3">
-              {candidate.certifications.map((cert: string, index: number) => (
-                <span
-                  key={index}
-                  className="bg-sky-50 border border-sky-200 text-navy-900 px-4 py-2 rounded-full text-sm font-medium"
-                >
-                  {cert}
-                </span>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* Languages Card */}
-        {candidate.languages && candidate.languages.length > 0 && (
-          <section className="bg-white rounded-2xl shadow-xl border border-slate-100 p-8 mb-8">
-            <div className="flex items-center mb-6">
-              <div className="w-12 h-12 bg-sky-100 rounded-lg flex items-center justify-center mr-4">
-                <Globe className="h-6 w-6 text-navy-700" />
-              </div>
-              <h2 className="text-xl font-bold text-navy-900">Languages</h2>
-            </div>
-            <div className="flex flex-wrap gap-3">
-              {candidate.languages.map((language: string, index: number) => (
-                <span
-                  key={index}
-                  className="bg-sky-50 border border-sky-200 text-navy-900 px-4 py-2 rounded-full text-sm font-medium"
-                >
-                  {language}
-                </span>
-              ))}
+              {candidate.certifications.map((cert: string | {name: string; verificationLink?: string; verificationCode?: string}, index: number) => {
+                // Handle both old format (string) and new format (object)
+                const certName = typeof cert === 'string' ? cert : cert.name;
+                return (
+                  <span
+                    key={index}
+                    className="bg-sky-50 border border-sky-200 text-navy-900 px-4 py-2 rounded-full text-sm font-medium"
+                  >
+                    {certName}
+                  </span>
+                );
+              })}
             </div>
           </section>
         )}

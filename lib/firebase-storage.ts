@@ -1,6 +1,7 @@
 import { 
   ref, 
   uploadBytes, 
+  uploadBytesResumable,
   getDownloadURL, 
   deleteObject,
   listAll
@@ -44,16 +45,59 @@ export const uploadResume = async (file: File, userId: string) => {
   });
 };
 
-// Upload video file
-export const uploadVideo = async (file: File, userId: string) => {
+// Upload video file with progress tracking
+export const uploadVideo = async (
+  file: File, 
+  userId: string, 
+  onProgress?: (progress: number) => void
+) => {
   const path = `videos/${userId}/${Date.now()}_${file.name}`;
-  return uploadFile(file, path, {
-    contentType: file.type,
-    customMetadata: {
-      uploadedBy: userId,
-      fileType: 'video'
-    }
-  });
+  
+  if (onProgress) {
+    // Use resumable upload for progress tracking
+    return new Promise<{ url: string | null; path: string | null; error: string | null }>((resolve) => {
+      const storageRef = ref(storage, path);
+      const uploadTask = uploadBytesResumable(storageRef, file, {
+        contentType: file.type,
+        customMetadata: {
+          uploadedBy: userId,
+          fileType: 'video'
+        }
+      });
+
+      uploadTask.on(
+        'state_changed',
+        (snapshot) => {
+          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+          onProgress(progress);
+        },
+        (error) => {
+          resolve({ url: null, path: null, error: error.message });
+        },
+        async () => {
+          try {
+            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+            resolve({
+              url: downloadURL,
+              path: uploadTask.snapshot.ref.fullPath,
+              error: null
+            });
+          } catch (error: any) {
+            resolve({ url: null, path: null, error: error.message });
+          }
+        }
+      );
+    });
+  } else {
+    // Fallback to regular upload
+    return uploadFile(file, path, {
+      contentType: file.type,
+      customMetadata: {
+        uploadedBy: userId,
+        fileType: 'video'
+      }
+    });
+  }
 };
 
 // Upload profile image
@@ -64,6 +108,18 @@ export const uploadProfileImage = async (file: File, userId: string) => {
     customMetadata: {
       uploadedBy: userId,
       fileType: 'profile-image'
+    }
+  });
+};
+
+// Upload transcript file
+export const uploadTranscript = async (file: File, userId: string) => {
+  const path = `transcripts/${userId}/${Date.now()}_${file.name}`;
+  return uploadFile(file, path, {
+    contentType: file.type,
+    customMetadata: {
+      uploadedBy: userId,
+      fileType: 'transcript'
     }
   });
 };

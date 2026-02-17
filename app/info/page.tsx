@@ -182,7 +182,7 @@ export default function InfoPage() {
                 </div>
                 <div className="flex items-center gap-3 bg-white rounded-lg p-4 shadow-sm">
                   <Video className="h-5 w-5 text-indigo-600 flex-shrink-0" />
-                  <span className="text-gray-800 font-medium">Add the video (0–30 seconds, friendly and clear)</span>
+                  <span className="text-gray-800 font-medium">Add the video (0–60 seconds, friendly and clear)</span>
                 </div>
                 <div className="flex items-center gap-3 bg-white rounded-lg p-4 shadow-sm">
                   <TrendingUp className="h-5 w-5 text-indigo-600 flex-shrink-0" />

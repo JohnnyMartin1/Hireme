@@ -947,7 +947,7 @@ function InformationSection({ profile }: { profile: any }) {
           
           <div className="flex items-center space-x-4 p-4 bg-white rounded-xl border border-slate-200 hover:shadow-md hover:border-sky-200 transition-all duration-200">
             <i className="fa-solid fa-video text-sky-500"></i>
-            <span className="text-slate-700 font-medium">Add the video (0–30 seconds, friendly and clear)</span>
+            <span className="text-slate-700 font-medium">Add the video (0–60 seconds, friendly and clear)</span>
           </div>
           
           <div className="flex items-center space-x-4 p-4 bg-white rounded-xl border border-slate-200 hover:shadow-md hover:border-sky-200 transition-all duration-200">
@@ -1565,10 +1565,10 @@ function DangerSection() {
                 To proceed with account deletion, please contact our support team at:
               </p>
               <a 
-                href="mailto:officialhiremeapp@gmail.com" 
+                href="mailto:support@officialhireme.com" 
                 className="text-navy-900 font-semibold hover:text-sky-500 transition-colors inline-flex items-center"
               >
-                officialhiremeapp@gmail.com
+                support@officialhireme.com
                 <i className="fa-solid fa-external-link ml-2 text-xs"></i>
               </a>
             </div>

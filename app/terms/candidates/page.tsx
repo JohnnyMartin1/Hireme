@@ -288,8 +288,8 @@ export default function CandidateTermsOfServicePage() {
               <h2 className="text-2xl font-bold text-navy-900 mt-8 mb-4">Contact Us</h2>
               <p className="text-slate-700 leading-relaxed">
                 If you have any questions, concerns, or feedback about these Terms or the Platform, please contact us at:{" "}
-                <a href="mailto:officialhiremeapp@gmail.com" className="text-navy-800 hover:text-navy-600 underline font-semibold">
-                  officialhiremeapp@gmail.com
+                <a href="mailto:support@officialhireme.com" className="text-navy-800 hover:text-navy-600 underline font-semibold">
+                  support@officialhireme.com
                 </a>
               </p>
               <p className="text-slate-700 leading-relaxed mt-4">

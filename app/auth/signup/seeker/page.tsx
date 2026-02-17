@@ -28,6 +28,12 @@ export default function SeekerSignupPage() {
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [termsModalOpen, setTermsModalOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [additionalEducation, setAdditionalEducation] = useState<Array<{
+    school: string;
+    major: string;
+    minor: string;
+    graduationYear: string;
+  }>>([]);
   const firstInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
@@ -89,10 +95,15 @@ export default function SeekerSignupPage() {
       return;
     }
     
-    setIsLoading(true);
+    // Optimistic update - show success immediately
     setError(null);
+    setIsLoading(true);
 
     try {
+      // Use AbortController for timeout (5 seconds max)
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+
       const response = await fetch('/api/auth/send-verification-code', {
         method: 'POST',
         headers: {
@@ -101,25 +112,34 @@ export default function SeekerSignupPage() {
         body: JSON.stringify({
           email: formData.email,
         }),
+        signal: controller.signal,
       });
+
+      clearTimeout(timeoutId);
 
       const data = await response.json();
 
       if (!response.ok) {
-        console.error('Verification code API error:', data);
         setError(data.error || 'Failed to send verification code. Please try again.');
+        setIsLoading(false);
         return;
       }
 
       if (data.success) {
+        // Success - show immediately
         setEmailSent(true);
+        setIsLoading(false);
       } else {
         setError(data.error || 'Failed to send verification code');
+        setIsLoading(false);
       }
     } catch (error: any) {
-      console.error('Error sending verification code:', error);
-      setError('Failed to send verification code. Please try again.');
-    } finally {
+      if (error.name === 'AbortError') {
+        setError('Request timed out. Please try again.');
+      } else {
+        console.error('Error sending verification code:', error);
+        setError('Failed to send verification code. Please try again.');
+      }
       setIsLoading(false);
     }
   };
@@ -206,6 +226,11 @@ export default function SeekerSignupPage() {
       if (user) {
         // Create user profile in Firestore
         const validMajors = formData.majors.filter(m => m.trim() !== "");
+        // Filter out empty additional education entries
+        const validAdditionalEducation = additionalEducation.filter(edu => 
+          edu.school.trim() !== '' || edu.major.trim() !== '' || edu.graduationYear.trim() !== ''
+        );
+
         const profileData = {
           firstName: formData.firstName,
           lastName: formData.lastName,
@@ -216,6 +241,7 @@ export default function SeekerSignupPage() {
           majors: validMajors, // Store as array
           minor: formData.minor || '',
           graduationYear: formData.graduationYear,
+          additionalEducation: validAdditionalEducation.length > 0 ? validAdditionalEducation : undefined,
           createdAt: new Date(),
           openToOpp: true,
           emailVerified: true, // Email is already verified with 6-digit code
@@ -271,12 +297,12 @@ export default function SeekerSignupPage() {
   }, []);
 
   return (
-    <main className="min-h-screen sm:h-screen flex flex-col lg:flex-row bg-brand-gray overflow-hidden mobile-safe-top mobile-safe-bottom">
+    <main className="min-h-screen flex flex-col lg:flex-row bg-brand-gray mobile-safe-top mobile-safe-bottom">
       {/* Left Column - Content & Form */}
-      <div className="w-full lg:w-[48%] flex flex-col justify-center p-4 sm:p-6 md:p-8 bg-white relative overflow-y-auto">
-        <div className="flex-grow flex flex-col justify-center w-full max-w-[560px] mx-auto py-6 sm:py-0 pb-20 sm:pb-0">
+      <div className="w-full lg:w-[48%] flex flex-col bg-white relative overflow-y-auto lg:max-h-screen">
+        <div className="flex flex-col w-full max-w-[560px] mx-auto p-4 sm:p-6 md:p-8 py-4 sm:py-6">
           {/* Progress Stepper */}
-          <div className="flex flex-wrap items-center gap-2 sm:flex-nowrap sm:gap-4 text-xs sm:text-sm mb-6 sm:mb-8">
+          <div className="flex flex-wrap items-center gap-2 sm:flex-nowrap sm:gap-4 text-xs sm:text-sm mb-4 sm:mb-6">
             <div className={`flex items-center ${currentStep >= 1 ? 'text-navy-800 font-semibold' : 'text-text-secondary'} whitespace-nowrap gap-2`}>
               <span className={`flex items-center justify-center w-6 h-6 sm:w-8 sm:h-8 rounded-full text-xs ${
                 currentStep > 1 ? 'bg-success-green text-white' : currentStep === 1 ? 'bg-navy-800 text-white' : 'bg-light-gray text-text-secondary'
@@ -306,7 +332,7 @@ export default function SeekerSignupPage() {
           </div>
 
           {/* Progress Bar */}
-          <div className="w-full bg-light-gray rounded-full h-2 mb-6 sm:mb-8">
+          <div className="w-full bg-light-gray rounded-full h-2 mb-4 sm:mb-6">
             <div 
               className="bg-navy-800 h-2 rounded-full transition-all duration-300" 
               style={{ width: `${getProgressPercentage()}%` }}
@@ -316,8 +342,8 @@ export default function SeekerSignupPage() {
           {/* Step 1: Email Verification */}
           {currentStep === 1 && (
             <div>
-              <h1 className="text-2xl sm:text-4xl font-bold text-text-primary mb-4 sm:mb-6">Enter your email to get started</h1>
-              <div className="space-y-4 sm:space-y-6">
+              <h1 className="text-2xl sm:text-4xl font-bold text-text-primary mb-3 sm:mb-4">Enter your email to get started</h1>
+              <div className="space-y-3 sm:space-y-4">
                 <div className="relative">
                   <input 
                     type="email" 
@@ -350,7 +376,7 @@ export default function SeekerSignupPage() {
                 <p className="text-sm text-text-secondary">We'll email a 6-digit code to verify your address.</p>
                 
                 {emailSent && (
-                  <div className="space-y-6 pb-32 sm:pb-6">
+                  <div className="space-y-4 pb-6">
                     <div className="text-sm text-success-green">Code sent to {formData.email}</div>
                     {/* Hidden inputs for autofill support */}
                     {/* Hidden email input for mobile autofill - must be visible to browser but not to user */}
@@ -472,8 +498,8 @@ export default function SeekerSignupPage() {
           {/* Step 2: Create Account */}
           {currentStep === 2 && (
             <div>
-              <h1 className="text-4xl font-bold text-text-primary mb-6">Create your account</h1>
-              <form onSubmit={handleSubmit} className="space-y-6">
+              <h1 className="text-4xl font-bold text-text-primary mb-4">Create your account</h1>
+              <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-2">
@@ -612,7 +638,111 @@ export default function SeekerSignupPage() {
                   />
                 </div>
 
-                <div className="space-y-4">
+                {/* Additional Education Entries */}
+                {additionalEducation.map((edu, index) => (
+                  <div key={index} className="mt-4 p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-3">
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="text-sm font-semibold text-slate-700">Additional Education {index + 1}</h3>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAdditionalEducation(prev => prev.filter((_, i) => i !== index));
+                        }}
+                        className="text-slate-400 hover:text-red-500 transition-colors"
+                      >
+                        <i className="fa-solid fa-times"></i>
+                      </button>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-xs font-medium text-slate-500 mb-2 uppercase tracking-wide">
+                        College
+                      </label>
+                      <SearchableDropdown
+                        options={UNIVERSITIES}
+                        value={edu.school}
+                        onChange={(value) => {
+                          setAdditionalEducation(prev => prev.map((item, i) => 
+                            i === index ? { ...item, school: value } : item
+                          ));
+                        }}
+                        placeholder="Select your university"
+                        label="University"
+                        allowCustom
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-medium text-slate-500 mb-2 uppercase tracking-wide">
+                        Major
+                      </label>
+                      <SearchableDropdown
+                        options={MAJORS}
+                        value={edu.major}
+                        onChange={(value) => {
+                          setAdditionalEducation(prev => prev.map((item, i) => 
+                            i === index ? { ...item, major: value } : item
+                          ));
+                        }}
+                        placeholder="Select your major"
+                        label="Major"
+                        allowCustom
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-medium text-slate-500 mb-2 uppercase tracking-wide">
+                        Minor (optional)
+                      </label>
+                      <SearchableDropdown
+                        options={MINORS}
+                        value={edu.minor}
+                        onChange={(value) => {
+                          setAdditionalEducation(prev => prev.map((item, i) => 
+                            i === index ? { ...item, minor: value } : item
+                          ));
+                        }}
+                        placeholder="Select your minor (optional)"
+                        label="Minor"
+                        allowCustom
+                      />
+                    </div>
+
+                    <div>
+                      <SearchableDropdown
+                        options={GRADUATION_YEARS}
+                        value={edu.graduationYear}
+                        onChange={(value) => {
+                          setAdditionalEducation(prev => prev.map((item, i) => 
+                            i === index ? { ...item, graduationYear: value } : item
+                          ));
+                        }}
+                        placeholder="Select graduation year"
+                        label="Graduation Year"
+                      />
+                    </div>
+                  </div>
+                ))}
+
+                <div className="mt-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAdditionalEducation(prev => [...prev, {
+                        school: '',
+                        major: '',
+                        minor: '',
+                        graduationYear: ''
+                      }]);
+                    }}
+                    className="text-sm text-navy-800 hover:text-navy-600 font-medium flex items-center gap-2 transition-colors"
+                  >
+                    <i className="fa-solid fa-plus text-xs"></i>
+                    Add education
+                  </button>
+                </div>
+
+                <div className="space-y-3">
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-2">
                       Password <span className="text-red-500">*</span>
@@ -755,7 +885,7 @@ export default function SeekerSignupPage() {
       </div>
 
       {/* Right Column - Profile Gallery */}
-      <div className="hidden lg:block w-[52%] bg-brand-gray p-8 overflow-hidden relative">
+      <div className="hidden lg:block w-[52%] bg-brand-gray p-8 overflow-y-auto lg:h-screen relative">
         <div className="absolute inset-0 bg-gradient-to-br from-brand-gray via-subtle-gray to-brand-gray"></div>
         
         <div className="h-full w-full relative">

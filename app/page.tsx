@@ -1658,16 +1658,16 @@ export default function Home() {
                     <div className="flex-1">
                       <p className="text-sm text-slate-600 mb-1">Contact us at:</p>
                       <a 
-                        href="mailto:officialhiremeapp@gmail.com" 
+                        href="mailto:support@officialhireme.com" 
                         className="text-navy-800 hover:text-navy-600 font-semibold text-base break-all"
                       >
-                        officialhiremeapp@gmail.com
+                        support@officialhireme.com
                       </a>
                     </div>
                     <button
                       onClick={async () => {
                         try {
-                          await navigator.clipboard.writeText('officialhiremeapp@gmail.com');
+                          await navigator.clipboard.writeText('support@officialhireme.com');
                           setEmailCopied(true);
                           setTimeout(() => setEmailCopied(false), 2000);
                         } catch (err) {

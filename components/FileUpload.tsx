@@ -2,10 +2,10 @@
 import { useState, useRef } from 'react';
 import { useToast } from '@/components/NotificationSystem';
 import { Upload, X, FileText, User, Loader2 } from 'lucide-react';
-import { uploadResume, uploadProfileImage, deleteFile } from '@/lib/firebase-storage';
+import { uploadResume, uploadProfileImage, uploadTranscript, deleteFile } from '@/lib/firebase-storage';
 
 interface FileUploadProps {
-  type: 'resume' | 'profile-image';
+  type: 'resume' | 'profile-image' | 'transcript';
   currentFile?: string;
   onUploadComplete: (fileUrl: string) => void;
   onDelete: () => void;
@@ -28,13 +28,13 @@ export default function FileUpload({
     if (!file) return;
 
     // Validate file type
-    if (type === 'resume') {
+    if (type === 'resume' || type === 'transcript') {
       if (!file.type.includes('pdf')) {
-        toast.info('Info', 'Please upload a PDF file for your resume.');
+        toast.info('Info', `Please upload a PDF file for your ${type === 'resume' ? 'resume' : 'transcript'}.`);
         return;
       }
       if (file.size > 5 * 1024 * 1024) { // 5MB limit
-        toast.info('Info', 'Resume file size must be less than 5MB.');
+        toast.info('Info', `${type === 'resume' ? 'Resume' : 'Transcript'} file size must be less than 5MB.`);
         return;
       }
     } else if (type === 'profile-image') {
@@ -57,6 +57,11 @@ export default function FileUpload({
         if (error) throw new Error(error);
         if (!url) throw new Error('Upload failed - no URL returned');
         fileUrl = url;
+      } else if (type === 'transcript') {
+        const { url, error } = await uploadTranscript(file, userId);
+        if (error) throw new Error(error);
+        if (!url) throw new Error('Upload failed - no URL returned');
+        fileUrl = url;
       } else {
         const { url, error } = await uploadProfileImage(file, userId);
         if (error) throw new Error(error);
@@ -67,7 +72,8 @@ export default function FileUpload({
       onUploadComplete(fileUrl);
     } catch (error) {
       console.error('Upload error:', error);
-      toast.error('Error', `Failed to upload ${type === 'resume' ? 'resume' : 'profile image'}. Please try again.`);
+      const fileTypeName = type === 'resume' ? 'resume' : type === 'transcript' ? 'transcript' : 'profile image';
+      toast.error('Error', `Failed to upload ${fileTypeName}. Please try again.`);
     } finally {
       setIsUploading(false);
     }
@@ -154,7 +160,7 @@ export default function FileUpload({
           <input
             ref={fileInputRef}
             type="file"
-            accept={type === 'resume' ? '.pdf' : 'image/*'}
+            accept={type === 'resume' || type === 'transcript' ? '.pdf' : 'image/*'}
             onChange={(e) => e.target.files?.[0] && handleFileSelect(e.target.files[0])}
             className="hidden"
           />
@@ -168,10 +174,10 @@ export default function FileUpload({
             <div>
               <Upload className="h-8 w-8 text-gray-400 mx-auto mb-3" />
               <p className="text-sm font-medium text-gray-700 mb-1">
-                {type === 'resume' ? 'Upload Resume' : 'Upload Profile Picture'}
+                {type === 'resume' ? 'Upload Resume' : type === 'transcript' ? 'Upload Transcript' : 'Upload Profile Picture'}
               </p>
               <p className="text-xs text-gray-500 mb-3">
-                {type === 'resume' 
+                {type === 'resume' || type === 'transcript'
                   ? 'Drag and drop a PDF file here, or click to browse' 
                   : 'Drag and drop an image file here, or click to browse'
                 }

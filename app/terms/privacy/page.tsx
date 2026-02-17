@@ -360,7 +360,7 @@ export default function PrivacyPolicyPage() {
                 <p className="text-slate-700 leading-relaxed">
                   <strong className="text-navy-900">HireMe LLC</strong><br />
                   Privacy Department<br />
-                  Email: <a href="mailto:officialhiremeapp@gmail.com" className="text-navy-800 hover:text-navy-700 underline">officialhiremeapp@gmail.com</a>
+                  Email: <a href="mailto:support@officialhireme.com" className="text-navy-800 hover:text-navy-700 underline">support@officialhireme.com</a>
                 </p>
               </div>
               <p className="text-slate-700 leading-relaxed mb-4">

@@ -7,6 +7,7 @@ import { createDocument, updateDocument } from '@/lib/firebase-firestore';
 import FileUpload from '@/components/FileUpload';
 import VideoUpload from '@/components/VideoUpload';
 import MultiSelectDropdown from '@/components/MultiSelectDropdown';
+import LanguageSelector, { LanguageSkill } from '@/components/LanguageSelector';
 import { LOCATIONS, WORK_PREFERENCES, JOB_TYPES, SKILLS, CAREER_INTERESTS, LANGUAGES } from '@/lib/profile-data';
 
 interface ProfileData {
@@ -14,7 +15,7 @@ interface ProfileData {
   workArrangements: string[];
   jobTypes: string[];
   skills: string[];
-  languages: string[];
+  languages: LanguageSkill[];
   experience: string;
   industries: string[];
   linkedin: string;
@@ -30,15 +31,15 @@ const slideContents = [
     description: 'Tell us where and how you prefer to work'
   },
   {
-    title: 'Skills & Expertise',
+    title: 'Skills & Languages',
     description: 'Showcase your technical and professional abilities'
   },
   {
-    title: 'Experience',
-    description: 'Share your relevant work experience and achievements'
+    title: 'Extracurricular Activities',
+    description: 'Help employers learn more about you by including any experiences that make you stand out!'
   },
   {
-    title: 'Career Industries',
+    title: 'Career Interests',
     description: 'Select the industries you\'re interested in'
   },
   {
@@ -367,7 +368,7 @@ export default function NextStepsOnboarding() {
               </div>
             )}
 
-            {/* Slide 2: Skills & Expertise */}
+            {/* Slide 2: Skills & Languages */}
             {currentSlide === 2 && (
               <div className="space-y-6">
                 <div>
@@ -382,7 +383,7 @@ export default function NextStepsOnboarding() {
                   />
                 </div>
                 <div>
-                  <MultiSelectDropdown
+                  <LanguageSelector
                     options={LANGUAGES}
                     values={profileData.languages}
                     onChange={(values) => setProfileData({...profileData, languages: values})}
@@ -395,17 +396,17 @@ export default function NextStepsOnboarding() {
               </div>
             )}
 
-            {/* Slide 3: Experience */}
+            {/* Slide 3: Extracurricular Activities */}
             {currentSlide === 3 && (
               <div className="relative">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Experience & Relevant Experience
+                  Extracurricular Activities
                 </label>
                 <textarea
                   value={profileData.experience}
                   onChange={(e) => setProfileData({...profileData, experience: e.target.value})}
                   rows={6}
-                  placeholder="Describe your work experience, internships, projects, and achievements..."
+                  placeholder="Describe your extracurricular activities, clubs, volunteer work, projects, etc."
                   className="w-full bg-blue-50/50 rounded-xl border border-gray-200 px-4 py-4 focus:border-navy-800 focus:ring-2 focus:ring-navy/20 focus:outline-none transition-all resize-none"
                 />
                 <div className="flex justify-end mt-2">
@@ -416,7 +417,7 @@ export default function NextStepsOnboarding() {
               </div>
             )}
 
-            {/* Slide 4: Industries */}
+            {/* Slide 4: Career Interests */}
             {currentSlide === 4 && (
               <div>
                 <MultiSelectDropdown
@@ -424,7 +425,7 @@ export default function NextStepsOnboarding() {
                   values={profileData.industries}
                   onChange={(values) => setProfileData({...profileData, industries: values})}
                   placeholder="Select industries"
-                  label="Career Industries"
+                  label="Career Interests"
                   allowCustom
                   maxSelections={5}
                 />
@@ -559,7 +560,7 @@ export default function NextStepsOnboarding() {
                   {/* Skills Summary */}
                   <div className="bg-white/60 rounded-xl p-6 border border-gray-200/30">
                     <div className="flex items-center justify-between mb-4">
-                      <h3 className="font-semibold text-gray-900">Skills</h3>
+                      <h3 className="font-semibold text-gray-900">Skills & Languages</h3>
                       <button 
                         onClick={() => setCurrentSlide(2)}
                         className="text-navy-800 text-sm hover:underline"
@@ -569,14 +570,14 @@ export default function NextStepsOnboarding() {
                     </div>
                     <div className="space-y-2 text-sm text-gray-600">
                       <p><span className="font-medium">Technical & Professional Skills:</span> {profileData.skills.length > 0 ? profileData.skills.join(', ') : 'Not specified'}</p>
-                      <p><span className="font-medium">Languages:</span> {profileData.languages.length > 0 ? profileData.languages.join(', ') : 'Not specified'}</p>
+                      <p><span className="font-medium">Languages:</span> {profileData.languages.length > 0 ? profileData.languages.map(l => l.language).join(', ') : 'Not specified'}</p>
                     </div>
                   </div>
 
                   {/* Experience Summary */}
                   <div className="bg-white/60 rounded-xl p-6 border border-gray-200/30">
                     <div className="flex items-center justify-between mb-4">
-                      <h3 className="font-semibold text-gray-900">Experience</h3>
+                      <h3 className="font-semibold text-gray-900">Extracurricular Activities</h3>
                       <button 
                         onClick={() => setCurrentSlide(3)}
                         className="text-navy-800 text-sm hover:underline"
@@ -592,7 +593,7 @@ export default function NextStepsOnboarding() {
                   {/* Industries Summary */}
                   <div className="bg-white/60 rounded-xl p-6 border border-gray-200/30">
                     <div className="flex items-center justify-between mb-4">
-                      <h3 className="font-semibold text-gray-900">Industries</h3>
+                      <h3 className="font-semibold text-gray-900">Career Interests</h3>
                       <button 
                         onClick={() => setCurrentSlide(4)}
                         className="text-navy-800 text-sm hover:underline"

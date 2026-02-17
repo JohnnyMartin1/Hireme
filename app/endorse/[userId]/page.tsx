@@ -53,10 +53,16 @@ export default function EndorseFormPage() {
     setError(null);
     setSuccess(null);
     
+    // Normalize LinkedIn URL - add https:// if missing
+    let normalizedLinkedIn = endorserLinkedIn.trim();
+    if (normalizedLinkedIn && !normalizedLinkedIn.startsWith('http://') && !normalizedLinkedIn.startsWith('https://')) {
+      normalizedLinkedIn = `https://${normalizedLinkedIn}`;
+    }
+    
     const endorsementData = {
       endorserName,
       endorserEmail,
-      endorserLinkedIn,
+      endorserLinkedIn: normalizedLinkedIn,
       endorserTitle,
       endorserCompany,
       skill,
@@ -217,10 +223,10 @@ export default function EndorseFormPage() {
               <input 
                 value={endorserLinkedIn} 
                 onChange={(e)=>setEndorserLinkedIn(e.target.value)} 
-                type="url" 
+                type="text" 
                 required 
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
-                placeholder="https://linkedin.com/in/johnsmith" 
+                placeholder="www.linkedin.com/in/johnsmith" 
               />
               <p className="text-sm text-gray-500 mt-1">
                 This helps verify your identity and adds credibility to your endorsement.
