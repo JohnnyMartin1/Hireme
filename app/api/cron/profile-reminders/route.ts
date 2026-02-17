@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
 import { calculateCompletion } from '@/components/ProfileCompletionProvider';
 import { Resend } from 'resend';
+import { FieldValue } from 'firebase-admin/firestore';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
