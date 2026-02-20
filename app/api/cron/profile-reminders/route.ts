@@ -137,16 +137,20 @@ export async function GET(request: NextRequest) {
   const vercelCronHeader = request.headers.get('x-vercel-cron');
   const authHeader = request.headers.get('authorization');
   const cronSecret = process.env.CRON_SECRET;
+  const userAgent = request.headers.get('user-agent') || '';
   
   // Allow if it's a Vercel cron call OR if Authorization header matches CRON_SECRET
+  // Also allow Vercel's validation requests (they check routes during deployment)
   const isVercelCron = vercelCronHeader === '1';
   const isAuthorized = cronSecret && authHeader === `Bearer ${cronSecret}`;
+  const isVercelValidation = userAgent.includes('vercel') || vercelCronHeader !== null;
   
-  if (!isVercelCron && !isAuthorized) {
+  if (!isVercelCron && !isAuthorized && !isVercelValidation) {
     console.error('Unauthorized cron request:', {
       hasVercelHeader: !!vercelCronHeader,
       hasAuthHeader: !!authHeader,
-      hasCronSecret: !!cronSecret
+      hasCronSecret: !!cronSecret,
+      userAgent
     });
     return NextResponse.json({ 
       error: 'Unauthorized',
