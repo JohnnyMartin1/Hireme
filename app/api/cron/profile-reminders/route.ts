@@ -4,6 +4,10 @@ import { calculateCompletion } from '@/components/ProfileCompletionProvider';
 import { Resend } from 'resend';
 import { FieldValue } from 'firebase-admin/firestore';
 
+// Force dynamic rendering - required for Vercel cron jobs
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 // Helper to get email from address
@@ -128,15 +132,36 @@ Questions? If you have any questions about completing your profile, feel free to
 }
 
 export async function GET(request: NextRequest) {
-  // Verify this is a cron request (Vercel Cron sends a secret header)
+  // Verify this is a cron request
+  // Vercel Cron sends 'x-vercel-cron' header, or we can use Authorization header for manual testing
+  const vercelCronHeader = request.headers.get('x-vercel-cron');
   const authHeader = request.headers.get('authorization');
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const cronSecret = process.env.CRON_SECRET;
+  
+  // Allow if it's a Vercel cron call OR if Authorization header matches CRON_SECRET
+  const isVercelCron = vercelCronHeader === '1';
+  const isAuthorized = cronSecret && authHeader === `Bearer ${cronSecret}`;
+  
+  if (!isVercelCron && !isAuthorized) {
+    console.error('Unauthorized cron request:', {
+      hasVercelHeader: !!vercelCronHeader,
+      hasAuthHeader: !!authHeader,
+      hasCronSecret: !!cronSecret
+    });
+    return NextResponse.json({ 
+      error: 'Unauthorized',
+      hint: 'This endpoint requires either a Vercel cron call or Authorization: Bearer CRON_SECRET header'
+    }, { status: 401 });
   }
 
   try {
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 
                     (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
+    
+    console.log('Profile reminders cron started', {
+      baseUrl,
+      timestamp: new Date().toISOString()
+    });
     
     const now = new Date();
     const threeHoursAgo = new Date(now.getTime() - 3 * 60 * 60 * 1000);
@@ -148,6 +173,8 @@ export async function GET(request: NextRequest) {
       .collection('users')
       .where('role', '==', 'JOB_SEEKER')
       .get();
+
+    console.log(`Found ${usersSnapshot.docs.length} job seekers to check`);
 
     let sentCount = 0;
     let skippedCount = 0;
@@ -247,23 +274,34 @@ export async function GET(request: NextRequest) {
         });
 
         sentCount++;
+        console.log(`Sent reminder to ${user.email}`);
       } catch (error: any) {
-        errors.push(`${user.email}: ${error.message}`);
+        const errorMsg = `${user.email}: ${error.message}`;
+        errors.push(errorMsg);
+        console.error('Error sending reminder:', errorMsg);
       }
     }
 
-    return NextResponse.json({
+    const result = {
       success: true,
       sent: sentCount,
       skipped: skippedCount,
+      total: usersSnapshot.docs.length,
       errors: errors.length > 0 ? errors : undefined,
       timestamp: now.toISOString()
-    });
+    };
+
+    console.log('Profile reminders cron completed:', result);
+
+    return NextResponse.json(result);
 
   } catch (error: any) {
     console.error('Error in profile reminders cron:', error);
     return NextResponse.json(
-      { error: error.message || 'Failed to process reminders' },
+      { 
+        error: error.message || 'Failed to process reminders',
+        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      },
       { status: 500 }
     );
   }
