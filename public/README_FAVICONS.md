@@ -1,18 +1,20 @@
 # Favicon Files - Save Instructions
 
-To make your logo appear in search results, save your optimized image files here in the `/public` directory with these exact names:
+The **browser tab icon (favicon)** is set to use **`/public/favicon.svg`** — a square crop of the HireMe logo (magnifying glass + “Hi”). This is already in place so the tab shows the HireMe logo on modern browsers.
 
-## Required Files:
+## Optional (for older browsers and PWA):
 
 1. **favicon.ico** 
    - Size: 32x32 or 16x16 pixels
    - Location: `/public/favicon.ico`
    - Format: ICO file
+   - Used as fallback when SVG is not supported.
 
 2. **apple-touch-icon.png**
    - Size: 180x180 pixels  
    - Location: `/public/apple-touch-icon.png`
    - Format: PNG file
+   - For “Add to Home Screen” on iOS.
 
 ## Optional (for better social media sharing):
 
