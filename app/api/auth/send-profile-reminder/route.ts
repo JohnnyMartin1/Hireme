@@ -55,12 +55,11 @@ export async function POST(request: NextRequest) {
               </p>
               
               <p style="margin: 0 0 20px; color: #374151; font-size: 16px; line-height: 1.6;">
-                Thanks for signing up for HireMe! We noticed you skipped the profile setup step on mobile. 
-                No worries — completing your profile is much easier on a computer, and it only takes a few minutes!
+                Thanks for signing up for HireMe! We noticed you haven't finished setting up your profile yet — whether you were short on time or waiting to come back later, this is a quick reminder to complete it.
               </p>
 
               <p style="margin: 0 0 20px; color: #374151; font-size: 16px; line-height: 1.6;">
-                A complete profile helps employers discover your amazing potential. You can add:
+                A complete profile helps employers understand who you are beyond a resume and makes it much easier for them to discover you. In just a few minutes you can add:
               </p>
 
               <ul style="margin: 20px 0; padding-left: 20px; color: #374151; font-size: 16px; line-height: 1.8;">
@@ -113,9 +112,9 @@ export async function POST(request: NextRequest) {
       `,
       text: `Hi ${displayName},
 
-Thanks for signing up for HireMe! We noticed you skipped the profile setup step on mobile. No worries — completing your profile is much easier on a computer, and it only takes a few minutes!
+Thanks for signing up for HireMe! We noticed you haven't finished setting up your profile yet — whether you were short on time or waiting to come back later, this is a quick reminder to complete it.
 
-A complete profile helps employers discover your amazing potential. You can add your skills, experience, work preferences, professional links, resume, and much more.
+A complete profile helps employers understand who you are beyond a resume and makes it much easier for them to discover you. In just a few minutes you can add your skills, experience, work preferences, professional links, resume, and much more.
 
 Complete your profile here: ${profileUrl}
 
