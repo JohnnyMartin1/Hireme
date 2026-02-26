@@ -43,7 +43,10 @@ export function FirebaseAuthProvider({ children }: { children: React.ReactNode }
           const { data: profileData, error: profileError } = await getDocument('users', firebaseUser.uid);
           
           if (profileError) {
-            console.error('Error fetching user profile:', profileError);
+            // Document not found is expected for new users; use fallback profile
+            if (profileError !== 'Document not found') {
+              console.error('Error fetching user profile:', profileError);
+            }
             // Fallback to basic profile with default role
             setProfile({
               id: firebaseUser.uid,

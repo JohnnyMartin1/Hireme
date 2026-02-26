@@ -33,8 +33,8 @@ export default function EmployerHomePage() {
       return;
     }
 
-    // Check if email is verified (using profile data from Firestore)
-    if (profile && !profile.emailVerified) {
+    // Only redirect when Firestore explicitly says not verified (avoid loop when profile is fallback).
+    if (profile && profile.emailVerified === false) {
       router.push("/auth/verify-email");
       return;
     }

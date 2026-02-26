@@ -57,8 +57,7 @@ export default function Home() {
   
   const isApp = typeof window !== 'undefined' ? checkIsApp() : false;
   
-  // Debug logging (will appear in Safari Web Inspector, not Xcode console)
-  if (typeof window !== 'undefined') {
+  if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
     console.log('[Home] App detection check:', {
       href: window.location.href,
       userAgent: navigator.userAgent,
@@ -289,26 +288,12 @@ export default function Home() {
   // Use isApp directly since it's checked immediately and reliably
   const shouldShowMobile = showMobile || isApp;
   
-  // Debug logging (check Safari Web Inspector console, not Xcode)
-  if (typeof window !== 'undefined') {
-    console.log('[Home] Render decision:', {
-      showMobile,
-      isApp,
-      shouldShowMobile,
-      href: window.location.href,
-      userAgent: navigator.userAgent.substring(0, 50)
-    });
+  if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+    console.log('[Home] Render decision:', { showMobile, isApp, shouldShowMobile, href: window.location.href });
   }
-  
+
   if (shouldShowMobile) {
-    if (typeof window !== 'undefined') {
-      console.log('[Home] ✅ Rendering MobileLanding component');
-    }
     return <MobileLanding />;
-  }
-  
-  if (typeof window !== 'undefined') {
-    console.log('[Home] 🌐 Rendering website landing page');
   }
 
   // Website landing page (always render this first to prevent hydration mismatch)
