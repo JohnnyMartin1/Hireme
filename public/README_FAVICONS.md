@@ -1,37 +1,42 @@
-# Favicon Files - Save Instructions
+# Favicons – What to Replace for Google Search (and Tabs)
 
-The **browser tab icon (favicon)** is set to use **`/public/favicon.svg`** — a square crop of the HireMe logo (magnifying glass + “Hi”). This is already in place so the tab shows the HireMe logo on modern browsers.
+**To change only the icon that appears in Google search results (and in browser tabs):** replace the files below in the `public` folder with your new versions. Use the **exact filenames** and **sizes** listed. Do **not** change `logo.svg` if you want the main website header/logo to stay the same.
 
-## Optional (for older browsers and PWA):
+---
 
-1. **favicon.ico** 
-   - Size: 32x32 or 16x16 pixels
-   - Location: `/public/favicon.ico`
-   - Format: ICO file
-   - Used as fallback when SVG is not supported.
+## Files that affect Google search and browser tab
 
-2. **apple-touch-icon.png**
-   - Size: 180x180 pixels  
-   - Location: `/public/apple-touch-icon.png`
-   - Format: PNG file
-   - For “Add to Home Screen” on iOS.
+| File in `public/`        | Replace with your new file | Size / format   |
+|---------------------------|----------------------------|-----------------|
+| **favicon.ico**           | Same name                  | 32×32 or 16×32 (ICO) |
+| **favicon.svg**           | Same name                  | SVG (any size)  |
+| **favicon-16x16.png**     | Same name                  | 16×16 PNG       |
+| **favicon-32x32.png**     | Same name                  | 32×32 PNG       |
+| **apple-touch-icon.png**  | Same name                  | 180×180 PNG     |
 
-## Optional (for better social media sharing):
+Optional (PWA / “Add to home screen”):
 
-3. **og-image.png** or **og-image.jpg**
-   - Size: 1200x630 pixels (recommended)
-   - Location: `/public/og-image.png`
-   - Format: PNG or JPG
+| File in `public/`             | Replace with your new file | Size / format |
+|--------------------------------|----------------------------|----------------|
+| **android-chrome-192x192.png** | Same name                  | 192×192 PNG    |
+| **android-chrome-512x512.png** | Same name                  | 512×512 PNG    |
 
-## How to Save:
+`site.webmanifest` points to the android-chrome files; keep those filenames if you replace the images.
 
-1. Download your optimized images from wherever you created them
-2. Rename them to match the filenames above exactly
-3. Place them in the `/public` folder (same level as `logo.svg`)
-4. The metadata is already configured in `app/layout.tsx` to use these files
+---
 
-Once saved, the logo will automatically appear in:
-- Browser tabs (favicon)
-- Search results (after search engines index)
-- Social media shares (Open Graph image)
-- iOS home screen (apple-touch-icon)
+## Do not change (if you want the site itself unchanged)
+
+- **logo.svg** – used for the main HireMe logo on the website (header, etc.). Leave as-is if you only want to change the Google/search icon.
+- **brand/** – other branding assets used on the site.
+
+---
+
+## How to replace
+
+1. Export or generate your new favicons (e.g. from RealFaviconGenerator or your design tool).
+2. Rename each file to match the table above **exactly** (e.g. `favicon.ico`, `favicon.svg`, not `favicon-new.ico`).
+3. Put them in the **`public`** folder (same folder that contains `logo.svg`), overwriting the existing files.
+4. Deploy. The site and Google will then use these icons.
+
+Google may take time to update search results (hours to a few days). You can request re-indexing in Google Search Console to speed it up.

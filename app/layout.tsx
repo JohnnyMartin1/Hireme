@@ -12,8 +12,11 @@ export const metadata = {
   authors: [{ name: "HireMe" }],
   creator: "HireMe",
   publisher: "HireMe",
-  // Favicon: app/icon.svg is used by Next.js file-based metadata (served at /icon)
   icons: {
+    icon: [
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/favicon.svg', type: 'image/svg+xml', sizes: 'any' }
+    ],
     apple: [
       { url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }
     ]
@@ -75,6 +78,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, shrink-to-fit=no" />
         <meta name="format-detection" content="telephone=no" />
+        <link rel="icon" href="/favicon.ico" sizes="any" />
+        <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180" />
         <link rel="manifest" href="/site.webmanifest" />
         <link 

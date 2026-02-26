@@ -2,9 +2,6 @@
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
-  async rewrites() {
-    return [{ source: '/favicon.ico', destination: '/icon.svg' }];
-  },
   images: { 
     remotePatterns: [
       {
