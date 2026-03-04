@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminAuth, adminDb } from '@/lib/firebase-admin';
 
+export const maxDuration = 60;
+
 const BATCH_LIMIT = 500;
+const MAX_ORPHANS_PER_RUN = 15;
 
 /** Delete all Firestore data for a user (same as delete-account, but no Auth delete). */
 async function deleteAllUserData(userId: string, userData?: { role?: string; email?: string }): Promise<void> {
@@ -89,8 +92,9 @@ export async function POST(request: NextRequest) {
 
     console.log(`[cleanup-orphaned] Orphaned: ${orphanedUsers.length}, Valid: ${validUsers.length}`);
 
+    const toProcess = orphanedUsers.slice(0, MAX_ORPHANS_PER_RUN);
     const deletedUsers: string[] = [];
-    for (const orphanedUser of orphanedUsers) {
+    for (const orphanedUser of toProcess) {
       try {
         await deleteAllUserData(orphanedUser.id, {
           role: orphanedUser.role,
@@ -102,17 +106,22 @@ export async function POST(request: NextRequest) {
         console.error(`[cleanup-orphaned] Failed to delete ${orphanedUser.id}:`, error);
       }
     }
+    const remaining = orphanedUsers.length - toProcess.length;
 
     return NextResponse.json({
       success: true,
-      message: 'Cleanup completed',
+      message: remaining > 0
+        ? `Cleanup completed. Deleted ${deletedUsers.length} orphaned users. ${remaining} remaining — run again to continue.`
+        : 'Cleanup completed',
       stats: {
         totalFirestoreUsers: firestoreUsers.length,
         validUsers: validUsers.length,
         orphanedUsers: orphanedUsers.length,
-        deletedUsers: deletedUsers.length
+        deletedUsers: deletedUsers.length,
+        remainingOrphans: remaining
       },
-      deletedUserIds: deletedUsers
+      deletedUserIds: deletedUsers,
+      remainingOrphans: remaining
     });
   } catch (error: any) {
     console.error('[cleanup-orphaned] Error:', error);

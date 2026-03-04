@@ -49,8 +49,19 @@ export default function CleanupPage() {
         const result = await response.json();
         setCleanupResult(result);
       } else {
-        const errorData = await response.json();
-        setError(errorData.error || 'Failed to cleanup orphaned users');
+        const text = await response.text();
+        let message = 'Failed to cleanup orphaned users. Please try again.';
+        try {
+          const errorData = JSON.parse(text);
+          message = errorData.error || message;
+        } catch {
+          if (response.status === 504) {
+            message = 'Cleanup timed out (server took too long). Try again — each run removes some orphaned data.';
+          } else if (text.length < 200) {
+            message = text || message;
+          }
+        }
+        setError(message);
       }
     } catch (error) {
       console.error('Error during cleanup:', error);
@@ -132,6 +143,11 @@ export default function CleanupPage() {
           {cleanupResult && (
             <div className="mt-6 p-6 bg-green-50 border border-green-200 rounded-lg">
               <h3 className="text-lg font-semibold text-green-900 mb-4">Cleanup Complete</h3>
+              {cleanupResult.remainingOrphans > 0 && (
+                <p className="text-amber-800 bg-amber-100 rounded-lg p-3 mb-4 text-sm">
+                  {cleanupResult.remainingOrphans} orphaned users remaining. Click the button again to continue cleanup.
+                </p>
+              )}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                 <div>
                   <p className="text-green-700 font-medium">Total Firestore Users:</p>

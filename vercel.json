@@ -5,7 +5,8 @@
   "installCommand": "npm install",
   "devCommand": "npm run dev",
   "functions": {
-    "app/api/**/*.ts": { "maxDuration": 30 }
+    "app/api/**/*.ts": { "maxDuration": 30 },
+    "app/api/auth/cleanup-orphaned-users/route.ts": { "maxDuration": 60 }
   },
   "crons": [
     {
