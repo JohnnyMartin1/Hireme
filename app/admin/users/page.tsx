@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useFirebaseAuth } from "@/components/FirebaseAuthProvider";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Users, Search, Filter, Eye, Mail, Shield, Trash2, Clock, CheckCircle } from "lucide-react";
@@ -7,6 +7,8 @@ import Link from "next/link";
 import { queryDocuments, getDocument } from '@/lib/firebase-firestore';
 import { where } from 'firebase/firestore';
 import { useToast } from '@/components/NotificationSystem';
+
+const AUTH_SETTLE_MS = 1200;
 
 interface User {
   id: string;
@@ -30,20 +32,45 @@ export default function UsersManagementPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [authSettled, setAuthSettled] = useState(false);
+  const settleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const toast = useToast();
 
+  // Allow auth state to restore (e.g. after navigation or new tab) before redirecting
   useEffect(() => {
-    if (!loading && !user) {
+    if (loading) {
+      setAuthSettled(false);
+      if (settleTimerRef.current) {
+        clearTimeout(settleTimerRef.current);
+        settleTimerRef.current = null;
+      }
+      return;
+    }
+    if (user) {
+      setAuthSettled(true);
+      if (settleTimerRef.current) {
+        clearTimeout(settleTimerRef.current);
+        settleTimerRef.current = null;
+      }
+      return;
+    }
+    settleTimerRef.current = setTimeout(() => setAuthSettled(true), AUTH_SETTLE_MS);
+    return () => {
+      if (settleTimerRef.current) clearTimeout(settleTimerRef.current);
+    };
+  }, [loading, user]);
+
+  useEffect(() => {
+    if (!authSettled) return;
+    if (!user) {
       router.push("/auth/login");
       return;
     }
-
-    // Only allow admin users (check email)
-    if (user && user.email !== 'officialhiremeapp@gmail.com') {
+    if (user.email !== 'officialhiremeapp@gmail.com') {
       router.push("/home");
       return;
     }
-  }, [user, profile, loading, router]);
+  }, [user, authSettled, router]);
 
   useEffect(() => {
     if (user?.email === 'officialhiremeapp@gmail.com') {
@@ -186,19 +213,18 @@ export default function UsersManagementPage() {
     return user.emailVerified ? 'verified' : 'unverified';
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-blue-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading admin panel...</p>
+  if (loading || !authSettled || !user || user.email !== 'officialhiremeapp@gmail.com') {
+    if (!authSettled || !user) {
+      return (
+        <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-blue-50 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading...</p>
+          </div>
         </div>
-      </div>
-    );
-  }
-
-  if (!user || user.email !== 'officialhiremeapp@gmail.com') {
-    return null; // Will redirect
+      );
+    }
+    return null; // Will redirect (not admin)
   }
 
   return (
