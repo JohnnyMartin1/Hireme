@@ -68,6 +68,25 @@ export async function GET(request: NextRequest) {
       console.warn('[cron/profile-reminders] NEXT_PUBLIC_APP_URL not set');
     }
 
+    // Run orphan cleanup first so deleted Auth users don't get reminders
+    const cronSecret = process.env.CRON_SECRET;
+    if (cronSecret) {
+      try {
+        const cleanupRes = await fetch(`${baseUrl}/api/auth/cleanup-orphaned-users`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${cronSecret}` },
+        });
+        if (cleanupRes.ok) {
+          const cleanupData = await cleanupRes.json();
+          console.log('[cron/profile-reminders] Cleanup:', cleanupData.stats?.deletedUsers ?? 0, 'orphaned users deleted');
+        } else {
+          console.warn('[cron/profile-reminders] Cleanup failed:', cleanupRes.status);
+        }
+      } catch (e) {
+        console.warn('[cron/profile-reminders] Cleanup error:', e);
+      }
+    }
+
     const usersRef = adminDb.collection('users');
     const q = usersRef.where('role', '==', 'JOB_SEEKER');
     const snapshot = await q.get();

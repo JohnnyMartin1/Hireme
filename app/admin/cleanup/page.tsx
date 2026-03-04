@@ -18,13 +18,12 @@ export default function CleanupPage() {
       router.push("/auth/login");
       return;
     }
-
-    // Only allow admin users
-    if (profile && profile.role !== 'ADMIN') {
+    // Only allow admin (same check as dashboard - by email, not profile.role)
+    if (!loading && user && user.email !== 'officialhiremeapp@gmail.com') {
       router.push("/home");
       return;
     }
-  }, [user, profile, loading, router]);
+  }, [user, loading, router]);
 
   const handleCleanup = async () => {
     if (!user) return;
@@ -72,7 +71,7 @@ export default function CleanupPage() {
     );
   }
 
-  if (!user || profile?.role !== 'ADMIN') {
+  if (!user || user.email !== 'officialhiremeapp@gmail.com') {
     return null; // Will redirect
   }
 

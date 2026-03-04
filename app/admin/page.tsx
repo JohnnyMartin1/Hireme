@@ -4,8 +4,6 @@ import { useFirebaseAuth } from "@/components/FirebaseAuthProvider";
 import { useRouter } from "next/navigation";
 import { Building2, Users, Trash2, Shield, UserCheck, Clock, TrendingUp } from "lucide-react";
 import Link from "next/link";
-import { queryDocuments } from '@/lib/firebase-firestore';
-import { where } from 'firebase/firestore';
 
 export default function AdminDashboardPage() {
   const { user, profile, loading } = useFirebaseAuth();
@@ -32,15 +30,17 @@ export default function AdminDashboardPage() {
     }
   }, [user, profile, loading, router]);
 
-  // Fetch admin statistics
+  // Fetch admin statistics (use Firebase Auth counts so dashboard matches User Management)
   useEffect(() => {
     const fetchStats = async () => {
       if (!user || user.email !== 'officialhiremeapp@gmail.com') return;
       
       setIsLoadingStats(true);
       try {
-        // Get accurate counts from Firebase Authentication
-        const response = await fetch('/api/admin/get-firebase-user-count');
+        const token = await user.getIdToken(true);
+        const response = await fetch('/api/admin/get-firebase-user-count', {
+          headers: { 'Authorization': `Bearer ${token}` },
+        });
         
         if (response.ok) {
           const data = await response.json();
@@ -48,23 +48,16 @@ export default function AdminDashboardPage() {
             pendingCompanies: data.pendingCompanies,
             verifiedCompanies: data.verifiedCompanies,
             totalCompanies: data.employers,
-            totalUsers: data.totalUsers, // This now matches Firebase Auth exactly
+            totalUsers: data.totalUsers,
             jobSeekers: data.jobSeekers
           });
         } else {
           console.error('Failed to fetch Firebase user counts');
-          // Fallback to Firestore counts if API fails
-          const { data: allUsers } = await queryDocuments('users', []);
-          setAdminStats({
-            pendingCompanies: 0,
-            verifiedCompanies: 0,
-            totalCompanies: 0,
-            totalUsers: allUsers?.length || 0,
-            jobSeekers: 0
-          });
+          setAdminStats(prev => ({ ...prev, totalUsers: 0 }));
         }
       } catch (error) {
         console.error('Error fetching admin stats:', error);
+        setAdminStats(prev => ({ ...prev, totalUsers: 0 }));
       } finally {
         setIsLoadingStats(false);
       }

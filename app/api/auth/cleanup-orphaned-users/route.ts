@@ -1,67 +1,102 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminAuth, adminDb } from '@/lib/firebase-admin';
 
+const BATCH_LIMIT = 500;
+
+/** Delete all Firestore data for a user (same as delete-account, but no Auth delete). */
+async function deleteAllUserData(userId: string, userData?: { role?: string; email?: string }): Promise<void> {
+  const refs: any[] = [];
+  refs.push(adminDb.collection('users').doc(userId));
+
+  const addRefs = (snap: { docs: { ref: any }[] }) => {
+    snap.docs.forEach(doc => refs.push(doc.ref));
+  };
+
+  addRefs(await adminDb.collection('messageThreads').where('participantIds', 'array-contains', userId).get());
+  addRefs(await adminDb.collection('messages').where('senderId', '==', userId).get());
+  addRefs(await adminDb.collection('profileViews').where('viewerId', '==', userId).get());
+  addRefs(await adminDb.collection('profileViews').where('viewedUserId', '==', userId).get());
+  addRefs(await adminDb.collection('savedCandidates').where('userId', '==', userId).get());
+  addRefs(await adminDb.collection('endorsements').where('userId', '==', userId).get());
+  addRefs(await adminDb.collection('companyRatings').where('userId', '==', userId).get());
+  addRefs(await adminDb.collection('emailVerificationTokens').where('userId', '==', userId).get());
+  if (userData?.role === 'EMPLOYER') {
+    addRefs(await adminDb.collection('jobs').where('employerId', '==', userId).get());
+  }
+  if (userData?.role === 'RECRUITER' && userData?.email) {
+    addRefs(await adminDb.collection('companyInvitations').where('invitedEmail', '==', userData.email).get());
+  }
+
+  for (let i = 0; i < refs.length; i += BATCH_LIMIT) {
+    const batch = adminDb.batch();
+    refs.slice(i, i + BATCH_LIMIT).forEach(ref => batch.delete(ref));
+    await batch.commit();
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
-    // Get authorization header
+    // Allow either admin Bearer (Firebase token) or cron secret
     const authHeader = request.headers.get('authorization');
+    const cronSecret = process.env.CRON_SECRET;
+    const isCron = cronSecret && authHeader === `Bearer ${cronSecret}`;
+
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const token = authHeader.split('Bearer ')[1];
-    
-    // Verify the Firebase token (admin only)
-    let decodedToken;
-    try {
-      decodedToken = await adminAuth.verifyIdToken(token);
-    } catch (error) {
-      console.error('Token verification failed:', error);
-      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+    if (!isCron) {
+      try {
+        const decodedToken = await adminAuth.verifyIdToken(token);
+        const userDoc = await adminDb.collection('users').doc(decodedToken.uid).get();
+        const userData = userDoc.data();
+        if (userData?.role !== 'ADMIN') {
+          return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+        }
+      } catch {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      }
     }
 
-    // Get all users from Firestore
     const usersSnapshot = await adminDb.collection('users').get();
     const firestoreUsers = usersSnapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
     }));
 
-    console.log(`Found ${firestoreUsers.length} users in Firestore`);
+    console.log(`[cleanup-orphaned] Found ${firestoreUsers.length} users in Firestore`);
 
-    // Check which users exist in Firebase Auth
     const orphanedUsers: any[] = [];
     const validUsers: any[] = [];
-
-    // Process in batches to avoid overwhelming Firebase Auth
     const batchSize = 10;
+
     for (let i = 0; i < firestoreUsers.length; i += batchSize) {
       const batch = firestoreUsers.slice(i, i + batchSize);
-      
       const promises = batch.map(async (user: any) => {
         try {
           await adminAuth.getUser(user.id);
           validUsers.push(user);
-        } catch (error: any) {
-          console.log(`Orphaned user found: ${user.id} (${user.email || 'no email'})`);
+        } catch {
           orphanedUsers.push(user);
         }
       });
-      
       await Promise.all(promises);
     }
 
-    console.log(`Found ${orphanedUsers.length} orphaned users, ${validUsers.length} valid users`);
+    console.log(`[cleanup-orphaned] Orphaned: ${orphanedUsers.length}, Valid: ${validUsers.length}`);
 
-    // Delete orphaned users from Firestore
     const deletedUsers: string[] = [];
     for (const orphanedUser of orphanedUsers) {
       try {
-        await adminDb.collection('users').doc(orphanedUser.id).delete();
+        await deleteAllUserData(orphanedUser.id, {
+          role: orphanedUser.role,
+          email: orphanedUser.email
+        });
         deletedUsers.push(orphanedUser.id);
-        console.log(`Deleted orphaned user: ${orphanedUser.id}`);
-      } catch (error) {
-        console.error(`Failed to delete orphaned user ${orphanedUser.id}:`, error);
+        console.log(`[cleanup-orphaned] Deleted all data for: ${orphanedUser.id} (${orphanedUser.email || 'no email'})`);
+      } catch (error: any) {
+        console.error(`[cleanup-orphaned] Failed to delete ${orphanedUser.id}:`, error);
       }
     }
 
@@ -76,12 +111,11 @@ export async function POST(request: NextRequest) {
       },
       deletedUserIds: deletedUsers
     });
-
   } catch (error: any) {
-    console.error('Error during cleanup:', error);
-    return NextResponse.json({ 
+    console.error('[cleanup-orphaned] Error:', error);
+    return NextResponse.json({
       error: 'Failed to cleanup orphaned users',
-      details: error.message 
+      details: error.message
     }, { status: 500 });
   }
 }
