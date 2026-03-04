@@ -1,6 +1,8 @@
-# Favicons – What to Replace for Google Search (and Tabs)
+# Favicons – Google Search Icon Only
 
-**To change only the icon that appears in Google search results (and in browser tabs):** replace the files below in the `public` folder with your new versions. Use the **exact filenames** and **sizes** listed. Do **not** change `logo.svg` if you want the main website header/logo to stay the same.
+**`public/favicon.svg` is used only for the favicon** (the small icon in Google search results and browser tabs). It is **not** used anywhere on the website. All on-site logos (header, etc.) use `logo.svg` and are unchanged.
+
+**To change only the icon in Google search (and tabs):** replace the files below in the `public` folder with your new versions. Use the **exact filenames** and **sizes** listed. Do **not** change `logo.svg` if you want the main website header/logo to stay the same.
 
 ---
 
