@@ -16,12 +16,14 @@ export async function GET(request: NextRequest) {
     try {
       decodedToken = await adminAuth.verifyIdToken(token);
       
-      // Check if user is admin
       const { adminDb } = await import('@/lib/firebase-admin');
       const userDoc = await adminDb.collection('users').doc(decodedToken.uid).get();
       const userData = userDoc.data();
+      const adminEmail = process.env.ADMIN_EMAIL || 'officialhiremeapp@gmail.com';
+      const isAdminByRole = userData?.role === 'ADMIN';
+      const isAdminByEmail = decodedToken.email === adminEmail;
       
-      if (userData?.role !== 'ADMIN') {
+      if (!isAdminByRole && !isAdminByEmail) {
         return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 });
       }
     } catch (error) {

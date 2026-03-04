@@ -51,7 +51,10 @@ export async function POST(request: NextRequest) {
         const decodedToken = await adminAuth.verifyIdToken(token);
         const userDoc = await adminDb.collection('users').doc(decodedToken.uid).get();
         const userData = userDoc.data();
-        if (userData?.role !== 'ADMIN') {
+        const adminEmail = process.env.ADMIN_EMAIL || 'officialhiremeapp@gmail.com';
+        const isAdminByRole = userData?.role === 'ADMIN';
+        const isAdminByEmail = decodedToken.email === adminEmail;
+        if (!isAdminByRole && !isAdminByEmail) {
           return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
         }
       } catch {
