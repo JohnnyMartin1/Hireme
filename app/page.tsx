@@ -1130,12 +1130,14 @@ export default function Home() {
           <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 h-full flex items-center">
             <div className="max-w-2xl reveal-up">
               <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-navy-900 leading-tight mb-4 tracking-tight">
-                The Complete Hiring System That
-                <span className="block text-navy-600 mt-1">Closes The Loop</span>
+                Applying to Jobs Is Broken.
+                <span className="block text-navy-600 mt-1">We Fixed It.</span>
               </h1>
-              <p className="text-base sm:text-lg lg:text-xl text-slate-600 mb-6 leading-relaxed">
-                HireMe isn't just another job board. It's an end-to-end hiring platform that connects sourcing, screening, collaboration, and onboarding into one seamless workflow.
-              </p>
+              <div className="text-base sm:text-lg lg:text-xl text-slate-600 leading-relaxed space-y-4 mb-6">
+                <p>HireMe flips the job search.</p>
+                <p>Instead of sending out hundreds of applications and waiting for responses, you create one profile and let employers come to you.</p>
+                <p>One profile. Real opportunities. No application black hole.</p>
+              </div>
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                 <button 
                   onClick={() => {
