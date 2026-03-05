@@ -147,9 +147,13 @@ export default function CompanySignupPage() {
 
         // Send verification email via Resend (better deliverability)
         try {
+          const token = await user.getIdToken();
           await fetch('/api/auth/send-verification', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
             body: JSON.stringify({
               userId: user.uid,
               email: formData.email,
@@ -162,10 +166,12 @@ export default function CompanySignupPage() {
 
         // Send admin notification about new company registration
         try {
+          const token = await user.getIdToken();
           await fetch('/api/admin/notify-new-company', {
             method: 'POST',
             headers: { 
               'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`,
               'x-user-id': user.uid
             },
             body: JSON.stringify({

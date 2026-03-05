@@ -315,7 +315,8 @@ function CandidateMessagesPageContent() {
         content: newMessage.trim()
       };
 
-      const { error: messageError } = await sendMessage(selectedThread.thread.id, messageData);
+      const token = await user.getIdToken();
+      const { error: messageError } = await sendMessage(selectedThread.thread.id, messageData, token);
       
       if (messageError) {
         console.error('Error sending message:', messageError);

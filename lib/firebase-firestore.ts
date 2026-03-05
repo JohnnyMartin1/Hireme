@@ -105,20 +105,19 @@ export const queryDocuments = async (collectionName: string, constraints: any[] 
   }
 };
 
-// Specific queries for your app
-export const getProfilesByRole = async (role: string) => {
+// Specific queries for your app. Pass idToken for verify-users (required for API auth).
+export const getProfilesByRole = async (role: string, idToken?: string) => {
   const result = await queryDocuments('users', [where('role', '==', role)]);
   
-  // Verify all users still exist in Firebase Auth (not just job seekers)
-  if (result.data && result.data.length > 0) {
+  if (result.data && result.data.length > 0 && idToken) {
     try {
       const userIds = result.data.map((user: any) => user.id);
       
-      // Verify users exist in Firebase Auth
       const verifyResponse = await fetch('/api/auth/verify-users', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${idToken}`,
         },
         body: JSON.stringify({ userIds }),
       });
@@ -284,7 +283,7 @@ export const sendMessage = async (threadId: string, messageData: {
     location: string;
     jobDescription: string;
   };
-}) => {
+}, idToken?: string) => {
   try {
     const message = {
       ...messageData,
@@ -293,27 +292,29 @@ export const sendMessage = async (threadId: string, messageData: {
       read: false
     };
     
-    // Add message to messages collection
     const messageRef = await addDoc(collection(db, 'messages'), message);
     
-    // Update thread's lastMessageAt
     await updateDocument('messageThreads', threadId, {
       lastMessageAt: serverTimestamp()
     });
     
-    // Trigger notification via API route (non-blocking)
-    try {
-      fetch('/api/notifications/message-sent', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          threadId,
-          senderId: messageData.senderId,
-          messageContent: messageData.content.substring(0, 150)
-        })
-      }).catch(err => console.error('Error triggering message notification:', err));
-    } catch (e) {
-      // Silent fail - don't block message sending
+    if (idToken) {
+      try {
+        fetch('/api/notifications/message-sent', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${idToken}`
+          },
+          body: JSON.stringify({
+            threadId,
+            senderId: messageData.senderId,
+            messageContent: messageData.content.substring(0, 150)
+          })
+        }).catch(err => console.error('Error triggering message notification:', err));
+      } catch (e) {
+        // Silent fail
+      }
     }
     
     return { id: messageRef.id, error: null };
@@ -422,7 +423,7 @@ export const acceptMessageThread = async (threadId: string, userId: string) => {
   }
 };
 
-export const trackProfileView = async (candidateId: string, viewerId: string) => {
+export const trackProfileView = async (candidateId: string, viewerId: string, idToken: string) => {
   try {
     const viewData = {
       candidateId,
@@ -432,11 +433,14 @@ export const trackProfileView = async (candidateId: string, viewerId: string) =>
     
     await addDoc(collection(db, 'profileViews'), viewData);
     
-    // Trigger notification via API route (non-blocking)
+    // Trigger notification via API route (non-blocking); requires auth
     try {
       fetch('/api/notifications/profile-viewed', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${idToken}`
+        },
         body: JSON.stringify({
           candidateId,
           viewerId
@@ -812,19 +816,21 @@ export const createEndorsement = async (userId: string, endorsement: {
   endorserCompany?: string;
   skill: string;
   message?: string;
-}) => {
+}, idToken?: string) => {
   try {
     const { id, error } = await createDocument('endorsements', {
       userId,
       ...endorsement
     });
     
-    // Trigger notification via API route (non-blocking)
-    if (!error && id) {
+    if (!error && id && idToken) {
       try {
         fetch('/api/notifications/endorsement-received', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${idToken}`
+          },
           body: JSON.stringify({
             userId,
             endorserName: endorsement.endorserName,

@@ -167,7 +167,8 @@ export default function CandidateProfilePage() {
         // Track profile view if user is logged in and viewing someone else's profile
         // Only track for employers/recruiters if profile is 70%+ complete (already checked above)
         if (user && user.uid !== params.id) {
-          await trackProfileView(params.id as string, user.uid);
+          const token = await user.getIdToken();
+          await trackProfileView(params.id as string, user.uid, token);
         }
 
         // Check if candidate is saved (for employers and recruiters)
@@ -276,7 +277,8 @@ export default function CandidateProfilePage() {
         messageData.jobDetails = jobDetails;
       }
 
-      const { error: messageError } = await sendMessage(threadId, messageData);
+      const token = await user.getIdToken();
+      const { error: messageError } = await sendMessage(threadId, messageData, token);
 
       if (messageError) {
         console.error('Error sending message:', messageError);

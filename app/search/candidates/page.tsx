@@ -91,9 +91,11 @@ export default function SearchCandidatesPage() {
   };
 
   const loadAllCandidates = async () => {
+    if (!user) return;
     setIsLoading(true);
     try {
-      const { data: candidateProfiles, error } = await getProfilesByRole('JOB_SEEKER');
+      const token = await user.getIdToken();
+      const { data: candidateProfiles, error } = await getProfilesByRole('JOB_SEEKER', token);
       
       if (error || !candidateProfiles) {
         setCandidates([]);
@@ -131,9 +133,11 @@ export default function SearchCandidatesPage() {
       return;
     }
 
+    if (!user) return;
     setIsLoading(true);
     try {
-      const { data: candidateProfiles, error } = await getProfilesByRole('JOB_SEEKER');
+      const token = await user.getIdToken();
+      const { data: candidateProfiles, error } = await getProfilesByRole('JOB_SEEKER', token);
       
       if (error) {
         console.error('Error searching candidates:', error);
@@ -322,9 +326,11 @@ export default function SearchCandidatesPage() {
   };
 
   const handleSearchWithJobRequirements = async (job: any) => {
+    if (!user) return;
     setIsLoading(true);
     try {
-      const { data: candidateProfiles, error } = await getProfilesByRole('JOB_SEEKER');
+      const token = await user.getIdToken();
+      const { data: candidateProfiles, error } = await getProfilesByRole('JOB_SEEKER', token);
       
       if (error) {
         console.error('Error searching candidates:', error);

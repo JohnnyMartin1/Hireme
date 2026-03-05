@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useFirebaseAuth } from "@/components/FirebaseAuthProvider";
 import { useProfileCompletion } from "@/components/ProfileCompletionProvider";
-import { updateDocument, getDocument } from '@/lib/firebase-firestore';
+import { upsertDocument, getDocument } from '@/lib/firebase-firestore';
 import { ArrowLeft, Save, GraduationCap, MapPin, Briefcase, Calendar, Globe, Award, BookOpen, User, Video, Share2, HelpCircle, Check } from 'lucide-react';
 import Link from 'next/link';
 import { useToast } from '@/components/NotificationSystem';
@@ -257,12 +257,14 @@ export default function EditProfilePage() {
 
     setIsSubmitting(true);
     try {
-      // Filter out empty certifications before saving
+      // Filter out empty certifications before saving. Include role/email so a missing user doc is created correctly.
       const dataToSave = {
         ...formData,
-        certifications: formData.certifications.filter(cert => cert.name && cert.name.trim() !== '')
+        certifications: formData.certifications.filter(cert => cert.name && cert.name.trim() !== ''),
+        email: user.email,
+        ...(profile?.role && { role: profile.role })
       };
-      const { error } = await updateDocument('users', user.uid, dataToSave);
+      const { error } = await upsertDocument('users', user.uid, dataToSave);
       
       if (error) {
         console.error('Error updating profile:', error);

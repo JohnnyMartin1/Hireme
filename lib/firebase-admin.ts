@@ -16,12 +16,13 @@ if (!admin.apps.length) {
   // Replace literal \n with actual newlines
   privateKey = privateKey.replace(/\\n/g, '\n');
 
-  console.log('Firebase Admin SDK initialization:', {
-    projectId: projectId ? 'SET' : 'MISSING',
-    clientEmail: clientEmail ? 'SET' : 'MISSING', 
-    privateKey: privateKey ? 'SET (length: ' + privateKey.length + ')' : 'MISSING',
-    privateKeyStarts: privateKey ? privateKey.substring(0, 20) + '...' : 'N/A'
-  });
+  if (process.env.NODE_ENV === 'development') {
+    console.log('Firebase Admin SDK initialization:', {
+      projectId: projectId ? 'SET' : 'MISSING',
+      clientEmail: clientEmail ? 'SET' : 'MISSING',
+      privateKey: privateKey ? 'SET' : 'MISSING',
+    });
+  }
 
   if (projectId && clientEmail && privateKey) {
     try {
@@ -32,15 +33,17 @@ if (!admin.apps.length) {
           privateKey,
         }),
       });
-      console.log('Firebase Admin SDK initialized successfully');
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Firebase Admin SDK initialized successfully');
+      }
     } catch (error) {
       console.error('Firebase Admin SDK initialization error:', error);
-      // Fallback to application default credentials
       admin.initializeApp();
     }
   } else {
-    console.log('Missing Firebase credentials, using default');
-    // Fallback to application default credentials if available
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Missing Firebase credentials, using default');
+    }
     admin.initializeApp();
   }
 }

@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
 
+const MAX_ATTEMPTS = 10;
+const WINDOW_MS = 15 * 60 * 1000; // 15 minutes
+
 export async function POST(request: NextRequest) {
   try {
     const { email, code } = await request.json();
@@ -11,6 +14,25 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    const emailKey = email.toLowerCase().trim();
+    const rateLimitRef = adminDb.collection('verifyCodeAttempts').doc(emailKey);
+    const rateLimitSnap = await rateLimitRef.get();
+    const now = Date.now();
+    const data = rateLimitSnap.data();
+    let attempts = data?.attempts ?? 0;
+    let windowStart = data?.windowStart ?? now;
+    if (now - windowStart > WINDOW_MS) {
+      attempts = 0;
+      windowStart = now;
+    }
+    if (attempts >= MAX_ATTEMPTS) {
+      return NextResponse.json(
+        { success: false, error: 'Too many attempts. Please try again later.' },
+        { status: 429, headers: { 'Retry-After': '900' } }
+      );
+    }
+    await rateLimitRef.set({ attempts: attempts + 1, windowStart }, { merge: true });
 
     // Find the code in database using Admin SDK
     const codesSnapshot = await adminDb
@@ -67,6 +89,8 @@ export async function POST(request: NextRequest) {
         emailVerifiedAt: new Date().toISOString()
       });
     }
+
+    await rateLimitRef.delete();
 
     return NextResponse.json({ 
       success: true,

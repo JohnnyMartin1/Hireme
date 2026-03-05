@@ -715,11 +715,13 @@ function NotificationsSection({ toast, profile }: { toast: (msg: string) => void
     }
     
     try {
-      console.log('Saving preference:', { key, value, userId: user.uid });
-      
+      const token = await user.getIdToken();
       const response = await fetch('/api/notifications/update-preferences', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
         body: JSON.stringify({
           userId: user.uid,
           preferences: { [key]: value },

@@ -84,9 +84,13 @@ function VerifyEmailContent() {
     setResendMessage("");
 
     try {
+      const token = await user.getIdToken();
       const response = await fetch('/api/auth/send-verification', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({
           userId: user.uid,
           email: user.email,

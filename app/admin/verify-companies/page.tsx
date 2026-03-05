@@ -74,18 +74,19 @@ export default function VerifyCompaniesPage() {
   };
 
   const handleVerification = async (companyId: string, approved: boolean) => {
+    if (!user) return;
     setProcessingId(companyId);
     try {
-      // Use server-side API to update company status (bypasses client-side security rules)
+      const token = await user.getIdToken();
       const response = await fetch('/api/admin/verify-company', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
           companyId,
           approved,
-          adminUserId: user?.uid
         }),
       });
 

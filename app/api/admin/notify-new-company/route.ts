@@ -1,11 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
+import { adminAuth } from '@/lib/firebase-admin';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(request: NextRequest) {
   try {
+    const authHeader = request.headers.get('authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    let decodedToken;
+    try {
+      decodedToken = await adminAuth.verifyIdToken(authHeader.slice(7));
+    } catch {
+      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+    }
+
     const { companyName, contactName, contactEmail, companySize, industry } = await request.json();
+
+    if (!contactEmail || decodedToken.email !== contactEmail) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
 
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 
                     (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');

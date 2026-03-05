@@ -1,25 +1,40 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { adminAuth } from '@/lib/firebase-admin';
+import { adminAuth, adminDb } from '@/lib/firebase-admin';
 
 export async function POST(request: NextRequest) {
   try {
+    const authHeader = request.headers.get('authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    let decodedToken;
+    try {
+      decodedToken = await adminAuth.verifyIdToken(authHeader.slice(7));
+    } catch {
+      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+    }
     const { userIds } = await request.json();
 
-    // If userIds is empty array, return all Firebase Auth users
-    if (Array.isArray(userIds) && userIds.length === 0) {
+    if (!Array.isArray(userIds)) {
+      return NextResponse.json({ error: 'userIds must be an array' }, { status: 400 });
+    }
+
+    if (userIds.length === 0) {
+      const adminEmail = process.env.ADMIN_EMAIL || 'officialhiremeapp@gmail.com';
+      const userDoc = await adminDb.collection('users').doc(decodedToken.uid).get();
+      const userData = userDoc.data();
+      const isAdmin = userData?.role === 'ADMIN' || decodedToken.email === adminEmail;
+      if (!isAdmin) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      }
       const listUsersResult = await adminAuth.listUsers();
       const allUserIds = listUsersResult.users.map(user => user.uid);
-      
-      return NextResponse.json({ 
+      return NextResponse.json({
         validUserIds: allUserIds,
         totalChecked: allUserIds.length,
         validCount: allUserIds.length,
         invalidCount: 0
       });
-    }
-
-    if (!Array.isArray(userIds)) {
-      return NextResponse.json({ error: 'userIds must be an array' }, { status: 400 });
     }
 
     // Check which users still exist in Firebase Auth

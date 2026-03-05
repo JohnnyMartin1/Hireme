@@ -123,9 +123,13 @@ export default function RecruiterSignupPage() {
 
         // Send verification email via Resend (better deliverability)
         try {
+          const token = await user.getIdToken();
           await fetch('/api/auth/send-verification', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
             body: JSON.stringify({
               userId: user.uid,
               email: email,

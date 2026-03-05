@@ -124,7 +124,8 @@ export default function MessageThreadPage() {
         content: newMessage.trim()
       };
 
-      const { error: messageError } = await sendMessage(thread.id, messageData);
+      const token = await user.getIdToken();
+      const { error: messageError } = await sendMessage(thread.id, messageData, token);
       
       if (messageError) {
         console.error('Error sending message:', messageError);

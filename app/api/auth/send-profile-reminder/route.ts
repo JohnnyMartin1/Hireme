@@ -3,8 +3,19 @@ import { Resend } from 'resend';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
+function isCronAuthorized(request: NextRequest): boolean {
+  if (request.headers.get('x-vercel-cron') === 'true') return true;
+  const authHeader = request.headers.get('authorization');
+  const secret = process.env.CRON_SECRET;
+  return !!(secret && authHeader === `Bearer ${secret}`);
+}
+
 export async function POST(request: NextRequest) {
   try {
+    if (!isCronAuthorized(request)) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { email, firstName } = await request.json();
 
     if (!email) {

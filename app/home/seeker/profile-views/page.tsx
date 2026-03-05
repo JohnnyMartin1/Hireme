@@ -110,11 +110,13 @@ export default function ProfileViewersPage() {
     const toast = document.createElement('div');
     toast.className = 'toast bg-white border border-slate-200 rounded-xl px-4 py-3 shadow-lg flex items-center space-x-3';
     
-    const iconClass = type === 'success' ? 'fa-check text-green-500' : 'fa-info text-sky-400';
-    toast.innerHTML = `
-      <i class="fa-solid ${iconClass}"></i>
-      <span class="font-semibold text-navy">${message}</span>
-    `;
+    const icon = document.createElement('i');
+    icon.className = type === 'success' ? 'fa-solid fa-check text-green-500' : 'fa-solid fa-info text-sky-400';
+    const span = document.createElement('span');
+    span.className = 'font-semibold text-navy';
+    span.textContent = message;
+    toast.appendChild(icon);
+    toast.appendChild(span);
     
     toastContainer.appendChild(toast);
     

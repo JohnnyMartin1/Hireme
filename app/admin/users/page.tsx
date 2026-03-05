@@ -94,16 +94,18 @@ export default function UsersManagementPage() {
   }, [users, searchTerm, roleFilter, statusFilter]);
 
   const loadUsers = async () => {
+    if (!user) return;
     setIsLoading(true);
     try {
-      // Get users that actually exist in Firebase Auth
+      const token = await user.getIdToken();
       const response = await fetch('/api/auth/verify-users', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({ 
-          userIds: [] // Empty array means get all users
+          userIds: [] // Empty array means get all users (admin only)
         }),
       });
 

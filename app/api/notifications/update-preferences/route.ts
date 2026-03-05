@@ -1,33 +1,40 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { adminDb } from '@/lib/firebase-admin';
+import { adminAuth, adminDb } from '@/lib/firebase-admin';
 
 export async function POST(request: NextRequest) {
   try {
-    console.log('📧 Notification preferences update request received');
-    
+    const authHeader = request.headers.get('authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    let decodedToken;
+    try {
+      decodedToken = await adminAuth.verifyIdToken(authHeader.slice(7));
+    } catch {
+      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+    }
+
     const body = await request.json();
     const { userId, preferences } = body;
 
-    console.log('User ID:', userId);
-    console.log('Preferences to update:', preferences);
-
     if (!userId) {
-      console.error('❌ Missing userId');
       return NextResponse.json(
         { success: false, error: 'User ID is required' },
         { status: 400 }
       );
     }
 
+    if (decodedToken.uid !== userId) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
     if (!preferences || typeof preferences !== 'object') {
-      console.error('❌ Invalid preferences:', preferences);
       return NextResponse.json(
         { success: false, error: 'Valid preferences object is required' },
         { status: 400 }
       );
     }
 
-    // Use Firebase Admin SDK (bypasses security rules, runs on server)
     const userRef = adminDb.collection('users').doc(userId);
     
     // Get current preferences
@@ -35,20 +42,13 @@ export async function POST(request: NextRequest) {
     const currentPreferences = userDoc.exists 
       ? (userDoc.data()?.notificationPreferences || {})
       : {};
-    
-    console.log('📄 Current preferences:', currentPreferences);
-    
-    // Merge with new preferences
     const updatedPreferences = { ...currentPreferences, ...preferences };
-    console.log('📝 Updated preferences:', updatedPreferences);
-    
-    // Update the document (or create if it doesn't exist)
+
     await userRef.set({
       notificationPreferences: updatedPreferences,
       updatedAt: new Date(),
     }, { merge: true });
 
-    console.log('✅ Preferences updated successfully via Admin SDK');
     return NextResponse.json({ success: true });
   } catch (error: any) {
     console.error('❌ Error in API route:', error);
