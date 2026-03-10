@@ -231,7 +231,7 @@ export default function SeekerSignupPage() {
           edu.school.trim() !== '' || edu.major.trim() !== '' || edu.graduationYear.trim() !== ''
         );
 
-        const profileData = {
+        const profileData: any = {
           firstName: formData.firstName,
           lastName: formData.lastName,
           email: formData.email,
@@ -241,13 +241,17 @@ export default function SeekerSignupPage() {
           majors: validMajors, // Store as array
           minor: formData.minor || '',
           graduationYear: formData.graduationYear,
-          additionalEducation: validAdditionalEducation.length > 0 ? validAdditionalEducation : undefined,
           createdAt: new Date(),
           openToOpp: true,
           emailVerified: true, // Email is already verified with 6-digit code
           emailVerifiedAt: new Date().toISOString(),
           termsAcceptedAt: new Date().toISOString()
         };
+
+        // Only add additionalEducation when we actually have entries; avoid undefined, which Firestore rejects.
+        if (validAdditionalEducation.length > 0) {
+          profileData.additionalEducation = validAdditionalEducation;
+        }
 
         const { error: profileError } = await createDocument('users', profileData, user.uid);
 
