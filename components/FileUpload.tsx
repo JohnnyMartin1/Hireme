@@ -1,7 +1,7 @@
 "use client";
 import { useState, useRef } from 'react';
 import { useToast } from '@/components/NotificationSystem';
-import { Upload, X, FileText, User, Loader2 } from 'lucide-react';
+import { Upload, X, FileText, Loader2 } from 'lucide-react';
 import { uploadResume, uploadProfileImage, uploadTranscript, deleteFile } from '@/lib/firebase-storage';
 
 interface FileUploadProps {
@@ -119,7 +119,7 @@ export default function FileUpload({
       {currentFile ? (
         <div className="flex items-center justify-between p-4 bg-green-50 border border-green-200 rounded-lg">
           <div className="flex items-center">
-            {type === 'resume' ? (
+            {type === 'resume' || type === 'transcript' ? (
               <FileText className="h-5 w-5 text-green-600 mr-3" />
             ) : (
               <img 
@@ -130,10 +130,16 @@ export default function FileUpload({
             )}
             <div>
               <p className="font-medium text-green-800">
-                {type === 'resume' ? 'Resume uploaded' : 'Profile image uploaded'}
+                {type === 'resume'
+                  ? 'Resume uploaded'
+                  : type === 'transcript'
+                  ? 'Transcript uploaded'
+                  : 'Profile image uploaded'}
               </p>
               <p className="text-sm text-green-600">
-                {type === 'resume' ? 'PDF file ready' : 'Image ready'}
+                {type === 'resume' || type === 'transcript'
+                  ? 'PDF file ready'
+                  : 'Image ready'}
               </p>
             </div>
           </div>
