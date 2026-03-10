@@ -281,20 +281,18 @@ export default function SeekerSignupPage() {
     return (currentStep / 3) * 100;
   };
 
-  // Detect mobile device
+  // Only show "mobile device" message on actual phones/tablets, not on desktop with narrow window
   useEffect(() => {
     const checkMobile = () => {
       if (typeof window !== 'undefined') {
-        // Check screen width
-        const isMobileWidth = window.innerWidth < 1024; // lg breakpoint
-        // Check user agent for mobile devices
         const isMobileUA = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
           navigator.userAgent
         );
-        setIsMobile(isMobileWidth || isMobileUA);
+        const isNarrow = window.innerWidth < 768;
+        setIsMobile(isMobileUA && isNarrow);
       }
     };
-    
+
     checkMobile();
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);

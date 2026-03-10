@@ -1,6 +1,5 @@
 "use client";
 import { useState, useRef, useEffect, memo } from 'react';
-import { createPortal } from 'react-dom';
 import { ChevronDown, Search, X, Plus } from 'lucide-react';
 
 export interface LanguageSkill {
@@ -37,27 +36,9 @@ const LanguageSelector = memo(function LanguageSelector({
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredOptions, setFilteredOptions] = useState(options || []);
-  const [position, setPosition] = useState({ top: 0, left: 0, width: 0 });
   const dropdownRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLDivElement>(null);
   const [customInput, setCustomInput] = useState('');
-
-  const updatePosition = () => {
-    if (triggerRef.current) {
-      const rect = triggerRef.current.getBoundingClientRect();
-      setPosition({
-        top: rect.bottom + 4,
-        left: rect.left,
-        width: rect.width
-      });
-    }
-  };
-
-  useEffect(() => {
-    if (isOpen) {
-      updatePosition();
-    }
-  }, [isOpen]);
 
   useEffect(() => {
     const filtered = options.filter(option =>
@@ -81,21 +62,8 @@ const LanguageSelector = memo(function LanguageSelector({
       }
     };
 
-    const handleScroll = () => {
-      if (isOpen) {
-        updatePosition();
-      }
-    };
-
     document.addEventListener('mousedown', handleClickOutside);
-    window.addEventListener('scroll', handleScroll, true);
-    window.addEventListener('resize', updatePosition);
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-      window.removeEventListener('scroll', handleScroll, true);
-      window.removeEventListener('resize', updatePosition);
-    };
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isOpen]);
 
   const handleSelect = (language: string) => {
@@ -175,15 +143,10 @@ const LanguageSelector = memo(function LanguageSelector({
           <ChevronDown className={`h-5 w-5 text-slate-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
         </div>
 
-        {isOpen && createPortal(
+        {isOpen && (
           <div
             ref={dropdownRef}
-            className="fixed z-50 bg-white border border-slate-300 rounded-lg shadow-xl max-h-96 overflow-hidden"
-            style={{
-              top: `${position.top}px`,
-              left: `${position.left}px`,
-              width: `${position.width}px`
-            }}
+            className="absolute left-0 right-0 mt-2 z-50 bg-white border border-slate-300 rounded-lg shadow-xl max-h-96 overflow-hidden"
           >
             <div className="p-2 border-b border-slate-200">
               <div className="relative">
@@ -247,8 +210,7 @@ const LanguageSelector = memo(function LanguageSelector({
                 </div>
               </div>
             )}
-          </div>,
-          document.body
+          </div>
         )}
       </div>
 
