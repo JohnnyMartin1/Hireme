@@ -55,38 +55,38 @@ export default function LoginPage() {
       if (error) {
         setErr(error);
       } else if (user) {
-        // Fetch user profile to determine role
+        // Fetch user profile to determine role, but treat \"Document not found\" as a normal first-login case.
         try {
           const { data: profile, error: profileError } = await getDocument('users', user.uid);
-          
-          if (profileError) {
+
+          if (profileError && profileError !== 'Document not found') {
             setErr("Error fetching user profile. Please try again.");
             setIsLoading(false);
             return;
           }
 
-          if (profile) {
-            // Cast to our shared type
-            const p = profile as Partial<UserProfile>;
-            const userRole = p.role ?? null;
+          // If no profile doc yet, assume JOB_SEEKER by default (same as FirebaseAuthProvider fallback)
+          const p = (profile as Partial<UserProfile>) || {};
+          const userRole = p.role ?? "JOB_SEEKER";
 
-            // Check for admin email first
-            if (user?.email === 'officialhiremeapp@gmail.com') {
-              router.push("/admin");
-            } else if (userRole === "EMPLOYER" || userRole === "RECRUITER") {
-              router.push("/home/employer");
-            } else if (userRole === "JOB_SEEKER") {
-              router.push("/home/seeker");
-            } else if (userRole === "ADMIN") {
-              router.push("/admin");
-            } else {
-              setErr("Invalid user role. Please contact support.");
-            }
+          // Check for admin email first
+          if (user?.email === 'officialhiremeapp@gmail.com' || userRole === "ADMIN") {
+            router.push("/admin");
+          } else if (userRole === "EMPLOYER" || userRole === "RECRUITER") {
+            router.push("/home/employer");
+          } else if (userRole === "JOB_SEEKER") {
+            router.push("/home/seeker");
           } else {
-            setErr("User profile not found. Please contact support.");
+            setErr("Invalid user role. Please contact support.");
           }
         } catch (profileError) {
-          setErr("Error fetching user profile. Please try again.");
+          // If profile fetch fails entirely, fall back to a basic JOB_SEEKER routing so login still succeeds.
+          console.error('Error fetching user profile on login:', profileError);
+          if (user?.email === 'officialhiremeapp@gmail.com') {
+            router.push("/admin");
+          } else {
+            router.push("/home/seeker");
+          }
         }
       }
     } catch (error: any) {
