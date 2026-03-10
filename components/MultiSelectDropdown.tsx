@@ -192,15 +192,10 @@ const MultiSelectDropdown = memo(function MultiSelectDropdown({
           </div>
         </div>
 
-        {isOpen && !isMaxReached && typeof window !== 'undefined' && createPortal(
+        {isOpen && !isMaxReached && (
           <div 
             ref={dropdownRef}
-            className="fixed z-[9999] bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-hidden"
-            style={{ 
-              top: `${position.top}px`, 
-              left: `${position.left}px`, 
-              width: `${position.width}px` 
-            }}
+            className="absolute left-0 right-0 mt-2 z-50 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-hidden"
           >
             <div className="p-2 border-b border-gray-200">
               <div className="relative">
@@ -212,7 +207,7 @@ const MultiSelectDropdown = memo(function MultiSelectDropdown({
                   onChange={(e) => setSearchTerm(e.target.value)}
                   onKeyDown={handleKeyDown}
                   className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  autoFocus={typeof window !== 'undefined' && window.innerWidth >= 1024}
+                  autoFocus
                 />
               </div>
             </div>
@@ -250,8 +245,7 @@ const MultiSelectDropdown = memo(function MultiSelectDropdown({
                 </div>
               )}
             </div>
-          </div>,
-          document.body
+          </div>
         )}
       </div>
     </div>

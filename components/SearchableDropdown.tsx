@@ -224,15 +224,10 @@ const SearchableDropdown = memo(function SearchableDropdown({
           </div>
         </div>
 
-        {isOpen && typeof window !== 'undefined' && createPortal(
+        {isOpen && (
           <div 
             ref={dropdownRef}
-            className="fixed z-[9999] bg-white border border-light-gray rounded-xl shadow-lg max-h-60 overflow-hidden"
-            style={{ 
-              top: `${position.top}px`, 
-              left: `${position.left}px`, 
-              width: `${position.width}px` 
-            }}
+            className="absolute left-0 right-0 mt-2 z-50 bg-white border border-light-gray rounded-xl shadow-lg max-h-60 overflow-hidden"
           >
             <div className="p-2 border-b border-light-gray">
               <div className="relative">
@@ -244,7 +239,7 @@ const SearchableDropdown = memo(function SearchableDropdown({
                   onChange={(e) => setSearchTerm(e.target.value)}
                   onKeyDown={handleKeyDown}
                   className="w-full pl-10 pr-4 py-2 border border-light-gray rounded-lg focus:ring-2 focus:ring-navy focus:border-navy text-base"
-                  autoFocus={typeof window !== 'undefined' && window.innerWidth >= 1024}
+                  autoFocus
                 />
               </div>
             </div>
@@ -281,8 +276,7 @@ const SearchableDropdown = memo(function SearchableDropdown({
                 </div>
               )}
             </div>
-          </div>,
-          document.body
+          </div>
         )}
       </div>
     </div>
