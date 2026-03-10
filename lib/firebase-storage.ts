@@ -112,9 +112,9 @@ export const uploadProfileImage = async (file: File, userId: string) => {
   });
 };
 
-// Upload transcript file
+// Upload transcript file (same path pattern as resume so Storage rules apply)
 export const uploadTranscript = async (file: File, userId: string) => {
-  const path = `transcripts/${userId}/${Date.now()}_${file.name}`;
+  const path = `resumes/${userId}/transcript_${Date.now()}_${file.name}`;
   return uploadFile(file, path, {
     contentType: file.type,
     customMetadata: {
