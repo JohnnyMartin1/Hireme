@@ -38,7 +38,7 @@ const SearchableDropdown = memo(function SearchableDropdown({
       const dropdownHeight = 240; // Approximate max height of dropdown
       const spaceBelow = viewportHeight - rect.bottom;
       const spaceAbove = rect.top;
-      const isMobile = window.innerWidth < 1024;
+      const isMobile = window.innerWidth < 768; // treat only true phone widths as mobile
 
       // If not enough space below, position above the trigger
       let top = rect.bottom + 4;

@@ -36,7 +36,7 @@ const MultiSelectDropdown = memo(function MultiSelectDropdown({
   const updatePosition = () => {
     if (triggerRef.current && typeof window !== 'undefined') {
       const rect = triggerRef.current.getBoundingClientRect();
-      const isMobile = window.innerWidth < 1024;
+      const isMobile = window.innerWidth < 768; // treat only true phone widths as mobile
       const horizontalPadding = isMobile ? 16 : 0;
       const left = isMobile ? horizontalPadding : rect.left;
       const width = isMobile ? window.innerWidth - horizontalPadding * 2 : rect.width;
