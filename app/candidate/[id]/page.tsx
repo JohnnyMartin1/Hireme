@@ -474,7 +474,9 @@ export default function CandidateProfilePage() {
       <header className="sticky top-0 bg-white shadow-sm z-50 border-b border-slate-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
           <Link
-            href={user?.uid === candidate.id ? "/home/seeker" : "/search/candidates"}
+            href={(user?.email === 'officialhiremeapp@gmail.com' || profile?.role === 'ADMIN')
+              ? "/admin/users"
+              : (user?.uid === candidate.id ? "/home/seeker" : "/search/candidates")}
             className="flex items-center gap-2 text-navy-800 hover:text-navy-600 transition-all duration-200 group px-3 py-2 rounded-lg hover:bg-sky-50 hover:shadow-md min-h-[48px]"
           >
             <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5 group-hover:-translate-x-1 transition-transform" />
