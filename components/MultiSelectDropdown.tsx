@@ -34,12 +34,17 @@ const MultiSelectDropdown = memo(function MultiSelectDropdown({
   const triggerRef = useRef<HTMLDivElement>(null);
 
   const updatePosition = () => {
-    if (triggerRef.current) {
+    if (triggerRef.current && typeof window !== 'undefined') {
       const rect = triggerRef.current.getBoundingClientRect();
+      const isMobile = window.innerWidth < 1024;
+      const horizontalPadding = isMobile ? 16 : 0;
+      const left = isMobile ? horizontalPadding : rect.left;
+      const width = isMobile ? window.innerWidth - horizontalPadding * 2 : rect.width;
+
       setPosition({
         top: rect.bottom + 4,
-        left: rect.left,
-        width: rect.width
+        left,
+        width
       });
     }
   };

@@ -32,23 +32,29 @@ const SearchableDropdown = memo(function SearchableDropdown({
   const triggerRef = useRef<HTMLDivElement>(null);
 
   const updatePosition = () => {
-    if (triggerRef.current) {
+    if (triggerRef.current && typeof window !== 'undefined') {
       const rect = triggerRef.current.getBoundingClientRect();
       const viewportHeight = window.innerHeight;
       const dropdownHeight = 240; // Approximate max height of dropdown
       const spaceBelow = viewportHeight - rect.bottom;
       const spaceAbove = rect.top;
-      
+      const isMobile = window.innerWidth < 1024;
+
       // If not enough space below, position above the trigger
       let top = rect.bottom + 4;
       if (spaceBelow < dropdownHeight && spaceAbove > spaceBelow) {
         top = rect.top - dropdownHeight - 4;
       }
-      
+
+      // On mobile, center the dropdown in the content area so it doesn't hug the extreme left
+      const horizontalPadding = isMobile ? 16 : 0;
+      const usableWidth = isMobile ? window.innerWidth - horizontalPadding * 2 : rect.width;
+      const left = isMobile ? horizontalPadding : rect.left;
+
       setPosition({
         top: Math.max(8, Math.min(top, viewportHeight - dropdownHeight - 8)), // Keep within viewport
-        left: rect.left,
-        width: rect.width
+        left,
+        width: usableWidth
       });
     }
   };
