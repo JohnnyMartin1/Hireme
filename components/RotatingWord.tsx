@@ -48,19 +48,20 @@ export function RotatingWord({
   return (
     <span className={className}>
       <span
-        className="relative inline-block align-baseline text-left whitespace-nowrap"
+        className="relative inline-block align-baseline text-left whitespace-nowrap max-w-full"
         style={{ 
           minWidth: maxLen ? `${maxLen * 0.6}ch` : undefined,
-          width: maxLen ? `${maxLen * 0.6}ch` : undefined
+          width: maxLen ? `${maxLen * 0.6}ch` : undefined,
+          maxWidth: '100%'
         }}
       >
         {shouldReduceMotion ? (
-          <span className={`${wordClassName} whitespace-nowrap`}>{words?.[0] ?? ""}</span>
+          <span className={`${wordClassName} whitespace-normal sm:whitespace-nowrap`}>{words?.[0] ?? ""}</span>
         ) : (
           <AnimatePresence mode="wait">
             <motion.span
               key={current}
-              className={`${wordClassName} inline-block whitespace-nowrap`}
+              className={`${wordClassName} inline-block whitespace-normal sm:whitespace-nowrap`}
               initial={{ opacity: 0, y: 10, filter: "blur(2px)" }}
               animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
               exit={{ opacity: 0, y: -10, filter: "blur(2px)" }}

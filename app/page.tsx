@@ -1161,7 +1161,7 @@ export default function Home() {
           <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-12 lg:mb-14 reveal">
               <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-navy-900 mb-4 tracking-tight">
-                <span className="inline-block whitespace-nowrap pl-2 sm:pl-4 lg:pl-6">
+                <span className="inline-block whitespace-normal sm:whitespace-nowrap pl-2 sm:pl-4 lg:pl-6">
                   Built For{" "}
                   <RotatingWord
                     words={[
