@@ -1,7 +1,7 @@
 "use client";
 import { useParams } from 'next/navigation';
 import { useFirebaseAuth } from "@/components/FirebaseAuthProvider";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
 import { User, MapPin, GraduationCap, Star, MessageSquare, Heart, Loader2, ArrowLeft, Send, Video, FileText, Download, X, Code, Briefcase, Plane, Calendar, Copy, Check, Building2, UserCircle, Award, Globe, ZoomIn, ZoomOut, RotateCcw } from "lucide-react";
 import { getDocument, getOrCreateThread, sendMessage, saveCandidate, isCandidateSaved, getEndorsements } from '@/lib/firebase-firestore';
@@ -56,6 +56,7 @@ interface CandidateProfile {
 
 export default function CandidateProfilePage() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const { user, profile, loading } = useFirebaseAuth();
   const router = useRouter();
   const [candidate, setCandidate] = useState<any>(null);
@@ -105,6 +106,7 @@ export default function CandidateProfilePage() {
     }
   };
   const [endorsements, setEndorsements] = useState<any[]>([]);
+  const [jobMatchContext, setJobMatchContext] = useState<any>(null);
   const [stickyBarVisible, setStickyBarVisible] = useState(false);
   const [copyLinkSuccess, setCopyLinkSuccess] = useState(false);
   const heroCardRef = useRef<HTMLDivElement>(null);
@@ -193,6 +195,28 @@ export default function CandidateProfilePage() {
 
     fetchCandidateProfile();
   }, [params.id, user, profile]);
+
+  useEffect(() => {
+    const fetchMatchContext = async () => {
+      if (!user || !candidate?.id) return;
+      if (!(profile?.role === 'EMPLOYER' || profile?.role === 'RECRUITER' || profile?.role === 'ADMIN')) return;
+      const jobId = searchParams.get('jobId');
+      if (!jobId) {
+        setJobMatchContext(null);
+        return;
+      }
+      try {
+        const res = await fetch(`/api/job/${jobId}/matches`);
+        if (!res.ok) return;
+        const payload = await res.json();
+        const match = (payload.matches || []).find((m: any) => m.candidateId === candidate.id);
+        if (match) setJobMatchContext(match);
+      } catch (err) {
+        console.error('Failed to fetch match context:', err);
+      }
+    };
+    fetchMatchContext();
+  }, [searchParams, user, profile, candidate?.id]);
 
   // Handle sticky bar visibility
   useEffect(() => {
@@ -397,6 +421,34 @@ export default function CandidateProfilePage() {
   }
 
   const candidateName = `${candidate.firstName || 'First'} ${candidate.lastName || 'Last'}`;
+  const matchingNormalization = (candidate.matchingNormalization || {}) as Record<string, any>;
+  const targetRoles = Array.isArray(candidate.targetRolesV2) ? candidate.targetRolesV2 : [];
+  const functionInterests = Array.isArray(candidate.interestFunctionsV2) ? candidate.interestFunctionsV2 : [];
+  const structuredSkills = Array.isArray(candidate.skillsV2) ? candidate.skillsV2 : [];
+  const structuredExperience = Array.isArray(candidate.experienceProjectsV2) ? candidate.experienceProjectsV2 : [];
+  const readinessSignals = {
+    resume: Boolean(candidate.resumeUrl),
+    video: Boolean(candidate.videoUrl),
+    transcript: Boolean(candidate.transcriptUrl),
+    endorsements: Array.isArray(endorsements) ? endorsements.length : 0,
+  };
+  const topSkills = (candidate.skills || []).slice(0, 8);
+  const structuredSkillProof = structuredSkills
+    .filter((s: any) => s?.name)
+    .slice(0, 5)
+    .map((s: any) => `${s.name}${s.proficiency ? ` (${String(s.proficiency).toLowerCase()})` : ''}`);
+  const experienceProofSnippets = structuredExperience
+    .slice(0, 3)
+    .map((exp: any) => `${exp.title || 'Experience'}${exp.organization ? ` at ${exp.organization}` : ''}`);
+  const potentialGaps = [
+    !targetRoles.length ? 'No target roles listed' : '',
+    !topSkills.length ? 'No core skill tags listed' : '',
+    !structuredExperience.length && !candidate.experience ? 'No structured experience evidence added' : '',
+    !candidate.gpa ? 'GPA not listed' : '',
+    !readinessSignals.resume ? 'Resume missing' : '',
+    !readinessSignals.video ? 'Intro video missing' : '',
+    !candidate.workAuthorization ? 'Work authorization not specified' : '',
+  ].filter(Boolean);
 
   return (
     <main className="min-h-screen bg-slate-50 mobile-safe-top mobile-safe-bottom overflow-x-hidden w-full">
@@ -584,6 +636,86 @@ export default function CandidateProfilePage() {
             )}
           </div>
         </section>
+
+        {/* Matching Dimensions Snapshot (recruiter-facing) */}
+        {user?.uid !== candidate.id && (profile?.role === 'EMPLOYER' || profile?.role === 'RECRUITER' || profile?.role === 'ADMIN') && (
+          <section className="bg-white rounded-2xl shadow-xl border border-slate-100 p-8 mb-8">
+            <div className="flex items-center mb-6">
+              <div className="w-12 h-12 bg-sky-100 rounded-lg flex items-center justify-center mr-4">
+                <Building2 className="h-6 w-6 text-navy-700" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-navy-900">Matching Dimensions Snapshot</h2>
+                <p className="text-sm text-slate-600">These are the same dimensions used by ranking and explanation logic.</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-4"><strong>Target role alignment:</strong> {targetRoles.length ? targetRoles.join(', ') : 'No target roles added'}</div>
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-4"><strong>Functional interest alignment:</strong> {functionInterests.length ? functionInterests.join(', ') : 'No function interests added'}</div>
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-4"><strong>Hard skill alignment:</strong> {(candidate.skills || []).length ? (candidate.skills || []).slice(0, 10).join(', ') : 'No core skills listed'}</div>
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-4"><strong>Skill evidence / proof:</strong> {structuredSkills.length ? structuredSkills.filter((s: any) => s?.name).slice(0, 6).map((s: any) => `${s.name}${s.proficiency ? ` (${s.proficiency})` : ''}`).join(', ') : 'No structured skill proof yet'}</div>
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-4"><strong>Experience/project evidence:</strong> {structuredExperience.length ? `${structuredExperience.length} structured entries` : 'No structured entries'} {candidate.experience ? ' + narrative experience provided' : ''}</div>
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-4"><strong>Industry alignment:</strong> {(candidate.interestIndustriesV2 || candidate.careerInterests || []).length ? (candidate.interestIndustriesV2 || candidate.careerInterests).slice(0, 8).join(', ') : 'No industry interests listed'}</div>
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-4"><strong>Work preference alignment:</strong> {[...(candidate.workPreferences || []), ...(candidate.jobTypes || []), ...(candidate.locations || [])].slice(0, 8).join(', ') || 'No preferences listed'}</div>
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-4"><strong>Education / major / GPA alignment:</strong> {(matchingNormalization.normalizedMajors || candidate.major || 'N/A')} {candidate.gpa ? `• GPA ${candidate.gpa}` : ''}</div>
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-4"><strong>Authorization / sponsorship alignment:</strong> {candidate.workAuthorization?.authorizedToWork == null ? 'Not specified' : candidate.workAuthorization.authorizedToWork ? 'Authorized to work' : 'Not currently authorized'} {candidate.workAuthorization?.requiresVisaSponsorship === true ? '• Requires sponsorship' : candidate.workAuthorization?.requiresVisaSponsorship === false ? '• No sponsorship required' : ''}</div>
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-4"><strong>Recruiter confidence/readiness:</strong> {readinessSignals.resume ? 'Resume' : 'No resume'} • {readinessSignals.video ? 'Video' : 'No video'} • {readinessSignals.transcript ? 'Transcript' : 'No transcript'} • {readinessSignals.endorsements} endorsements</div>
+            </div>
+          </section>
+        )}
+
+        {/* Recruiter Match Summary */}
+        {user?.uid !== candidate.id && (profile?.role === 'EMPLOYER' || profile?.role === 'RECRUITER' || profile?.role === 'ADMIN') && (
+          <section className="bg-white rounded-2xl shadow-xl border border-slate-100 p-8 mb-8">
+            <div className="flex items-center mb-6">
+              <div className="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center mr-4">
+                <Star className="h-6 w-6 text-indigo-700" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold text-navy-900">Recruiter Match Summary</h2>
+                <p className="text-sm text-slate-600">Decision-first view aligned to the ranking dimensions.</p>
+              </div>
+            </div>
+            {jobMatchContext && (
+              <div className="mb-5 rounded-lg border border-indigo-200 bg-indigo-50 p-4 text-sm">
+                <p className="font-semibold text-indigo-900 mb-2">Why this candidate ranked here</p>
+                <p className="text-slate-700">{jobMatchContext.explanation || 'Match explanation unavailable.'}</p>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-3 text-xs text-slate-700">
+                  <div>Overall: <span className="font-semibold">{jobMatchContext.overallScore ?? 'N/A'}</span></div>
+                  <div>Title: <span className="font-semibold">{jobMatchContext.titleScore ?? 'N/A'}</span></div>
+                  <div>Skills: <span className="font-semibold">{jobMatchContext.skillsScore ?? 'N/A'}</span></div>
+                  <div>Preference: <span className="font-semibold">{jobMatchContext.preferenceScore ?? 'N/A'}</span></div>
+                </div>
+              </div>
+            )}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                <p className="text-xs uppercase tracking-wide text-slate-500 mb-1">1. Why this candidate matched</p>
+                <p className="text-navy-900">
+                  Target roles: {targetRoles.length ? targetRoles.join(', ') : 'Not specified'}.
+                  Strongest skills: {topSkills.length ? topSkills.slice(0, 4).join(', ') : 'Not specified'}.
+                </p>
+              </div>
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                <p className="text-xs uppercase tracking-wide text-slate-500 mb-1">2. Potential gaps</p>
+                <p className="text-navy-900">{potentialGaps.length ? potentialGaps.slice(0, 3).join(' • ') : 'No obvious critical gaps from profile data.'}</p>
+              </div>
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                <p className="text-xs uppercase tracking-wide text-slate-500 mb-1">3. Match highlights</p>
+                <p className="text-navy-900">
+                  Experience proof: {experienceProofSnippets.length ? experienceProofSnippets.join(' • ') : 'No structured experience snippets yet'}.
+                  {structuredSkillProof.length ? ` Skill proof: ${structuredSkillProof.join(' • ')}.` : ''}
+                </p>
+              </div>
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                <p className="text-xs uppercase tracking-wide text-slate-500 mb-1">4. Recruiter confidence signals</p>
+                <p className="text-navy-900">
+                  {readinessSignals.resume ? 'Resume' : 'No resume'} • {readinessSignals.video ? 'Video' : 'No video'} • {readinessSignals.transcript ? 'Transcript' : 'No transcript'} • {readinessSignals.endorsements} endorsements
+                </p>
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* Video Section */}
         {candidate.videoUrl && (

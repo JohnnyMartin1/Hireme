@@ -1,0 +1,13 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "jobMatches",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "jobId", "order": "ASCENDING" },
+        { "fieldPath": "overallScore", "order": "DESCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}

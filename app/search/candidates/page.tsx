@@ -95,7 +95,9 @@ export default function SearchCandidatesPage() {
     setIsLoading(true);
     try {
       const token = await user.getIdToken();
-      const { data: candidateProfiles, error } = await getProfilesByRole('JOB_SEEKER', token);
+      const { data: candidateProfiles, error } = await getProfilesByRole('JOB_SEEKER', token, {
+        verifyAuthUsers: false,
+      });
       
       if (error || !candidateProfiles) {
         setCandidates([]);
@@ -137,7 +139,9 @@ export default function SearchCandidatesPage() {
     setIsLoading(true);
     try {
       const token = await user.getIdToken();
-      const { data: candidateProfiles, error } = await getProfilesByRole('JOB_SEEKER', token);
+      const { data: candidateProfiles, error } = await getProfilesByRole('JOB_SEEKER', token, {
+        verifyAuthUsers: false,
+      });
       
       if (error) {
         console.error('Error searching candidates:', error);
@@ -330,7 +334,9 @@ export default function SearchCandidatesPage() {
     setIsLoading(true);
     try {
       const token = await user.getIdToken();
-      const { data: candidateProfiles, error } = await getProfilesByRole('JOB_SEEKER', token);
+      const { data: candidateProfiles, error } = await getProfilesByRole('JOB_SEEKER', token, {
+        verifyAuthUsers: false,
+      });
       
       if (error) {
         console.error('Error searching candidates:', error);

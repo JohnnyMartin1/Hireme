@@ -2700,6 +2700,25 @@ export const LANGUAGES = [
   "Sanskrit"
 ].sort();
 
+/** Industries for job posts / employer matching (compact list). */
+export const INDUSTRIES = [
+  "Technology",
+  "Finance & Banking",
+  "Consulting",
+  "Healthcare",
+  "Education",
+  "Retail & Consumer",
+  "Manufacturing",
+  "Media & Entertainment",
+  "Government & Nonprofit",
+  "Real Estate",
+  "Energy",
+  "Aerospace & Defense",
+  "Legal",
+  "Hospitality & Travel",
+  "Other",
+].sort();
+
 export const CAREER_INTERESTS = [
   "Account Management",
   "Accounting & Auditing",

@@ -31,10 +31,8 @@ export function FirebaseAuthProvider({ children }: { children: React.ReactNode }
 
     // Try to initialize Firebase auth with error handling
     try {
-      console.log('Initializing Firebase auth...');
       const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
         clearTimeout(loadingTimeout); // Clear timeout when auth state changes
-        console.log('Firebase auth state changed:', firebaseUser ? 'User logged in' : 'No user');
         setUser(firebaseUser);
 
       if (firebaseUser) {

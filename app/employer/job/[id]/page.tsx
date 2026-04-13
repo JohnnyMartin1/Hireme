@@ -8,18 +8,25 @@ import Link from 'next/link';
 
 export default function ViewJobPage({ params }: { params: { id: string } }) {
   const router = useRouter();
-  const { user, profile } = useFirebaseAuth();
+  const { user, profile, loading } = useFirebaseAuth();
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [job, setJob] = useState<any>(null);
 
-  // Redirect if not logged in or not an employer/recruiter
-  if (!user || !profile || (profile.role !== 'EMPLOYER' && profile.role !== 'RECRUITER')) {
-    router.push('/auth/login');
-    return null;
-  }
+  useEffect(() => {
+    if (loading) return;
+    if (!user || !profile || (profile.role !== 'EMPLOYER' && profile.role !== 'RECRUITER')) {
+      router.replace('/auth/login');
+    }
+  }, [loading, user, profile, router]);
 
   useEffect(() => {
+    if (loading) return;
+    if (!user || !profile || (profile.role !== 'EMPLOYER' && profile.role !== 'RECRUITER')) {
+      setIsLoading(false);
+      return;
+    }
+
     const fetchJob = async () => {
       if (!params.id) return;
       
@@ -36,13 +43,19 @@ export default function ViewJobPage({ params }: { params: { id: string } }) {
           return;
         }
 
-        // Check if the job belongs to the current user
-        if ((jobData as any).employerId !== user.uid) {
+        const j = jobData as any;
+        const sameEmployer = j.employerId === user.uid;
+        const sameCompany =
+          j.companyId &&
+          profile?.companyId &&
+          j.companyId === profile.companyId &&
+          (profile.role === 'EMPLOYER' || profile.role === 'RECRUITER');
+        if (!sameEmployer && !sameCompany) {
           setError('You can only view your own jobs');
           return;
         }
 
-        setJob(jobData);
+        setJob({ ...j, id: params.id });
       } catch (err) {
         console.error('Error fetching job:', err);
         setError('Failed to load job');
@@ -52,7 +65,7 @@ export default function ViewJobPage({ params }: { params: { id: string } }) {
     };
 
     fetchJob();
-  }, [params.id, user]);
+  }, [params.id, user, profile, loading]);
 
   if (isLoading) {
     return (
@@ -190,14 +203,23 @@ export default function ViewJobPage({ params }: { params: { id: string } }) {
           )}
 
           {/* Action Buttons */}
-          <div className="flex gap-4 pt-6 border-t border-gray-200">
+          <div className="flex flex-wrap gap-4 pt-6 border-t border-gray-200">
             <button
-              onClick={() => router.push(`/employer/job/${job.id}/edit`)}
+              type="button"
+              onClick={() => router.push(`/employer/job/${params.id}/matches`)}
+              className="px-6 py-3 bg-navy-800 text-white rounded-lg hover:bg-navy-700 transition-colors"
+            >
+              Top Matches
+            </button>
+            <button
+              type="button"
+              onClick={() => router.push(`/employer/job/${params.id}/edit`)}
               className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
             >
               Edit Job
             </button>
             <button
+              type="button"
               onClick={() => router.push('/home/employer')}
               className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
             >

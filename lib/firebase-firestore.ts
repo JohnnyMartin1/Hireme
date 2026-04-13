@@ -106,10 +106,15 @@ export const queryDocuments = async (collectionName: string, constraints: any[] 
 };
 
 // Specific queries for your app. Pass idToken for verify-users (required for API auth).
-export const getProfilesByRole = async (role: string, idToken?: string) => {
+export const getProfilesByRole = async (
+  role: string,
+  idToken?: string,
+  options?: { verifyAuthUsers?: boolean }
+) => {
   const result = await queryDocuments('users', [where('role', '==', role)]);
-  
-  if (result.data && result.data.length > 0 && idToken) {
+  const shouldVerifyAuthUsers = options?.verifyAuthUsers !== false;
+
+  if (shouldVerifyAuthUsers && result.data && result.data.length > 0 && idToken) {
     try {
       const userIds = result.data.map((user: any) => user.id);
       

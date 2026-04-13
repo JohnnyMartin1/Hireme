@@ -19,7 +19,8 @@ import {
   MessageSquare,
   ChevronDown,
   SortAsc,
-  X
+  X,
+  Sparkles
 } from "lucide-react";
 import { getEmployerJobs, getUserMessageThreads } from '@/lib/firebase-firestore';
 import { deleteDocument } from '@/lib/firebase-firestore';
@@ -417,6 +418,13 @@ export default function EmployerJobsList({ limit }: EmployerJobsListProps) {
                 </div>
                 
                 <div className="flex items-center gap-2 ml-4">
+                  <Link
+                    href={`/employer/job/${job.id}/matches`}
+                    className="p-2 text-violet-600 hover:bg-violet-50 rounded-lg transition-colors"
+                    title="AI matches"
+                  >
+                    <Sparkles className="h-4 w-4" />
+                  </Link>
                   <Link
                     href={`/employer/job/${job.id}/edit`}
                     className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"

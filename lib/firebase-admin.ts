@@ -51,3 +51,22 @@ if (!admin.apps.length) {
 export const adminAuth = admin.auth();
 export const adminDb = admin.firestore();
 
+declare global {
+  // eslint-disable-next-line no-var
+  var __HIREME_FIRESTORE_SETTINGS_APPLIED__: boolean | undefined;
+}
+
+// Prevent hard failures when nested optional fields are undefined.
+// Firestore allows settings() only once per runtime; guard for HMR/dev reloads.
+if (!globalThis.__HIREME_FIRESTORE_SETTINGS_APPLIED__) {
+  try {
+    adminDb.settings({ ignoreUndefinedProperties: true });
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
+    if (!msg.includes('Firestore has already been initialized')) {
+      throw error;
+    }
+  }
+  globalThis.__HIREME_FIRESTORE_SETTINGS_APPLIED__ = true;
+}
+

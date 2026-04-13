@@ -49,6 +49,42 @@ export interface UserProfile {
   extracurriculars?: string[] | null;
   certifications?: string[] | null;
   languages?: string[] | null;
+  targetRolesV2?: string[] | null;
+  interestIndustriesV2?: string[] | null;
+  interestFunctionsV2?: string[] | null;
+  skillsV2?: Array<{
+    name: string;
+    proficiency?: 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED' | string;
+    evidenceSources?: string[];
+  }> | null;
+  experienceProjectsV2?: Array<{
+    title?: string;
+    organization?: string;
+    type?: 'INTERNSHIP' | 'PART_TIME' | 'FULL_TIME' | 'LEADERSHIP' | 'PROJECT' | 'CLUB' | string;
+    startDate?: string;
+    endDate?: string;
+    industry?: string;
+    location?: string;
+    bullets?: string[];
+    skillsUsed?: string[];
+  }> | null;
+  professionalSummaryV2?: {
+    summary?: string;
+    targetRoleContext?: string;
+    strengths?: string;
+    standout?: string;
+  } | null;
+  jobSearchPreferencesV2?: {
+    activelyLooking?: boolean;
+    desiredStartDate?: string;
+    willingToRelocate?: boolean;
+    openToAdjacentRoles?: boolean;
+    salaryMin?: number | null;
+    salaryMax?: number | null;
+    preferredLocations?: string[];
+    workArrangements?: string[];
+    jobTypes?: string[];
+  } | null;
 
   // Personal
   bio?: string | null;

@@ -26,6 +26,53 @@ import {
   CAREER_INTERESTS,
   LANGUAGES
 } from '@/lib/profile-data';
+import { buildNormalizedCandidateProfile } from '@/lib/matching/candidate-profile';
+
+type SkillV2 = {
+  name: string;
+  proficiency?: 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED' | '';
+  evidenceSources?: string[];
+};
+
+type ExperienceProjectV2 = {
+  title: string;
+  organization: string;
+  type: 'INTERNSHIP' | 'PART_TIME' | 'FULL_TIME' | 'LEADERSHIP' | 'PROJECT' | 'CLUB' | '';
+  startDate: string;
+  endDate: string;
+  industry: string;
+  location: string;
+  bullets: string[];
+  skillsUsed: string[];
+};
+
+const TARGET_ROLE_OPTIONS = [
+  'Software Engineer',
+  'Product Manager',
+  'Data Analyst',
+  'Business Analyst',
+  'Financial Analyst',
+  'UX Designer',
+  'UI Designer',
+  'Graphic Designer',
+  'Marketing Coordinator',
+  'Sales Development Representative',
+  'Operations Analyst',
+  'Project Manager',
+  'Investment Banking Analyst',
+  'FP&A Analyst',
+  'Recruiter',
+];
+
+const EVIDENCE_SOURCE_OPTIONS = [
+  'coursework',
+  'internship',
+  'work',
+  'project',
+  'club',
+  'certification',
+  'self-taught',
+];
 
 interface ProfileFormData {
   firstName: string;
@@ -56,6 +103,25 @@ interface ProfileFormData {
   languages: LanguageSkill[];
   // Career
   careerInterests: string[];
+  targetRolesV2: string[];
+  interestIndustriesV2: string[];
+  interestFunctionsV2: string[];
+  skillsV2: SkillV2[];
+  experienceProjectsV2: ExperienceProjectV2[];
+  professionalSummaryV2: {
+    summary: string;
+    targetRoleContext: string;
+    strengths: string;
+    standout: string;
+  };
+  jobSearchPreferencesV2: {
+    activelyLooking: boolean;
+    desiredStartDate: string;
+    willingToRelocate: boolean;
+    openToAdjacentRoles: boolean;
+    salaryMin: string;
+    salaryMax: string;
+  };
   // Work Authorization
   workAuthorization: {
     authorizedToWork: boolean | null;
@@ -91,6 +157,25 @@ export default function EditProfilePage() {
     certifications: [],
     languages: [],
     careerInterests: [],
+    targetRolesV2: [],
+    interestIndustriesV2: [],
+    interestFunctionsV2: [],
+    skillsV2: [],
+    experienceProjectsV2: [],
+    professionalSummaryV2: {
+      summary: '',
+      targetRoleContext: '',
+      strengths: '',
+      standout: ''
+    },
+    jobSearchPreferencesV2: {
+      activelyLooking: true,
+      desiredStartDate: '',
+      willingToRelocate: false,
+      openToAdjacentRoles: true,
+      salaryMin: '',
+      salaryMax: ''
+    },
     workAuthorization: {
       authorizedToWork: null,
       requiresVisaSponsorship: null
@@ -104,6 +189,15 @@ export default function EditProfilePage() {
     transcriptUrl: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const adjacentRoleSuggestions = (() => {
+    const normalized = formData.targetRolesV2.map((r) => r.toLowerCase());
+    const has = (t: string) => normalized.some((r) => r.includes(t));
+    if (has('design')) return ['Product Designer', 'Visual Designer', 'UX Designer', 'UI Designer'];
+    if (has('analyst') || has('finance')) return ['Financial Analyst', 'Business Analyst', 'FP&A Analyst', 'Data Analyst'];
+    if (has('engineer') || has('developer')) return ['Software Engineer', 'Frontend Engineer', 'Backend Engineer', 'Full Stack Engineer'];
+    if (has('marketing')) return ['Growth Marketing', 'Brand Marketing', 'Product Marketing'];
+    return ['Product Manager', 'Operations Analyst', 'Business Analyst'];
+  })();
 
   // Helper functions to check section completion
   const isBasicInfoComplete = () => {
@@ -133,8 +227,13 @@ export default function EditProfilePage() {
     return formData.skills.length > 0;
   };
 
+  const isTargetRolesComplete = () => {
+    return formData.targetRolesV2.length > 0;
+  };
+
   const isExperienceComplete = () => {
-    return formData.experience.trim() !== '' || 
+    return formData.experience.trim() !== '' ||
+           formData.experienceProjectsV2.length > 0 ||
            formData.extracurriculars.length > 0 || 
            formData.certifications.length > 0 || 
            formData.languages.length > 0;
@@ -150,9 +249,7 @@ export default function EditProfilePage() {
   };
 
   const isPersonalComplete = () => {
-    return formData.bio.trim() !== '' || 
-           formData.linkedinUrl.trim() !== '' || 
-           formData.portfolioUrl.trim() !== '';
+    return formData.bio.trim() !== '';
   };
 
   const isFilesComplete = () => {
@@ -225,11 +322,30 @@ export default function EditProfilePage() {
               }))
         ) : [],
         careerInterests: profile.careerInterests || [],
+        targetRolesV2: profile.targetRolesV2 || [],
         workAuthorization: profile.workAuthorization || {
           authorizedToWork: null,
           requiresVisaSponsorship: null
         },
         bio: profile.bio || '',
+              interestIndustriesV2: profile.interestIndustriesV2 || profile.careerInterests || [],
+              interestFunctionsV2: profile.interestFunctionsV2 || [],
+              skillsV2: Array.isArray(profile.skillsV2) ? profile.skillsV2 : [],
+              experienceProjectsV2: Array.isArray(profile.experienceProjectsV2) ? profile.experienceProjectsV2 : [],
+              professionalSummaryV2: profile.professionalSummaryV2 || {
+                summary: profile.bio || '',
+                targetRoleContext: '',
+                strengths: '',
+                standout: ''
+              },
+              jobSearchPreferencesV2: profile.jobSearchPreferencesV2 || {
+                activelyLooking: true,
+                desiredStartDate: '',
+                willingToRelocate: false,
+                openToAdjacentRoles: true,
+                salaryMin: '',
+                salaryMax: ''
+              },
               linkedinUrl: profile.linkedinUrl || '',
               portfolioUrl: profile.portfolioUrl || '',
               resumeUrl: profile.resumeUrl || '',
@@ -260,9 +376,32 @@ export default function EditProfilePage() {
       // Filter out empty certifications before saving. Include role/email so a missing user doc is created correctly.
       const dataToSave = {
         ...formData,
+        professionalSummaryV2: {
+          ...formData.professionalSummaryV2,
+          summary: formData.professionalSummaryV2.summary || formData.bio
+        },
         certifications: formData.certifications.filter(cert => cert.name && cert.name.trim() !== ''),
         email: user.email,
         ...(profile?.role && { role: profile.role })
+      };
+      const normalized = buildNormalizedCandidateProfile(user.uid, dataToSave as Record<string, unknown>);
+      (dataToSave as any).matchingNormalization = {
+        candidateId: normalized.candidateId,
+        targetRoles: normalized.targetRoles,
+        normalizedRoles: normalized.normalizedRoles,
+        normalizedSkills: normalized.normalizedSkills,
+        normalizedFunctions: normalized.normalizedFunctions,
+        normalizedIndustries: normalized.normalizedIndustries,
+        structuredExperienceSignals: normalized.structuredExperienceSignals,
+        skillEvidenceSignals: normalized.skillEvidenceSignals,
+        preferenceSignals: normalized.preferenceSignals,
+        normalizedMajors: normalized.normalizedMajors,
+        normalizedDegrees: normalized.normalizedDegrees,
+        recruiterConfidenceSignals: normalized.recruiterConfidenceSignals,
+        educationKeywords: normalized.educationKeywords,
+        experienceKeywords: normalized.experienceKeywords,
+        normalizedSummary: normalized.normalizedSummary,
+        updatedAt: new Date().toISOString(),
       };
       const { error } = await upsertDocument('users', user.uid, dataToSave);
       
@@ -342,8 +481,8 @@ export default function EditProfilePage() {
       <main className="max-w-4xl mx-auto px-4 sm:px-6 py-4 sm:py-6 lg:py-10">
         {/* Page Header */}
         <div className="mb-4 sm:mb-6 lg:mb-10">
-          <h1 className="text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-bold text-navy-900 tracking-tight">Skills & Certifications</h1>
-          <p className="text-slate-600 mt-1 sm:mt-2 text-sm sm:text-base lg:text-lg">Complete your profile to increase visibility and connect with top employers.</p>
+          <h1 className="text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-bold text-navy-900 tracking-tight">Build Your Match-Ready Profile</h1>
+          <p className="text-slate-600 mt-1 sm:mt-2 text-sm sm:text-base lg:text-lg">Complete one rich profile once so recruiters can decide quickly whether to message or interview you.</p>
         </div>
         
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
@@ -377,7 +516,7 @@ export default function EditProfilePage() {
                   </div>
                 </div>
               </div>
-              <p className="text-slate-600 text-xs sm:text-sm text-center">{Math.floor(completion / 10)} of 10 sections completed</p>
+              <p className="text-slate-600 text-xs sm:text-sm text-center">Matching profile quality score</p>
             </div>
           </div>
 
@@ -392,8 +531,8 @@ export default function EditProfilePage() {
                 <User className="h-5 w-5 sm:h-6 sm:w-6 text-navy-700" />
               </div>
               <div className="flex-1">
-                <h3 className="text-lg sm:text-xl font-bold text-navy-900">Basic Information</h3>
-                <p className="text-slate-600 text-xs sm:text-sm">Your core personal details</p>
+                <h3 className="text-lg sm:text-xl font-bold text-navy-900">Professional Headline & Summary</h3>
+                <p className="text-slate-600 text-xs sm:text-sm">This is the first thing matching and recruiters use to understand your direction.</p>
               </div>
               {isBasicInfoComplete() && (
                 <div className="w-6 h-6 sm:w-7 sm:h-7 bg-green-500 rounded-full flex items-center justify-center">
@@ -437,6 +576,97 @@ export default function EditProfilePage() {
                 className="w-full h-11 sm:h-12 px-4 rounded-lg bg-white border border-slate-200 text-navy-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-200 focus:border-sky-400 transition-all text-base"
                 placeholder="e.g., Computer Science Student | Full-Stack Developer"
               />
+              <p className="text-xs text-slate-500 mt-2">Tell recruiters what role you are best positioned for in one line.</p>
+            </div>
+
+            <div className="mt-4">
+              <label className="block text-xs sm:text-sm font-medium text-navy-900 mb-2">Professional Summary</label>
+              <textarea
+                value={formData.professionalSummaryV2.summary || formData.bio}
+                onChange={(e) => {
+                  handleInputChange('bio', e.target.value);
+                  handleInputChange('professionalSummaryV2', {
+                    ...formData.professionalSummaryV2,
+                    summary: e.target.value
+                  });
+                }}
+                rows={4}
+                className="w-full px-4 py-3 rounded-lg bg-white border border-slate-200 text-navy-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-200 focus:border-sky-400 transition-all resize-none"
+                placeholder="Describe what roles you want, your strongest skills, and your most relevant experience."
+              />
+              <p className="text-xs text-slate-500 mt-2">Be specific: include exact roles you want, your top 2-3 skills, and one strong experience/project result.</p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+              <input
+                value={formData.professionalSummaryV2.targetRoleContext}
+                onChange={(e) => handleInputChange('professionalSummaryV2', { ...formData.professionalSummaryV2, targetRoleContext: e.target.value })}
+                className="w-full h-11 px-4 rounded-lg bg-white border border-slate-200 text-navy-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-200"
+                placeholder="Roles you're targeting most"
+              />
+              <input
+                value={formData.professionalSummaryV2.strengths}
+                onChange={(e) => handleInputChange('professionalSummaryV2', { ...formData.professionalSummaryV2, strengths: e.target.value })}
+                className="w-full h-11 px-4 rounded-lg bg-white border border-slate-200 text-navy-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-200"
+                placeholder="Strongest 2-3 skills"
+              />
+            </div>
+          </div>
+
+          {/* Target Roles */}
+          <div className="bg-white rounded-2xl shadow-xl border border-slate-100 p-4 sm:p-6 lg:p-8">
+            <div className="flex items-center mb-4 sm:mb-6">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-sky-100 rounded-lg flex items-center justify-center mr-3 sm:mr-4">
+                <Briefcase className="h-5 w-5 sm:h-6 sm:w-6 text-navy-700" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg sm:text-xl font-bold text-navy-900">Target Roles</h3>
+                <p className="text-slate-600 text-xs sm:text-sm">Select the roles you most want recruiters to contact you about.</p>
+              </div>
+              {isTargetRolesComplete() && (
+                <div className="w-6 h-6 sm:w-7 sm:h-7 bg-green-500 rounded-full flex items-center justify-center">
+                  <Check className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
+                </div>
+              )}
+            </div>
+            <MultiSelectDropdown
+              options={TARGET_ROLE_OPTIONS}
+              values={formData.targetRolesV2}
+              onChange={(values) => handleInputChange('targetRolesV2', values.slice(0, 5))}
+              placeholder="e.g. Financial Analyst, Product Analyst, UX Designer"
+              label={`Target Roles (${formData.targetRolesV2.length}/5)`}
+              allowCustom
+              maxSelections={5}
+            />
+            <p className="text-xs text-slate-500 mt-2">Keep this focused. These roles heavily influence ranking and recruiter outreach relevance.</p>
+            <div className="mt-3">
+              <p className="text-xs text-slate-500 mb-2">Adjacent-role suggestions (optional):</p>
+              <div className="flex flex-wrap gap-2">
+                {adjacentRoleSuggestions
+                  .filter((role) => !formData.targetRolesV2.includes(role))
+                  .slice(0, 4)
+                  .map((role) => (
+                    <button
+                      key={role}
+                      type="button"
+                      onClick={() => handleInputChange('targetRolesV2', [...formData.targetRolesV2, role].slice(0, 5))}
+                      className="px-2.5 py-1 text-xs rounded-full border border-sky-200 bg-sky-50 text-navy-800 hover:bg-sky-100"
+                    >
+                      + {role}
+                    </button>
+                  ))}
+              </div>
+            </div>
+            <div className="mt-4">
+              <MultiSelectDropdown
+                options={CAREER_INTERESTS}
+                values={formData.interestFunctionsV2}
+                onChange={(values) => handleInputChange('interestFunctionsV2', values.slice(0, 8))}
+                placeholder="e.g. Financial Analysis, Product Design, Underwriting"
+                label="Function Interests"
+                allowCustom
+                maxSelections={8}
+              />
+              <p className="text-xs text-slate-500 mt-2">Function interests describe what type of work you want to do (different from industries and target roles).</p>
             </div>
           </div>
 
@@ -699,7 +929,8 @@ export default function EditProfilePage() {
                 <Award className="h-6 w-6 text-navy-700" />
               </div>
               <div className="flex-1">
-                <h3 className="text-xl font-bold text-navy-900">Skills & Languages</h3>
+                <h3 className="text-xl font-bold text-navy-900">Skills</h3>
+                <p className="text-slate-600 text-sm">Add your strongest job-relevant skills so recruiters can assess fit at a glance.</p>
               </div>
               {!isSkillsComplete() && (
                 <span className="text-xs font-semibold tracking-wider text-orange-700 bg-orange-100 px-3 py-1 rounded-full uppercase">Required</span>
@@ -731,6 +962,179 @@ export default function EditProfilePage() {
                 allowCustom
                 maxSelections={10}
               />
+            </div>
+            <p className="text-xs text-slate-500 mt-3">Tip: prioritize skills you can prove through internships, projects, clubs, or coursework.</p>
+
+            <div className="mt-6 border-t border-slate-100 pt-4">
+              <h4 className="text-sm font-semibold text-navy-900 mb-2">Structured Skill Evidence (optional but recommended)</h4>
+              <p className="text-xs text-slate-500 mb-3">Add proficiency and evidence source so recruiters can trust your top skills.</p>
+              <div className="space-y-3">
+                {formData.skillsV2.map((s, idx) => (
+                  <div key={`sv2-${idx}`} className="grid grid-cols-1 md:grid-cols-4 gap-2">
+                    <input
+                      value={s.name}
+                      onChange={(e) => {
+                        const next = [...formData.skillsV2];
+                        next[idx] = { ...next[idx], name: e.target.value };
+                        handleInputChange('skillsV2', next);
+                      }}
+                      className="px-3 py-2 rounded-lg border border-slate-200 text-sm"
+                      placeholder="Skill"
+                    />
+                    <select
+                      value={s.proficiency || ''}
+                      onChange={(e) => {
+                        const next = [...formData.skillsV2];
+                        next[idx] = { ...next[idx], proficiency: e.target.value as SkillV2['proficiency'] };
+                        handleInputChange('skillsV2', next);
+                      }}
+                      className="px-3 py-2 rounded-lg border border-slate-200 text-sm"
+                    >
+                      <option value="">Proficiency</option>
+                      <option value="BEGINNER">Beginner</option>
+                      <option value="INTERMEDIATE">Intermediate</option>
+                      <option value="ADVANCED">Advanced</option>
+                    </select>
+                    <MultiSelectDropdown
+                      options={EVIDENCE_SOURCE_OPTIONS}
+                      values={s.evidenceSources || []}
+                      onChange={(values) => {
+                        const next = [...formData.skillsV2];
+                        next[idx] = { ...next[idx], evidenceSources: values };
+                        handleInputChange('skillsV2', next);
+                      }}
+                      placeholder="Evidence source(s)"
+                      label=""
+                      allowCustom={false}
+                      maxSelections={4}
+                    />
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => handleInputChange('skillsV2', [...formData.skillsV2, { name: '', proficiency: '', evidenceSources: [] }])}
+                  className="text-sm text-navy-700 hover:text-navy-900"
+                >
+                  + Add structured skill
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Experience & Projects */}
+          <div className="bg-white rounded-2xl shadow-xl border border-slate-100 p-8">
+            <div className="flex items-center mb-6">
+              <div className="w-12 h-12 bg-sky-100 rounded-lg flex items-center justify-center mr-4">
+                <Briefcase className="h-6 w-6 text-navy-700" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-xl font-bold text-navy-900">Experience & Projects</h3>
+                <p className="text-slate-600 text-sm">Add internships, projects, jobs, clubs, or leadership roles that prove your fit.</p>
+              </div>
+              {!isExperienceComplete() && (
+                <span className="text-xs font-semibold tracking-wider text-orange-700 bg-orange-100 px-3 py-1 rounded-full uppercase">Required</span>
+              )}
+              {isExperienceComplete() && (
+                <div className="w-7 h-7 bg-green-500 rounded-full flex items-center justify-center">
+                  <Check className="h-4 w-4 text-white" />
+                </div>
+              )}
+            </div>
+            <label className="block text-sm font-medium text-navy-900 mb-2">Experience / Project Evidence</label>
+            <textarea
+              value={formData.experience}
+              onChange={(e) => handleInputChange('experience', e.target.value)}
+              rows={5}
+              className="w-full px-4 py-3 rounded-lg bg-white border border-slate-200 text-navy-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-200 focus:border-sky-400 transition-all resize-none"
+              placeholder="Use bullets with impact: what you did, tools used, outcomes, and leadership/ownership."
+            />
+            {!formData.experience.trim() && (
+              <p className="text-xs text-slate-500 mt-2">Example: Built valuation model in Excel for 8 deals, reduced analysis turnaround by 25%.</p>
+            )}
+
+            <div className="mt-6 border-t border-slate-100 pt-4">
+              <h4 className="text-sm font-semibold text-navy-900 mb-2">Structured Experience Entries</h4>
+              <p className="text-xs text-slate-500 mb-3">Add internships, projects, jobs, clubs, or leadership entries with skills used.</p>
+              <div className="space-y-4">
+                {formData.experienceProjectsV2.map((exp, idx) => (
+                  <div key={`expv2-${idx}`} className="rounded-lg border border-slate-200 p-3 bg-slate-50">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-2">
+                      <input value={exp.title} onChange={(e) => {
+                        const next = [...formData.experienceProjectsV2];
+                        next[idx] = { ...next[idx], title: e.target.value };
+                        handleInputChange('experienceProjectsV2', next);
+                      }} className="px-3 py-2 rounded border border-slate-200 text-sm" placeholder="Title" />
+                      <input value={exp.organization} onChange={(e) => {
+                        const next = [...formData.experienceProjectsV2];
+                        next[idx] = { ...next[idx], organization: e.target.value };
+                        handleInputChange('experienceProjectsV2', next);
+                      }} className="px-3 py-2 rounded border border-slate-200 text-sm" placeholder="Organization" />
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-2">
+                      <select value={exp.type} onChange={(e) => {
+                        const next = [...formData.experienceProjectsV2];
+                        next[idx] = { ...next[idx], type: e.target.value as ExperienceProjectV2['type'] };
+                        handleInputChange('experienceProjectsV2', next);
+                      }} className="px-3 py-2 rounded border border-slate-200 text-sm">
+                        <option value="">Type</option>
+                        <option value="INTERNSHIP">Internship</option>
+                        <option value="PART_TIME">Part-time</option>
+                        <option value="FULL_TIME">Full-time</option>
+                        <option value="LEADERSHIP">Leadership</option>
+                        <option value="PROJECT">Project</option>
+                        <option value="CLUB">Club</option>
+                      </select>
+                      <input value={exp.startDate} onChange={(e) => {
+                        const next = [...formData.experienceProjectsV2];
+                        next[idx] = { ...next[idx], startDate: e.target.value };
+                        handleInputChange('experienceProjectsV2', next);
+                      }} className="px-3 py-2 rounded border border-slate-200 text-sm" placeholder="Start date" />
+                      <input value={exp.endDate} onChange={(e) => {
+                        const next = [...formData.experienceProjectsV2];
+                        next[idx] = { ...next[idx], endDate: e.target.value };
+                        handleInputChange('experienceProjectsV2', next);
+                      }} className="px-3 py-2 rounded border border-slate-200 text-sm" placeholder="End date / Present" />
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-2">
+                      <input value={exp.industry} onChange={(e) => {
+                        const next = [...formData.experienceProjectsV2];
+                        next[idx] = { ...next[idx], industry: e.target.value };
+                        handleInputChange('experienceProjectsV2', next);
+                      }} className="px-3 py-2 rounded border border-slate-200 text-sm" placeholder="Industry" />
+                      <input value={exp.location} onChange={(e) => {
+                        const next = [...formData.experienceProjectsV2];
+                        next[idx] = { ...next[idx], location: e.target.value };
+                        handleInputChange('experienceProjectsV2', next);
+                      }} className="px-3 py-2 rounded border border-slate-200 text-sm" placeholder="Location" />
+                    </div>
+                    <textarea value={exp.bullets.join('\n')} onChange={(e) => {
+                      const next = [...formData.experienceProjectsV2];
+                      next[idx] = { ...next[idx], bullets: e.target.value.split('\n').map((x) => x.trim()).filter(Boolean).slice(0, 5) };
+                      handleInputChange('experienceProjectsV2', next);
+                    }} rows={3} className="w-full px-3 py-2 rounded border border-slate-200 text-sm mb-2" placeholder="3-5 bullet points (one per line)" />
+                    <p className="text-[11px] text-slate-500 mb-2">Use 2-5 bullets with outcomes when possible (impact, scope, or metrics).</p>
+                    <input value={exp.skillsUsed.join(', ')} onChange={(e) => {
+                      const next = [...formData.experienceProjectsV2];
+                      next[idx] = { ...next[idx], skillsUsed: e.target.value.split(',').map((x) => x.trim()).filter(Boolean) };
+                      handleInputChange('experienceProjectsV2', next);
+                    }} className="w-full px-3 py-2 rounded border border-slate-200 text-sm" placeholder="Skills used (comma-separated)" />
+                    <button
+                      type="button"
+                      onClick={() => handleInputChange('experienceProjectsV2', formData.experienceProjectsV2.filter((_, i) => i !== idx))}
+                      className="mt-2 text-xs text-red-600 hover:text-red-700"
+                    >
+                      Remove entry
+                    </button>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => handleInputChange('experienceProjectsV2', [...formData.experienceProjectsV2, { title: '', organization: '', type: '', startDate: '', endDate: '', industry: '', location: '', bullets: [], skillsUsed: [] }])}
+                  className="text-sm text-navy-700 hover:text-navy-900"
+                >
+                  + Add structured experience
+                </button>
+              </div>
             </div>
           </div>
 
@@ -826,15 +1230,15 @@ export default function EditProfilePage() {
             </div>
           </div>
 
-          {/* Extracurricular Activities */}
+          {/* Endorsements, Certifications & Extracurriculars */}
           <div className="bg-white rounded-2xl shadow-xl border border-slate-100 p-8">
             <div className="flex items-center mb-6">
               <div className="w-12 h-12 bg-sky-100 rounded-lg flex items-center justify-center mr-4">
                 <Briefcase className="h-6 w-6 text-navy-700" />
               </div>
               <div className="flex-1">
-                <h3 className="text-xl font-bold text-navy-900">Extracurricular Activities</h3>
-                <p className="text-slate-600 text-sm">Help employers learn more about you by including any experiences that make you stand out!</p>
+                <h3 className="text-xl font-bold text-navy-900">Endorsements, Certifications & Extracurriculars</h3>
+                <p className="text-slate-600 text-sm">These proof signals help recruiters trust your profile and differentiate you.</p>
               </div>
               {!isExperienceComplete() && (
                 <span className="text-xs font-semibold tracking-wider text-orange-700 bg-orange-100 px-3 py-1 rounded-full uppercase">Required</span>
@@ -855,7 +1259,7 @@ export default function EditProfilePage() {
                 onChange={(e) => handleInputChange('experience', e.target.value)}
                 rows={4}
                 className="w-full px-4 py-3 rounded-lg bg-white border border-slate-200 text-navy-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-200 focus:border-sky-400 transition-all resize-none"
-                placeholder="Describe your extracurricular activities, clubs, volunteer work, projects, etc."
+                placeholder="Describe clubs, competitions, volunteer work, and leadership that strengthen your candidacy."
               />
             </div>
           </div>
@@ -867,8 +1271,8 @@ export default function EditProfilePage() {
                 <Briefcase className="h-6 w-6 text-navy-700" />
               </div>
               <div className="flex-1">
-                <h3 className="text-xl font-bold text-navy-900">Career Interests</h3>
-                <p className="text-slate-600 text-sm">Industries and roles you're interested in (up to 5)</p>
+                <h3 className="text-xl font-bold text-navy-900">Career Interests (Industries)</h3>
+                <p className="text-slate-600 text-sm">Industries are separate from target roles and functions. Choose sectors where you want to work.</p>
               </div>
               {!isCareerInterestsComplete() && (
                 <span className="text-xs font-semibold tracking-wider text-orange-700 bg-orange-100 px-3 py-1 rounded-full uppercase">Required</span>
@@ -886,13 +1290,111 @@ export default function EditProfilePage() {
                 values={formData.careerInterests}
                 onChange={(values) => handleInputChange('careerInterests', values)}
                 placeholder="Select career industries you're interested in"
-                label="Career Industries"
+                label="Industries of Interest"
                 allowCustom
                 maxSelections={5}
               />
               <p className="text-sm text-slate-500 mt-2">
-                Select up to 5 industries you're most interested in pursuing for your career.
+                Select up to 5 interests. Recruiters will use this to judge long-term fit and motivation.
               </p>
+              <div className="mt-4">
+                <MultiSelectDropdown
+                  options={CAREER_INTERESTS}
+                  values={formData.interestIndustriesV2}
+                  onChange={(values) => handleInputChange('interestIndustriesV2', values.slice(0, 6))}
+                  placeholder="Industries of interest"
+                  label="Industries of Interest (V2)"
+                  allowCustom
+                  maxSelections={6}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Job Search Preferences V2 */}
+          <div className="bg-white rounded-2xl shadow-xl border border-slate-100 p-8">
+            <div className="flex items-center mb-6">
+              <div className="w-12 h-12 bg-sky-100 rounded-lg flex items-center justify-center mr-4">
+                <Calendar className="h-6 w-6 text-navy-700" />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-navy-900">Job Search Preferences</h3>
+                <p className="text-slate-600 text-sm">These are normalized for matching and help recruiters contact you for the right opportunities.</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <label className="flex items-center gap-2 text-sm text-navy-900">
+                <input type="checkbox" checked={formData.jobSearchPreferencesV2.activelyLooking} onChange={(e) => handleInputChange('jobSearchPreferencesV2', { ...formData.jobSearchPreferencesV2, activelyLooking: e.target.checked })} />
+                Actively looking
+              </label>
+              <label className="flex items-center gap-2 text-sm text-navy-900">
+                <input type="checkbox" checked={formData.jobSearchPreferencesV2.openToAdjacentRoles} onChange={(e) => handleInputChange('jobSearchPreferencesV2', { ...formData.jobSearchPreferencesV2, openToAdjacentRoles: e.target.checked })} />
+                Open to adjacent roles
+              </label>
+              <label className="flex items-center gap-2 text-sm text-navy-900">
+                <input type="checkbox" checked={formData.jobSearchPreferencesV2.willingToRelocate} onChange={(e) => handleInputChange('jobSearchPreferencesV2', { ...formData.jobSearchPreferencesV2, willingToRelocate: e.target.checked })} />
+                Willing to relocate
+              </label>
+              <input
+                type="text"
+                value={formData.jobSearchPreferencesV2.desiredStartDate}
+                onChange={(e) => handleInputChange('jobSearchPreferencesV2', { ...formData.jobSearchPreferencesV2, desiredStartDate: e.target.value })}
+                className="px-3 py-2 rounded border border-slate-200 text-sm"
+                placeholder="Desired start date"
+              />
+              <input
+                type="text"
+                value={formData.jobSearchPreferencesV2.salaryMin}
+                onChange={(e) => handleInputChange('jobSearchPreferencesV2', { ...formData.jobSearchPreferencesV2, salaryMin: e.target.value })}
+                className="px-3 py-2 rounded border border-slate-200 text-sm"
+                placeholder="Salary minimum (optional)"
+              />
+              <input
+                type="text"
+                value={formData.jobSearchPreferencesV2.salaryMax}
+                onChange={(e) => handleInputChange('jobSearchPreferencesV2', { ...formData.jobSearchPreferencesV2, salaryMax: e.target.value })}
+                className="px-3 py-2 rounded border border-slate-200 text-sm"
+                placeholder="Salary maximum (optional)"
+              />
+            </div>
+          </div>
+
+          {/* Recruiter Preview */}
+          <div className="bg-white rounded-2xl shadow-xl border border-slate-100 p-8">
+            <div className="flex items-center mb-5">
+              <div className="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center mr-4">
+                <HelpCircle className="h-6 w-6 text-indigo-700" />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-navy-900">Recruiter Preview</h3>
+                <p className="text-slate-600 text-sm">How employers will quickly understand your profile.</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                <p className="text-xs uppercase tracking-wide text-slate-500 mb-1">Target Roles</p>
+                <p className="text-navy-900">{formData.targetRolesV2.length ? formData.targetRolesV2.join(', ') : 'Add up to 5 target roles'}</p>
+              </div>
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                <p className="text-xs uppercase tracking-wide text-slate-500 mb-1">Top Skills</p>
+                <p className="text-navy-900">{formData.skills.length ? formData.skills.slice(0, 8).join(', ') : 'Add role-relevant skills recruiters can verify'}</p>
+              </div>
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                <p className="text-xs uppercase tracking-wide text-slate-500 mb-1">Experience Evidence</p>
+                <p className="text-navy-900">
+                  {formData.experienceProjectsV2.length
+                    ? `${formData.experienceProjectsV2.length} structured entries`
+                    : formData.experience.trim()
+                      ? `${formData.experience.trim().slice(0, 140)}...`
+                      : 'Add concrete experience bullets with outcomes.'}
+                </p>
+              </div>
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                <p className="text-xs uppercase tracking-wide text-slate-500 mb-1">Readiness Signals</p>
+                <p className="text-navy-900">
+                  {formData.resumeUrl ? 'Resume' : 'No resume'} • {formData.videoUrl ? 'Video' : 'No video'} • {formData.transcriptUrl ? 'Transcript' : 'No transcript'} • {formData.workAuthorization.authorizedToWork == null ? 'Auth unknown' : formData.workAuthorization.authorizedToWork ? 'Authorized' : 'Needs authorization'}
+                </p>
+              </div>
             </div>
           </div>
 
@@ -987,15 +1489,15 @@ export default function EditProfilePage() {
             </div>
           </div>
 
-          {/* Personal & Links */}
+          {/* Links */}
           <div className="bg-white rounded-2xl shadow-xl border border-slate-100 p-8">
             <div className="flex items-center mb-6">
               <div className="w-12 h-12 bg-sky-100 rounded-lg flex items-center justify-center mr-4">
                 <BookOpen className="h-6 w-6 text-navy-700" />
               </div>
               <div className="flex-1">
-                <h3 className="text-xl font-bold text-navy-900">Personal & Links</h3>
-                <p className="text-slate-600 text-sm">Tell employers about yourself and share your work</p>
+                <h3 className="text-xl font-bold text-navy-900">Portfolio & Professional Links</h3>
+                <p className="text-slate-600 text-sm">These links help recruiters validate your work quickly.</p>
               </div>
               {isPersonalComplete() && (
                 <div className="w-7 h-7 bg-green-500 rounded-full flex items-center justify-center">
@@ -1004,17 +1506,6 @@ export default function EditProfilePage() {
               )}
             </div>
             
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-navy-900 mb-2">Bio</label>
-              <textarea
-                value={formData.bio}
-                onChange={(e) => handleInputChange('bio', e.target.value)}
-                rows={4}
-                className="w-full px-4 py-3 rounded-lg bg-white border border-slate-200 text-navy-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-200 focus:border-sky-400 transition-all resize-none"
-                placeholder="Tell employers about yourself, your goals, and what makes you unique..."
-              />
-            </div>
-
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-navy-900 mb-2">LinkedIn URL</label>
@@ -1082,6 +1573,7 @@ export default function EditProfilePage() {
                 />
               </div>
             </div>
+            <p className="text-xs text-slate-500 mt-3">Resume, video, transcript, endorsements, certifications, and extracurriculars act as recruiter confidence signals.</p>
           </div>
 
           {/* Profile Video */}

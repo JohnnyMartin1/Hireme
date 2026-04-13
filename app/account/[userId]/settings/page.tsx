@@ -1567,10 +1567,10 @@ function DangerSection() {
                 To proceed with account deletion, please contact our support team at:
               </p>
               <a 
-                href="mailto:support@officialhireme.com" 
+                href="mailto:info@officialhireme.com" 
                 className="text-navy-900 font-semibold hover:text-sky-500 transition-colors inline-flex items-center"
               >
-                support@officialhireme.com
+                info@officialhireme.com
                 <i className="fa-solid fa-external-link ml-2 text-xs"></i>
               </a>
             </div>
