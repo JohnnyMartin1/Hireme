@@ -72,7 +72,26 @@ type DebugLike = {
   candidateCanonicalRole?: string;
   penaltiesApplied?: string[];
   scoreCapsApplied?: string[];
+  formulaInputs?: {
+    anchorSkills?: number;
+  };
 };
+
+function anchorCoverageScore(scores: { debug?: DebugLike }): number | null {
+  const formulaAnchor = scores.debug?.formulaInputs?.anchorSkills;
+  if (typeof formulaAnchor === 'number' && Number.isFinite(formulaAnchor)) {
+    return Math.max(0, Math.min(100, Math.round(formulaAnchor)));
+  }
+
+  const matched = scores.debug?.matchedAnchors?.length ?? 0;
+  const missing = scores.debug?.missingAnchors?.length ?? 0;
+  const total = matched + missing;
+  if (total > 0) {
+    return Math.round((matched / total) * 100);
+  }
+
+  return null;
+}
 
 function toSentence(text: string): string {
   const cleaned = text.replace(/\s+/g, ' ').trim();
@@ -110,10 +129,11 @@ function fitReasonForLabel(
   scores: SubScores & { overallScore: number; debug?: DebugLike }
 ): string {
   const d = scores.debug;
+  const anchorScore = anchorCoverageScore(scores);
   if (d?.roleDistance === 'LOW') {
     return 'Background appears to be in a different professional track from this role.';
   }
-  if ((scores.titleScore < 40 || (scores.anchorSkillScore ?? 0) < 35) && fitLabel !== 'Strong fit') {
+  if ((scores.titleScore < 40 || (anchorScore ?? 0) < 35) && fitLabel !== 'Strong fit') {
     return 'Some adjacent experience, but core role-specific signals are limited.';
   }
 
@@ -162,6 +182,7 @@ function buildRecruiterSummary(
   missingSkills: string[]
 ): RecruiterSummary {
   const d = scores.debug;
+  const anchorScore = anchorCoverageScore(scores);
   const strengthCandidates: Array<{ priority: number; text: string }> = [];
   const gapCandidates: Array<{ priority: number; text: string }> = [];
 
@@ -194,12 +215,12 @@ function buildRecruiterSummary(
     });
   }
 
-  if ((scores.anchorSkillScore ?? 0) >= 65) {
+  if ((anchorScore ?? 0) >= 65) {
     strengthCandidates.push({
       priority: 90,
       text: 'Profile shows several role-specific skills needed for this position.',
     });
-  } else if ((scores.anchorSkillScore ?? 0) < 30 && (d?.anchorSkillsUsed || []).length >= 4) {
+  } else if ((anchorScore ?? 0) < 30 && (d?.anchorSkillsUsed || []).length >= 4) {
     gapCandidates.push({
       priority: 92,
       text: 'Lacks several role-specific skills required for this position.',
@@ -334,6 +355,7 @@ export function buildMatchExplanation(
   const strengths: string[] = [];
   const gaps: string[] = [];
   const d = scores.debug;
+  const anchorScore = anchorCoverageScore(scores);
   const matchedSkills = presentableMatchedSkills(job, candidate);
   const matchedKeys = new Set(matchedSkills.map((m) => skillCompareKey(m)));
 
@@ -351,7 +373,7 @@ export function buildMatchExplanation(
 
   const dimensionRanked = [
     { key: 'specialization', label: 'role specialization fit', score: scores.titleScore },
-    { key: 'anchors', label: 'domain anchor skills', score: scores.anchorSkillScore ?? 0 },
+    { key: 'anchors', label: 'domain anchor skills', score: anchorScore ?? 0 },
     { key: 'skills', label: 'required skills & tools', score: scores.skillsScore },
     { key: 'experience', label: 'experience evidence', score: d?.experienceEvidenceScore ?? 0 },
     { key: 'domain', label: 'industry / domain overlap', score: scores.industryScore },
@@ -393,10 +415,10 @@ export function buildMatchExplanation(
     strengths.push('Adjacent specialization — plausible stretch match.');
   }
 
-  if ((scores.anchorSkillScore ?? 0) >= 65) {
-    strengths.push(`Strong domain anchor overlap (${scores.anchorSkillScore}/100).`);
-  } else if ((scores.anchorSkillScore ?? 0) < 30 && (d?.anchorSkillsUsed || []).length >= 4) {
-    gaps.push(`Domain anchor coverage is weak (${scores.anchorSkillScore ?? 0}/100) for this role.`);
+  if ((anchorScore ?? 0) >= 65) {
+    strengths.push(`Strong domain anchor overlap (${anchorScore}/100).`);
+  } else if ((anchorScore ?? 0) < 30 && (d?.anchorSkillsUsed || []).length >= 4) {
+    gaps.push(`Domain anchor coverage is weak (${anchorScore ?? 0}/100) for this role.`);
   }
 
   if ((d?.experienceEvidenceScore ?? 0) >= 65) {
@@ -463,7 +485,7 @@ export function buildMatchExplanation(
       { score: scores.titleScore, text: `Role specialization fit ${scores.titleScore}/100.` },
       { score: scores.skillsScore, text: `Required skills/tools overlap ${scores.skillsScore}/100.` },
       { score: scores.industryScore, text: `Domain / industry overlap ${scores.industryScore}/100.` },
-      { score: scores.anchorSkillScore ?? 0, text: `Anchor skill coverage ${scores.anchorSkillScore ?? 0}/100.` },
+      { score: anchorScore ?? 0, text: `Anchor skill coverage ${anchorScore ?? 0}/100.` },
     ];
     for (const fb of fallbacks.sort((a, b) => b.score - a.score)) {
       if (strengths.length >= 2) break;
@@ -471,9 +493,9 @@ export function buildMatchExplanation(
     }
   }
 
-  if (scores.titleScore < 38 && (scores.anchorSkillScore ?? 0) < 35) {
+  if (scores.titleScore < 38 && (anchorScore ?? 0) < 35) {
     gaps.unshift(
-      `Core fit is weak on specialization (${scores.titleScore}/100) and anchors (${scores.anchorSkillScore ?? 0}/100); rank is not driven by location alone.`
+      `Core fit is weak on specialization (${scores.titleScore}/100) and anchors (${anchorScore ?? 0}/100); rank is not driven by location alone.`
     );
   }
 
