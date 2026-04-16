@@ -7,6 +7,7 @@ import { Loader2, MessageSquare } from "lucide-react";
 import { getCandidateUrl, getDashboardUrl, getJobMatchesUrl, getJobOverviewUrl, getMessagesUrl } from "@/lib/navigation";
 import { useFirebaseAuth } from "@/components/FirebaseAuthProvider";
 import { PIPELINE_STAGES, normalizePipelineStage, type PipelineStage } from "@/lib/firebase-firestore";
+import type { RecruiterSummary } from "@/types/matching";
 
 type MatchScoreRow = {
   candidateId: string;
@@ -14,11 +15,7 @@ type MatchScoreRow = {
   strengths?: string[];
   gaps?: string[];
   candidatePreview?: { firstName?: string | null; lastName?: string | null };
-  recruiterSummary?: {
-    strengths?: string[];
-    gaps?: string[];
-    riskNote?: string;
-  };
+  recruiterSummary?: Pick<RecruiterSummary, "strengths" | "gaps" | "riskNote">;
 };
 
 type PipelineCandidateCard = {

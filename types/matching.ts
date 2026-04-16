@@ -6,6 +6,17 @@
 export type JobStatus = 'ACTIVE' | 'DRAFT' | 'CLOSED' | 'INACTIVE';
 
 export type JobMatchStatus = 'pending' | 'complete' | 'failed';
+export type RecruiterFitLabel = 'Strong fit' | 'Good fit' | 'Stretch fit' | 'Low fit';
+
+/** Canonical recruiter-facing summary shared by employer match surfaces. */
+export interface RecruiterSummary {
+  headline: string;
+  fitLabel: RecruiterFitLabel;
+  fitReason: string;
+  strengths: string[];
+  gaps: string[];
+  riskNote?: string;
+}
 
 /** Extended fields stored on Firestore `jobs` documents (beyond legacy fields). */
 export interface JobMatchingFields {
@@ -30,6 +41,8 @@ export interface JobMatchingFields {
   locationType?: 'remote' | 'hybrid' | 'onsite' | 'unknown';
   minimumQualifications?: string[];
   roleAliases?: string[];
+  /** Domain must-have phrases for specialized matching (AI + heuristic). */
+  anchorSkills?: string[];
   experienceLevel?: string | null;
   requiredMajors?: string[];
   preferredMajors?: string[];
@@ -62,6 +75,7 @@ export interface JobMatchRecord {
   explanation: string;
   strengths: string[];
   gaps: string[];
+  recruiterSummary?: RecruiterSummary;
   createdAt: string;
   updatedAt: string;
 }
@@ -113,6 +127,8 @@ export interface NormalizedCandidateProfile {
     endorsementsCount: number;
     certificationsCount: number;
   };
+  /** Short, identity-heavy text used for canonical role detection (reduces resume noise). */
+  roleDetectionText: string;
   raw: Record<string, unknown>;
 }
 
@@ -147,5 +163,6 @@ export interface ProcessedJobContent {
   relocationAccepted: boolean | null;
   minimumQualifications: string[];
   roleAliases: string[];
+  anchorSkills?: string[];
   source: 'openai' | 'heuristic';
 }

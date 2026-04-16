@@ -1,8 +1,11 @@
-import type { NormalizedCandidateProfile } from '@/types/matching';
+import type {
+  NormalizedCandidateProfile,
+  RecruiterFitLabel,
+  RecruiterSummary,
+} from '@/types/matching';
 import type { JobForScoring, SubScores } from '@/lib/matching/scoring';
 import { dedupeSkillList, skillCompareKey, isPresentableSkillLabel } from '@/lib/matching/normalize-terms';
 
-/** Same safe blob as scoring skills (no 1-char substring matches). */
 function candidateSkillBlob(c: NormalizedCandidateProfile): string {
   return [c.headline, c.bio, c.experienceSummary, c.matchingText, ...c.mergedSkills].join(' ').toLowerCase();
 }
@@ -19,9 +22,6 @@ function skillMatchedInProfile(needle: string, c: NormalizedCandidateProfile): b
   return candSkills.some((sk) => sk === key || sk.startsWith(key + ' '));
 }
 
-/**
- * Matched skill/keyword labels safe to show recruiters (no garbage tokens).
- */
 function presentableMatchedSkills(job: JobForScoring, c: NormalizedCandidateProfile): string[] {
   const pool = dedupeSkillList([
     ...job.requiredSkills,
@@ -55,79 +55,372 @@ function missingRequiredSkills(job: JobForScoring, matchedKeys: Set<string>): st
   return missing;
 }
 
+type DebugLike = {
+  eligibility?: { eligibilityStatus?: string; gatingReasons?: string[] };
+  specializationScore?: number;
+  anchorSkillsUsed?: string[];
+  matchedAnchors?: string[];
+  missingAnchors?: string[];
+  experienceEvidenceScore?: number;
+  domainIndustryScore?: number;
+  toolsOverlapScore?: number;
+  majorAlignmentScore?: number;
+  gpaNumericFitScore?: number;
+  readinessScore?: number;
+  roleDistance?: string;
+  canonicalRole?: string;
+  candidateCanonicalRole?: string;
+  penaltiesApplied?: string[];
+  scoreCapsApplied?: string[];
+};
+
+function toSentence(text: string): string {
+  const cleaned = text.replace(/\s+/g, ' ').trim();
+  if (!cleaned) return '';
+  return /[.!?]$/.test(cleaned) ? cleaned : `${cleaned}.`;
+}
+
+function toPhrase(text: string): string {
+  const cleaned = text.replace(/\s+/g, ' ').trim();
+  return cleaned.replace(/[.!?]$/, '');
+}
+
+function titleCaseWords(value: string): string {
+  return value
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((word) => word[0].toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
+}
+
+function humanizeRoleKey(value: string | null | undefined): string {
+  if (!value) return '';
+  return titleCaseWords(value.replace(/[_-]+/g, ' '));
+}
+
+function mapFitLabel(overallScore: number): RecruiterFitLabel {
+  if (overallScore >= 75) return 'Strong fit';
+  if (overallScore >= 55) return 'Good fit';
+  if (overallScore >= 30) return 'Stretch fit';
+  return 'Low fit';
+}
+
+function fitReasonForLabel(
+  fitLabel: RecruiterFitLabel,
+  scores: SubScores & { overallScore: number; debug?: DebugLike }
+): string {
+  const d = scores.debug;
+  if (d?.roleDistance === 'LOW') {
+    return 'Background appears to be in a different professional track from this role.';
+  }
+  if ((scores.titleScore < 40 || (scores.anchorSkillScore ?? 0) < 35) && fitLabel !== 'Strong fit') {
+    return 'Some adjacent experience, but core role-specific signals are limited.';
+  }
+
+  switch (fitLabel) {
+    case 'Strong fit':
+      return 'Strong professional match across role alignment, skills, and domain signals.';
+    case 'Good fit':
+      return 'Relevant background with several strong overlaps for this role.';
+    case 'Stretch fit':
+      return 'Related experience is present, but key qualifications are still missing.';
+    default:
+      return 'Limited direct overlap with the required specialization.';
+  }
+}
+
+function candidateIdentity(candidate: NormalizedCandidateProfile, debug?: DebugLike): string {
+  const canonical = humanizeRoleKey(debug?.candidateCanonicalRole);
+  if (canonical) return canonical;
+  const firstRole = humanizeRoleKey(candidate.targetRoles[0] || candidate.normalizedRoles[0] || '');
+  if (firstRole) return firstRole;
+  const headline = toPhrase(String(candidate.headline || '').trim());
+  if (headline) return headline;
+  return 'Candidate';
+}
+
+function dedupeNonEmpty(values: string[], maxItems: number): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const raw of values) {
+    const cleaned = toSentence(raw);
+    if (!cleaned) continue;
+    const key = skillCompareKey(cleaned);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(cleaned);
+    if (out.length >= maxItems) break;
+  }
+  return out;
+}
+
+function buildRecruiterSummary(
+  job: JobForScoring,
+  candidate: NormalizedCandidateProfile,
+  scores: SubScores & { overallScore: number; debug?: DebugLike },
+  matchedSkills: string[],
+  missingSkills: string[]
+): RecruiterSummary {
+  const d = scores.debug;
+  const strengthCandidates: Array<{ priority: number; text: string }> = [];
+  const gapCandidates: Array<{ priority: number; text: string }> = [];
+
+  if (d?.roleDistance === 'LOW') {
+    gapCandidates.push({
+      priority: 100,
+      text: 'Background appears to be in a different professional track than this role.',
+    });
+  } else if (d?.roleDistance === 'MEDIUM') {
+    gapCandidates.push({
+      priority: 88,
+      text: 'Has related experience, but not directly in this exact role focus.',
+    });
+  } else if (d?.roleDistance === 'MEDIUM_HIGH') {
+    strengthCandidates.push({
+      priority: 92,
+      text: 'Has adjacent specialization that can transfer to this position.',
+    });
+  }
+
+  if (scores.titleScore >= 70) {
+    strengthCandidates.push({
+      priority: 98,
+      text: `Professional background aligns well with ${job.normalizedTitle || job.title}.`,
+    });
+  } else if (scores.titleScore < 40) {
+    gapCandidates.push({
+      priority: 95,
+      text: 'Limited evidence of direct alignment with this role specialization.',
+    });
+  }
+
+  if ((scores.anchorSkillScore ?? 0) >= 65) {
+    strengthCandidates.push({
+      priority: 90,
+      text: 'Profile shows several role-specific skills needed for this position.',
+    });
+  } else if ((scores.anchorSkillScore ?? 0) < 30 && (d?.anchorSkillsUsed || []).length >= 4) {
+    gapCandidates.push({
+      priority: 92,
+      text: 'Lacks several role-specific skills required for this position.',
+    });
+  }
+
+  if ((d?.experienceEvidenceScore ?? 0) >= 65) {
+    strengthCandidates.push({
+      priority: 85,
+      text: 'Experience history includes work that is directly relevant to this role.',
+    });
+  } else if ((d?.experienceEvidenceScore ?? 0) < 35) {
+    gapCandidates.push({
+      priority: 90,
+      text: 'Limited visible experience directly tied to this role.',
+    });
+  }
+
+  if (scores.industryScore >= 68) {
+    strengthCandidates.push({
+      priority: 84,
+      text: 'Domain background appears to align with this team and problem space.',
+    });
+  } else if (scores.industryScore < 42 && (job.industry || (job.domainKeywords || []).length)) {
+    gapCandidates.push({
+      priority: 84,
+      text: 'No strong evidence of experience in this domain.',
+    });
+  }
+
+  if (matchedSkills.length) {
+    strengthCandidates.push({
+      priority: 78,
+      text: `Has overlap on key skills and tools such as ${matchedSkills.slice(0, 3).join(', ')}.`,
+    });
+  }
+
+  if (missingSkills.length) {
+    gapCandidates.push({
+      priority: 79,
+      text: `Missing clear evidence for key requirements such as ${missingSkills.slice(0, 2).join(', ')}.`,
+    });
+  }
+
+  if ((d?.readinessScore ?? 0) >= 70 || candidate.hasResume || candidate.hasVideo) {
+    const readinessSignals = [
+      candidate.hasResume ? 'resume' : null,
+      candidate.hasVideo ? 'video introduction' : null,
+    ].filter(Boolean) as string[];
+    if (readinessSignals.length) {
+      strengthCandidates.push({
+        priority: 72,
+        text: `Application materials are available (${readinessSignals.join(' and ')}).`,
+      });
+    }
+  } else if ((d?.readinessScore ?? 0) < 38) {
+    gapCandidates.push({
+      priority: 70,
+      text: 'Limited portfolio or project evidence makes evaluation harder.',
+    });
+  }
+
+  if ((scores.authorizationScore ?? 0) >= 80) {
+    strengthCandidates.push({
+      priority: 58,
+      text: 'Work authorization appears to align with role requirements.',
+    });
+  } else if ((scores.authorizationScore ?? 0) <= 25) {
+    gapCandidates.push({
+      priority: 66,
+      text: 'Work authorization constraints may limit near-term hiring options.',
+    });
+  }
+
+  if (scores.locationScore >= 80) {
+    strengthCandidates.push({
+      priority: 55,
+      text: 'Location setup aligns well with this role.',
+    });
+  } else if (scores.locationScore < 48) {
+    gapCandidates.push({
+      priority: 62,
+      text: 'Location preferences may not align with this role setup.',
+    });
+  }
+
+  const strengths = dedupeNonEmpty(
+    strengthCandidates.sort((a, b) => b.priority - a.priority).map((s) => s.text),
+    3
+  );
+  const gaps = dedupeNonEmpty(
+    gapCandidates.sort((a, b) => b.priority - a.priority).map((g) => g.text),
+    3
+  );
+
+  const fitLabel = mapFitLabel(scores.overallScore);
+  const fitReason = fitReasonForLabel(fitLabel, scores);
+
+  const strongestStrength = toPhrase(strengths[0] || 'some relevant transferable strengths');
+  const biggestGap = toPhrase(gaps[0] || 'a few qualifications remain unclear');
+  const identity = candidateIdentity(candidate, d);
+  const headline = toSentence(`${identity} with ${strongestStrength.toLowerCase()} but ${biggestGap.toLowerCase()}`);
+
+  let riskNote: string | undefined;
+  if (fitLabel === 'Stretch fit') {
+    riskNote = 'Would likely require ramp-up time to cover role-specific gaps.';
+  } else if (fitLabel === 'Low fit') {
+    riskNote = 'Not a strong profile match based on currently available signals.';
+  }
+
+  return {
+    headline,
+    fitLabel,
+    fitReason,
+    strengths,
+    gaps,
+    riskNote,
+  };
+}
+
 /**
- * Narrative + strengths + gaps from real score components (no vague default when data exists).
+ * Narrative aligned with upgraded scoring dimensions (specialization, anchors, domain, GPA, etc.).
  */
 export function buildMatchExplanation(
   job: JobForScoring,
   candidate: NormalizedCandidateProfile,
   scores: SubScores & {
     overallScore: number;
-    debug?: {
-      functionAlignmentScore?: number;
-      experienceEvidenceScore?: number;
-      authorizationScore?: number;
-      majorAlignmentScore?: number;
-      readinessScore?: number;
-      roleDistance?: string;
-      canonicalRole?: string;
-      penaltiesApplied?: string[];
-      scoreCapsApplied?: string[];
-    };
+    debug?: DebugLike;
   }
-): { explanation: string; strengths: string[]; gaps: string[] } {
+): { explanation: string; strengths: string[]; gaps: string[]; recruiterSummary: RecruiterSummary } {
   const strengths: string[] = [];
   const gaps: string[] = [];
+  const d = scores.debug;
   const matchedSkills = presentableMatchedSkills(job, candidate);
   const matchedKeys = new Set(matchedSkills.map((m) => skillCompareKey(m)));
+
+  const elig = d?.eligibility?.eligibilityStatus;
+  if (elig === 'weak_domain_fit') {
+    gaps.push('Eligibility screen: weak domain fit for this specialized role.');
+  } else if (elig === 'borderline') {
+    gaps.push('Eligibility screen: borderline fit — review role and anchor skills carefully.');
+  }
+  if (d?.eligibility?.gatingReasons?.length) {
+    for (const r of d.eligibility.gatingReasons.slice(0, 2)) {
+      if (!gaps.includes(r)) gaps.push(r);
+    }
+  }
+
   const dimensionRanked = [
-    { key: 'title', label: 'target role fit', score: scores.titleScore },
-    { key: 'skills', label: 'strongest skills match', score: scores.skillsScore },
-    { key: 'experience', label: 'relevant experience evidence', score: scores.debug?.experienceEvidenceScore ?? 0 },
-    { key: 'function', label: 'function alignment', score: scores.debug?.functionAlignmentScore ?? 0 },
-    { key: 'authorization', label: 'sponsorship/authorization fit', score: scores.debug?.authorizationScore ?? 0 },
-    { key: 'education', label: 'education/GPA fit', score: scores.gpaScore },
-    { key: 'location', label: 'location fit', score: scores.locationScore },
-    { key: 'preference', label: 'job-type fit', score: scores.preferenceScore },
-    { key: 'industry', label: 'industry alignment', score: scores.industryScore },
-    { key: 'readiness', label: 'recruiter readiness signals', score: scores.debug?.readinessScore ?? 0 },
+    { key: 'specialization', label: 'role specialization fit', score: scores.titleScore },
+    { key: 'anchors', label: 'domain anchor skills', score: scores.anchorSkillScore ?? 0 },
+    { key: 'skills', label: 'required skills & tools', score: scores.skillsScore },
+    { key: 'experience', label: 'experience evidence', score: d?.experienceEvidenceScore ?? 0 },
+    { key: 'domain', label: 'industry / domain overlap', score: scores.industryScore },
+    { key: 'gpa', label: 'GPA vs minimum', score: scores.gpaScore },
+    { key: 'major', label: 'major / education requirements', score: scores.majorFitScore ?? 0 },
+    { key: 'location', label: 'location', score: scores.locationScore },
+    { key: 'jobType', label: 'job type preference', score: scores.preferenceScore },
+    { key: 'auth', label: 'work authorization', score: scores.authorizationScore ?? 0 },
+    { key: 'readiness', label: 'readiness (resume, portfolio, video)', score: d?.readinessScore ?? 0 },
   ].sort((a, b) => b.score - a.score);
+
+  if ((d?.matchedAnchors || []).length) {
+    strengths.push(`Domain anchors matched: ${(d!.matchedAnchors || []).slice(0, 5).join(', ')}.`);
+  } else if ((d?.anchorSkillsUsed || []).length >= 4) {
+    gaps.push(
+      `Few or no domain anchor skills from the job (${(d?.anchorSkillsUsed || []).slice(0, 4).join(', ')}) appear in this profile.`
+    );
+  }
 
   if (matchedSkills.length) {
     strengths.push(`Shared skills or tools: ${matchedSkills.join(', ')}.`);
   }
 
-  if (scores.titleScore >= 55) {
+  if (scores.titleScore >= 70) {
     strengths.push(
-      `Target role fit (${scores.titleScore}/100): stated target roles and profile context align with "${job.normalizedTitle || job.title}".`
+      `Role specialization fit (${scores.titleScore}/100) aligns with "${job.normalizedTitle || job.title}".`
     );
-  } else if (scores.titleScore >= 28 && scores.titleScore < 55) {
-    gaps.push(
-      `Limited title overlap (${scores.titleScore}/100) between this role and the candidate's stated focus.`
-    );
+  } else if (scores.titleScore < 40) {
+    gaps.push(`Role specialization fit is low (${scores.titleScore}/100) for this opening.`);
   }
-  if (scores.debug?.roleDistance === 'LOW') {
+
+  if (d?.roleDistance === 'LOW') {
     gaps.unshift(
-      `Background appears in a different role family than this ${scores.debug?.canonicalRole || 'target'} role.`
+      `Different professional domain than this ${d?.canonicalRole || 'role'} opening (candidate signals: ${d?.candidateCanonicalRole || 'unknown'}).`
     );
-  } else if (scores.debug?.roleDistance === 'MEDIUM') {
-    gaps.push('Candidate appears adjacent to the target specialization, but not a direct specialization match.');
+  } else if (d?.roleDistance === 'MEDIUM') {
+    gaps.push('Same broad field but different specialization than the job target.');
+  } else if (d?.roleDistance === 'MEDIUM_HIGH') {
+    strengths.push('Adjacent specialization — plausible stretch match.');
   }
 
-  if ((scores.debug?.experienceEvidenceScore ?? 0) >= 65) {
+  if ((scores.anchorSkillScore ?? 0) >= 65) {
+    strengths.push(`Strong domain anchor overlap (${scores.anchorSkillScore}/100).`);
+  } else if ((scores.anchorSkillScore ?? 0) < 30 && (d?.anchorSkillsUsed || []).length >= 4) {
+    gaps.push(`Domain anchor coverage is weak (${scores.anchorSkillScore ?? 0}/100) for this role.`);
+  }
+
+  if ((d?.experienceEvidenceScore ?? 0) >= 65) {
     strengths.push(
-      `Relevant experience evidence (${scores.debug?.experienceEvidenceScore}/100) appears in projects/internship signals tied to required skills.`
+      `Relevant experience evidence (${d?.experienceEvidenceScore}/100) tied to role skills and domain.`
     );
-  } else if ((scores.debug?.experienceEvidenceScore ?? 0) < 35) {
-    gaps.push(
-      `Limited role-specific experience evidence (${scores.debug?.experienceEvidenceScore ?? 0}/100) in the profile.`
-    );
+  } else if ((d?.experienceEvidenceScore ?? 0) < 35) {
+    gaps.push(`Limited role-specific experience evidence (${d?.experienceEvidenceScore ?? 0}/100).`);
   }
 
-  if ((scores.debug?.functionAlignmentScore ?? 0) >= 70) {
-    strengths.push(`Function alignment is strong (${scores.debug?.functionAlignmentScore}/100).`);
-  } else if ((scores.debug?.functionAlignmentScore ?? 0) < 35) {
-    gaps.push(`Function alignment is weak (${scores.debug?.functionAlignmentScore ?? 0}/100).`);
+  if (scores.industryScore >= 68) {
+    strengths.push(`Industry / domain overlap is solid (${scores.industryScore}/100).`);
+  } else if (scores.industryScore < 42 && (job.industry || (job.domainKeywords || []).length)) {
+    gaps.push(`Industry or domain keyword overlap is limited (${scores.industryScore}/100).`);
+  }
+
+  if (job.minGpaNumeric != null) {
+    if (scores.gpaScore >= 85) {
+      strengths.push(`GPA meets or exceeds the stated minimum (${scores.gpaScore}/100 fit).`);
+    } else if (scores.gpaScore < 45) {
+      gaps.push(`GPA is below or unclear versus the job minimum (${scores.gpaScore}/100).`);
+    }
+  } else if ((scores.majorFitScore ?? 0) >= 70) {
+    strengths.push(`Education / major signals align (${scores.majorFitScore}/100).`);
   }
 
   if (scores.locationScore >= 80) {
@@ -135,50 +428,27 @@ export function buildMatchExplanation(
       job.workMode === 'REMOTE' || String(job.workMode).toUpperCase() === 'REMOTE'
         ? 'remote-friendly setup'
         : [job.locationCity, job.locationState].filter(Boolean).join(', ') || job.location || 'job location';
-    strengths.push(`Location fit (${scores.locationScore}/100) for ${loc}.`);
-  } else if (scores.locationScore < 50 && scores.locationScore > 0) {
-    gaps.push(`Location fit is weak (${scores.locationScore}/100) relative to the job's work mode and geography.`);
+    strengths.push(`Location (${scores.locationScore}/100) fits ${loc}.`);
+  } else if (scores.locationScore < 48) {
+    gaps.push(`Location fit is weak (${scores.locationScore}/100).`);
   }
 
-  if (job.minGpaNumeric != null) {
-    if (scores.gpaScore >= 80) {
-      strengths.push(`Education/GPA fit is strong (${scores.gpaScore}/100) for the role requirements.`);
-    } else if (scores.gpaScore >= 45 && scores.gpaScore < 80) {
-      gaps.push(`Education/GPA fit is moderate (${scores.gpaScore}/100); stronger major/GPA evidence would improve rank.`);
-    } else if (scores.gpaScore < 45) {
-      gaps.push(`Education/GPA fit is weak (${scores.gpaScore}/100) versus stated requirements.`);
-    }
+  if (scores.preferenceScore >= 80) {
+    strengths.push(`Job type preference (${scores.preferenceScore}/100) matches ${String(job.employment || job.jobType || '').replace(/_/g, ' ')}.`);
+  } else if (scores.preferenceScore < 42) {
+    gaps.push(`Job type may not match the candidate's selected job types (${scores.preferenceScore}/100).`);
   }
 
-  if ((job.industry || (job.requiredCareerInterests || []).length) && scores.industryScore >= 70) {
-    const bits = [job.industry, ...(job.requiredCareerInterests || []).slice(0, 2)].filter(Boolean);
-    strengths.push(
-      `Industry / interest alignment (${scores.industryScore}/100) with ${bits.join(', ')}.`
-    );
-  } else if ((job.industry || (job.requiredCareerInterests || []).length) && scores.industryScore < 50) {
-    gaps.push(`Industry or required career-interest overlap is limited (${scores.industryScore}/100).`);
+  if ((scores.authorizationScore ?? 0) <= 25) {
+    gaps.push(`Work authorization / sponsorship fit is poor (${scores.authorizationScore}/100).`);
+  } else if ((scores.authorizationScore ?? 0) >= 80) {
+    strengths.push(`Work authorization compatibility looks strong (${scores.authorizationScore}/100).`);
   }
 
-  if (scores.preferenceScore >= 75) {
-    strengths.push(
-      `Work arrangement preference (${scores.preferenceScore}/100) matches the job type (${String(job.employment || job.jobType || '').replace(/_/g, ' ')}).`
-    );
-  } else if (scores.preferenceScore < 45) {
-    gaps.push(
-      `Job type (${String(job.employment || job.jobType || '').replace(/_/g, ' ')}) may not match the candidate's selected job types.`
-    );
-  }
-
-  if ((scores.debug?.authorizationScore ?? 0) >= 85) {
-    strengths.push(`Sponsorship/authorization fit is strong (${scores.debug?.authorizationScore}/100).`);
-  } else if ((scores.debug?.authorizationScore ?? 0) <= 40) {
-    gaps.push(`Sponsorship/authorization compatibility is weak (${scores.debug?.authorizationScore}/100).`);
-  }
-
-  if ((scores.debug?.readinessScore ?? 0) >= 70) {
-    strengths.push(`Recruiter readiness signals are strong (${scores.debug?.readinessScore}/100).`);
-  } else if ((scores.debug?.readinessScore ?? 0) < 40) {
-    gaps.push(`Recruiter readiness signals are limited (${scores.debug?.readinessScore ?? 0}/100).`);
+  if ((d?.readinessScore ?? 0) >= 70) {
+    strengths.push(`Recruiter readiness (${d?.readinessScore}/100): portfolio/resume/video signals.`);
+  } else if ((d?.readinessScore ?? 0) < 38) {
+    gaps.push(`Limited portfolio / readiness signals (${d?.readinessScore ?? 0}/100).`);
   }
 
   if (candidate.hasResume) strengths.push('Resume uploaded.');
@@ -188,14 +458,12 @@ export function buildMatchExplanation(
     gaps.push(`No clear profile signal for "${m}".`);
   }
 
-  // Ensure recruiter-facing strengths list has at least 2 concrete items.
   if (strengths.length < 2) {
     const fallbacks: Array<{ score: number; text: string }> = [
-      { score: scores.skillsScore, text: `Skills overlap scored ${scores.skillsScore}/100.` },
-      { score: scores.titleScore, text: `Role/title alignment scored ${scores.titleScore}/100.` },
-      { score: scores.locationScore, text: `Location fit scored ${scores.locationScore}/100.` },
-      { score: scores.preferenceScore, text: `Job-type fit scored ${scores.preferenceScore}/100.` },
-      { score: scores.industryScore, text: `Industry alignment scored ${scores.industryScore}/100.` },
+      { score: scores.titleScore, text: `Role specialization fit ${scores.titleScore}/100.` },
+      { score: scores.skillsScore, text: `Required skills/tools overlap ${scores.skillsScore}/100.` },
+      { score: scores.industryScore, text: `Domain / industry overlap ${scores.industryScore}/100.` },
+      { score: scores.anchorSkillScore ?? 0, text: `Anchor skill coverage ${scores.anchorSkillScore ?? 0}/100.` },
     ];
     for (const fb of fallbacks.sort((a, b) => b.score - a.score)) {
       if (strengths.length >= 2) break;
@@ -203,47 +471,39 @@ export function buildMatchExplanation(
     }
   }
 
-  // Be explicit when role relevance is weak.
-  if (scores.titleScore < 35 && scores.skillsScore < 35) {
+  if (scores.titleScore < 38 && (scores.anchorSkillScore ?? 0) < 35) {
     gaps.unshift(
-      `Role relevance is weak (title ${scores.titleScore}/100, skills ${scores.skillsScore}/100), so this ranking is driven more by non-role dimensions.`
+      `Core fit is weak on specialization (${scores.titleScore}/100) and anchors (${scores.anchorSkillScore ?? 0}/100); rank is not driven by location alone.`
     );
   }
 
   const topDimensions = dimensionRanked.slice(0, 3);
-  const topDimensionText = topDimensions.map((d) => `${d.label} ${d.score}/100`).join(', ');
-
+  const topDimensionText = topDimensions.map((x) => `${x.label} ${x.score}/100`).join(', ');
   let explanation = `Overall ${scores.overallScore}/100. Top drivers: ${topDimensionText}.`;
 
-  if (scores.titleScore >= 65) {
-    explanation += ` Title alignment is strong.`;
-  } else if (scores.titleScore < 35) {
-    explanation += ` Title alignment is weak.`;
+  if (d?.penaltiesApplied?.length) {
+    explanation += ` Penalties: ${d.penaltiesApplied.join(', ')}.`;
   }
-
-  if (scores.skillsScore >= 65) {
-    explanation += ` Skill overlap is strong${matchedSkills.length ? ` (${matchedSkills.slice(0, 3).join(', ')})` : ''}.`;
-  } else if (scores.skillsScore < 35) {
-    explanation += ` Skill overlap is weak.`;
-  }
-
-  if (scores.locationScore >= 75 || scores.preferenceScore >= 75) {
-    explanation += ` Location/job-type compatibility contributes meaningfully.`;
+  if (d?.scoreCapsApplied?.length) {
+    explanation += ` Caps: ${d.scoreCapsApplied.join(', ')}.`;
   }
 
   if (gaps.length > 0) {
-    explanation += ` Main gaps: ${gaps.slice(0, 2).join(' ')}`;
+    explanation += ` Key gaps: ${gaps.slice(0, 2).join(' ')}`;
   }
-  if (scores.debug?.penaltiesApplied?.length) {
-    explanation += ` Domain penalties applied: ${scores.debug.penaltiesApplied.join(', ')}.`;
-  }
-  if (scores.debug?.scoreCapsApplied?.length) {
-    explanation += ` Score caps applied: ${scores.debug.scoreCapsApplied.join(', ')}.`;
-  }
+
+  const recruiterSummary = buildRecruiterSummary(
+    job,
+    candidate,
+    scores,
+    matchedSkills,
+    missingRequiredSkills(job, matchedKeys)
+  );
 
   return {
     explanation: explanation.replace(/\s+/g, ' ').trim(),
-    strengths: dedupeSkillList(strengths).slice(0, 4),
-    gaps: dedupeSkillList(gaps).slice(0, 3),
+    strengths: dedupeSkillList(strengths).slice(0, 4).map((item) => toSentence(item)),
+    gaps: dedupeSkillList(gaps).slice(0, 4).map((item) => toSentence(item)),
+    recruiterSummary,
   };
 }
