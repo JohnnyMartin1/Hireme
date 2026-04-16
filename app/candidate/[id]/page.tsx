@@ -4,10 +4,11 @@ import { useFirebaseAuth } from "@/components/FirebaseAuthProvider";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
 import { User, MapPin, GraduationCap, Star, MessageSquare, Heart, Loader2, ArrowLeft, Send, Video, FileText, Download, X, Code, Briefcase, Plane, Calendar, Copy, Check, Building2, UserCircle, Award, Globe, ZoomIn, ZoomOut, RotateCcw } from "lucide-react";
-import { getDocument, getOrCreateThread, sendMessage, saveCandidate, isCandidateSaved, getEndorsements } from '@/lib/firebase-firestore';
+import { getDocument, getOrCreateThread, sendMessage, saveCandidate, isCandidateSaved, getEndorsements, getPipelineEntryForJobCandidate, moveCandidateStage, createOrUpdatePipelineEntry, setFollowUpDate, PIPELINE_STAGES, type PipelineStage } from '@/lib/firebase-firestore';
 import Link from 'next/link';
 import { trackProfileView } from '@/lib/firebase-firestore';
 import { getEmployerJobs, getCompanyJobs } from '@/lib/firebase-firestore';
+import { getDashboardUrl, getJobMatchesUrl, getJobPipelineUrl, getMessagesUrl } from '@/lib/navigation';
 import { calculateCompletion } from '@/components/ProfileCompletionProvider';
 import { LanguageSkill } from '@/components/LanguageSelector';
 
@@ -107,6 +108,8 @@ export default function CandidateProfilePage() {
   };
   const [endorsements, setEndorsements] = useState<any[]>([]);
   const [jobMatchContext, setJobMatchContext] = useState<any>(null);
+  const [pipelineEntry, setPipelineEntry] = useState<any>(null);
+  const [pipelineBusy, setPipelineBusy] = useState(false);
   const [stickyBarVisible, setStickyBarVisible] = useState(false);
   const [copyLinkSuccess, setCopyLinkSuccess] = useState(false);
   const heroCardRef = useRef<HTMLDivElement>(null);
@@ -218,6 +221,24 @@ export default function CandidateProfilePage() {
     fetchMatchContext();
   }, [searchParams, user, profile, candidate?.id]);
 
+  useEffect(() => {
+    const fetchPipelineContext = async () => {
+      if (!candidate?.id || !(profile?.role === 'EMPLOYER' || profile?.role === 'RECRUITER')) {
+        setPipelineEntry(null);
+        return;
+      }
+      const jobId = searchParams.get('jobId');
+      if (!jobId) {
+        setPipelineEntry(null);
+        return;
+      }
+      const { data: entry } = await getPipelineEntryForJobCandidate(jobId, candidate.id);
+      setPipelineEntry(entry || null);
+    };
+
+    fetchPipelineContext();
+  }, [searchParams, candidate?.id, profile?.role]);
+
   // Handle sticky bar visibility
   useEffect(() => {
     const handleScroll = () => {
@@ -249,6 +270,66 @@ export default function CandidateProfilePage() {
     const first = firstName?.[0] || '';
     const last = lastName?.[0] || '';
     return (first + last).toUpperCase() || 'U';
+  };
+
+  const handlePipelineStageChange = async (newStage: PipelineStage) => {
+    const jobId = searchParams.get('jobId');
+    if (!candidate?.id || !jobId) return;
+    if (!user?.uid) return;
+    setPipelineBusy(true);
+    try {
+      if (pipelineEntry?.id) {
+        const { error: moveError } = await moveCandidateStage(pipelineEntry.id, newStage);
+        if (moveError) {
+          setError(moveError);
+          return;
+        }
+        setPipelineEntry((prev: any) => ({ ...(prev || {}), stage: newStage }));
+        return;
+      }
+      const { id, error: createError } = await createOrUpdatePipelineEntry(jobId, candidate.id, {
+        stage: newStage,
+        ownerId: user.uid,
+      });
+      if (createError || !id) {
+        setError(createError || 'Unable to update pipeline stage');
+        return;
+      }
+      setPipelineEntry({ id, stage: newStage, jobId, candidateId: candidate.id });
+    } finally {
+      setPipelineBusy(false);
+    }
+  };
+
+  const handlePipelineFollowUpChange = async (rawDate: string) => {
+    const jobId = searchParams.get('jobId');
+    if (!candidate?.id || !jobId) return;
+    if (!user?.uid) return;
+    const followUpDate = rawDate ? new Date(`${rawDate}T12:00:00`) : null;
+    setPipelineBusy(true);
+    try {
+      if (pipelineEntry?.id) {
+        const { error: followUpError } = await setFollowUpDate(pipelineEntry.id, followUpDate);
+        if (followUpError) {
+          setError(followUpError);
+          return;
+        }
+        setPipelineEntry((prev: any) => ({ ...(prev || {}), nextFollowUpAt: followUpDate }));
+        return;
+      }
+      const { id, error: createError } = await createOrUpdatePipelineEntry(jobId, candidate.id, {
+        stage: 'NEW',
+        ownerId: user.uid,
+        nextFollowUpAt: followUpDate,
+      });
+      if (createError || !id) {
+        setError(createError || 'Unable to set follow-up date');
+        return;
+      }
+      setPipelineEntry({ id, stage: 'NEW', jobId, candidateId: candidate.id, nextFollowUpAt: followUpDate });
+    } finally {
+      setPipelineBusy(false);
+    }
   };
 
   const handleSendMessage = async () => {
@@ -306,7 +387,7 @@ export default function CandidateProfilePage() {
 
       if (messageError) {
         console.error('Error sending message:', messageError);
-        setError('Failed to send message');
+        setError(typeof messageError === 'string' ? messageError : 'Failed to send message');
         return;
       }
 
@@ -314,7 +395,8 @@ export default function CandidateProfilePage() {
       setShowMessageDialog(false);
       setMessageContent('');
       setSelectedJobId('');
-      router.push(`/messages/${threadId}`);
+      const jid = jobDetails?.jobId || selectedJobId;
+      router.push(jid ? `/messages/${threadId}?jobId=${encodeURIComponent(jid)}` : `/messages/${threadId}`);
 
     } catch (err) {
       console.error('Error in handleSendMessage:', err);
@@ -349,8 +431,11 @@ export default function CandidateProfilePage() {
       }
       
       setEmployerJobs(jobs);
-      if (jobs.length > 0) {
-        setSelectedJobId(jobs[0].id); // Select first job by default
+      const fromUrl = searchParams.get('jobId');
+      if (fromUrl && jobs.some((j: any) => j.id === fromUrl)) {
+        setSelectedJobId(fromUrl);
+      } else if (jobs.length > 0) {
+        setSelectedJobId(jobs[0].id);
       }
     } catch (err) {
       console.error('Error fetching jobs:', err);
@@ -449,6 +534,16 @@ export default function CandidateProfilePage() {
     !readinessSignals.video ? 'Intro video missing' : '',
     !candidate.workAuthorization ? 'Work authorization not specified' : '',
   ].filter(Boolean);
+  const pipelineStage = (pipelineEntry?.stage || 'NEW') as PipelineStage;
+  const followUpRaw = pipelineEntry?.nextFollowUpAt;
+  const nextFollowUpDate = followUpRaw
+    ? new Date(followUpRaw?.toDate ? followUpRaw.toDate() : followUpRaw)
+    : null;
+  const followUpDue = !!nextFollowUpDate && nextFollowUpDate.getTime() < Date.now();
+  const jobIdFromContext = searchParams.get('jobId');
+  const isAdminViewer = user?.email === 'officialhiremeapp@gmail.com' || profile?.role === 'ADMIN';
+  const isEmployerOrRecruiter = profile?.role === 'EMPLOYER' || profile?.role === 'RECRUITER';
+  const viewingAsRecruiter = user?.uid !== candidate.id && isEmployerOrRecruiter && !isAdminViewer;
 
   return (
     <main className="min-h-screen bg-slate-50 mobile-safe-top mobile-safe-bottom overflow-x-hidden w-full">
@@ -524,18 +619,70 @@ export default function CandidateProfilePage() {
 
       {/* Header */}
       <header className="sticky top-0 bg-white shadow-sm z-50 border-b border-slate-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
-          <Link
-            href={(user?.email === 'officialhiremeapp@gmail.com' || profile?.role === 'ADMIN')
-              ? "/admin/users"
-              : (user?.uid === candidate.id ? "/home/seeker" : "/search/candidates")}
-            className="flex items-center gap-2 text-navy-800 hover:text-navy-600 transition-all duration-200 group px-3 py-2 rounded-lg hover:bg-sky-50 hover:shadow-md min-h-[48px]"
-          >
-            <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5 group-hover:-translate-x-1 transition-transform" />
-            <span className="font-medium text-sm sm:text-base hidden sm:inline">Back to Dashboard</span>
-            <span className="font-medium text-sm sm:text-base sm:hidden">Back</span>
-          </Link>
-          <Link href="/" className="flex items-center gap-2">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-wrap items-center gap-2 min-w-0">
+            {isAdminViewer ? (
+              <Link
+                href="/admin/users"
+                className="flex items-center gap-2 text-navy-800 hover:text-navy-600 transition-all duration-200 group px-3 py-2 rounded-lg hover:bg-sky-50 hover:shadow-md min-h-[48px]"
+              >
+                <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5 group-hover:-translate-x-1 transition-transform" />
+                <span className="font-medium text-sm sm:text-base">Back to admin</span>
+              </Link>
+            ) : user?.uid === candidate.id ? (
+              <Link
+                href="/home/seeker"
+                className="flex items-center gap-2 text-navy-800 hover:text-navy-600 transition-all duration-200 group px-3 py-2 rounded-lg hover:bg-sky-50 hover:shadow-md min-h-[48px]"
+              >
+                <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5 group-hover:-translate-x-1 transition-transform" />
+                <span className="font-medium text-sm sm:text-base">Back to dashboard</span>
+              </Link>
+            ) : viewingAsRecruiter ? (
+              <>
+                {jobIdFromContext ? (
+                  <>
+                    <Link
+                      href={getJobMatchesUrl(jobIdFromContext)}
+                      className="flex items-center gap-2 text-navy-800 hover:text-navy-600 px-3 py-2 rounded-lg hover:bg-sky-50 min-h-[48px] text-sm font-medium"
+                    >
+                      <ArrowLeft className="h-4 w-4 shrink-0" />
+                      <span className="hidden sm:inline">Back to matches</span>
+                      <span className="sm:hidden">Matches</span>
+                    </Link>
+                    <Link
+                      href={getJobPipelineUrl(jobIdFromContext)}
+                      className="inline-flex items-center px-3 py-2 rounded-lg border border-slate-200 text-navy-800 text-sm font-medium hover:bg-slate-50 min-h-[48px]"
+                    >
+                      Pipeline
+                    </Link>
+                  </>
+                ) : (
+                  <Link
+                    href="/search/candidates"
+                    className="flex items-center gap-2 text-navy-800 hover:text-navy-600 px-3 py-2 rounded-lg hover:bg-sky-50 min-h-[48px] text-sm font-medium"
+                  >
+                    <ArrowLeft className="h-4 w-4 shrink-0" />
+                    Back to candidate search
+                  </Link>
+                )}
+                <Link
+                  href={getDashboardUrl()}
+                  className="inline-flex items-center px-3 py-2 rounded-lg bg-navy-800 text-white text-sm font-semibold hover:bg-navy-700 min-h-[48px]"
+                >
+                  Dashboard
+                </Link>
+              </>
+            ) : (
+              <Link
+                href="/home/seeker"
+                className="flex items-center gap-2 text-navy-800 hover:text-navy-600 transition-all duration-200 group px-3 py-2 rounded-lg hover:bg-sky-50 hover:shadow-md min-h-[48px]"
+              >
+                <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5 group-hover:-translate-x-1 transition-transform" />
+                <span className="font-medium text-sm sm:text-base">Back</span>
+              </Link>
+            )}
+          </div>
+          <Link href="/" className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
             <div className="w-8 h-8 bg-navy-800 rounded-lg flex items-center justify-center">
               <svg width="20" height="20" viewBox="0 0 269 274" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M111.028 0C172.347 0.000238791 222.055 51.647 222.055 115.356C222.055 140.617 214.238 163.98 200.983 182.981L258.517 242.758L238.036 264.036L181.077 204.857C161.97 221.02 137.589 230.713 111.028 230.713C49.7092 230.713 2.76862e-05 179.066 0 115.356C0 51.6468 49.7092 0 111.028 0Z" fill="white"/>
@@ -636,6 +783,87 @@ export default function CandidateProfilePage() {
             )}
           </div>
         </section>
+
+        {/* Pipeline Context (recruiter-facing with job context) */}
+        {user?.uid !== candidate.id && (profile?.role === 'EMPLOYER' || profile?.role === 'RECRUITER') && jobIdFromContext && (
+          <section className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6 mb-8">
+            <div className="flex items-center mb-4">
+              <div className="w-12 h-12 bg-emerald-100 rounded-lg flex items-center justify-center mr-4">
+                <Briefcase className="h-6 w-6 text-emerald-700" />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold text-navy-900">Recruiter workflow context</h2>
+                <p className="text-sm text-slate-600">Pipeline status and actions for this candidate on the current job.</p>
+              </div>
+            </div>
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+              <div className="flex flex-wrap items-center gap-2 mb-3">
+                <span className="inline-flex rounded-full border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-700">
+                  Stage: {pipelineStage}
+                </span>
+                {followUpDue && (
+                  <span className="inline-flex rounded-full border border-rose-200 bg-rose-50 px-2 py-1 text-xs font-semibold text-rose-700">
+                    Follow-up due
+                  </span>
+                )}
+                {nextFollowUpDate && (
+                  <span className="inline-flex rounded-full border border-amber-200 bg-amber-50 px-2 py-1 text-xs font-semibold text-amber-700">
+                    Next follow-up: {nextFollowUpDate.toLocaleDateString()}
+                  </span>
+                )}
+              </div>
+              <div className="flex flex-wrap items-center gap-2 mb-3">
+                <Link
+                  href={getJobMatchesUrl(jobIdFromContext)}
+                  className="inline-flex items-center px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-xs font-semibold text-navy-800 hover:bg-slate-100"
+                >
+                  Back to matches
+                </Link>
+                <Link
+                  href={getJobPipelineUrl(jobIdFromContext)}
+                  className="inline-flex items-center px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-xs font-semibold text-navy-800 hover:bg-slate-100"
+                >
+                  View pipeline
+                </Link>
+                <Link
+                  href={getMessagesUrl(jobIdFromContext)}
+                  className="inline-flex items-center px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-xs font-semibold text-navy-800 hover:bg-slate-100"
+                >
+                  Job messages
+                </Link>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <select
+                  value={pipelineStage}
+                  onChange={(e) => handlePipelineStageChange(e.target.value as PipelineStage)}
+                  disabled={pipelineBusy}
+                  className="px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm text-slate-700"
+                >
+                  {PIPELINE_STAGES.map((stage) => (
+                    <option key={stage} value={stage}>
+                      {stage}
+                    </option>
+                  ))}
+                </select>
+                <input
+                  type="date"
+                  value={nextFollowUpDate ? nextFollowUpDate.toISOString().slice(0, 10) : ''}
+                  onChange={(e) => handlePipelineFollowUpChange(e.target.value)}
+                  disabled={pipelineBusy}
+                  className="px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm text-slate-700"
+                />
+                <button
+                  type="button"
+                  onClick={() => handlePipelineFollowUpChange('')}
+                  disabled={pipelineBusy}
+                  className="px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm font-medium text-slate-700 hover:bg-slate-100"
+                >
+                  Mark follow-up done
+                </button>
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* Matching Dimensions Snapshot (recruiter-facing) */}
         {user?.uid !== candidate.id && (profile?.role === 'EMPLOYER' || profile?.role === 'RECRUITER' || profile?.role === 'ADMIN') && (

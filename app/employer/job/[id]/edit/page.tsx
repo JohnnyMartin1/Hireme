@@ -50,9 +50,15 @@ export default function EditJobPage({ params }: { params: { id: string } }) {
           return;
         }
 
-        // Check if the job belongs to the current user
-        if ((jobData as any).employerId !== user.uid) {
-          setError('You can only edit your own jobs');
+        const j = jobData as any;
+        const sameEmployer = j.employerId === user.uid;
+        const sameCompany =
+          j.companyId &&
+          profile?.companyId &&
+          j.companyId === profile.companyId &&
+          (profile.role === 'EMPLOYER' || profile.role === 'RECRUITER');
+        if (!sameEmployer && !sameCompany) {
+          setError('You can only edit jobs for your company');
           return;
         }
 
@@ -79,7 +85,7 @@ export default function EditJobPage({ params }: { params: { id: string } }) {
     };
 
     fetchJob();
-  }, [params.id, user]);
+  }, [params.id, user, profile?.companyId, profile?.role]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

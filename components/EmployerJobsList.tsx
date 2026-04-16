@@ -17,15 +17,16 @@ import {
   Filter,
   Users,
   MessageSquare,
+  Workflow,
   ChevronDown,
   SortAsc,
   X,
   Sparkles
 } from "lucide-react";
-import { getEmployerJobs, getUserMessageThreads } from '@/lib/firebase-firestore';
+import { getEmployerJobs, getCompanyJobs, getUserMessageThreads, getPipelineByJob, normalizePipelineStage, queryDocuments, where } from '@/lib/firebase-firestore';
 import { deleteDocument } from '@/lib/firebase-firestore';
 import { db } from '@/lib/firebase';
-import { collection, query, where, getDocs, limit as firestoreLimit } from 'firebase/firestore';
+import { collection, query, getDocs, limit as firestoreLimit } from 'firebase/firestore';
 
 interface EmployerJobsListProps {
   limit?: number;
@@ -43,6 +44,10 @@ interface JobWithMetrics {
   description: string;
   createdAt: any;
   outreachCount: number;
+  pipelineCount: number;
+  contactedCount: number;
+  followUpDueCount: number;
+  newStrongMatchesCount: number;
 }
 
 type SortOption = 'date-desc' | 'date-asc' | 'title-asc' | 'title-desc' | 'outreach-desc' | 'outreach-asc';
@@ -50,7 +55,7 @@ type StatusFilter = 'all' | 'ACTIVE' | 'INACTIVE';
 
 export default function EmployerJobsList({ limit }: EmployerJobsListProps) {
   const toast = useToast();
-  const { user } = useFirebaseAuth();
+  const { user, profile } = useFirebaseAuth();
   const [jobs, setJobs] = useState<any[]>([]);
   const [jobsWithMetrics, setJobsWithMetrics] = useState<JobWithMetrics[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -62,12 +67,19 @@ export default function EmployerJobsList({ limit }: EmployerJobsListProps) {
   // Fetch jobs and outreach data
   useEffect(() => {
     const fetchJobsWithMetrics = async () => {
-      if (!user) return;
-      
+      if (!user) {
+        setJobs([]);
+        setJobsWithMetrics([]);
+        setIsLoading(false);
+        return;
+      }
+      if (!profile) return;
+
       setIsLoading(true);
       try {
-        // Fetch jobs
-        const { data: jobsData, error } = await getEmployerJobs(user.uid);
+        const { data: jobsData, error } = profile.companyId
+          ? await getCompanyJobs(profile.companyId, user.uid, profile.isCompanyOwner || false)
+          : await getEmployerJobs(user.uid);
         if (error) {
           console.error('Error fetching jobs:', error);
           setIsLoading(false);
@@ -116,10 +128,37 @@ export default function EmployerJobsList({ limit }: EmployerJobsListProps) {
         }
 
         // Combine jobs with outreach metrics
-        const jobsWithMetricsData: JobWithMetrics[] = jobsData.map((job: any) => ({
-          ...job,
-          outreachCount: outreachCountMap.get(job.id) || 0
-        }));
+        const jobsWithMetricsData: JobWithMetrics[] = await Promise.all(
+          jobsData.map(async (job: any) => {
+            const { data: entries } = await getPipelineByJob(job.id);
+            const normalizedEntries = (entries || []).map((entry: any) => ({
+              ...entry,
+              stage: normalizePipelineStage(entry.stage),
+            }));
+            const now = Date.now();
+            const followUpDueCount = normalizedEntries.filter((entry: any) => {
+              const raw = entry.nextFollowUpAt;
+              if (!raw) return false;
+              const d = raw?.toDate ? raw.toDate() : new Date(raw);
+              return d.getTime() < now;
+            }).length;
+            const contactedCount = normalizedEntries.filter((entry: any) => entry.stage === 'CONTACTED').length;
+
+            const { data: matches } = await queryDocuments('jobMatches', [where('jobId', '==', job.id)]);
+            const strongMatches = ((matches || []) as any[]).filter((m: any) => Number(m.overallScore || 0) >= 80);
+            const pipelineCandidateIds = new Set(normalizedEntries.map((entry: any) => entry.candidateId));
+            const newStrongMatchesCount = strongMatches.filter((m: any) => m.candidateId && !pipelineCandidateIds.has(m.candidateId)).length;
+
+            return {
+              ...job,
+              outreachCount: outreachCountMap.get(job.id) || 0,
+              pipelineCount: normalizedEntries.length,
+              contactedCount,
+              followUpDueCount,
+              newStrongMatchesCount,
+            };
+          })
+        );
 
         setJobsWithMetrics(jobsWithMetricsData);
       } catch (err) {
@@ -130,7 +169,7 @@ export default function EmployerJobsList({ limit }: EmployerJobsListProps) {
     };
 
     fetchJobsWithMetrics();
-  }, [user]);
+  }, [user, profile?.companyId, profile?.isCompanyOwner, profile]);
 
   // Filter and sort jobs
   const filteredAndSortedJobs = useMemo(() => {
@@ -373,6 +412,16 @@ export default function EmployerJobsList({ limit }: EmployerJobsListProps) {
                         <span>{job.outreachCount} outreach{job.outreachCount !== 1 ? 'es' : ''}</span>
                       </div>
                     )}
+                    {job.followUpDueCount > 0 && (
+                      <div className="flex items-center gap-1 px-2 py-1 bg-rose-100 text-rose-700 rounded-full text-xs font-medium">
+                        <span>{job.followUpDueCount} follow-up due</span>
+                      </div>
+                    )}
+                    {job.newStrongMatchesCount > 0 && (
+                      <div className="flex items-center gap-1 px-2 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-medium">
+                        <span>{job.newStrongMatchesCount} new strong match{job.newStrongMatchesCount > 1 ? 'es' : ''}</span>
+                      </div>
+                    )}
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
@@ -415,37 +464,64 @@ export default function EmployerJobsList({ limit }: EmployerJobsListProps) {
                       </Link>
                     )}
                   </div>
+                  <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px]">
+                    <div className="rounded-md border border-slate-200 bg-slate-50 px-2 py-1.5">
+                      Pipeline <span className="font-semibold text-navy-900">{job.pipelineCount || 0}</span>
+                    </div>
+                    <div className="rounded-md border border-slate-200 bg-slate-50 px-2 py-1.5">
+                      Contacted <span className="font-semibold text-navy-900">{job.contactedCount || 0}</span>
+                    </div>
+                    <div className="rounded-md border border-slate-200 bg-slate-50 px-2 py-1.5">
+                      Due <span className="font-semibold text-navy-900">{job.followUpDueCount || 0}</span>
+                    </div>
+                    <div className="rounded-md border border-slate-200 bg-slate-50 px-2 py-1.5">
+                      Strong new <span className="font-semibold text-navy-900">{job.newStrongMatchesCount || 0}</span>
+                    </div>
+                  </div>
                 </div>
                 
-                <div className="flex items-center gap-2 ml-4">
-                  <Link
-                    href={`/employer/job/${job.id}/matches`}
-                    className="p-2 text-violet-600 hover:bg-violet-50 rounded-lg transition-colors"
-                    title="AI matches"
-                  >
-                    <Sparkles className="h-4 w-4" />
-                  </Link>
-                  <Link
-                    href={`/employer/job/${job.id}/edit`}
-                    className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                    title="Edit Job"
-                  >
-                    <Edit className="h-4 w-4" />
-                  </Link>
-                  <Link
-                    href={`/employer/job/${job.id}`}
-                    className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                    title="View Job"
-                  >
-                    <Eye className="h-4 w-4" />
-                  </Link>
-                  <button
-                    onClick={() => handleDeleteJob(job.id)}
-                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                    title="Delete Job"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
+                <div className="ml-4 min-w-[180px]">
+                  <div className="flex flex-col gap-2">
+                    <Link
+                      href={`/employer/job/${job.id}/matches`}
+                      className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-violet-600 text-white text-xs font-semibold hover:bg-violet-700 transition-colors"
+                      title="Open AI matches"
+                    >
+                      <Sparkles className="h-3.5 w-3.5" />
+                      Matches
+                    </Link>
+                    <Link
+                      href={`/employer/job/${job.id}/pipeline`}
+                      className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700 transition-colors"
+                      title="Open candidate pipeline"
+                    >
+                      <Workflow className="h-3.5 w-3.5" />
+                      Pipeline
+                    </Link>
+                    <div className="flex items-center justify-center gap-1">
+                      <Link
+                        href={`/employer/job/${job.id}`}
+                        className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                        title="View job details"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Link>
+                      <Link
+                        href={`/employer/job/${job.id}/edit`}
+                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                        title="Edit job"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Link>
+                      <button
+                        onClick={() => handleDeleteJob(job.id)}
+                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        title="Delete job"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>

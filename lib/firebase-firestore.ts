@@ -240,6 +240,171 @@ export const isCandidateSaved = async (employerId: string, candidateId: string) 
   }
 };
 
+// ============================================
+// CANDIDATE PIPELINE
+// ============================================
+
+export const PIPELINE_STAGES = [
+  'NEW',
+  'SHORTLIST',
+  'CONTACTED',
+  'RESPONDED',
+  'INTERVIEW',
+  'REJECTED',
+] as const;
+
+export type PipelineStage = (typeof PIPELINE_STAGES)[number];
+
+export const normalizePipelineStage = (value: unknown): PipelineStage => {
+  const raw = String(value || '').toUpperCase().trim();
+  if (raw === 'SHORTLISTED') return 'SHORTLIST';
+  if ((PIPELINE_STAGES as readonly string[]).includes(raw)) {
+    return raw as PipelineStage;
+  }
+  return 'NEW';
+};
+
+export interface CandidatePipelineEntry {
+  id: string;
+  jobId: string;
+  candidateId: string;
+  companyId: string;
+  stage: PipelineStage;
+  ownerId?: string;
+  createdAt?: unknown;
+  updatedAt?: unknown;
+  lastContactedAt?: unknown;
+  nextFollowUpAt?: unknown;
+}
+
+export const createOrUpdatePipelineEntry = async (
+  jobId: string,
+  candidateId: string,
+  updates: Partial<Omit<CandidatePipelineEntry, 'id' | 'jobId' | 'candidateId' | 'companyId' | 'createdAt' | 'updatedAt'>> & {
+    stage?: PipelineStage;
+    ownerId?: string;
+    lastContactedAt?: Date | null;
+    nextFollowUpAt?: Date | null;
+  }
+) => {
+  try {
+    const existing = await queryDocuments('candidatePipelineEntries', [
+      where('jobId', '==', jobId),
+      where('candidateId', '==', candidateId),
+    ]);
+
+    let companyId = '';
+    if (existing.data.length > 0) {
+      companyId = String((existing.data[0] as any).companyId || '');
+    } else {
+      const { data: jobData, error: jobError } = await getDocument('jobs', jobId);
+      if (jobError || !jobData) {
+        return { id: null, error: 'Failed to resolve job for pipeline entry' };
+      }
+      companyId = String((jobData as any).companyId || '');
+    }
+
+    const basePayload: Record<string, unknown> = {
+      stage: normalizePipelineStage(updates.stage || 'NEW'),
+      ownerId: updates.ownerId ?? ((existing.data[0] as any)?.ownerId ?? null),
+      updatedAt: serverTimestamp(),
+    };
+
+    if (updates.lastContactedAt !== undefined) {
+      basePayload.lastContactedAt = updates.lastContactedAt ? updates.lastContactedAt : null;
+    }
+    if (updates.nextFollowUpAt !== undefined) {
+      basePayload.nextFollowUpAt = updates.nextFollowUpAt ? updates.nextFollowUpAt : null;
+    }
+
+    if (existing.data.length > 0) {
+      const existingId = existing.data[0].id as string;
+      const { error } = await updateDocument('candidatePipelineEntries', existingId, basePayload);
+      return { id: existingId, error };
+    }
+
+    const createPayload = {
+      jobId,
+      candidateId,
+      companyId,
+      stage: normalizePipelineStage(updates.stage || 'NEW'),
+      ownerId: updates.ownerId ?? null,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+      lastContactedAt: updates.lastContactedAt ? updates.lastContactedAt : null,
+      nextFollowUpAt: updates.nextFollowUpAt ? updates.nextFollowUpAt : null,
+    };
+
+    const { id, error } = await createDocument('candidatePipelineEntries', createPayload);
+    return { id, error };
+  } catch (error: any) {
+    return { id: null, error: error.message };
+  }
+};
+
+export const getPipelineByJob = async (jobId: string) => {
+  try {
+    const { data, error } = await queryDocuments('candidatePipelineEntries', [
+      where('jobId', '==', jobId),
+    ]);
+    return { data: (data || []) as CandidatePipelineEntry[], error };
+  } catch (error: any) {
+    return { data: [] as CandidatePipelineEntry[], error: error.message };
+  }
+};
+
+export const getPipelineEntryForJobCandidate = async (
+  jobId: string,
+  candidateId: string
+) => {
+  try {
+    const { data, error } = await queryDocuments('candidatePipelineEntries', [
+      where('jobId', '==', jobId),
+      where('candidateId', '==', candidateId),
+    ]);
+    if (error) return { data: null as CandidatePipelineEntry | null, error };
+    return { data: (data?.[0] || null) as CandidatePipelineEntry | null, error: null };
+  } catch (error: any) {
+    return { data: null as CandidatePipelineEntry | null, error: error.message };
+  }
+};
+
+export const moveCandidateStage = async (
+  pipelineEntryId: string,
+  newStage: PipelineStage
+) => {
+  try {
+    const payload: Record<string, unknown> = {
+      stage: normalizePipelineStage(newStage),
+      updatedAt: serverTimestamp(),
+    };
+
+    if (newStage === 'CONTACTED') {
+      payload.lastContactedAt = serverTimestamp();
+    }
+
+    const { error } = await updateDocument('candidatePipelineEntries', pipelineEntryId, payload);
+    return { error };
+  } catch (error: any) {
+    return { error: error.message };
+  }
+};
+
+export const setFollowUpDate = async (
+  pipelineEntryId: string,
+  date: Date | null
+) => {
+  try {
+    const { error } = await updateDocument('candidatePipelineEntries', pipelineEntryId, {
+      nextFollowUpAt: date ? date : null,
+      updatedAt: serverTimestamp(),
+    });
+    return { error };
+  } catch (error: any) {
+    return { error: error.message };
+  }
+};
+
 // Messaging functions
 export const getMessageThread = async (threadId: string) => {
   return getDocument('messageThreads', threadId);
@@ -290,8 +455,109 @@ export const sendMessage = async (threadId: string, messageData: {
   };
 }, idToken?: string) => {
   try {
+    const resolveThreadJobId = async (data: typeof messageData) => {
+      if (data.jobDetails?.jobId) return String(data.jobDetails.jobId);
+      const messagesQuery = query(
+        collection(db, 'messages'),
+        where('threadId', '==', threadId),
+        limit(25)
+      );
+      const messagesSnapshot = await getDocs(messagesQuery);
+      for (const msgDoc of messagesSnapshot.docs) {
+        const docData: any = msgDoc.data();
+        if (docData?.jobDetails?.jobId) return String(docData.jobDetails.jobId);
+      }
+      return null;
+    };
+
+    const jobDetailsFromJobDoc = (job: any, jobId: string) => ({
+      jobId,
+      jobTitle: String(job?.title || ''),
+      employmentType: String(job?.employment || ''),
+      location: `${job?.locationCity || ''} ${job?.locationState || ''}`.trim() || String(job?.location || ''),
+      jobDescription: String(job?.description || ''),
+    });
+
+    const { data: senderProfile } = await getDocument('users', messageData.senderId);
+    const senderRole = String((senderProfile as any)?.role || '');
+
+    let outbound = { ...messageData };
+    if (!outbound.jobDetails?.jobId) {
+      const resolvedJobId = await resolveThreadJobId(outbound);
+      if (resolvedJobId) {
+        const { data: jobRow } = await getDocument('jobs', resolvedJobId);
+        if (jobRow) {
+          outbound = {
+            ...outbound,
+            jobDetails: jobDetailsFromJobDoc(jobRow, resolvedJobId),
+          };
+        }
+      }
+    } else if (outbound.jobDetails && (!outbound.jobDetails.jobTitle || !outbound.jobDetails.jobDescription)) {
+      const { data: jobRow } = await getDocument('jobs', outbound.jobDetails.jobId);
+      if (jobRow) {
+        outbound = {
+          ...outbound,
+          jobDetails: jobDetailsFromJobDoc(jobRow, outbound.jobDetails.jobId),
+        };
+      }
+    }
+
+    if (
+      (senderRole === 'EMPLOYER' || senderRole === 'RECRUITER') &&
+      !outbound.jobDetails?.jobId
+    ) {
+      return {
+        id: null,
+        error: 'Attach a job to this conversation before sending outreach.',
+      };
+    }
+
+    const syncPipelineWithMessage = async () => {
+      if (!senderRole) return;
+
+      const associatedJobId = await resolveThreadJobId(outbound);
+      if (!associatedJobId) return;
+
+      const { data: threadData } = await getDocument('messageThreads', threadId);
+      const participantIds = Array.isArray((threadData as any)?.participantIds)
+        ? ((threadData as any).participantIds as string[])
+        : [];
+      const otherParticipantId = participantIds.find((id) => id !== outbound.senderId) || null;
+      const { data: otherProfile } = otherParticipantId
+        ? await getDocument('users', otherParticipantId)
+        : { data: null };
+
+      const pipelineCandidateId =
+        senderRole === 'JOB_SEEKER'
+          ? outbound.senderId
+          : ((otherProfile as any)?.role === 'JOB_SEEKER' ? otherParticipantId : null);
+      if (!pipelineCandidateId) return;
+
+      const { data: existingEntry } = await getPipelineEntryForJobCandidate(associatedJobId, pipelineCandidateId);
+      const currentStage = existingEntry?.stage || 'NEW';
+
+      if (senderRole === 'EMPLOYER' || senderRole === 'RECRUITER' || senderRole === 'ADMIN') {
+        const stageShouldBecomeContacted =
+          currentStage === 'NEW' || currentStage === 'SHORTLIST' || currentStage === 'CONTACTED';
+        await createOrUpdatePipelineEntry(associatedJobId, pipelineCandidateId, {
+          stage: stageShouldBecomeContacted ? 'CONTACTED' : currentStage,
+          ownerId: outbound.senderId,
+          lastContactedAt: new Date(),
+        });
+      }
+
+      if (senderRole === 'JOB_SEEKER') {
+        const stageShouldBecomeResponded =
+          currentStage === 'NEW' || currentStage === 'SHORTLIST' || currentStage === 'CONTACTED' || currentStage === 'RESPONDED';
+        await createOrUpdatePipelineEntry(associatedJobId, pipelineCandidateId, {
+          stage: stageShouldBecomeResponded ? 'RESPONDED' : currentStage,
+        });
+      }
+    };
+
     const message = {
-      ...messageData,
+      ...outbound,
       threadId,
       createdAt: serverTimestamp(),
       read: false
@@ -302,6 +568,12 @@ export const sendMessage = async (threadId: string, messageData: {
     await updateDocument('messageThreads', threadId, {
       lastMessageAt: serverTimestamp()
     });
+
+    try {
+      await syncPipelineWithMessage();
+    } catch (pipelineSyncError) {
+      console.error('Failed to sync pipeline from message event:', pipelineSyncError);
+    }
     
     if (idToken) {
       try {
@@ -313,8 +585,8 @@ export const sendMessage = async (threadId: string, messageData: {
           },
           body: JSON.stringify({
             threadId,
-            senderId: messageData.senderId,
-            messageContent: messageData.content.substring(0, 150)
+            senderId: outbound.senderId,
+            messageContent: outbound.content.substring(0, 150)
           })
         }).catch(err => console.error('Error triggering message notification:', err));
       } catch (e) {

@@ -56,6 +56,9 @@ function getBackButtonHref(pathname: string, profile: any): string {
     return '/home/employer';
   }
   if (pathname.startsWith('/candidate/')) {
+    if (profile?.role === 'EMPLOYER' || profile?.role === 'RECRUITER') {
+      return '/home/employer';
+    }
     return '/search/candidates';
   }
   // Messages routes - check most specific first
@@ -165,20 +168,53 @@ export default function SiteHeader() {
         ) : (
           <>
             {/* Desktop Navigation - Logged In */}
-            <nav className="hidden md:flex items-center gap-3 lg:gap-4">
-              <Link 
-                href={`/account/${user?.uid}/settings`}
-                className="text-sm text-navy-900 hover:text-navy-700 font-semibold px-4 py-2 rounded-lg hover:bg-sky-50 transition-all duration-200"
-              >
-                Settings
-              </Link>
-              <button
-                onClick={signOut}
-                className="text-sm text-navy-900 hover:text-navy-700 font-semibold px-4 py-2 rounded-lg hover:bg-sky-50 transition-all duration-200"
-              >
-                Sign out
-              </button>
-            </nav>
+            <div className="hidden md:flex items-center flex-1 min-w-0 justify-end gap-2 lg:gap-4">
+              {(profile?.role === 'EMPLOYER' || profile?.role === 'RECRUITER') && (
+                <nav
+                  className="flex flex-1 items-center justify-center gap-2 lg:gap-3 min-w-0"
+                  aria-label="Primary"
+                >
+                  <Link
+                    href="/home/employer"
+                    className="text-sm text-navy-900 hover:text-navy-700 font-semibold px-3 py-2 rounded-lg hover:bg-sky-50 transition-all duration-200 whitespace-nowrap"
+                  >
+                    Dashboard
+                  </Link>
+                  <Link
+                    href="/employer/jobs"
+                    className="text-sm text-navy-900 hover:text-navy-700 font-semibold px-3 py-2 rounded-lg hover:bg-sky-50 transition-all duration-200 whitespace-nowrap"
+                  >
+                    Jobs
+                  </Link>
+                  <Link
+                    href="/messages"
+                    className="text-sm text-navy-900 hover:text-navy-700 font-semibold px-3 py-2 rounded-lg hover:bg-sky-50 transition-all duration-200 whitespace-nowrap"
+                  >
+                    Messages
+                  </Link>
+                  <Link
+                    href="/search/candidates"
+                    className="text-sm text-navy-900 hover:text-navy-700 font-semibold px-3 py-2 rounded-lg hover:bg-sky-50 transition-all duration-200 whitespace-nowrap"
+                  >
+                    Candidates
+                  </Link>
+                </nav>
+              )}
+              <nav className="flex items-center gap-2 shrink-0">
+                <Link 
+                  href={`/account/${user?.uid}/settings`}
+                  className="text-sm text-navy-900 hover:text-navy-700 font-semibold px-4 py-2 rounded-lg hover:bg-sky-50 transition-all duration-200"
+                >
+                  Settings
+                </Link>
+                <button
+                  onClick={signOut}
+                  className="text-sm text-navy-900 hover:text-navy-700 font-semibold px-4 py-2 rounded-lg hover:bg-sky-50 transition-all duration-200"
+                >
+                  Sign out
+                </button>
+              </nav>
+            </div>
 
             {/* Mobile Hamburger Button - Logged In (hidden when back button is shown) */}
             {!shouldShowBackButton ? (
@@ -206,6 +242,38 @@ export default function SiteHeader() {
             {/* Mobile Menu - Logged In */}
             <MobileNav isOpen={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)}>
               <nav className="flex flex-col w-full">
+                {(profile?.role === 'EMPLOYER' || profile?.role === 'RECRUITER') && (
+                  <>
+                    <Link
+                      href="/home/employer"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="flex items-center justify-center px-4 py-4 text-base font-medium text-navy-900 hover:bg-sky-50 active:bg-sky-100 transition-colors border-b border-slate-100 min-h-[56px] w-full text-center"
+                    >
+                      Dashboard
+                    </Link>
+                    <Link
+                      href="/employer/jobs"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="flex items-center justify-center px-4 py-4 text-base font-medium text-navy-900 hover:bg-sky-50 active:bg-sky-100 transition-colors border-b border-slate-100 min-h-[56px] w-full text-center"
+                    >
+                      Jobs
+                    </Link>
+                    <Link
+                      href="/messages"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="flex items-center justify-center px-4 py-4 text-base font-medium text-navy-900 hover:bg-sky-50 active:bg-sky-100 transition-colors border-b border-slate-100 min-h-[56px] w-full text-center"
+                    >
+                      Messages
+                    </Link>
+                    <Link
+                      href="/search/candidates"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="flex items-center justify-center px-4 py-4 text-base font-medium text-navy-900 hover:bg-sky-50 active:bg-sky-100 transition-colors border-b border-slate-100 min-h-[56px] w-full text-center"
+                    >
+                      Candidates
+                    </Link>
+                  </>
+                )}
                 <Link 
                   href={`/account/${user?.uid}/settings`}
                   onClick={() => setMobileMenuOpen(false)}

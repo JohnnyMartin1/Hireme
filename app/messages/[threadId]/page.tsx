@@ -1,11 +1,13 @@
 "use client";
+
 import { useParams } from 'next/navigation';
 import { useFirebaseAuth } from "@/components/FirebaseAuthProvider";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
 import { User, MessageSquare, Send, ArrowLeft, Loader2, Star } from "lucide-react";
-import { getMessageThread, getThreadMessages, sendMessage, getDocument, createCompanyRating } from '@/lib/firebase-firestore';
+import { getMessageThread, getThreadMessages, sendMessage, getDocument, createCompanyRating, getPipelineEntryForJobCandidate, moveCandidateStage, setFollowUpDate, createOrUpdatePipelineEntry, PIPELINE_STAGES, normalizePipelineStage, type PipelineStage } from '@/lib/firebase-firestore';
 import Link from 'next/link';
+import { getDashboardUrl, getJobMatchesUrl, getJobOverviewUrl, getJobPipelineUrl } from '@/lib/navigation';
 import CompanyRatingModal from '@/components/CompanyRatingModal';
 import CompanyProfile from '@/components/CompanyProfile';
 
@@ -47,6 +49,9 @@ export default function MessageThreadPage() {
   const [showRatingModal, setShowRatingModal] = useState(false);
   const [isSubmittingRating, setIsSubmittingRating] = useState(false);
   const [jobToRate, setJobToRate] = useState<any>(null);
+  const [jobContext, setJobContext] = useState<Message['jobDetails'] | null>(null);
+  const [pipelineEntry, setPipelineEntry] = useState<any>(null);
+  const [pipelineBusy, setPipelineBusy] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -97,6 +102,37 @@ export default function MessageThreadPage() {
         }
 
         setMessages((messagesResult.data as Message[]) || []);
+        const loadedMessages = (messagesResult.data as Message[]) || [];
+        let contextFromMessages = loadedMessages.find((msg) => msg.jobDetails?.jobId)?.jobDetails || null;
+        const urlJobId =
+          typeof window !== "undefined"
+            ? new URLSearchParams(window.location.search).get("jobId")
+            : null;
+        if (
+          !contextFromMessages?.jobId &&
+          urlJobId &&
+          (profile?.role === 'EMPLOYER' || profile?.role === 'RECRUITER')
+        ) {
+          const { data: jobRow } = await getDocument('jobs', urlJobId);
+          if (jobRow) {
+            const j = jobRow as any;
+            contextFromMessages = {
+              jobId: urlJobId,
+              jobTitle: j.title || '',
+              employmentType: j.employment || '',
+              location: `${j.locationCity || ''} ${j.locationState || ''}`.trim() || j.location || '',
+              jobDescription: j.description || '',
+            };
+          }
+        }
+        setJobContext(contextFromMessages);
+
+        if (contextFromMessages?.jobId && otherId && (profile?.role === 'EMPLOYER' || profile?.role === 'RECRUITER')) {
+          const { data: entry } = await getPipelineEntryForJobCandidate(contextFromMessages.jobId, otherId);
+          setPipelineEntry(entry || null);
+        } else {
+          setPipelineEntry(null);
+        }
 
       } catch (err) {
         setError(`Failed to load thread: ${err instanceof Error ? err.message : 'Unknown error'}`);
@@ -106,7 +142,7 @@ export default function MessageThreadPage() {
     };
 
     fetchThreadData();
-  }, [params.threadId, user]);
+  }, [params.threadId, user, profile?.role]);
 
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -118,18 +154,32 @@ export default function MessageThreadPage() {
 
     setIsSending(true);
     try {
-      const messageData = {
+      const messageData: {
+        senderId: string;
+        senderName: string;
+        content: string;
+        jobDetails?: Message["jobDetails"];
+      } = {
         senderId: user.uid,
         senderName: `${profile.firstName || ''} ${profile.lastName || ''}`.trim() || 'User',
-        content: newMessage.trim()
+        content: newMessage.trim(),
       };
+      if (jobContext?.jobId) {
+        messageData.jobDetails = {
+          jobId: jobContext.jobId,
+          jobTitle: jobContext.jobTitle || '',
+          employmentType: jobContext.employmentType || '',
+          location: jobContext.location || '',
+          jobDescription: jobContext.jobDescription || '',
+        };
+      }
 
       const token = await user.getIdToken();
       const { error: messageError } = await sendMessage(thread.id, messageData, token);
       
       if (messageError) {
         console.error('Error sending message:', messageError);
-        setError('Failed to send message');
+        setError(typeof messageError === 'string' ? messageError : 'Failed to send message');
         return;
       }
 
@@ -150,7 +200,15 @@ export default function MessageThreadPage() {
       setTimeout(async () => {
         const { data: refreshedMessages } = await getThreadMessages(thread.id);
         if (refreshedMessages) {
-          setMessages(refreshedMessages as Message[]);
+          const typedMessages = refreshedMessages as Message[];
+          setMessages(typedMessages);
+          const contextFromMessages = typedMessages.find((msg) => msg.jobDetails?.jobId)?.jobDetails || null;
+          setJobContext(contextFromMessages);
+          const candidateId = thread.participantIds.find((id) => id !== user.uid);
+          if (contextFromMessages?.jobId && candidateId && (profile?.role === 'EMPLOYER' || profile?.role === 'RECRUITER')) {
+            const { data: entry } = await getPipelineEntryForJobCandidate(contextFromMessages.jobId, candidateId);
+            setPipelineEntry(entry || null);
+          }
         }
       }, 500);
       
@@ -215,6 +273,67 @@ export default function MessageThreadPage() {
     }
   };
 
+  const isRecruiterView = profile?.role === 'EMPLOYER' || profile?.role === 'RECRUITER';
+  const candidateIdForPipeline = thread?.participantIds?.find((id) => id !== user?.uid) || null;
+
+  const handleMoveStage = async (newStage: PipelineStage) => {
+    if (!jobContext?.jobId || !candidateIdForPipeline) return;
+    if (!user?.uid) return;
+    setPipelineBusy(true);
+    try {
+      if (pipelineEntry?.id) {
+        const { error: moveError } = await moveCandidateStage(pipelineEntry.id, newStage);
+        if (moveError) {
+          setError(moveError);
+          return;
+        }
+        setPipelineEntry((prev: any) => ({ ...(prev || {}), stage: newStage }));
+        return;
+      }
+      const { id, error: createError } = await createOrUpdatePipelineEntry(jobContext.jobId, candidateIdForPipeline, {
+        stage: newStage,
+        ownerId: user.uid,
+      });
+      if (createError || !id) {
+        setError(createError || 'Failed to create pipeline entry');
+        return;
+      }
+      setPipelineEntry((prev: any) => ({ ...(prev || {}), id, stage: newStage }));
+    } finally {
+      setPipelineBusy(false);
+    }
+  };
+
+  const handleSetFollowUp = async (rawDate: string) => {
+    if (!jobContext?.jobId || !candidateIdForPipeline) return;
+    if (!user?.uid) return;
+    const followUpDate = rawDate ? new Date(`${rawDate}T12:00:00`) : null;
+    setPipelineBusy(true);
+    try {
+      if (pipelineEntry?.id) {
+        const { error: followUpError } = await setFollowUpDate(pipelineEntry.id, followUpDate);
+        if (followUpError) {
+          setError(followUpError);
+          return;
+        }
+        setPipelineEntry((prev: any) => ({ ...(prev || {}), nextFollowUpAt: followUpDate }));
+        return;
+      }
+      const { id, error: createError } = await createOrUpdatePipelineEntry(jobContext.jobId, candidateIdForPipeline, {
+        stage: 'NEW',
+        ownerId: user.uid,
+        nextFollowUpAt: followUpDate,
+      });
+      if (createError || !id) {
+        setError(createError || 'Failed to set follow-up date');
+        return;
+      }
+      setPipelineEntry((prev: any) => ({ ...(prev || {}), id, stage: 'NEW', nextFollowUpAt: followUpDate }));
+    } finally {
+      setPipelineBusy(false);
+    }
+  };
+
   // Determine messages page and dashboard URL based on role
   const messagesPageUrl = profile?.role === 'JOB_SEEKER' ? '/messages/candidate' : '/messages';
   const dashboardUrl = profile?.role === 'JOB_SEEKER' 
@@ -262,6 +381,13 @@ export default function MessageThreadPage() {
     );
   }
 
+  const currentStage = normalizePipelineStage(pipelineEntry?.stage);
+  const followUpRaw = pipelineEntry?.nextFollowUpAt;
+  const nextFollowUpDate = followUpRaw
+    ? new Date(followUpRaw?.toDate ? followUpRaw.toDate() : followUpRaw)
+    : null;
+  const followUpDue = !!nextFollowUpDate && nextFollowUpDate.getTime() < Date.now();
+
   return (
     <main className="min-h-screen bg-slate-50 mobile-safe-top mobile-safe-bottom">
       {/* Header */}
@@ -282,6 +408,18 @@ export default function MessageThreadPage() {
       </header>
 
       <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-4 w-full">
+        <section className="mb-4 bg-white border border-slate-200 rounded-2xl shadow-sm p-4 sm:p-5">
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1">Conversation workspace</p>
+          <h1 className="text-lg sm:text-xl font-bold text-navy-900">
+            {otherParticipant
+              ? `${otherParticipant.firstName || ''} ${otherParticipant.lastName || ''}`.trim() || 'Conversation'
+              : 'Conversation'}
+          </h1>
+          <p className="text-sm text-slate-600 mt-1">
+            Keep messaging, stage management, and job context together in one thread.
+          </p>
+        </section>
+
         {/* Main Content */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Messages Section */}
@@ -312,6 +450,87 @@ export default function MessageThreadPage() {
                   </p>
                 </div>
               </div>
+              {isRecruiterView && jobContext?.jobId && (
+                <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 px-3 py-3">
+                  <div className="flex flex-wrap items-center gap-2 mb-2">
+                    <span className="inline-flex items-center rounded-full bg-sky-100 px-2 py-1 text-xs font-semibold text-sky-700">
+                      {jobContext.jobTitle || 'Job context'}
+                    </span>
+                    <span className="inline-flex items-center rounded-full bg-slate-200 px-2 py-1 text-xs font-semibold text-slate-700">
+                      {currentStage}
+                    </span>
+                    {followUpDue && (
+                      <span className="inline-flex items-center rounded-full bg-rose-100 px-2 py-1 text-xs font-semibold text-rose-700">
+                        Follow-up due
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap gap-2 mb-3 text-xs font-semibold">
+                    <Link
+                      href={getJobMatchesUrl(jobContext.jobId)}
+                      className="text-sky-700 hover:text-sky-900 underline underline-offset-2"
+                    >
+                      View matches
+                    </Link>
+                    <span className="text-slate-300" aria-hidden>
+                      ·
+                    </span>
+                    <Link
+                      href={getJobPipelineUrl(jobContext.jobId)}
+                      className="text-sky-700 hover:text-sky-900 underline underline-offset-2"
+                    >
+                      View pipeline
+                    </Link>
+                    <span className="text-slate-300" aria-hidden>
+                      ·
+                    </span>
+                    <Link
+                      href={getJobOverviewUrl(jobContext.jobId)}
+                      className="text-sky-700 hover:text-sky-900 underline underline-offset-2"
+                    >
+                      View job
+                    </Link>
+                    <span className="text-slate-300" aria-hidden>
+                      ·
+                    </span>
+                    <Link
+                      href={getDashboardUrl()}
+                      className="text-slate-600 hover:text-navy-900 underline underline-offset-2"
+                    >
+                      Dashboard
+                    </Link>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <select
+                      value={currentStage}
+                      onChange={(e) => handleMoveStage(e.target.value as PipelineStage)}
+                      disabled={pipelineBusy}
+                      className="px-2 py-1.5 rounded-md border border-slate-200 bg-white text-xs text-slate-700"
+                    >
+                      {PIPELINE_STAGES.map((stage) => (
+                        <option key={stage} value={stage}>
+                          {stage}
+                        </option>
+                      ))}
+                    </select>
+                    <input
+                      type="date"
+                      value={nextFollowUpDate ? nextFollowUpDate.toISOString().slice(0, 10) : ''}
+                      onChange={(e) => handleSetFollowUp(e.target.value)}
+                      disabled={pipelineBusy}
+                      className="px-2 py-1.5 rounded-md border border-slate-200 bg-white text-xs text-slate-700"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleSetFollowUp('')}
+                      disabled={pipelineBusy}
+                      className="px-2 py-1.5 rounded-md border border-slate-200 bg-white text-xs font-medium text-slate-700 hover:bg-slate-100"
+                    >
+                      Mark follow-up done
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Messages Container */}
@@ -329,7 +548,7 @@ export default function MessageThreadPage() {
                         {/* Job Details Card - Show above message if present */}
                         {message.jobDetails && (
                           <Link 
-                            href={`/job/${message.jobDetails.jobId}`}
+                            href={getJobOverviewUrl(message.jobDetails.jobId)}
                             className="block mb-2"
                           >
                             <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-sm hover:shadow-md hover:border-sky-200 transition-all cursor-pointer">

@@ -24,9 +24,9 @@ export default function EmployerJobsPage() {
   if (!user || !profile) return null;
 
   return (
-    <main className="min-h-screen mobile-safe-top mobile-safe-bottom overflow-x-hidden w-full" style={{background: 'linear-gradient(180deg, #E6F0FF 0%, #F8FAFC 100%)'}}>
+    <main className="min-h-screen mobile-safe-top mobile-safe-bottom overflow-x-hidden w-full bg-slate-50">
       <div className="w-full md:max-w-6xl md:mx-auto px-0 sm:px-3 md:px-6 pt-12 sm:pt-16 md:pt-20 pb-4 sm:pb-6 md:pb-10 min-w-0">
-        <div className="w-full min-w-0 bg-white/90 backdrop-blur-sm p-4 sm:p-6 md:p-8 rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-slate-200 mb-3 sm:mb-6">
+        <div className="w-full min-w-0 bg-white p-4 sm:p-6 md:p-8 rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-slate-200 mb-3 sm:mb-6">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0 mb-4 sm:mb-6">
             <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
               <Link 
@@ -37,7 +37,7 @@ export default function EmployerJobsPage() {
                 <span className="hidden sm:inline">Back to Dashboard</span>
                 <span className="sm:hidden">Back</span>
               </Link>
-              <h1 className="text-xl sm:text-2xl font-bold text-navy-900 break-words">Manage Jobs</h1>
+              <h1 className="text-xl sm:text-2xl font-bold text-navy-900 break-words">Requisition Portfolio</h1>
             </div>
             <Link
               href="/employer/job/new"
@@ -47,6 +47,9 @@ export default function EmployerJobsPage() {
               <span>Post New Job</span>
             </Link>
           </div>
+          <p className="text-sm text-slate-500 mb-4">
+            Prioritize requisitions by pipeline activity, follow-up urgency, and unacted strong matches.
+          </p>
           <EmployerJobsList />
         </div>
       </div>

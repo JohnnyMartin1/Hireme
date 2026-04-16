@@ -3,10 +3,8 @@ import { useFirebaseAuth } from "@/components/FirebaseAuthProvider";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useMemo } from "react";
 import { User, MessageSquare, ArrowRight, Loader2, ArrowLeft, Filter, Briefcase, X } from "lucide-react";
-import { getUserMessageThreads, getDocument, getThreadMessages, getEmployerJobs, getCompanyJobs } from '@/lib/firebase-firestore';
+import { getUserMessageThreads, getDocument, getThreadMessages, getEmployerJobs, getCompanyJobs, getPipelineEntryForJobCandidate, normalizePipelineStage } from '@/lib/firebase-firestore';
 import Link from 'next/link';
-import { db } from '@/lib/firebase';
-import { collection, query, where, getDocs, limit as firestoreLimit } from 'firebase/firestore';
 
 interface MessageThread {
   id: string;
@@ -22,6 +20,10 @@ interface ThreadWithParticipants {
   lastMessage?: any;
   jobId?: string;
   jobTitle?: string;
+  pipelineStage?: string;
+  nextFollowUpAt?: any;
+  followUpDue?: boolean;
+  awaitingLabel?: string;
 }
 
 interface Job {
@@ -112,40 +114,60 @@ export default function MessagesPage() {
               otherParticipant = otherProfile;
             }
             
-            // Check messages for job association (only for employers/recruiters)
+            // Check messages for workflow context (only for employers/recruiters)
             let jobId: string | undefined = undefined;
             let jobTitle: string | undefined = undefined;
+            let pipelineStage: string | undefined = undefined;
+            let nextFollowUpAt: any = null;
+            let followUpDue = false;
+            let lastMessage: any = null;
+            let awaitingLabel: string | undefined = undefined;
             
             if (profile && (profile.role === 'EMPLOYER' || profile.role === 'RECRUITER')) {
               try {
-                // Fetch a few messages to check for jobDetails
-                const messagesQuery = query(
-                  collection(db, 'messages'),
-                  where('threadId', '==', thread.id),
-                  firestoreLimit(10)
-                );
-                
-                const messagesSnapshot = await getDocs(messagesQuery);
-                
-                // Find first message with jobDetails
-                for (const msgDoc of messagesSnapshot.docs) {
-                  const msgData = msgDoc.data();
-                  if (msgData.jobDetails && msgData.jobDetails.jobId) {
-                    jobId = msgData.jobDetails.jobId;
-                    jobTitle = msgData.jobDetails.jobTitle;
-                    break;
+                const { data: threadMessages } = await getThreadMessages(thread.id);
+                if (threadMessages && threadMessages.length > 0) {
+                  lastMessage = threadMessages[threadMessages.length - 1];
+                  const mostRecentWithJob = [...threadMessages]
+                    .reverse()
+                    .find((msg: any) => msg?.jobDetails?.jobId);
+                  if (mostRecentWithJob?.jobDetails?.jobId) {
+                    jobId = mostRecentWithJob.jobDetails.jobId;
+                    jobTitle = mostRecentWithJob.jobDetails.jobTitle;
+                  }
+                  if (lastMessage?.senderId === user.uid) {
+                    awaitingLabel = 'Awaiting candidate';
+                  } else {
+                    awaitingLabel = 'Candidate replied';
                   }
                 }
               } catch (err) {
                 console.error('Error checking messages for job:', err);
               }
             }
+
+            if (jobId && otherId && (profile?.role === 'EMPLOYER' || profile?.role === 'RECRUITER')) {
+              const { data: pipelineEntry } = await getPipelineEntryForJobCandidate(jobId, otherId);
+              if (pipelineEntry) {
+                pipelineStage = normalizePipelineStage(pipelineEntry.stage);
+                nextFollowUpAt = pipelineEntry.nextFollowUpAt || null;
+                if (nextFollowUpAt) {
+                  const nextDate = nextFollowUpAt?.toDate ? nextFollowUpAt.toDate() : new Date(nextFollowUpAt);
+                  followUpDue = nextDate.getTime() < Date.now();
+                }
+              }
+            }
             
             return {
               thread: thread as any as MessageThread,
               otherParticipant,
+              lastMessage,
               jobId,
-              jobTitle
+              jobTitle,
+              pipelineStage,
+              nextFollowUpAt,
+              followUpDue,
+              awaitingLabel,
             } as ThreadWithParticipants;
           })
         );
@@ -208,36 +230,54 @@ export default function MessagesPage() {
 
   // Only show job filter for employers/recruiters
   const showJobFilter = (profile.role === 'EMPLOYER' || profile.role === 'RECRUITER') && jobs.length > 0;
+  const followUpDueCount = filteredThreads.filter((thread) => thread.followUpDue).length;
+  const awaitingCandidateCount = filteredThreads.filter((thread) => thread.awaitingLabel === 'Awaiting candidate').length;
 
   return (
-    <main className="min-h-screen bg-slate-50 mobile-safe-top mobile-safe-bottom">
-      {/* Header */}
-      <header className="sticky top-0 bg-white shadow-sm z-50 border-b border-slate-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
+    <main className="min-h-screen mobile-safe-top mobile-safe-bottom overflow-x-hidden w-full" style={{ background: 'linear-gradient(180deg, #E6F0FF 0%, #F8FAFC 100%)' }}>
+      <div className="w-full md:max-w-7xl md:mx-auto px-0 sm:px-3 md:px-6 lg:px-8 pt-12 sm:pt-16 md:pt-20 pb-4 sm:pb-6 md:pb-10 min-w-0">
+        {/* Back Link */}
+        <section className="mb-4 sm:mb-6 md:mb-8 px-2 sm:px-0">
           <Link
             href={dashboardUrl}
-            className="flex items-center gap-2 text-navy-800 hover:text-navy-600 transition-all duration-200 group px-3 py-2 rounded-lg hover:bg-sky-50 hover:shadow-md min-h-[44px]"
+            className="flex items-center text-navy-800 font-semibold hover:text-navy-900 transition-all duration-200 bg-sky-200/10 hover:bg-sky-200/20 px-3 sm:px-4 py-2 rounded-full w-fit min-h-[44px] text-sm sm:text-base hover:shadow-md hover:scale-105"
           >
-            <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform duration-200" />
-            <span className="font-medium text-sm hidden sm:inline">Back to Dashboard</span>
-            <span className="font-medium text-sm sm:hidden">Back</span>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            <span className="hidden sm:inline">Back to Dashboard</span>
+            <span className="sm:hidden">Back</span>
           </Link>
-          <Link href="/" className="shrink-0" aria-label="HireMe home">
-            <img src="/logo.svg" alt="HireMe logo" className="h-7 sm:h-8 w-auto" role="img" aria-label="HireMe logo" />
-          </Link>
-        </div>
-      </header>
+        </section>
 
-      <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 w-full">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-navy-900 mb-2">Messages</h1>
-          <p className="text-slate-600">Your conversations with candidates and employers</p>
-        </div>
+        {/* Page Intro */}
+        <section className="w-full min-w-0 bg-white/90 backdrop-blur-sm p-4 sm:p-6 md:p-8 rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-slate-200 mb-3 sm:mb-6 md:mb-8">
+          <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+            <div className="min-w-0">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1">Employer inbox</p>
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-navy-900 mb-2 break-words">Messages</h1>
+              <p className="text-sm sm:text-base md:text-lg text-slate-600 break-words">
+                Track candidate conversations with job and pipeline context in one place.
+              </p>
+              <p className="text-xs sm:text-sm text-slate-500 mt-2">
+                Open any thread to update stage, follow-up dates, and job workflow links.
+              </p>
+            </div>
+            <div className="grid grid-cols-3 gap-2 text-xs min-w-[260px]">
+              <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-slate-700">
+                Threads <span className="font-semibold text-navy-900">{filteredThreads.length}</span>
+              </div>
+              <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-rose-700">
+                Due <span className="font-semibold">{followUpDueCount}</span>
+              </div>
+              <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-amber-700">
+                Awaiting <span className="font-semibold">{awaitingCandidateCount}</span>
+              </div>
+            </div>
+          </div>
+        </section>
 
         {/* Job Filter - Only show for employers/recruiters */}
         {showJobFilter && (
-          <div className="mb-6 bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
+          <section className="w-full min-w-0 bg-white/90 backdrop-blur-sm p-4 sm:p-5 md:p-6 rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-slate-200 mb-3 sm:mb-6">
             <div className="flex items-center gap-4 flex-wrap">
               <div className="flex items-center gap-2">
                 <Filter className="h-5 w-5 text-slate-600" />
@@ -270,13 +310,14 @@ export default function MessagesPage() {
                 </button>
               )}
             </div>
-          </div>
+          </section>
         )}
 
         {/* Threads List */}
-        <div className="space-y-4">
+        <section className="w-full min-w-0">
+          <div className="space-y-3">
           {filteredThreads.length === 0 ? (
-            <div className="bg-white rounded-2xl shadow-xl border border-slate-100 p-12 text-center">
+            <div className="bg-white/90 backdrop-blur-sm rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-slate-200 p-8 sm:p-10 md:p-12 text-center">
               <MessageSquare className="h-16 w-16 text-slate-300 mx-auto mb-4" />
               <h3 className="text-lg font-semibold text-navy-900 mb-2">
                 {selectedJobId !== 'all' ? 'No messages for this job' : 'No messages yet'}
@@ -306,11 +347,11 @@ export default function MessagesPage() {
               )}
             </div>
           ) : (
-            filteredThreads.map(({ thread, otherParticipant, jobTitle }) => (
+            filteredThreads.map(({ thread, otherParticipant, jobId, jobTitle, pipelineStage, nextFollowUpAt, followUpDue, awaitingLabel, lastMessage }) => (
               <Link
                 key={thread.id}
-                href={`/messages/${thread.id}`}
-                className="block bg-white rounded-2xl shadow-xl border border-slate-100 p-6 hover:shadow-2xl hover:border-sky-200 transition-all"
+                href={jobId ? `/messages/${thread.id}?jobId=${encodeURIComponent(jobId)}` : `/messages/${thread.id}`}
+                className="block bg-white/90 backdrop-blur-sm rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-slate-200 p-4 sm:p-5 hover:shadow-md hover:border-sky-200 transition-all"
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4 flex-1">
@@ -339,13 +380,36 @@ export default function MessagesPage() {
                             {jobTitle}
                           </span>
                         )}
+                        {pipelineStage && (
+                          <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium bg-slate-100 text-slate-700 rounded-full">
+                            {pipelineStage}
+                          </span>
+                        )}
+                        {followUpDue && (
+                          <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium bg-rose-100 text-rose-700 rounded-full">
+                            Follow-up due
+                          </span>
+                        )}
                       </div>
                       <p className="text-sm text-slate-600">
                         {otherParticipant?.headline || otherParticipant?.role || 'User'}
                       </p>
+                      {lastMessage?.content && (
+                        <p className="text-xs text-slate-500 mt-1 line-clamp-1">
+                          {lastMessage.content}
+                        </p>
+                      )}
+                      {nextFollowUpAt && (
+                        <p className="text-xs text-slate-500 mt-1">
+                          Next follow-up: {new Date(nextFollowUpAt?.toDate ? nextFollowUpAt.toDate() : nextFollowUpAt).toLocaleDateString()}
+                        </p>
+                      )}
                       <p className="text-xs text-slate-500 mt-1">
                         Last activity: {thread.lastMessageAt ? new Date(thread.lastMessageAt.toDate ? thread.lastMessageAt.toDate() : thread.lastMessageAt).toLocaleDateString() : 'Recently'}
                       </p>
+                      {awaitingLabel && (
+                        <p className="text-xs text-slate-600 mt-1">{awaitingLabel}</p>
+                      )}
                     </div>
                   </div>
                   <ArrowRight className="h-5 w-5 text-slate-400 flex-shrink-0" />
@@ -353,7 +417,8 @@ export default function MessagesPage() {
               </Link>
             ))
           )}
-        </div>
+          </div>
+        </section>
       </div>
     </main>
   );

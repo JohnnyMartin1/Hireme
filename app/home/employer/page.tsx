@@ -14,7 +14,8 @@ import {
   FileText
 } from "lucide-react";
 import EmployerJobsList from "@/components/EmployerJobsList";
-import { getEmployerJobs, getCompanyJobs, getUserMessageThreads, getProfilesByRole } from '@/lib/firebase-firestore';
+import { getCandidateUrl, getJobMatchesUrl } from "@/lib/navigation";
+import { getDocument, getEmployerJobs, getCompanyJobs, getUserMessageThreads, getPipelineByJob, queryDocuments, where, normalizePipelineStage } from '@/lib/firebase-firestore';
 import CompanyRatingDisplay from '@/components/CompanyRatingDisplay';
 
 export default function EmployerHomePage() {
@@ -26,6 +27,19 @@ export default function EmployerHomePage() {
     activeJobs: 0
   });
   const [isLoadingStats, setIsLoadingStats] = useState(true);
+  const [attentionLoading, setAttentionLoading] = useState(true);
+  const [workQueueItems, setWorkQueueItems] = useState<any[]>([]);
+  const [workQueueCounts, setWorkQueueCounts] = useState({
+    followUpDue: 0,
+    awaitingResponse: 0,
+    newMatches: 0,
+  });
+  const [jobWorkflowSignals, setJobWorkflowSignals] = useState({
+    withPipeline: 0,
+    withContacted: 0,
+    withFollowUpDue: 0,
+    withStrongUnacted: 0,
+  });
 
   useEffect(() => {
     if (!loading && !user) {
@@ -99,6 +113,150 @@ export default function EmployerHomePage() {
     };
 
     fetchStats();
+  }, [user, profile]);
+
+  useEffect(() => {
+    const loadNeedsAttention = async () => {
+      if (!user || !profile || (profile.role !== 'EMPLOYER' && profile.role !== 'RECRUITER')) return;
+
+      setAttentionLoading(true);
+      try {
+        const { data: jobs, error: jobsError } = profile.companyId
+          ? await getCompanyJobs(profile.companyId, user.uid, profile.isCompanyOwner || false)
+          : await getEmployerJobs(user.uid);
+        if (jobsError || !jobs || jobs.length === 0) {
+          setWorkQueueItems([]);
+          setWorkQueueCounts({ followUpDue: 0, awaitingResponse: 0, newMatches: 0 });
+          return;
+        }
+
+        const now = Date.now();
+        const queueItems: any[] = [];
+        const seenJobCandidate = new Set<string>();
+        const candidateCache = new Map<string, string>();
+        let followUpDueCount = 0;
+        let awaitingResponseCount = 0;
+        let newMatchesCount = 0;
+        let jobsWithPipeline = 0;
+        let jobsWithContacted = 0;
+        let jobsWithFollowUpDue = 0;
+        let jobsWithStrongUnacted = 0;
+
+        const resolveCandidateName = async (candidateId: string) => {
+          if (candidateCache.has(candidateId)) return candidateCache.get(candidateId) as string;
+          const { data: candidate } = await getDocument('users', candidateId);
+          const candidateProfile = (candidate || {}) as any;
+          const candidateName = `${candidateProfile.firstName || ''} ${candidateProfile.lastName || ''}`.trim() || 'Candidate';
+          candidateCache.set(candidateId, candidateName);
+          return candidateName;
+        };
+
+        for (const job of jobs as any[]) {
+          const { data: entries } = await getPipelineByJob(job.id);
+          const pipelineCandidates = new Set<string>();
+          let jobHasFollowUpDue = false;
+          const normalizedEntries = (entries || []).map((entry: any) => ({
+            ...entry,
+            stage: normalizePipelineStage(entry.stage),
+          }));
+          if (normalizedEntries.length > 0) jobsWithPipeline += 1;
+          if (normalizedEntries.some((entry: any) => entry.stage === 'CONTACTED')) jobsWithContacted += 1;
+
+          for (const entry of normalizedEntries) {
+            pipelineCandidates.add(entry.candidateId);
+            const candidateName = await resolveCandidateName(entry.candidateId);
+            const dedupeKey = `${entry.jobId}:${entry.candidateId}`;
+            seenJobCandidate.add(dedupeKey);
+
+            const followUpRaw = (entry as any).nextFollowUpAt as any;
+            const nextFollowUpDate = followUpRaw?.toDate
+              ? followUpRaw.toDate()
+              : followUpRaw
+                ? new Date(followUpRaw)
+                : null;
+
+            if (nextFollowUpDate && nextFollowUpDate.getTime() < now) {
+              jobHasFollowUpDue = true;
+              followUpDueCount += 1;
+              queueItems.push({
+                id: entry.id,
+                candidateName,
+                candidateId: entry.candidateId,
+                jobId: entry.jobId,
+                jobTitle: (job as any).title || 'Job',
+                reason: 'Follow-up overdue',
+                href: getCandidateUrl(entry.candidateId, entry.jobId),
+                tone: 'rose',
+                priority: 1,
+              });
+            }
+
+            if (entry.stage === 'CONTACTED') {
+              awaitingResponseCount += 1;
+              queueItems.push({
+                id: entry.id,
+                candidateName,
+                candidateId: entry.candidateId,
+                jobId: entry.jobId,
+                jobTitle: (job as any).title || 'Job',
+                reason: 'Awaiting response',
+                href: getCandidateUrl(entry.candidateId, entry.jobId),
+                tone: 'amber',
+                priority: 2,
+              });
+            }
+          }
+          if (jobHasFollowUpDue) jobsWithFollowUpDue += 1;
+
+          const { data: matches } = await queryDocuments('jobMatches', [where('jobId', '==', job.id)]);
+          const strongUnactedMatches = ((matches || []) as any[])
+            .filter((m: any) => typeof m.overallScore === 'number' && m.overallScore >= 80)
+            .sort((a: any, b: any) => Number(b.overallScore || 0) - Number(a.overallScore || 0))
+            .slice(0, 4);
+
+          for (const match of strongUnactedMatches as any[]) {
+            if (!match.candidateId || pipelineCandidates.has(match.candidateId)) continue;
+            const dedupeKey = `${job.id}:${match.candidateId}`;
+            if (seenJobCandidate.has(dedupeKey)) continue;
+            seenJobCandidate.add(dedupeKey);
+            const candidateName = await resolveCandidateName(match.candidateId);
+            newMatchesCount += 1;
+            queueItems.push({
+              id: `new-${job.id}-${match.candidateId}`,
+              candidateName,
+              candidateId: match.candidateId,
+              jobId: job.id,
+              jobTitle: (job as any).title || 'Job',
+              reason: 'New match to review',
+              href: getJobMatchesUrl(job.id),
+              tone: 'sky',
+              priority: 3,
+            });
+          }
+          if (strongUnactedMatches.some((match: any) => match.candidateId && !pipelineCandidates.has(match.candidateId))) {
+            jobsWithStrongUnacted += 1;
+          }
+        }
+
+        queueItems.sort((a, b) => a.priority - b.priority);
+        setWorkQueueItems(queueItems.slice(0, 12));
+        setWorkQueueCounts({
+          followUpDue: followUpDueCount,
+          awaitingResponse: awaitingResponseCount,
+          newMatches: newMatchesCount,
+        });
+        setJobWorkflowSignals({
+          withPipeline: jobsWithPipeline,
+          withContacted: jobsWithContacted,
+          withFollowUpDue: jobsWithFollowUpDue,
+          withStrongUnacted: jobsWithStrongUnacted,
+        });
+      } finally {
+        setAttentionLoading(false);
+      }
+    };
+
+    loadNeedsAttention();
   }, [user, profile]);
 
   if (loading) {
@@ -205,6 +363,81 @@ export default function EmployerHomePage() {
               <p className="text-slate-500 font-medium mt-1 text-sm sm:text-base">Active Jobs</p>
             </div>
           </Link>
+        </section>
+
+        {/* Your Work Today */}
+        <section className="w-full min-w-0 bg-white p-4 sm:p-6 md:p-8 rounded-none sm:rounded-xl md:rounded-2xl shadow-md border-x-0 sm:border border-slate-200 mb-3 sm:mb-6 md:mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-5">
+            <div>
+              <h2 className="text-base sm:text-lg md:text-xl font-bold text-navy-900">Your work today</h2>
+              <p className="text-xs sm:text-sm text-slate-500">Start here: follow-ups, responses, and new high-fit candidates that need action.</p>
+            </div>
+            <span className="text-xs sm:text-sm text-slate-500 font-medium">
+              {attentionLoading ? 'Loading...' : `${workQueueItems.length} items ready`}
+            </span>
+          </div>
+
+          {attentionLoading ? (
+            <p className="text-sm text-slate-500">Loading recruiter actions...</p>
+          ) : (
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-4">
+                <div className="rounded-lg border border-rose-100 bg-rose-50 px-3 py-2 text-xs text-rose-800">
+                  Follow-ups overdue: <span className="font-semibold">{workQueueCounts.followUpDue}</span>
+                </div>
+                <div className="rounded-lg border border-amber-100 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                  Awaiting response: <span className="font-semibold">{workQueueCounts.awaitingResponse}</span>
+                </div>
+                <div className="rounded-lg border border-sky-100 bg-sky-50 px-3 py-2 text-xs text-sky-800">
+                  New strong matches: <span className="font-semibold">{workQueueCounts.newMatches}</span>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 mb-4">
+                <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
+                  Jobs with pipeline: <span className="font-semibold">{jobWorkflowSignals.withPipeline}</span>
+                </div>
+                <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
+                  Jobs with contacted: <span className="font-semibold">{jobWorkflowSignals.withContacted}</span>
+                </div>
+                <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
+                  Jobs with follow-up due: <span className="font-semibold">{jobWorkflowSignals.withFollowUpDue}</span>
+                </div>
+                <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
+                  Jobs with strong unacted matches: <span className="font-semibold">{jobWorkflowSignals.withStrongUnacted}</span>
+                </div>
+              </div>
+              {workQueueItems.length === 0 ? (
+                <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-6 text-center">
+                  <p className="text-sm font-medium text-navy-900">Queue is clear</p>
+                  <p className="text-xs text-slate-500 mt-1">No urgent follow-ups or pending match actions right now.</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {workQueueItems.map((item) => (
+                    <Link
+                      key={item.id}
+                      href={item.href}
+                      className={`block rounded-lg border px-3 py-2.5 text-sm transition-colors ${
+                        item.tone === 'rose'
+                          ? 'border-rose-200 bg-rose-50 text-rose-900 hover:bg-rose-100'
+                          : item.tone === 'amber'
+                            ? 'border-amber-200 bg-amber-50 text-amber-900 hover:bg-amber-100'
+                            : 'border-sky-200 bg-sky-50 text-sky-900 hover:bg-sky-100'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="font-semibold truncate">{item.candidateName} · {item.jobTitle}</p>
+                          <p className="text-xs opacity-80">{item.reason}</p>
+                        </div>
+                        <span className="text-xs font-semibold">Open</span>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </>
+          )}
         </section>
 
         {/* Main Content Grid */}

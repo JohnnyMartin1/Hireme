@@ -198,9 +198,10 @@ export default function ManageRecruitersPage() {
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pb-6 sm:pb-8 lg:pb-10 min-w-0">
         {/* Page Title */}
-        <div className="mb-8 lg:mb-12">
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-navy-900 mb-4 tracking-tight">Manage Recruiters</h1>
-          <p className="text-lg sm:text-xl text-slate-600 max-w-3xl leading-relaxed">Invite and manage recruiters for your company</p>
+        <div className="mb-8 lg:mb-10">
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1">Company settings</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-navy-900 mb-2 tracking-tight">Manage Recruiters</h1>
+          <p className="text-base sm:text-lg text-slate-600 max-w-3xl leading-relaxed">Invite and manage recruiters for your company</p>
         </div>
 
         {/* Invite Section */}

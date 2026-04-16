@@ -5,6 +5,7 @@ import { useFirebaseAuth } from '@/components/FirebaseAuthProvider';
 import { getDocument } from '@/lib/firebase-firestore';
 import { Loader2, MapPin, Building, DollarSign, Calendar, Tag, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
+import { getDashboardUrl, getJobMatchesUrl, getJobPipelineUrl } from '@/lib/navigation';
 
 export default function ViewJobPage({ params }: { params: { id: string } }) {
   const router = useRouter();
@@ -108,14 +109,8 @@ export default function ViewJobPage({ params }: { params: { id: string } }) {
             <span className="font-medium text-sm sm:text-base hidden sm:inline">Back to Jobs</span>
             <span className="font-medium text-sm sm:text-base sm:hidden">Back</span>
           </Link>
-          <Link href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-navy-800 rounded-lg flex items-center justify-center">
-              <svg width="20" height="20" viewBox="0 0 269 274" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M111.028 0C172.347 0.000238791 222.055 51.647 222.055 115.356C222.055 140.617 214.238 163.98 200.983 182.981L258.517 242.758L238.036 264.036L181.077 204.857C161.97 221.02 137.589 230.713 111.028 230.713C49.7092 230.713 2.76862e-05 179.066 0 115.356C0 51.6468 49.7092 0 111.028 0Z" fill="white"/>
-                <path d="M205.69 115.392C205.69 170.42 163.308 215.029 111.028 215.029C58.748 215.029 16.3666 170.42 16.3666 115.392C16.3666 60.3646 58.748 15.7559 111.028 15.7559C163.308 15.7559 205.69 60.3646 205.69 115.392Z" fill="#4F86F7"/>
-              </svg>
-            </div>
-            <span className="text-xl font-bold text-navy-900">HireMe</span>
+          <Link href="/" className="shrink-0" aria-label="HireMe home">
+            <img src="/logo.svg" alt="HireMe logo" className="h-7 sm:h-8 w-auto" role="img" aria-label="HireMe logo" />
           </Link>
         </div>
       </header>
@@ -206,10 +201,17 @@ export default function ViewJobPage({ params }: { params: { id: string } }) {
           <div className="flex flex-wrap gap-4 pt-6 border-t border-gray-200">
             <button
               type="button"
-              onClick={() => router.push(`/employer/job/${params.id}/matches`)}
+              onClick={() => router.push(getJobMatchesUrl(params.id))}
               className="px-6 py-3 bg-navy-800 text-white rounded-lg hover:bg-navy-700 transition-colors"
             >
               Top Matches
+            </button>
+            <button
+              type="button"
+              onClick={() => router.push(getJobPipelineUrl(params.id))}
+              className="px-6 py-3 bg-violet-600 text-white rounded-lg hover:bg-violet-700 transition-colors"
+            >
+              Pipeline
             </button>
             <button
               type="button"
@@ -220,7 +222,7 @@ export default function ViewJobPage({ params }: { params: { id: string } }) {
             </button>
             <button
               type="button"
-              onClick={() => router.push('/home/employer')}
+              onClick={() => router.push(getDashboardUrl())}
               className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
             >
               Back to Dashboard
