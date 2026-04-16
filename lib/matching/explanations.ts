@@ -65,6 +65,7 @@ type DebugLike = {
   domainIndustryScore?: number;
   toolsOverlapScore?: number;
   majorAlignmentScore?: number;
+  authorizationScore?: number;
   gpaNumericFitScore?: number;
   readinessScore?: number;
   roleDistance?: string;
@@ -72,7 +73,7 @@ type DebugLike = {
   candidateCanonicalRole?: string;
   penaltiesApplied?: string[];
   scoreCapsApplied?: string[];
-  formulaInputs?: {
+  formulaInputs?: Record<string, number | null | undefined> & {
     anchorSkills?: number;
   };
 };
@@ -90,6 +91,22 @@ function anchorCoverageScore(scores: { debug?: DebugLike }): number | null {
     return Math.round((matched / total) * 100);
   }
 
+  return null;
+}
+
+function authorizationScore(scores: { debug?: DebugLike }): number | null {
+  const raw = scores.debug?.authorizationScore;
+  if (typeof raw === 'number' && Number.isFinite(raw)) {
+    return Math.max(0, Math.min(100, Math.round(raw)));
+  }
+  return null;
+}
+
+function majorAlignmentScore(scores: { debug?: DebugLike }): number | null {
+  const raw = scores.debug?.majorAlignmentScore;
+  if (typeof raw === 'number' && Number.isFinite(raw)) {
+    return Math.max(0, Math.min(100, Math.round(raw)));
+  }
   return null;
 }
 
@@ -183,6 +200,7 @@ function buildRecruiterSummary(
 ): RecruiterSummary {
   const d = scores.debug;
   const anchorScore = anchorCoverageScore(scores);
+  const authScore = authorizationScore(scores);
   const strengthCandidates: Array<{ priority: number; text: string }> = [];
   const gapCandidates: Array<{ priority: number; text: string }> = [];
 
@@ -283,12 +301,12 @@ function buildRecruiterSummary(
     });
   }
 
-  if ((scores.authorizationScore ?? 0) >= 80) {
+  if ((authScore ?? 0) >= 80) {
     strengthCandidates.push({
       priority: 58,
       text: 'Work authorization appears to align with role requirements.',
     });
-  } else if ((scores.authorizationScore ?? 0) <= 25) {
+  } else if ((authScore ?? 0) <= 25) {
     gapCandidates.push({
       priority: 66,
       text: 'Work authorization constraints may limit near-term hiring options.',
@@ -356,6 +374,8 @@ export function buildMatchExplanation(
   const gaps: string[] = [];
   const d = scores.debug;
   const anchorScore = anchorCoverageScore(scores);
+  const authScore = authorizationScore(scores);
+  const majorScore = majorAlignmentScore(scores);
   const matchedSkills = presentableMatchedSkills(job, candidate);
   const matchedKeys = new Set(matchedSkills.map((m) => skillCompareKey(m)));
 
@@ -378,10 +398,10 @@ export function buildMatchExplanation(
     { key: 'experience', label: 'experience evidence', score: d?.experienceEvidenceScore ?? 0 },
     { key: 'domain', label: 'industry / domain overlap', score: scores.industryScore },
     { key: 'gpa', label: 'GPA vs minimum', score: scores.gpaScore },
-    { key: 'major', label: 'major / education requirements', score: scores.majorFitScore ?? 0 },
+    { key: 'major', label: 'major / education requirements', score: majorScore ?? 0 },
     { key: 'location', label: 'location', score: scores.locationScore },
     { key: 'jobType', label: 'job type preference', score: scores.preferenceScore },
-    { key: 'auth', label: 'work authorization', score: scores.authorizationScore ?? 0 },
+    { key: 'auth', label: 'work authorization', score: authScore ?? 0 },
     { key: 'readiness', label: 'readiness (resume, portfolio, video)', score: d?.readinessScore ?? 0 },
   ].sort((a, b) => b.score - a.score);
 
@@ -441,8 +461,8 @@ export function buildMatchExplanation(
     } else if (scores.gpaScore < 45) {
       gaps.push(`GPA is below or unclear versus the job minimum (${scores.gpaScore}/100).`);
     }
-  } else if ((scores.majorFitScore ?? 0) >= 70) {
-    strengths.push(`Education / major signals align (${scores.majorFitScore}/100).`);
+  } else if ((majorScore ?? 0) >= 70) {
+    strengths.push(`Education / major signals align (${majorScore}/100).`);
   }
 
   if (scores.locationScore >= 80) {
@@ -461,10 +481,10 @@ export function buildMatchExplanation(
     gaps.push(`Job type may not match the candidate's selected job types (${scores.preferenceScore}/100).`);
   }
 
-  if ((scores.authorizationScore ?? 0) <= 25) {
-    gaps.push(`Work authorization / sponsorship fit is poor (${scores.authorizationScore}/100).`);
-  } else if ((scores.authorizationScore ?? 0) >= 80) {
-    strengths.push(`Work authorization compatibility looks strong (${scores.authorizationScore}/100).`);
+  if ((authScore ?? 0) <= 25) {
+    gaps.push(`Work authorization / sponsorship fit is poor (${authScore}/100).`);
+  } else if ((authScore ?? 0) >= 80) {
+    strengths.push(`Work authorization compatibility looks strong (${authScore}/100).`);
   }
 
   if ((d?.readinessScore ?? 0) >= 70) {

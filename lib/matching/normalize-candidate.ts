@@ -312,6 +312,9 @@ export function normalizeCandidateForMatching(
   const normalizedSummary = normalizeWhitespaceLower(
     [desiredRolesText, richText, ...normalizedSkills, ...normalizedIndustries, ...normalizedFunctions].join(' ')
   );
+  const roleDetectionText = normalizeWhitespaceLower(
+    [headline, desiredRolesText, targetRolesV2.join(' '), richText, experience, structuredExperienceText].join(' ')
+  );
 
   return {
     candidateId,
@@ -338,6 +341,7 @@ export function normalizeCandidateForMatching(
     mergedSkills: normalizedSkills,
     desiredRolesText: desiredRolesText.toLowerCase(),
     roleSignals: normalizedRoles,
+    roleDetectionText,
     matchingText: normalizedSummary,
     careerInterests: careerInterests.map((s) => s.toLowerCase()),
     location: locationStr,
