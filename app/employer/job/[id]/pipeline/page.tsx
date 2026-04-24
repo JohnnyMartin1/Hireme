@@ -2,11 +2,32 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { Loader2, MessageSquare } from "lucide-react";
-import { getCandidateUrl, getDashboardUrl, getJobMatchesUrl, getJobOverviewUrl, getMessagesUrl } from "@/lib/navigation";
+import AddToTalentPoolButton from "@/components/employer/AddToTalentPoolButton";
+import { getCandidateUrl, getCandidatesSearchUrl, getDashboardUrl, getJobCompareUrl, getJobMatchesUrl, getJobOverviewUrl, getMessagesUrl } from "@/lib/navigation";
 import { useFirebaseAuth } from "@/components/FirebaseAuthProvider";
-import { PIPELINE_STAGES, normalizePipelineStage, type PipelineStage } from "@/lib/firebase-firestore";
+import { PIPELINE_STAGES, getRecruiterNotes, normalizePipelineStage, type PipelineStage } from "@/lib/firebase-firestore";
+import {
+  fetchJobEvaluationCriteria,
+  fetchJobEvaluations,
+  fetchJobReviews,
+  upsertCandidateReview,
+} from "@/lib/decision-client";
+import {
+  fetchJobInterviews,
+  fetchJobSequences,
+  patchJobSequence,
+  upsertJobSequence,
+} from "@/lib/communication-client";
+import {
+  summarizeCandidateEvaluations,
+  reviewStatusLabel,
+  type CandidateEvaluation,
+  type CandidateReviewRequest,
+  type JobEvaluationCriterion,
+} from "@/lib/hiring-decision";
+import { formatRecruiterAttentionLine } from "@/lib/communication-status";
 import type { RecruiterSummary } from "@/types/matching";
 
 type MatchScoreRow = {
@@ -28,6 +49,15 @@ type PipelineCandidateCard = {
   keyRisk: string | null;
   lastContactedAt?: any;
   nextFollowUpAt?: any;
+  noteCount?: number;
+  latestNote?: string | null;
+  evaluationCount?: number;
+  evaluationAvgRating?: number | null;
+  reviewStatus?: string | null;
+  waitingOn?: string;
+  sequenceStatus?: string | null;
+  interviewAt?: any;
+  interviewStatus?: string | null;
 };
 
 function dateInputValue(v: any): string {
@@ -51,6 +81,17 @@ function isFollowUpDue(v: any): boolean {
   return asDate.getTime() < Date.now();
 }
 
+function isFollowUpSoon(v: any): boolean {
+  if (!v) return false;
+  const asDate = v?.toDate
+    ? v.toDate()
+    : typeof v?._seconds === "number"
+      ? new Date(v._seconds * 1000)
+      : new Date(v);
+  const diff = asDate.getTime() - Date.now();
+  return diff >= 0 && diff <= 2 * 24 * 60 * 60 * 1000;
+}
+
 function formatDate(v: any): string {
   if (!v) return "";
   const asDate = v?.toDate
@@ -65,6 +106,7 @@ function formatDate(v: any): string {
 export default function JobPipelinePage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const jobId = params.id as string;
   const { user, profile } = useFirebaseAuth();
 
@@ -72,6 +114,9 @@ export default function JobPipelinePage() {
   const [jobTitle, setJobTitle] = useState<string>("");
   const [cards, setCards] = useState<PipelineCandidateCard[]>([]);
   const [busyEntryId, setBusyEntryId] = useState<string | null>(null);
+  const [reviewBusyCandidateId, setReviewBusyCandidateId] = useState<string | null>(null);
+  const [sequenceBusyCandidateId, setSequenceBusyCandidateId] = useState<string | null>(null);
+  const [selectedCandidateIds, setSelectedCandidateIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (!user || !profile || (profile.role !== "EMPLOYER" && profile.role !== "RECRUITER")) {
@@ -86,10 +131,15 @@ export default function JobPipelinePage() {
       const token = await user.getIdToken();
       const auth = { Authorization: `Bearer ${token}` };
 
-      const [jobRes, pipelineRes, matchesRes] = await Promise.all([
+      const [jobRes, pipelineRes, matchesRes, criteriaRes, evaluationsRes, reviewsRes, sequenceRes, interviewsRes] = await Promise.all([
         fetch(`/api/job/${jobId}`, { headers: auth }),
         fetch(`/api/job/${jobId}/pipeline`, { headers: auth }),
         fetch(`/api/job/${jobId}/matches`, { headers: auth }),
+        fetchJobEvaluationCriteria(jobId, token),
+        fetchJobEvaluations(jobId, token),
+        fetchJobReviews(jobId, token),
+        fetchJobSequences(jobId, token),
+        fetchJobInterviews(jobId, token),
       ]);
 
       const jobPayload = await jobRes.json().catch(() => ({}));
@@ -104,6 +154,42 @@ export default function JobPipelinePage() {
 
       const matchesJson = await matchesRes.json().catch(() => ({}));
       const matchesList: MatchScoreRow[] = matchesRes.ok && Array.isArray(matchesJson.matches) ? matchesJson.matches : [];
+      const criteria = criteriaRes.ok ? (criteriaRes.data.criteria || []) : [];
+      const evaluations = evaluationsRes.ok ? ((evaluationsRes.data.evaluations || []) as CandidateEvaluation[]) : [];
+      const reviews = reviewsRes.ok ? ((reviewsRes.data.reviews || []) as CandidateReviewRequest[]) : [];
+      const sequences = sequenceRes.ok ? (sequenceRes.data.sequences || []) : [];
+      const interviews = interviewsRes.ok ? (interviewsRes.data.interviews || []) : [];
+      const activeCriteria = [...criteria]
+        .filter((c: JobEvaluationCriterion) => c.active !== false)
+        .sort((a: JobEvaluationCriterion, b: JobEvaluationCriterion) => Number(a.order || 0) - Number(b.order || 0));
+
+      const evalsByCandidate = new Map<string, CandidateEvaluation[]>();
+      for (const ev of evaluations) {
+        const cid = String(ev.candidateId || "");
+        if (!cid) continue;
+        const list = evalsByCandidate.get(cid) || [];
+        list.push(ev);
+        evalsByCandidate.set(cid, list);
+      }
+      const reviewByCandidate = new Map<string, CandidateReviewRequest>();
+      for (const rv of reviews) {
+        const cid = String(rv.candidateId || "");
+        if (!cid) continue;
+        if (!reviewByCandidate.has(cid)) reviewByCandidate.set(cid, rv);
+      }
+      const sequenceByCandidate = new Map<string, any>();
+      for (const seq of sequences as any[]) {
+        const cid = String(seq?.candidateId || "");
+        if (!cid) continue;
+        if (!sequenceByCandidate.has(cid)) sequenceByCandidate.set(cid, seq);
+      }
+      const interviewByCandidate = new Map<string, any>();
+      for (const interview of interviews as any[]) {
+        const cid = String(interview?.candidateId || "");
+        if (!cid) continue;
+        if (String(interview?.status || "") === "CANCELLED") continue;
+        if (!interviewByCandidate.has(cid)) interviewByCandidate.set(cid, interview);
+      }
 
       const matchDetailsByCandidate = new Map<string, {
         score: number | null;
@@ -143,7 +229,51 @@ export default function JobPipelinePage() {
         nextFollowUpAt: entry.nextFollowUpAt,
       }));
 
-      setCards(mappedCards);
+      const notePairs = await Promise.all(
+        mappedCards.map(async (card) => {
+          const { data: notes } = await getRecruiterNotes(jobId, card.candidateId);
+          const list = notes || [];
+          return [
+            card.candidateId,
+            {
+              count: list.length,
+              latest: list[0]?.body ? String(list[0].body).slice(0, 100) : null,
+            },
+          ] as const;
+        })
+      );
+      const noteMetaByCandidate = Object.fromEntries(notePairs) as Record<string, { count: number; latest: string | null }>;
+
+      setCards(
+        mappedCards.map((card) => ({
+          ...card,
+          noteCount: noteMetaByCandidate[card.candidateId]?.count || 0,
+          latestNote: noteMetaByCandidate[card.candidateId]?.latest || null,
+          evaluationCount: summarizeCandidateEvaluations(
+            evalsByCandidate.get(card.candidateId) || [],
+            activeCriteria
+          ).count,
+          evaluationAvgRating: summarizeCandidateEvaluations(
+            evalsByCandidate.get(card.candidateId) || [],
+            activeCriteria
+          ).avgRating,
+          reviewStatus: reviewByCandidate.get(card.candidateId)?.status || null,
+          waitingOn: formatRecruiterAttentionLine({
+            pipelineStage: card.stage,
+            hasEvaluation:
+              summarizeCandidateEvaluations(evalsByCandidate.get(card.candidateId) || [], activeCriteria).count > 0,
+            isEvaluationComplete:
+              summarizeCandidateEvaluations(evalsByCandidate.get(card.candidateId) || [], activeCriteria).isComplete,
+            reviewStatus: reviewByCandidate.get(card.candidateId)?.status,
+            nextFollowUpAt: card.nextFollowUpAt,
+            interviewAt: interviewByCandidate.get(card.candidateId)?.scheduledAt,
+            sequence: sequenceByCandidate.get(card.candidateId) || null,
+          }),
+          sequenceStatus: sequenceByCandidate.get(card.candidateId)?.status || null,
+          interviewAt: interviewByCandidate.get(card.candidateId)?.scheduledAt || null,
+          interviewStatus: interviewByCandidate.get(card.candidateId)?.status || null,
+        }))
+      );
     } catch (e) {
       console.error("Pipeline page load failed:", e);
       setCards([]);
@@ -163,6 +293,7 @@ export default function JobPipelinePage() {
       CONTACTED: [],
       RESPONDED: [],
       INTERVIEW: [],
+      FINALIST: [],
       REJECTED: [],
     };
     for (const c of cards) {
@@ -170,6 +301,17 @@ export default function JobPipelinePage() {
     }
     return out;
   }, [cards]);
+  const orderedStages: PipelineStage[] = useMemo(
+    () => ["SHORTLIST", "NEW", "CONTACTED", "RESPONDED", "INTERVIEW", "FINALIST", "REJECTED"],
+    []
+  );
+  const highlightShortlist = (searchParams.get("stage") || "").toUpperCase() === "SHORTLIST";
+
+  const launchCompare = () => {
+    const ids = Array.from(selectedCandidateIds).slice(0, 4);
+    if (ids.length < 2) return;
+    router.push(getJobCompareUrl(jobId, ids));
+  };
 
   const handleMoveStage = async (entryId: string, candidateId: string, stage: PipelineStage) => {
     if (!user) return;
@@ -216,6 +358,60 @@ export default function JobPipelinePage() {
     }
   };
 
+  const handleRequestReview = async (candidateId: string) => {
+    if (!user) return;
+    setReviewBusyCandidateId(candidateId);
+    try {
+      const token = await user.getIdToken();
+      const res = await upsertCandidateReview(
+        jobId,
+        {
+          candidateId,
+          status: "REQUESTED",
+        },
+        token
+      );
+      if (!res.ok) return;
+      await load();
+    } finally {
+      setReviewBusyCandidateId(null);
+    }
+  };
+
+  const handleStartSequence = async (candidateId: string) => {
+    if (!user) return;
+    setSequenceBusyCandidateId(candidateId);
+    try {
+      const token = await user.getIdToken();
+      await upsertJobSequence(jobId, token, {
+        candidateId,
+        steps: [
+          { delayDays: 0, body: "Hi! Reaching out with next steps for this role." },
+          { delayDays: 3, body: "Friendly follow-up in case this got buried." },
+        ],
+      });
+      await load();
+    } finally {
+      setSequenceBusyCandidateId(null);
+    }
+  };
+
+  const handleStopSequence = async (candidateId: string) => {
+    if (!user) return;
+    setSequenceBusyCandidateId(candidateId);
+    try {
+      const token = await user.getIdToken();
+      await patchJobSequence(jobId, token, {
+        candidateId,
+        status: "STOPPED",
+        stoppedReason: "MANUAL_STOP",
+      });
+      await load();
+    } finally {
+      setSequenceBusyCandidateId(null);
+    }
+  };
+
   if (!user || !profile) return null;
 
   return (
@@ -223,8 +419,11 @@ export default function JobPipelinePage() {
       <header className="sticky top-0 bg-white/95 backdrop-blur-sm shadow-sm z-40 border-b border-slate-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Pipeline board</p>
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Pipeline</p>
             <p className="text-sm font-semibold text-navy-900">{jobTitle || "Job pipeline"}</p>
+            <p className="text-xs text-slate-500 mt-1 max-w-xl">
+              Active candidates for this job (all stages you are still working). Shortlist marks serious contenders; talent pools live under Pools in the main nav.
+            </p>
           </div>
           <div className="flex flex-wrap items-center gap-2 text-sm">
             <Link
@@ -245,11 +444,32 @@ export default function JobPipelinePage() {
             >
               Dashboard
             </Link>
+            <Link
+              href={getCandidatesSearchUrl(jobId)}
+              className="inline-flex items-center px-3 py-2 rounded-lg border border-slate-200 bg-white text-navy-800 font-medium hover:bg-slate-50"
+            >
+              Find more candidates
+            </Link>
+            <button
+              type="button"
+              onClick={launchCompare}
+              disabled={selectedCandidateIds.size < 2}
+              className="inline-flex items-center px-3 py-2 rounded-lg border border-violet-200 bg-violet-50 text-violet-800 font-medium hover:bg-violet-100 disabled:opacity-50"
+            >
+              Compare selected {selectedCandidateIds.size > 0 ? `(${selectedCandidateIds.size})` : ""}
+            </button>
           </div>
         </div>
       </header>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
+        <section className={`mb-4 rounded-xl border p-3 text-sm ${
+          highlightShortlist ? "border-violet-300 bg-violet-50 text-violet-900" : "border-slate-200 bg-white text-slate-700"
+        }`}>
+          <span className="font-semibold">Shortlist is your active working set.</span> Keep top contenders in
+          <span className="font-semibold"> SHORTLIST </span>
+          and launch compare when you have 2+ ready to decide.
+        </section>
         {loading ? (
           <div className="flex items-center justify-center py-24 text-slate-600">
             <Loader2 className="h-8 w-8 animate-spin mr-2" />
@@ -257,10 +477,15 @@ export default function JobPipelinePage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-            {PIPELINE_STAGES.map((stage) => (
-              <section key={stage} className="bg-white rounded-xl border border-slate-200 p-4 min-h-[280px]">
+            {orderedStages.map((stage) => (
+              <section
+                key={stage}
+                className={`bg-white rounded-xl border p-4 min-h-[280px] ${
+                  stage === "SHORTLIST" ? "border-violet-200 ring-1 ring-violet-100" : "border-slate-200"
+                }`}
+              >
                 <div className="flex items-center justify-between mb-3">
-                  <h2 className="font-semibold text-navy-900">{stage}</h2>
+                  <h2 className={`font-semibold ${stage === "SHORTLIST" ? "text-violet-800" : "text-navy-900"}`}>{stage}</h2>
                   <span className="text-xs text-slate-500">{grouped[stage].length}</span>
                 </div>
                 <div className="space-y-3">
@@ -271,6 +496,24 @@ export default function JobPipelinePage() {
                   ) : (
                     grouped[stage].map((card) => (
                       <article key={card.entryId} className="rounded-lg border border-slate-200 p-3 bg-slate-50">
+                        <div className="mb-1">
+                          <label className="inline-flex items-center gap-2 text-xs text-slate-600">
+                            <input
+                              type="checkbox"
+                              checked={selectedCandidateIds.has(card.candidateId)}
+                              onChange={() =>
+                                setSelectedCandidateIds((prev) => {
+                                  const next = new Set(prev);
+                                  if (next.has(card.candidateId)) next.delete(card.candidateId);
+                                  else next.add(card.candidateId);
+                                  return next;
+                                })
+                              }
+                              className="h-3.5 w-3.5 rounded border-slate-300 text-violet-600 focus:ring-violet-400"
+                            />
+                            Add to compare
+                          </label>
+                        </div>
                         <div className="flex items-start justify-between gap-2">
                           <Link href={getCandidateUrl(card.candidateId, jobId)} className="font-medium text-navy-900 hover:underline">
                             {card.name}
@@ -280,7 +523,11 @@ export default function JobPipelinePage() {
                           </span>
                         </div>
                         <div className="mt-1 flex items-center justify-between gap-2">
-                          <span className="inline-flex items-center rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-semibold text-slate-700">
+                          <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold ${
+                            card.stage === "SHORTLIST"
+                              ? "border-violet-200 bg-violet-50 text-violet-700"
+                              : "border-slate-200 bg-white text-slate-700"
+                          }`}>
                             {card.stage}
                           </span>
                           <div className="flex items-center gap-2">
@@ -297,6 +544,10 @@ export default function JobPipelinePage() {
                               <MessageSquare className="h-3 w-3" />
                               Inbox
                             </Link>
+                            <AddToTalentPoolButton
+                              candidateId={card.candidateId}
+                              buttonClassName="inline-flex items-center gap-1 rounded border border-slate-200 bg-white px-2 py-0.5 text-[11px] font-medium text-navy-700 hover:bg-slate-50"
+                            />
                           </div>
                         </div>
 
@@ -323,6 +574,50 @@ export default function JobPipelinePage() {
                             <p>
                               Next follow-up: {formatDate(card.nextFollowUpAt)}
                             </p>
+                          )}
+                        </div>
+                        <div className="mt-2 flex items-center gap-2">
+                          <span className={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold ${
+                            (card.noteCount || 0) > 0
+                              ? "border-indigo-200 bg-indigo-50 text-indigo-700"
+                              : "border-slate-200 bg-white text-slate-500"
+                          }`}>
+                            {(card.noteCount || 0) > 0 ? `${card.noteCount} note${card.noteCount === 1 ? "" : "s"}` : "No notes"}
+                          </span>
+                          {card.latestNote && (
+                            <span className="text-[10px] text-slate-500 truncate" title={card.latestNote}>
+                              {card.latestNote}
+                            </span>
+                          )}
+                        </div>
+                        <div className="mt-1 flex flex-wrap items-center gap-2">
+                          <span className={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold ${
+                            (card.evaluationCount || 0) > 0
+                              ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                              : "border-amber-200 bg-amber-50 text-amber-700"
+                          }`}>
+                            {(card.evaluationCount || 0) > 0
+                              ? `Eval ${card.evaluationCount}${card.evaluationAvgRating == null ? "" : ` · ${card.evaluationAvgRating.toFixed(1)}/5`}`
+                              : "No evaluation"}
+                          </span>
+                          <span className="inline-flex rounded-full border border-violet-200 bg-violet-50 px-2 py-0.5 text-[10px] font-semibold text-violet-700">
+                            {reviewStatusLabel(card.reviewStatus)}
+                          </span>
+                          <span className="text-[10px] text-slate-500">Waiting on {card.waitingOn || "in progress"}</span>
+                          {card.sequenceStatus && (
+                            <span className={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold ${
+                              card.sequenceStatus === "ACTIVE"
+                                ? "border-violet-200 bg-violet-50 text-violet-700"
+                                : "border-slate-200 bg-white text-slate-600"
+                            }`}>
+                              Sequence: {card.sequenceStatus}
+                            </span>
+                          )}
+                          {card.interviewAt && (
+                            <span className="inline-flex rounded-full border border-indigo-200 bg-indigo-50 px-2 py-0.5 text-[10px] font-semibold text-indigo-700">
+                              Interview ({String(card.interviewStatus || "SCHEDULED").toLowerCase()}):{" "}
+                              {formatDate(card.interviewAt)}
+                            </span>
                           )}
                         </div>
 
@@ -356,6 +651,33 @@ export default function JobPipelinePage() {
                             Follow-up due
                           </div>
                         )}
+                        {!isFollowUpDue(card.nextFollowUpAt) && isFollowUpSoon(card.nextFollowUpAt) && (
+                          <div className="mt-2 inline-flex rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs text-amber-700 font-medium">
+                            Follow-up due soon
+                          </div>
+                        )}
+                        <div className="mt-2">
+                          <button
+                            type="button"
+                            onClick={() => handleRequestReview(card.candidateId)}
+                            disabled={reviewBusyCandidateId === card.candidateId}
+                            className="inline-flex rounded-md border border-violet-200 bg-violet-50 px-2 py-1 text-[11px] font-semibold text-violet-800 hover:bg-violet-100 disabled:opacity-60"
+                          >
+                            {card.reviewStatus === "REQUESTED" ? "Review requested" : "Request review"}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              card.sequenceStatus === "ACTIVE"
+                                ? handleStopSequence(card.candidateId)
+                                : handleStartSequence(card.candidateId)
+                            }
+                            disabled={sequenceBusyCandidateId === card.candidateId}
+                            className="ml-2 inline-flex rounded-md border border-violet-200 bg-violet-50 px-2 py-1 text-[11px] font-semibold text-violet-800 hover:bg-violet-100 disabled:opacity-60"
+                          >
+                            {card.sequenceStatus === "ACTIVE" ? "Stop sequence" : "Start sequence"}
+                          </button>
+                        </div>
                       </article>
                     ))
                   )}

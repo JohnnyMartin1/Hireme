@@ -1,10 +1,22 @@
 "use client";
 import { useFirebaseAuth } from "@/components/FirebaseAuthProvider";
-import { useRouter } from "next/navigation";
-import { useEffect, useState, useMemo } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useState, useMemo } from "react";
 import { User, MessageSquare, ArrowRight, Loader2, ArrowLeft, Filter, Briefcase, X } from "lucide-react";
-import { getUserMessageThreads, getDocument, getThreadMessages, getEmployerJobs, getCompanyJobs, getPipelineEntryForJobCandidate, normalizePipelineStage } from '@/lib/firebase-firestore';
+import {
+  getUserMessageThreads,
+  getDocument,
+  getThreadMessages,
+  getEmployerJobs,
+  getCompanyJobs,
+  getPipelineEntryForJobCandidate,
+  normalizePipelineStage,
+  threadDataToJobDetails,
+} from '@/lib/firebase-firestore';
+import { fetchJobInterviews, fetchJobSequences } from "@/lib/communication-client";
+import { getCommunicationStatusDisplayLabels } from "@/lib/communication-status";
 import Link from 'next/link';
+import { getEmployerTemplatesUrl, getJobOverviewUrl } from "@/lib/navigation";
 
 interface MessageThread {
   id: string;
@@ -12,6 +24,8 @@ interface MessageThread {
   createdAt: any;
   updatedAt: any;
   lastMessageAt: any;
+  jobId?: string;
+  jobContext?: Record<string, unknown>;
 }
 
 interface ThreadWithParticipants {
@@ -24,12 +38,32 @@ interface ThreadWithParticipants {
   nextFollowUpAt?: any;
   followUpDue?: boolean;
   awaitingLabel?: string;
+  operationalLabels?: string[];
+  interviewAt?: any;
+  hasActiveSequence?: boolean;
 }
 
 interface Job {
   id: string;
   title: string;
   [key: string]: any;
+}
+
+/** Reads `?jobId=` for deep links from job workspace (needs Suspense boundary). */
+function MessagesJobIdSync({
+  jobs,
+  setSelectedJobId,
+}: {
+  jobs: Job[];
+  setSelectedJobId: React.Dispatch<React.SetStateAction<string>>;
+}) {
+  const searchParams = useSearchParams();
+  useEffect(() => {
+    const q = searchParams.get("jobId");
+    if (!q || !jobs.length) return;
+    if (jobs.some((j) => j.id === q)) setSelectedJobId(q);
+  }, [searchParams, jobs, setSelectedJobId]);
+  return null;
 }
 
 export default function MessagesPage() {
@@ -89,6 +123,7 @@ export default function MessagesPage() {
       
       setIsLoading(true);
       try {
+        const token = await user.getIdToken();
         const { data: threadsData, error: threadsError } = await getUserMessageThreads(user.uid);
         
         if (threadsError) {
@@ -122,18 +157,29 @@ export default function MessagesPage() {
             let followUpDue = false;
             let lastMessage: any = null;
             let awaitingLabel: string | undefined = undefined;
-            
+            let interviewAt: any = null;
+            let hasActiveSequence = false;
+            let activeSequenceRow: any = null;
+
+            const threadJob = threadDataToJobDetails(thread as unknown as Record<string, unknown>);
+            if (threadJob?.jobId) {
+              jobId = threadJob.jobId;
+              jobTitle = threadJob.jobTitle || undefined;
+            }
+
             if (profile && (profile.role === 'EMPLOYER' || profile.role === 'RECRUITER')) {
               try {
                 const { data: threadMessages } = await getThreadMessages(thread.id);
                 if (threadMessages && threadMessages.length > 0) {
                   lastMessage = threadMessages[threadMessages.length - 1];
-                  const mostRecentWithJob = [...threadMessages]
-                    .reverse()
-                    .find((msg: any) => msg?.jobDetails?.jobId);
-                  if (mostRecentWithJob?.jobDetails?.jobId) {
-                    jobId = mostRecentWithJob.jobDetails.jobId;
-                    jobTitle = mostRecentWithJob.jobDetails.jobTitle;
+                  if (!jobId) {
+                    const mostRecentWithJob = [...threadMessages]
+                      .reverse()
+                      .find((msg: any) => msg?.jobDetails?.jobId);
+                    if (mostRecentWithJob?.jobDetails?.jobId) {
+                      jobId = mostRecentWithJob.jobDetails.jobId;
+                      jobTitle = mostRecentWithJob.jobDetails.jobTitle;
+                    }
                   }
                   if (lastMessage?.senderId === user.uid) {
                     awaitingLabel = 'Awaiting candidate';
@@ -156,7 +202,33 @@ export default function MessagesPage() {
                   followUpDue = nextDate.getTime() < Date.now();
                 }
               }
+              const [interviewsRes, sequenceRes] = await Promise.all([
+                fetchJobInterviews(jobId, token, otherId),
+                fetchJobSequences(jobId, token, otherId),
+              ]);
+              if (interviewsRes.ok && (interviewsRes.data.interviews || []).length > 0) {
+                const activeInterview = (interviewsRes.data.interviews || [])
+                  .find((iv: any) => String(iv.status || '') !== 'CANCELLED');
+                interviewAt = activeInterview?.scheduledAt || null;
+              }
+              if (sequenceRes.ok) {
+                const rows = (sequenceRes.data.sequences || []) as any[];
+                activeSequenceRow = rows.find((s: any) => String(s.status || '') === 'ACTIVE') || null;
+                hasActiveSequence = Boolean(activeSequenceRow);
+              }
             }
+            const awaitingReply =
+              lastMessage == null ? null : lastMessage.senderId === user.uid;
+            const operationalLabels = getCommunicationStatusDisplayLabels({
+              pipelineStage,
+              hasEvaluation: false,
+              isEvaluationComplete: true,
+              reviewStatus: null,
+              awaitingCandidateReply: awaitingReply,
+              nextFollowUpAt,
+              interviewAt,
+              sequence: activeSequenceRow,
+            });
             
             return {
               thread: thread as any as MessageThread,
@@ -168,6 +240,9 @@ export default function MessagesPage() {
               nextFollowUpAt,
               followUpDue,
               awaitingLabel,
+              operationalLabels,
+              interviewAt,
+              hasActiveSequence,
             } as ThreadWithParticipants;
           })
         );
@@ -196,6 +271,11 @@ export default function MessagesPage() {
   const dashboardUrl = profile?.role === 'JOB_SEEKER' 
     ? '/home/seeker' 
     : '/home/employer';
+  const jobScopedBack =
+    (profile?.role === "EMPLOYER" || profile?.role === "RECRUITER") &&
+    selectedJobId !== "all" &&
+    jobs.some((j) => j.id === selectedJobId);
+  const messagesBackHref = jobScopedBack ? getJobOverviewUrl(selectedJobId) : dashboardUrl;
 
   if (loading || isLoading) {
     return (
@@ -232,18 +312,25 @@ export default function MessagesPage() {
   const showJobFilter = (profile.role === 'EMPLOYER' || profile.role === 'RECRUITER') && jobs.length > 0;
   const followUpDueCount = filteredThreads.filter((thread) => thread.followUpDue).length;
   const awaitingCandidateCount = filteredThreads.filter((thread) => thread.awaitingLabel === 'Awaiting candidate').length;
+  const overdueCount = filteredThreads.filter((thread) => (thread.operationalLabels || []).includes('Overdue')).length;
+  const interviewScheduledCount = filteredThreads.filter((thread) => (thread.operationalLabels || []).includes('Interview scheduled')).length;
 
   return (
     <main className="min-h-screen mobile-safe-top mobile-safe-bottom overflow-x-hidden w-full" style={{ background: 'linear-gradient(180deg, #E6F0FF 0%, #F8FAFC 100%)' }}>
+      <Suspense fallback={null}>
+        <MessagesJobIdSync jobs={jobs} setSelectedJobId={setSelectedJobId} />
+      </Suspense>
       <div className="w-full md:max-w-7xl md:mx-auto px-0 sm:px-3 md:px-6 lg:px-8 pt-12 sm:pt-16 md:pt-20 pb-4 sm:pb-6 md:pb-10 min-w-0">
         {/* Back Link */}
         <section className="mb-4 sm:mb-6 md:mb-8 px-2 sm:px-0">
           <Link
-            href={dashboardUrl}
+            href={messagesBackHref}
             className="flex items-center text-navy-800 font-semibold hover:text-navy-900 transition-all duration-200 bg-sky-200/10 hover:bg-sky-200/20 px-3 sm:px-4 py-2 rounded-full w-fit min-h-[44px] text-sm sm:text-base hover:shadow-md hover:scale-105"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            <span className="hidden sm:inline">Back to Dashboard</span>
+            <span className="hidden sm:inline">
+              {jobScopedBack ? "Back to job overview" : "Back to Dashboard"}
+            </span>
             <span className="sm:hidden">Back</span>
           </Link>
         </section>
@@ -255,13 +342,16 @@ export default function MessagesPage() {
               <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1">Employer inbox</p>
               <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-navy-900 mb-2 break-words">Messages</h1>
               <p className="text-sm sm:text-base md:text-lg text-slate-600 break-words">
-                Track candidate conversations with job and pipeline context in one place.
+                Communicate with candidates. Pipeline and job context appear when a thread is tied to a requisition.
               </p>
               <p className="text-xs sm:text-sm text-slate-500 mt-2">
-                Open any thread to update stage, follow-up dates, and job workflow links.
+                <Link href={getEmployerTemplatesUrl()} className="text-sky-700 font-semibold hover:underline">
+                  Message templates
+                </Link>{" "}
+                — reusable outreach snippets (also under Settings → messaging tools).
               </p>
             </div>
-            <div className="grid grid-cols-3 gap-2 text-xs min-w-[260px]">
+            <div className="grid grid-cols-5 gap-2 text-xs min-w-[320px]">
               <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-slate-700">
                 Threads <span className="font-semibold text-navy-900">{filteredThreads.length}</span>
               </div>
@@ -270,6 +360,12 @@ export default function MessagesPage() {
               </div>
               <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-amber-700">
                 Awaiting <span className="font-semibold">{awaitingCandidateCount}</span>
+              </div>
+              <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-rose-700">
+                Overdue <span className="font-semibold">{overdueCount}</span>
+              </div>
+              <div className="rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-2 text-indigo-700">
+                Interviews <span className="font-semibold">{interviewScheduledCount}</span>
               </div>
             </div>
           </div>
@@ -347,7 +443,7 @@ export default function MessagesPage() {
               )}
             </div>
           ) : (
-            filteredThreads.map(({ thread, otherParticipant, jobId, jobTitle, pipelineStage, nextFollowUpAt, followUpDue, awaitingLabel, lastMessage }) => (
+            filteredThreads.map(({ thread, otherParticipant, jobId, jobTitle, pipelineStage, nextFollowUpAt, followUpDue, awaitingLabel, operationalLabels, hasActiveSequence, lastMessage }) => (
               <Link
                 key={thread.id}
                 href={jobId ? `/messages/${thread.id}?jobId=${encodeURIComponent(jobId)}` : `/messages/${thread.id}`}
@@ -390,6 +486,11 @@ export default function MessagesPage() {
                             Follow-up due
                           </span>
                         )}
+                        {hasActiveSequence && (
+                          <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium bg-violet-100 text-violet-700 rounded-full">
+                            Sequence active
+                          </span>
+                        )}
                       </div>
                       <p className="text-sm text-slate-600">
                         {otherParticipant?.headline || otherParticipant?.role || 'User'}
@@ -407,8 +508,28 @@ export default function MessagesPage() {
                       <p className="text-xs text-slate-500 mt-1">
                         Last activity: {thread.lastMessageAt ? new Date(thread.lastMessageAt.toDate ? thread.lastMessageAt.toDate() : thread.lastMessageAt).toLocaleDateString() : 'Recently'}
                       </p>
-                      {awaitingLabel && (
-                        <p className="text-xs text-slate-600 mt-1">{awaitingLabel}</p>
+                      {awaitingLabel && <p className="text-xs text-slate-600 mt-1">{awaitingLabel}</p>}
+                      {operationalLabels && operationalLabels.length > 0 && (
+                        <div className="mt-1 flex flex-wrap gap-1">
+                          {operationalLabels.map((label) => (
+                            <span
+                              key={`${thread.id}-${label}`}
+                              className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                                label === 'Overdue'
+                                  ? 'bg-rose-100 text-rose-700'
+                                  : label === 'Follow-up due'
+                                  ? 'bg-amber-100 text-amber-700'
+                                  : label === 'Interview scheduled'
+                                  ? 'bg-indigo-100 text-indigo-700'
+                                  : label === 'Sequence active'
+                                  ? 'bg-violet-100 text-violet-700'
+                                  : 'bg-slate-100 text-slate-700'
+                              }`}
+                            >
+                              {label}
+                            </span>
+                          ))}
+                        </div>
                       )}
                     </div>
                   </div>

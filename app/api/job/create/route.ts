@@ -155,6 +155,7 @@ export async function POST(request: NextRequest) {
       minimumQualifications: processed.minimumQualifications,
       roleAliases: processed.roleAliases,
       jobNormalization: processed,
+      anchorSkills: processed.anchorSkills,
       aiProcessingSource: parseResult.aiProcessingSource,
       embedding: null,
       matchStatus: 'pending',

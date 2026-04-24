@@ -20,6 +20,13 @@ export function getJobPipelineUrl(jobId: string): string {
   return `/employer/job/${jobId}/pipeline`;
 }
 
+export function getJobCompareUrl(jobId: string, candidateIds?: string[] | null): string {
+  const base = `/employer/job/${jobId}/compare`;
+  if (!candidateIds?.length) return base;
+  const ids = candidateIds.slice(0, 4).join(',');
+  return `${base}?candidateIds=${encodeURIComponent(ids)}`;
+}
+
 export function getJobEditUrl(jobId: string): string {
   return `/employer/job/${jobId}/edit`;
 }
@@ -37,6 +44,19 @@ export function getEmployerJobsListUrl(): string {
   return "/employer/jobs";
 }
 
-export function getCandidatesSearchUrl(): string {
+export function getEmployerTemplatesUrl(): string {
+  return "/employer/templates";
+}
+
+export function getCandidatesSearchUrl(jobId?: string | null): string {
+  if (jobId) return `/search/candidates?jobId=${encodeURIComponent(jobId)}`;
   return "/search/candidates";
+}
+
+export function getEmployerPoolsUrl(): string {
+  return "/employer/pools";
+}
+
+export function getEmployerPoolDetailUrl(poolId: string): string {
+  return `/employer/pools/${encodeURIComponent(poolId)}`;
 }

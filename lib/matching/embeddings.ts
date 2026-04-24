@@ -12,6 +12,7 @@ function isFiniteVector(v: unknown): v is Vector {
 export function buildJobEmbeddingText(job: JobForScoring): string {
   return [
     job.normalizedTitle || job.title,
+    (job.anchorSkills || []).join(', '),
     (job.requiredSkills || []).join(', '),
     (job.preferredSkills || []).join(', '),
     (job.keywords || []).join(', '),

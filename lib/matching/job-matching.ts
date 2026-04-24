@@ -36,9 +36,10 @@ function stripUndefinedDeep<T>(value: T): T {
 export function jobDocToScoringPayload(job: Record<string, unknown>): JobForScoring {
   const title = String(job.title || '');
   const normalizedTitle = (job.normalizedTitle as string) || null;
+  const descForRole = String(job.description || '').slice(0, 12000);
   const roleResolved = resolveCanonicalRoleKey(
     (job.canonicalRole as string) || ((job.jobNormalization as any)?.canonicalRole as string) || null,
-    `${normalizedTitle || ''} ${title} ${String(job.description || '')}`
+    `${normalizedTitle || ''} ${title} ${descForRole}`
   );
   const pickArray = (top: unknown, nested: unknown): string[] => {
     const a = Array.isArray(top) ? (top as string[]).map(String).filter(Boolean) : [];
@@ -131,6 +132,13 @@ export function jobDocToScoringPayload(job: Record<string, unknown>): JobForScor
       typeof job.sponsorshipAccepted === 'boolean' ? (job.sponsorshipAccepted as boolean) : null,
     relocationAccepted:
       typeof job.relocationAccepted === 'boolean' ? (job.relocationAccepted as boolean) : null,
+    description: descForRole || null,
+    anchorSkills: dedupeSkillList(
+      [
+        ...(Array.isArray(job.anchorSkills) ? (job.anchorSkills as string[]) : []),
+        ...(((job.jobNormalization as Record<string, unknown> | undefined)?.anchorSkills as string[]) || []),
+      ].map(String)
+    ).slice(0, 24),
   };
 }
 
@@ -177,6 +185,11 @@ export async function runJobMatching(db: Firestore, jobId: string): Promise<void
     const hardReqRaw = Array.isArray(job.hardRequirements) ? (job.hardRequirements as string[]) : [];
     const toolsRaw = Array.isArray(job.requiredTools) ? (job.requiredTools as string[]) : [];
     const domainRaw = Array.isArray(job.domainKeywords) ? (job.domainKeywords as string[]) : [];
+    const titleDescForRole = `${String(job.normalizedTitle || '')} ${String(job.title || '')} ${String(job.description || '').slice(0, 12000)}`.trim();
+    const roleFromTitleDescription = resolveCanonicalRoleKey('', titleDescForRole);
+    const generalistNeedsRefresh =
+      canonicalRaw.toLowerCase() === 'generalist' && roleFromTitleDescription.canonicalRole !== 'generalist';
+
     const needsNormalizationRefresh =
       !canonicalRaw ||
       canonicalRaw.toLowerCase() === 'unknown' ||
@@ -185,7 +198,8 @@ export async function runJobMatching(db: Firestore, jobId: string): Promise<void
       hardReqRaw.length === 0 ||
       toolsRaw.length === 0 ||
       domainRaw.length === 0 ||
-      !(job.jobNormalization && typeof job.jobNormalization === 'object');
+      !(job.jobNormalization && typeof job.jobNormalization === 'object') ||
+      generalistNeedsRefresh;
 
     let runtimeJob = { ...job } as Record<string, unknown>;
     if (needsNormalizationRefresh) {
@@ -232,6 +246,7 @@ export async function runJobMatching(db: Firestore, jobId: string): Promise<void
         domainKeywords: parsed.processed.domainKeywords,
         experienceRequirements: parsed.processed.experienceRequirements,
         educationRequirements: parsed.processed.educationRequirements,
+        anchorSkills: parsed.processed.anchorSkills,
         jobNormalization: parsed.processed,
         aiProcessingSource: parsed.aiProcessingSource,
       };
@@ -268,9 +283,10 @@ export async function runJobMatching(db: Firestore, jobId: string): Promise<void
         roleSpecialization: scoringJob.roleSpecialization,
         hardRequirements: scoringJob.hardRequirements,
         requiredTools: scoringJob.requiredTools,
-        domainKeywords: scoringJob.domainKeywords,
+          domainKeywords: scoringJob.domainKeywords,
+          anchorSkills: scoringJob.anchorSkills,
         formula:
-          'final = 0.30*role + 0.25*hardSkillsTools + 0.20*experience + 0.10*portfolio + 0.05*education + 0.10*locationPrefAuth; then penalties; then caps; then semantic blend if available',
+          'weighted blend of specialization, anchors, experience, domain, skills, tools, major, GPA, location, prefs, auth, readiness; penalties; caps; eligibility floor; guarded semantic',
       });
     }
     const nowIso = new Date().toISOString();
@@ -321,7 +337,7 @@ export async function runJobMatching(db: Firestore, jobId: string): Promise<void
           });
         }
       }
-      const { explanation, strengths, gaps } = buildMatchExplanation(
+      const { explanation, strengths, gaps, recruiterSummary } = buildMatchExplanation(
         scoringJob,
         normalized,
         scores
@@ -341,10 +357,14 @@ export async function runJobMatching(db: Firestore, jobId: string): Promise<void
         gpaScore: scores.gpaScore,
         industryScore: scores.industryScore,
         preferenceScore: scores.preferenceScore,
+        authorizationScore: scores.authorizationScore,
+        anchorSkillScore: scores.anchorSkillScore,
+        majorFitScore: scores.majorFitScore,
         scoreDebug: scores.debug,
         explanation,
         strengths,
         gaps,
+        recruiterSummary,
         createdAt: nowIso,
         updatedAt: nowIso,
       });

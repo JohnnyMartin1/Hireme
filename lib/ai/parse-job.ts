@@ -8,6 +8,7 @@ import {
 } from '@/lib/matching/normalize-terms';
 import { expandTitleMatchSignals } from '@/lib/matching/title-roles';
 import { classifyRole, SPECIALIZED_ROLE_CONFIG, resolveCanonicalRoleKey } from '@/lib/matching/role-taxonomy';
+import { isGenericAnchorToken } from '@/lib/matching/anchor-skills';
 
 type ParseInput = {
   title: string;
@@ -64,6 +65,7 @@ type OpenAiParsedJobShape = {
   roleAliases?: string[];
   aiSummary?: string | null;
   minGpa?: string | null;
+  anchorSkills?: string[];
 };
 
 const TOOL_HINTS = [
@@ -292,23 +294,73 @@ function extractMinGpa(description: string, fallback: string | null | undefined)
   return m?.[1] || null;
 }
 
+function filterNoisySkillPhrases(items: string[], max: number): string[] {
+  return dedupeSkillList(items.map(String))
+    .filter((s) => {
+      const k = normalizeWhitespaceLower(s);
+      if (k.length < 4) return false;
+      if (isGenericAnchorToken(k)) return false;
+      return true;
+    })
+    .slice(0, max);
+}
+
+function heuristicAnchorSkills(
+  canonicalRole: string,
+  requiredTools: string[],
+  domainKeywords: string[],
+  requiredSkills: string[]
+): string[] {
+  const cfg = SPECIALIZED_ROLE_CONFIG[canonicalRole];
+  const fromCfg = cfg?.strongSignals || [];
+  return filterNoisySkillPhrases(
+    [...fromCfg, ...requiredTools, ...domainKeywords, ...requiredSkills.slice(0, 8)],
+    22
+  );
+}
+
+function mergeParsedAnchors(parsedAnchors: unknown, heuristicAnchors: string[]): string[] {
+  const raw = Array.isArray(parsedAnchors) ? filterNoisySkillPhrases(parsedAnchors as string[], 24) : [];
+  if (raw.length >= 2) {
+    return dedupeSkillList([...raw, ...heuristicAnchors]).slice(0, 24);
+  }
+  return dedupeSkillList([...heuristicAnchors, ...raw]).slice(0, 24);
+}
+
 function sanitizeParsedShape(
   parsed: OpenAiParsedJobShape,
-  fallback: ProcessedJobContent
+  fallback: ProcessedJobContent,
+  jobDescription: string
 ): ProcessedJobContent {
-  const roleResolved = resolveCanonicalRoleKey(
+  const titleOnlyFallback = `${parsed.normalizedTitle || ''} ${fallback.normalizedTitle || ''}`.trim();
+  let roleResolved = resolveCanonicalRoleKey(
     parsed.canonicalRole || parsed.normalizedTitle || fallback.normalizedTitle,
-    `${parsed.normalizedTitle || ''} ${fallback.normalizedTitle || ''}`
+    titleOnlyFallback
   );
+  if (roleResolved.canonicalRole === 'generalist') {
+    const descSlice = String(jobDescription || '').slice(0, 12000);
+    const richFallback = `${titleOnlyFallback} ${descSlice}`.trim();
+    const fromRichText = resolveCanonicalRoleKey('', richFallback);
+    if (fromRichText.canonicalRole !== 'generalist') {
+      roleResolved = fromRichText;
+    }
+  }
   const preferParsedOrFallback = (arr: unknown, fb: string[], max: number): string[] => {
-    const parsedArr = Array.isArray(arr) ? dedupeSkillList((arr as string[]).map(String)) : [];
+    const parsedArr = Array.isArray(arr) ? filterNoisySkillPhrases((arr as string[]).map(String), max) : [];
     if (parsedArr.length > 0) return parsedArr.slice(0, max);
-    return dedupeSkillList(fb).slice(0, max);
+    return filterNoisySkillPhrases(fb, max);
   };
   const normalizedTitle = (parsed.normalizedTitle || fallback.normalizedTitle).trim();
-  const requiredSkills = dedupeSkillList(Array.isArray(parsed.requiredSkills) ? parsed.requiredSkills.map(String) : fallback.requiredSkills).slice(0, 25);
-  const preferredSkills = dedupeSkillList(Array.isArray(parsed.preferredSkills) ? parsed.preferredSkills.map(String) : fallback.preferredSkills).slice(0, 20);
-  const keywords = normalizeKeywordList(Array.isArray(parsed.keywords) ? parsed.keywords.map(String) : fallback.keywords, 32);
+  const requiredSkills = filterNoisySkillPhrases(
+    Array.isArray(parsed.requiredSkills) ? parsed.requiredSkills.map(String) : fallback.requiredSkills,
+    25
+  );
+  const preferredSkills = filterNoisySkillPhrases(
+    Array.isArray(parsed.preferredSkills) ? parsed.preferredSkills.map(String) : fallback.preferredSkills,
+    20
+  );
+  const kwSource = Array.isArray(parsed.keywords) ? (parsed.keywords as string[]).map(String) : fallback.keywords;
+  const keywords = normalizeKeywordList(filterNoisySkillPhrases(kwSource, 40), 32);
   const mustHaves = dedupeSkillList(Array.isArray(parsed.mustHaves) ? parsed.mustHaves.map(String) : fallback.mustHaves).slice(0, 12);
   const niceToHaves = dedupeSkillList(Array.isArray(parsed.niceToHaves) ? parsed.niceToHaves.map(String) : fallback.niceToHaves).slice(0, 12);
   const jobFunctions = dedupeSkillList(Array.isArray(parsed.jobFunctions) ? parsed.jobFunctions.map(String) : fallback.jobFunctions).slice(0, 10);
@@ -323,15 +375,23 @@ function sanitizeParsedShape(
   const locationType = parsed.locationType || fallback.locationType;
   const minGpa = String(parsed.minGpa ?? fallback.minGpa ?? '').replace(/\+/g, '').trim() || null;
 
+  const hb = preferParsedOrFallback(parsed.hardRequirements, fallback.hardRequirements, 16);
+  const tools = preferParsedOrFallback(parsed.requiredTools, fallback.requiredTools, 12);
+  const dk = preferParsedOrFallback(parsed.domainKeywords, fallback.domainKeywords, 16);
+  const anchorSkills = mergeParsedAnchors(
+    parsed.anchorSkills,
+    heuristicAnchorSkills(roleResolved.canonicalRole, tools, dk, requiredSkills.length ? requiredSkills : fallback.requiredSkills)
+  );
+
   return {
     normalizedTitle,
     canonicalRole: roleResolved.canonicalRole,
     roleFamily: roleResolved.roleFamily,
     roleSpecialization: roleResolved.roleSpecialization,
-    hardRequirements: preferParsedOrFallback(parsed.hardRequirements, fallback.hardRequirements, 16),
+    hardRequirements: hb,
     softRequirements: preferParsedOrFallback(parsed.softRequirements, fallback.softRequirements, 16),
-    requiredTools: preferParsedOrFallback(parsed.requiredTools, fallback.requiredTools, 12),
-    domainKeywords: preferParsedOrFallback(parsed.domainKeywords, fallback.domainKeywords, 16),
+    requiredTools: tools,
+    domainKeywords: dk,
     experienceRequirements: preferParsedOrFallback(
       parsed.experienceRequirements,
       fallback.experienceRequirements,
@@ -367,6 +427,7 @@ function sanitizeParsedShape(
     roleAliases,
     aiSummary: parsed.aiSummary?.trim() || fallback.aiSummary,
     minGpa,
+    anchorSkills,
     source: 'openai',
   };
 }
@@ -399,6 +460,13 @@ export function heuristicParseJob(input: ParseInput): ProcessedJobContent {
   const enrichedDomainKeywords = specialized
     ? dedupeSkillList([...reqBlocks.domainKeywords, ...specialized.strongSignals]).slice(0, 18)
     : reqBlocks.domainKeywords;
+  const reqSkillList = dedupeSkillList([...requiredSkillsStructured, ...skillData.required]).slice(0, 24);
+  const anchorSkills = heuristicAnchorSkills(
+    roleClass.canonicalRole,
+    reqBlocks.requiredTools,
+    enrichedDomainKeywords,
+    reqSkillList
+  );
 
   return {
     normalizedTitle,
@@ -412,7 +480,7 @@ export function heuristicParseJob(input: ParseInput): ProcessedJobContent {
     experienceRequirements: reqBlocks.experienceRequirements,
     educationRequirements: reqBlocks.educationRequirements,
     seniorityLevel: seniority,
-    requiredSkills: dedupeSkillList([...requiredSkillsStructured, ...skillData.required]).slice(0, 24),
+    requiredSkills: reqSkillList,
     preferredSkills: dedupeSkillList([...preferredSkillsStructured, ...skillData.preferred]).slice(0, 16),
     keywords: skillData.keywords,
     mustHaves: req.must,
@@ -432,6 +500,7 @@ export function heuristicParseJob(input: ParseInput): ProcessedJobContent {
     roleAliases,
     aiSummary: null,
     minGpa,
+    anchorSkills,
     source: 'heuristic',
   };
 }
@@ -459,6 +528,7 @@ Rules:
 - no one-character tokens
 - separate hard requirements (mustHaves) vs preferences (niceToHaves)
 - keep skill phrases meaningful and normalized
+- anchorSkills: 5–18 short domain must-have phrases for THIS role (e.g. "financial modeling", "garment construction"); omit vague tokens like "design" or "analysis" alone; leave sparse if unsure
 
 Return keys:
 normalizedTitle, canonicalRole, roleFamily, roleSpecialization,
@@ -466,7 +536,7 @@ hardRequirements, softRequirements, requiredTools, domainKeywords,
 experienceRequirements, educationRequirements, seniorityLevel, requiredSkills, preferredSkills, keywords,
 mustHaves, niceToHaves, jobFunctions, functionalArea, industries, experienceLevel,
 requiredMajors, preferredMajors, sponsorshipAccepted, relocationAccepted, locationType,
-minimumQualifications, roleAliases, aiSummary, minGpa`;
+minimumQualifications, roleAliases, aiSummary, minGpa, anchorSkills`;
 
   const user = `Title: ${input.title}
 Description:
@@ -505,7 +575,7 @@ Relocation Accepted: ${typeof input.relocationAccepted === 'boolean' ? String(in
     }
 
     try {
-      const processed = sanitizeParsedShape(ai.data, fallback);
+      const processed = sanitizeParsedShape(ai.data, fallback, input.description);
       console.info('[job-parse] OpenAI parsing succeeded', {
         title,
         normalizedTitle: processed.normalizedTitle,
@@ -527,5 +597,30 @@ Relocation Accepted: ${typeof input.relocationAccepted === 'boolean' ? String(in
     console.info('[job-parse] fallback heuristic parser used', { title });
     return { processed: fallback, aiProcessingSource: 'failed' };
   }
+}
+
+/**
+ * Offline guard: model `canonicalRole: generalist` must not win when title + description
+ * clearly indicate a taxonomy role (e.g. Financial Analyst).
+ * Run: `npx tsx scripts/validate-role-resolution.ts`
+ */
+export function verifyFinancialAnalystGeneralistSanitizeOverride(): boolean {
+  const input: ParseInput = {
+    title: 'Financial Analyst',
+    description:
+      'Support FP&A with financial modeling, DCF analysis, and advanced Excel. Partner with finance leadership on forecasts.',
+    tags: [],
+    requiredMajors: [],
+    preferredMajors: [],
+    requiredSkillsStructured: [],
+    preferredSkillsStructured: [],
+  };
+  const fallback = heuristicParseJob(input);
+  const parsed: OpenAiParsedJobShape = {
+    canonicalRole: 'generalist',
+    normalizedTitle: 'Financial Analyst',
+  };
+  const processed = sanitizeParsedShape(parsed, fallback, input.description);
+  return processed.canonicalRole !== 'generalist';
 }
 

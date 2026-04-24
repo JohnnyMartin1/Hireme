@@ -4,12 +4,14 @@ import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { Loader2, MapPin, RefreshCw, FileText, Video, MessageSquare, User } from "lucide-react";
-import { getCandidateUrl } from "@/lib/navigation";
+import { getCandidateUrl, getCandidatesSearchUrl, getJobCompareUrl } from "@/lib/navigation";
+import AddToTalentPoolButton from "@/components/employer/AddToTalentPoolButton";
 import { useFirebaseAuth } from "@/components/FirebaseAuthProvider";
 import { useToast } from "@/components/NotificationSystem";
 import type { RecruiterSummary } from "@/types/matching";
 import {
   PIPELINE_STAGES,
+  getRecruiterNotes,
   normalizePipelineStage,
   type PipelineStage,
 } from "@/lib/firebase-firestore";
@@ -64,6 +66,11 @@ type MatchRow = {
     candidateCanonicalRole?: string;
   } | null;
   candidatePreview?: CandidatePreview | null;
+};
+
+type CandidateNoteMeta = {
+  count: number;
+  latestSnippet: string | null;
 };
 
 function fitLabelForScore(score: number): RecruiterSummary["fitLabel"] {
@@ -134,6 +141,7 @@ export default function JobMatchesPage() {
   const [selectedCandidateIds, setSelectedCandidateIds] = useState<Set<string>>(new Set());
   const [bulkBusy, setBulkBusy] = useState(false);
   const [bulkStage, setBulkStage] = useState<PipelineStage>("SHORTLIST");
+  const [noteMetaByCandidateId, setNoteMetaByCandidateId] = useState<Record<string, CandidateNoteMeta>>({});
 
   useEffect(() => {
     if (!user || !profile || (profile.role !== "EMPLOYER" && profile.role !== "RECRUITER")) {
@@ -156,6 +164,27 @@ export default function JobMatchesPage() {
       const data = await res.json();
       setJob(data.job);
       setMatches(data.matches || []);
+      const candidateIds: string[] = Array.from(
+        new Set((Array.isArray(data.matches) ? data.matches : []).map((m: any) => String(m.candidateId || "")).filter(Boolean))
+      );
+      if (candidateIds.length > 0) {
+        const notePairs = await Promise.all(
+          candidateIds.map(async (candidateId) => {
+            const { data: notes } = await getRecruiterNotes(jobId, candidateId);
+            const list = notes || [];
+            return [
+              candidateId,
+              {
+                count: list.length,
+                latestSnippet: list[0]?.body ? String(list[0].body).slice(0, 100) : null,
+              } as CandidateNoteMeta,
+            ] as const;
+          })
+        );
+        setNoteMetaByCandidateId(Object.fromEntries(notePairs));
+      } else {
+        setNoteMetaByCandidateId({});
+      }
 
       const pipelineRes = await fetch(`/api/job/${jobId}/pipeline`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -260,18 +289,23 @@ export default function JobMatchesPage() {
     setActionBusyCandidateId(candidateId);
     try {
       const token = await user.getIdToken();
+      const body: Record<string, unknown> = { candidateId };
+      if (updates.stage !== undefined) {
+        body.stage = updates.stage;
+      }
+      if (updates.lastContactedAt !== undefined) {
+        body.lastContactedAt = updates.lastContactedAt ? updates.lastContactedAt.toISOString() : null;
+      }
+      if (updates.nextFollowUpAt !== undefined) {
+        body.nextFollowUpAt = updates.nextFollowUpAt ? updates.nextFollowUpAt.toISOString() : null;
+      }
       const res = await fetch(`/api/job/${jobId}/pipeline`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          candidateId,
-          stage: updates.stage || "NEW",
-          lastContactedAt: updates.lastContactedAt ?? undefined,
-          nextFollowUpAt: updates.nextFollowUpAt ?? undefined,
-        }),
+        body: JSON.stringify(body),
       });
       const payload = await res.json().catch(() => ({}));
       if (!res.ok || !payload?.entry?.id) {
@@ -279,8 +313,12 @@ export default function JobMatchesPage() {
         return false;
       }
 
-      const stage = normalizePipelineStage(updates.stage || "NEW");
       const existing = pipelineByCandidateId[candidateId];
+      const stage = normalizePipelineStage(
+        updates.stage !== undefined
+          ? updates.stage
+          : (payload.entry as any)?.stage ?? existing?.stage ?? "NEW"
+      );
       const id = payload.entry.id as string;
       setPipelineByCandidateId((prev) => ({
         ...prev,
@@ -347,6 +385,15 @@ export default function JobMatchesPage() {
     }
   };
 
+  const launchCompare = () => {
+    const ids = Array.from(selectedCandidateIds).slice(0, 4);
+    if (ids.length < 2) {
+      toast.error("Compare", "Select at least 2 candidates to compare");
+      return;
+    }
+    router.push(getJobCompareUrl(jobId, ids));
+  };
+
   if (!user || !profile) return null;
 
   const matchStatus = job?.matchStatus as string | undefined;
@@ -356,6 +403,13 @@ export default function JobMatchesPage() {
     <div className="min-h-screen bg-slate-50 mobile-safe-top mobile-safe-bottom">
       <header className="sticky top-0 bg-white/95 backdrop-blur-sm shadow-sm z-40 border-b border-slate-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-end gap-2">
+          <button
+            type="button"
+            onClick={() => router.push(getCandidatesSearchUrl(jobId))}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-200 bg-white text-navy-800 text-sm font-medium hover:bg-slate-50"
+          >
+            Find more candidates
+          </button>
           <button
             type="button"
             onClick={handleRerun}
@@ -446,6 +500,27 @@ export default function JobMatchesPage() {
               </section>
             )}
 
+            {visibleSortedMatches.length > 0 && (
+              <section className="mb-6 rounded-xl border border-violet-200 bg-violet-50 p-3 sm:p-4">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold text-violet-900">Build a shortlist compare set</p>
+                    <p className="text-xs text-violet-800">
+                      Select contenders, move to shortlist, then compare 2-4 side-by-side.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={launchCompare}
+                    disabled={selectedCandidateIds.size < 2}
+                    className="inline-flex items-center justify-center rounded-lg bg-violet-700 px-3 py-2 text-xs font-semibold text-white hover:bg-violet-800 disabled:opacity-50"
+                  >
+                    Compare {selectedCandidateIds.size > 0 ? `(${selectedCandidateIds.size})` : ""}
+                  </button>
+                </div>
+              </section>
+            )}
+
             {selectedCandidateIds.size > 0 && (
               <section className="mb-6 bg-gradient-to-r from-navy-900 to-navy-800 text-white rounded-xl p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center gap-3 shadow-sm">
                 <p className="text-sm font-medium">
@@ -488,6 +563,14 @@ export default function JobMatchesPage() {
                   >
                     Apply stage
                   </button>
+                  <button
+                    type="button"
+                    onClick={launchCompare}
+                    disabled={bulkBusy}
+                    className="px-3 py-1.5 rounded-lg bg-violet-100 text-violet-800 text-xs font-semibold hover:bg-violet-200 disabled:opacity-60"
+                  >
+                    Compare selected
+                  </button>
                 </div>
               </section>
             )}
@@ -515,6 +598,7 @@ export default function JobMatchesPage() {
                 router.push(getCandidateUrl(candidateId, jobId));
               }}
               onMoveStage={handleMoveStage}
+              noteMetaByCandidateId={noteMetaByCandidateId}
             />
             <MatchSection
               jobId={jobId}
@@ -539,6 +623,7 @@ export default function JobMatchesPage() {
                 router.push(getCandidateUrl(candidateId, jobId));
               }}
               onMoveStage={handleMoveStage}
+              noteMetaByCandidateId={noteMetaByCandidateId}
             />
             <MatchSection
               jobId={jobId}
@@ -563,6 +648,7 @@ export default function JobMatchesPage() {
                 router.push(getCandidateUrl(candidateId, jobId));
               }}
               onMoveStage={handleMoveStage}
+              noteMetaByCandidateId={noteMetaByCandidateId}
             />
             <MatchSection
               jobId={jobId}
@@ -587,6 +673,7 @@ export default function JobMatchesPage() {
                 router.push(getCandidateUrl(candidateId, jobId));
               }}
               onMoveStage={handleMoveStage}
+              noteMetaByCandidateId={noteMetaByCandidateId}
             />
 
             {visibleSortedMatches.length === 0 && (
@@ -616,6 +703,7 @@ function MatchSection({
   onReject,
   onMessage,
   onMoveStage,
+  noteMetaByCandidateId,
 }: {
   jobId: string;
   title: string;
@@ -630,6 +718,7 @@ function MatchSection({
   onReject: (candidateId: string) => Promise<void>;
   onMessage: (candidateId: string) => Promise<void>;
   onMoveStage: (candidateId: string, stage: PipelineStage) => Promise<boolean | void>;
+  noteMetaByCandidateId: Record<string, CandidateNoteMeta>;
 }) {
   if (!items.length) return null;
   return (
@@ -653,6 +742,7 @@ function MatchSection({
             onReject={() => onReject(m.candidateId)}
             onMessage={() => onMessage(m.candidateId)}
             onMoveStage={(stage) => onMoveStage(m.candidateId, stage)}
+            noteMeta={noteMetaByCandidateId[m.candidateId]}
           />
         ))}
       </div>
@@ -672,6 +762,7 @@ function MatchCard({
   onReject,
   onMessage,
   onMoveStage,
+  noteMeta,
 }: {
   jobId: string;
   m: MatchRow;
@@ -684,6 +775,7 @@ function MatchCard({
   onReject: () => Promise<void>;
   onMessage: () => Promise<void>;
   onMoveStage: (stage: PipelineStage) => Promise<boolean | void>;
+  noteMeta?: CandidateNoteMeta;
 }) {
   const preview = m.candidatePreview;
   const name =
@@ -769,12 +861,19 @@ function MatchCard({
         <span
           className={`inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full border ${
             inPipeline
-              ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+              ? currentStage === "SHORTLIST"
+                ? "bg-violet-50 text-violet-700 border-violet-200"
+                : "bg-emerald-50 text-emerald-700 border-emerald-200"
               : "bg-amber-50 text-amber-800 border-amber-200"
           }`}
         >
           {inPipeline ? `In pipeline · ${currentStage}` : "Not yet in pipeline"}
         </span>
+        {currentStage === "SHORTLIST" && (
+          <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full border border-violet-200 bg-violet-100 text-violet-800 font-semibold">
+            Working set contender
+          </span>
+        )}
         {preview?.resumeUrl ? (
           <span className="inline-flex items-center gap-1 text-xs text-slate-600">
             <FileText className="h-3.5 w-3.5 text-green-600" /> Resume
@@ -791,6 +890,20 @@ function MatchCard({
         ) : (
           <span className="inline-flex items-center gap-1 text-xs text-slate-400">
             <Video className="h-3.5 w-3.5" /> No video
+          </span>
+        )}
+        <span
+          className={`inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full border ${
+            (noteMeta?.count || 0) > 0
+              ? "bg-indigo-50 text-indigo-700 border-indigo-200"
+              : "bg-slate-50 text-slate-500 border-slate-200"
+          }`}
+        >
+          {(noteMeta?.count || 0) > 0 ? `${noteMeta?.count} note${noteMeta?.count === 1 ? "" : "s"}` : "No notes"}
+        </span>
+        {noteMeta?.latestSnippet && (
+          <span className="text-xs text-slate-500 max-w-xs truncate" title={noteMeta.latestSnippet}>
+            {noteMeta.latestSnippet}
           </span>
         )}
         <Link
@@ -824,6 +937,7 @@ function MatchCard({
           <MessageSquare className="h-4 w-4" />
           Message
         </button>
+        <AddToTalentPoolButton candidateId={m.candidateId} alignUp />
         <select
           value={inPipeline ? currentStage : "NEW"}
           onChange={(e) => onMoveStage(e.target.value as PipelineStage)}

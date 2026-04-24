@@ -1,7 +1,7 @@
 "use client";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { Menu, ArrowLeft } from "lucide-react";
 import { useFirebaseAuth } from "./FirebaseAuthProvider";
 import HireMeLogo from "./brand/HireMeLogo";
@@ -18,8 +18,8 @@ const PAGES_WITH_BACK_BUTTON = [
   '/account/security',
   '/account/uploads',
   '/account/company',
-  '/employer/job/',
   '/employer/candidates',
+  '/employer/pools/',
   '/company/view',
   '/company/recruiter/',
   '/company/manage/recruiters',
@@ -29,8 +29,7 @@ const PAGES_WITH_BACK_BUTTON = [
   '/home/seeker/profile-views',
 ];
 
-function getBackButtonHref(pathname: string, profile: any): string {
-  // Determine the appropriate back destination based on the current page
+function getBackButtonHref(pathname: string, profile: any, jobIdFromQuery: string | null): string {
   if (pathname.startsWith('/endorsements')) {
     return '/home/seeker';
   }
@@ -46,8 +45,11 @@ function getBackButtonHref(pathname: string, profile: any): string {
   if (pathname.startsWith('/account/security') || pathname.startsWith('/account/uploads') || pathname.startsWith('/account/company')) {
     return profile?.role === 'EMPLOYER' ? '/home/employer' : '/home/seeker';
   }
+  if (pathname.startsWith('/employer/pools/') && pathname !== '/employer/pools') {
+    return '/employer/pools';
+  }
   if (pathname.startsWith('/employer/job/')) {
-    return '/home/employer';
+    return '/employer/jobs';
   }
   if (pathname.startsWith('/employer/candidates')) {
     return '/home/employer';
@@ -57,22 +59,33 @@ function getBackButtonHref(pathname: string, profile: any): string {
   }
   if (pathname.startsWith('/candidate/')) {
     if (profile?.role === 'EMPLOYER' || profile?.role === 'RECRUITER') {
-      return '/home/employer';
+      if (jobIdFromQuery) return `/employer/job/${encodeURIComponent(jobIdFromQuery)}`;
+      return '/search/candidates';
     }
     return '/search/candidates';
   }
-  // Messages routes - check most specific first
   if (pathname.startsWith('/messages/candidate')) {
     return '/home/seeker';
   }
-  if (pathname === '/messages' || pathname.startsWith('/messages/')) {
-    // Messages page: go to appropriate dashboard based on role
+  if (pathname.startsWith('/messages/') && !pathname.startsWith('/messages/candidate')) {
     if (profile?.role === 'JOB_SEEKER') {
       return '/home/seeker';
-    } else if (profile?.role === 'EMPLOYER' || profile?.role === 'RECRUITER') {
+    }
+    if (profile?.role === 'EMPLOYER' || profile?.role === 'RECRUITER') {
+      if (jobIdFromQuery) return `/messages?jobId=${encodeURIComponent(jobIdFromQuery)}`;
       return '/home/employer';
     }
-    return '/home/seeker'; // Default fallback
+    return '/home/seeker';
+  }
+  if (pathname === '/messages') {
+    if (profile?.role === 'JOB_SEEKER') {
+      return '/home/seeker';
+    }
+    if (profile?.role === 'EMPLOYER' || profile?.role === 'RECRUITER') {
+      if (jobIdFromQuery) return `/employer/job/${encodeURIComponent(jobIdFromQuery)}`;
+      return '/home/employer';
+    }
+    return '/home/seeker';
   }
   if (pathname.startsWith('/home/seeker/profile-views')) {
     return '/home/seeker';
@@ -80,14 +93,23 @@ function getBackButtonHref(pathname: string, profile: any): string {
   return '/';
 }
 
-export default function SiteHeader() {
+function SiteHeaderInner() {
   const { user, profile, signOut } = useFirebaseAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const pathname = usePathname();
-  
-  // Check if current page should show back button
-  const shouldShowBackButton = user && PAGES_WITH_BACK_BUTTON.some(path => pathname.startsWith(path));
-  const backButtonHref = shouldShowBackButton ? getBackButtonHref(pathname, profile) : '/';
+  const searchParams = useSearchParams();
+  const jobIdFromQuery = searchParams.get("jobId");
+
+  const inBackPathList = Boolean(user && PAGES_WITH_BACK_BUTTON.some((path) => pathname.startsWith(path)));
+  const isEmpOrRec = profile?.role === "EMPLOYER" || profile?.role === "RECRUITER";
+  const hideBackEmployerThread =
+    isEmpOrRec &&
+    pathname.startsWith("/messages/") &&
+    !pathname.startsWith("/messages/candidate");
+  const hideBackEmployerCandidate = isEmpOrRec && pathname.startsWith("/candidate/");
+  const shouldShowBackButton =
+    inBackPathList && !hideBackEmployerThread && !hideBackEmployerCandidate;
+  const backButtonHref = shouldShowBackButton ? getBackButtonHref(pathname, profile, jobIdFromQuery) : '/';
 
   return (
     <header className="fixed top-0 left-0 right-0 bg-white/95 backdrop-blur-md shadow-sm z-50 border-b border-slate-100 mobile-safe-top">
@@ -198,6 +220,12 @@ export default function SiteHeader() {
                   >
                     Candidates
                   </Link>
+                  <Link
+                    href="/employer/pools"
+                    className="text-sm text-navy-900 hover:text-navy-700 font-semibold px-3 py-2 rounded-lg hover:bg-sky-50 transition-all duration-200 whitespace-nowrap"
+                  >
+                    Pools
+                  </Link>
                 </nav>
               )}
               <nav className="flex items-center gap-2 shrink-0">
@@ -272,6 +300,13 @@ export default function SiteHeader() {
                     >
                       Candidates
                     </Link>
+                    <Link
+                      href="/employer/pools"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="flex items-center justify-center px-4 py-4 text-base font-medium text-navy-900 hover:bg-sky-50 active:bg-sky-100 transition-colors border-b border-slate-100 min-h-[56px] w-full text-center"
+                    >
+                      Pools
+                    </Link>
                   </>
                 )}
                 <Link 
@@ -296,5 +331,13 @@ export default function SiteHeader() {
         )}
       </div>
     </header>
+  );
+}
+
+export default function SiteHeader() {
+  return (
+    <Suspense fallback={null}>
+      <SiteHeaderInner />
+    </Suspense>
   );
 }

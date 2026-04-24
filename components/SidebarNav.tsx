@@ -31,7 +31,11 @@ export default function SidebarNav({ role }: SidebarNavProps) {
   if (role === 'EMPLOYER') {
     items.push({ label: 'Search Candidates', href: '/search/candidates', icon: Search });
     items.push({ label: 'Post Job', href: '/employer/job/new', icon: Plus });
-    items.push({ label: 'Saved Candidates', href: '/saved/candidates', icon: Heart });
+    items.push({
+      label: 'Saved bookmarks',
+      href: '/saved/candidates',
+      icon: Heart,
+    });
   } else if (role === 'JOB_SEEKER') {
     items.push({ label: 'Edit Profile', href: '/account/profile', icon: User });
     items.push({ label: 'Uploads', href: '/account/uploads', icon: Upload });

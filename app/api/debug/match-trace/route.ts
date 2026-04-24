@@ -78,17 +78,16 @@ export async function GET(request: NextRequest) {
         hardRequirements: scoringJob.hardRequirements || [],
         requiredTools: scoringJob.requiredTools || [],
         domainKeywords: scoringJob.domainKeywords || [],
+        anchorSkills: scoringJob.anchorSkills || [],
         requiredSkills: scoringJob.requiredSkills || [],
         preferredSkills: scoringJob.preferredSkills || [],
       },
       formula: {
         weightedBase:
-          '0.30*roleDomainAlignment + 0.25*hardSkillsTools + 0.20*experienceEvidence + 0.10*portfolioProof + 0.05*educationRelevance + 0.10*locationPreferencesAuth',
-        penalties:
-          'LOW role distance -18; MEDIUM role distance -8; explicit unrelated role -24',
-        caps: 'missing specialized experience/tools cap<=35; missing portfolio cap<=50; unrelated role cap<=28',
-        semanticBlend:
-          'if semanticScore exists: final = baseAfterCaps*(1-0.06) + semanticScore*0.06',
+          '0.23*specialization + 0.20*anchors + 0.20*experience + 0.12*domainIndustry + 0.08*skills + 0.07*tools + 0.04*major + 0.03*gpa + 0.05*location + 0.02*jobType + 0.02*auth + 0.04*readiness',
+        penalties: 'LOW family -26; MEDIUM same-family -12; MEDIUM_HIGH adjacent -5; explicit unrelated -30',
+        caps: 'specialized must-have groups; anchor<20%; creative portfolio; unrelated role; eligibility floors',
+        semanticBlend: 'guarded 0.06 max, reduced for weak_domain_fit / LOW+specialized',
       },
       candidates,
     });

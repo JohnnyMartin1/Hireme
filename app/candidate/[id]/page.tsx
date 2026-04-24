@@ -2,15 +2,59 @@
 import { useParams } from 'next/navigation';
 import { useFirebaseAuth } from "@/components/FirebaseAuthProvider";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { User, MapPin, GraduationCap, Star, MessageSquare, Heart, Loader2, ArrowLeft, Send, Video, FileText, Download, X, Code, Briefcase, Plane, Calendar, Copy, Check, Building2, UserCircle, Award, Globe, ZoomIn, ZoomOut, RotateCcw } from "lucide-react";
-import { getDocument, getOrCreateThread, sendMessage, saveCandidate, isCandidateSaved, getEndorsements, getPipelineEntryForJobCandidate, moveCandidateStage, createOrUpdatePipelineEntry, setFollowUpDate, PIPELINE_STAGES, type PipelineStage } from '@/lib/firebase-firestore';
+import {
+  getDocument,
+  getOrCreateThread,
+  sendMessage,
+  saveCandidate,
+  isCandidateSaved,
+  getEndorsements,
+  getPipelineEntryForJobCandidate,
+  PIPELINE_STAGES,
+  type PipelineStage,
+  type MessageJobDetailsShape,
+} from '@/lib/firebase-firestore';
 import Link from 'next/link';
 import { trackProfileView } from '@/lib/firebase-firestore';
 import { getEmployerJobs, getCompanyJobs } from '@/lib/firebase-firestore';
-import { getDashboardUrl, getJobMatchesUrl, getJobPipelineUrl, getMessagesUrl } from '@/lib/navigation';
+import {
+  fetchMessageTemplates,
+  fetchJobInterviews,
+  fetchJobSequences,
+  upsertMessageTemplate,
+  patchJobSequence,
+  upsertJobInterview,
+  upsertJobSequence,
+} from '@/lib/communication-client';
+import {
+  formatTemplatePreview,
+  getSuggestedTemplateType,
+  SEQUENCE_ASSISTANT_MODE_LABEL,
+  describeSequenceAssistantState,
+  type InterviewEvent,
+  type MessageTemplate,
+  type OutreachSequence,
+} from '@/lib/communication-workflow';
+import {
+  getCandidatesSearchUrl,
+  getDashboardUrl,
+  getEmployerTemplatesUrl,
+  getJobCompareUrl,
+  getJobMatchesUrl,
+  getJobOverviewUrl,
+  getJobPipelineUrl,
+  getMessagesUrl,
+} from '@/lib/navigation';
+import { formatRecruiterAttentionLine } from "@/lib/communication-status";
 import { calculateCompletion } from '@/components/ProfileCompletionProvider';
 import { LanguageSkill } from '@/components/LanguageSelector';
+import RecruiterNotesPanel from '@/components/recruiter/RecruiterNotesPanel';
+import RecruiterDecisionPanel from '@/components/recruiter/RecruiterDecisionPanel';
+import CandidateTalentPoolsSection from '@/components/employer/CandidateTalentPoolsSection';
+import AddToTalentPoolButton from '@/components/employer/AddToTalentPoolButton';
+import { useToast } from '@/components/NotificationSystem';
 
 interface CandidateProfile {
   id: string;
@@ -59,6 +103,7 @@ export default function CandidateProfilePage() {
   const params = useParams();
   const searchParams = useSearchParams();
   const { user, profile, loading } = useFirebaseAuth();
+  const toast = useToast();
   const router = useRouter();
   const [candidate, setCandidate] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -68,6 +113,19 @@ export default function CandidateProfilePage() {
   const [isSendingMessage, setIsSendingMessage] = useState(false);
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
   const [employerJobs, setEmployerJobs] = useState<any[]>([]);
+  const [templates, setTemplates] = useState<MessageTemplate[]>([]);
+  const [selectedTemplateId, setSelectedTemplateId] = useState('');
+  const [templateName, setTemplateName] = useState('');
+  const [templateSaving, setTemplateSaving] = useState(false);
+  const [sequence, setSequence] = useState<OutreachSequence | null>(null);
+  const [sequenceBusy, setSequenceBusy] = useState(false);
+  const [interviewBusy, setInterviewBusy] = useState(false);
+  const [interviewEvent, setInterviewEvent] = useState<InterviewEvent | null>(null);
+  const [interviewScheduledAt, setInterviewScheduledAt] = useState('');
+  const [interviewDuration, setInterviewDuration] = useState('30');
+  const [interviewLocation, setInterviewLocation] = useState('');
+  const [interviewNotes, setInterviewNotes] = useState('');
+  const jobIdFromContext = searchParams.get('jobId');
   const [isSaved, setIsSaved] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [showResumeModal, setShowResumeModal] = useState(false);
@@ -123,9 +181,11 @@ export default function CandidateProfilePage() {
 
   useEffect(() => {
     const fetchCandidateProfile = async () => {
-      if (!params.id) return;
+      if (!params.id || loading) return;
+      if (!user) return;
 
       setIsLoading(true);
+      setError(null);
       try {
         // Use profile from auth context if viewing own profile, otherwise fetch
         if (user && user.uid === params.id && profile) {
@@ -167,6 +227,7 @@ export default function CandidateProfilePage() {
           }
 
           setCandidate(data);
+          setError(null);
         }
 
         // Track profile view if user is logged in and viewing someone else's profile
@@ -197,7 +258,7 @@ export default function CandidateProfilePage() {
     };
 
     fetchCandidateProfile();
-  }, [params.id, user, profile]);
+  }, [params.id, user, profile, loading]);
 
   useEffect(() => {
     const fetchMatchContext = async () => {
@@ -209,7 +270,10 @@ export default function CandidateProfilePage() {
         return;
       }
       try {
-        const res = await fetch(`/api/job/${jobId}/matches`);
+        const token = await user.getIdToken();
+        const res = await fetch(`/api/job/${jobId}/matches`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
         if (!res.ok) return;
         const payload = await res.json();
         const match = (payload.matches || []).find((m: any) => m.candidateId === candidate.id);
@@ -278,57 +342,194 @@ export default function CandidateProfilePage() {
     if (!user?.uid) return;
     setPipelineBusy(true);
     try {
-      if (pipelineEntry?.id) {
-        const { error: moveError } = await moveCandidateStage(pipelineEntry.id, newStage);
-        if (moveError) {
-          setError(moveError);
-          return;
-        }
-        setPipelineEntry((prev: any) => ({ ...(prev || {}), stage: newStage }));
-        return;
-      }
-      const { id, error: createError } = await createOrUpdatePipelineEntry(jobId, candidate.id, {
-        stage: newStage,
-        ownerId: user.uid,
+      const token = await user.getIdToken();
+      const res = await fetch(`/api/job/${jobId}/pipeline`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          candidateId: candidate.id,
+          stage: newStage,
+        }),
       });
-      if (createError || !id) {
-        setError(createError || 'Unable to update pipeline stage');
+      const payload = await res.json().catch(() => ({}));
+      if (!res.ok || !payload?.entry?.id) {
+        toast.error('Pipeline', String(payload?.error || 'Unable to update pipeline stage'));
         return;
       }
-      setPipelineEntry({ id, stage: newStage, jobId, candidateId: candidate.id });
+      setPipelineEntry(payload.entry);
     } finally {
       setPipelineBusy(false);
     }
   };
 
-  const handlePipelineFollowUpChange = async (rawDate: string) => {
+  const handlePipelineFollowUpChange = async (date: Date | null) => {
     const jobId = searchParams.get('jobId');
     if (!candidate?.id || !jobId) return;
     if (!user?.uid) return;
-    const followUpDate = rawDate ? new Date(`${rawDate}T12:00:00`) : null;
     setPipelineBusy(true);
     try {
-      if (pipelineEntry?.id) {
-        const { error: followUpError } = await setFollowUpDate(pipelineEntry.id, followUpDate);
-        if (followUpError) {
-          setError(followUpError);
-          return;
-        }
-        setPipelineEntry((prev: any) => ({ ...(prev || {}), nextFollowUpAt: followUpDate }));
-        return;
-      }
-      const { id, error: createError } = await createOrUpdatePipelineEntry(jobId, candidate.id, {
-        stage: 'NEW',
-        ownerId: user.uid,
-        nextFollowUpAt: followUpDate,
+      const token = await user.getIdToken();
+      const res = await fetch(`/api/job/${jobId}/pipeline`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          candidateId: candidate.id,
+          stage: (pipelineEntry?.stage || 'NEW') as PipelineStage,
+          nextFollowUpAt: date ? date.toISOString() : null,
+        }),
       });
-      if (createError || !id) {
-        setError(createError || 'Unable to set follow-up date');
+      const payload = await res.json().catch(() => ({}));
+      if (!res.ok || !payload?.entry?.id) {
+        toast.error('Pipeline', String(payload?.error || 'Unable to set follow-up date'));
         return;
       }
-      setPipelineEntry({ id, stage: 'NEW', jobId, candidateId: candidate.id, nextFollowUpAt: followUpDate });
+      setPipelineEntry(payload.entry);
     } finally {
       setPipelineBusy(false);
+    }
+  };
+
+  const loadCommunicationForJob = async (jobId: string, candidateId: string) => {
+    if (!user) return;
+    const token = await user.getIdToken();
+    const [templatesRes, sequenceRes, interviewRes] = await Promise.all([
+      fetchMessageTemplates(token),
+      fetchJobSequences(jobId, token, candidateId),
+      fetchJobInterviews(jobId, token, candidateId),
+    ]);
+    if (templatesRes.ok) {
+      setTemplates((templatesRes.data.templates || []) as MessageTemplate[]);
+    }
+    if (sequenceRes.ok) {
+      const first = (sequenceRes.data.sequences || [])[0] as OutreachSequence | undefined;
+      setSequence(first || null);
+    }
+    if (interviewRes.ok) {
+      const first = (interviewRes.data.interviews || [])
+        .find((iv: any) => String(iv?.status || '') !== 'CANCELLED') as InterviewEvent | undefined;
+      setInterviewEvent(first || null);
+      if (first?.scheduledAt) {
+        const d = (first.scheduledAt as any)?.toDate ? (first.scheduledAt as any).toDate() : new Date(first.scheduledAt as any);
+        if (!Number.isNaN(d.getTime())) setInterviewScheduledAt(d.toISOString().slice(0, 16));
+      }
+      if (first?.durationMinutes) setInterviewDuration(String(first.durationMinutes));
+      if (first?.location) setInterviewLocation(String(first.location));
+      if (first?.notes) setInterviewNotes(String(first.notes));
+    }
+  };
+
+  const handleApplyTemplate = (template: MessageTemplate) => {
+    setMessageContent((prev) => {
+      const prefix = prev.trim().length > 0 ? `${prev.trim()}\n\n` : '';
+      return `${prefix}${template.body}`.trim();
+    });
+  };
+
+  const handleSaveTemplate = async () => {
+    if (!user || !templateName.trim() || !messageContent.trim()) return;
+    setTemplateSaving(true);
+    try {
+      const token = await user.getIdToken();
+      const stage = pipelineStage || 'NEW';
+      const res = await upsertMessageTemplate(token, {
+        name: templateName.trim(),
+        body: messageContent.trim(),
+        type: getSuggestedTemplateType(stage),
+        stage,
+      });
+      if (!res.ok) return;
+      const refreshed = await fetchMessageTemplates(token);
+      if (refreshed.ok) setTemplates((refreshed.data.templates || []) as MessageTemplate[]);
+      setTemplateName('');
+    } finally {
+      setTemplateSaving(false);
+    }
+  };
+
+  const handleStartSequence = async () => {
+    const jobForAction = selectedJobId || jobIdFromContext;
+    if (!user || !candidate || !jobForAction) return;
+    setSequenceBusy(true);
+    try {
+      const token = await user.getIdToken();
+      const selectedStepTemplate = selectedTemplateId || suggestedTemplate?.id || null;
+      const res = await upsertJobSequence(jobForAction, token, {
+        candidateId: candidate.id,
+        steps: [
+          {
+            delayDays: 0,
+            messageTemplateId: selectedStepTemplate,
+            body: selectedStepTemplate ? null : (messageContent.trim() || null),
+          },
+          {
+            delayDays: 3,
+            messageTemplateId: selectedStepTemplate,
+            body: null,
+          },
+        ],
+      });
+      if (!res.ok) return;
+      setSequence((res.data.sequence || null) as OutreachSequence | null);
+    } finally {
+      setSequenceBusy(false);
+    }
+  };
+
+  const handleStopSequence = async () => {
+    const jobForAction = selectedJobId || jobIdFromContext;
+    if (!user || !candidate || !jobForAction) return;
+    setSequenceBusy(true);
+    try {
+      const token = await user.getIdToken();
+      const res = await patchJobSequence(jobForAction, token, {
+        candidateId: candidate.id,
+        status: 'STOPPED',
+        stoppedReason: 'MANUAL_STOP',
+      });
+      if (!res.ok) return;
+      setSequence((res.data.sequence || null) as OutreachSequence | null);
+    } finally {
+      setSequenceBusy(false);
+    }
+  };
+
+  const handleScheduleInterview = async (status: 'PROPOSED' | 'CONFIRMED') => {
+    const jobForAction = selectedJobId || jobIdFromContext;
+    if (!user || !candidate || !jobForAction || !interviewScheduledAt) return;
+    setInterviewBusy(true);
+    try {
+      const token = await user.getIdToken();
+      const when = new Date(interviewScheduledAt);
+      if (Number.isNaN(when.getTime())) return;
+      const res = await upsertJobInterview(jobForAction, token, {
+        candidateId: candidate.id,
+        status,
+        scheduledAt: when.toISOString(),
+        durationMinutes: Number(interviewDuration || 30),
+        location: interviewLocation,
+        notes: interviewNotes,
+      });
+      if (!res.ok) return;
+      setInterviewEvent((res.data.interview || null) as InterviewEvent | null);
+      await fetch(`/api/job/${jobForAction}/pipeline`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          candidateId: candidate.id,
+          stage: 'INTERVIEW',
+        }),
+      });
+    } finally {
+      setInterviewBusy(false);
     }
   };
 
@@ -344,7 +545,24 @@ export default function CandidateProfilePage() {
     setIsSendingMessage(true);
     try {
       const participantIds = [user.uid, candidate.id].sort();
-      const { id: threadId, error: threadError } = await getOrCreateThread(participantIds);
+
+      let threadJobOpts: { jobDetails?: MessageJobDetailsShape } | undefined;
+      let jobDetails: MessageJobDetailsShape | null = null;
+      if ((profile.role === "EMPLOYER" || profile.role === "RECRUITER") && selectedJobId) {
+        const selectedJob = employerJobs.find((job) => job.id === selectedJobId);
+        if (selectedJob) {
+          jobDetails = {
+            jobId: selectedJob.id,
+            jobTitle: selectedJob.title,
+            jobDescription: String(selectedJob.description || ""),
+            employmentType: String(selectedJob.employment || ""),
+            location: `${selectedJob.locationCity || ""} ${selectedJob.locationState || ""}`.trim(),
+          };
+          threadJobOpts = { jobDetails };
+        }
+      }
+
+      const { id: threadId, error: threadError } = await getOrCreateThread(participantIds, threadJobOpts);
 
       if (threadError || !threadId) {
         console.error('Error creating thread:', threadError);
@@ -355,21 +573,6 @@ export default function CandidateProfilePage() {
       // Auto-accept the thread for the employer who is initiating contact
       const { acceptMessageThread } = await import('@/lib/firebase-firestore');
       await acceptMessageThread(threadId, user.uid);
-
-      // Get job details if employer or recruiter
-      let jobDetails = null;
-      if ((profile.role === 'EMPLOYER' || profile.role === 'RECRUITER') && selectedJobId) {
-        const selectedJob = employerJobs.find(job => job.id === selectedJobId);
-        if (selectedJob) {
-          jobDetails = {
-            jobId: selectedJob.id,
-            jobTitle: selectedJob.title,
-            jobDescription: selectedJob.description,
-            employmentType: selectedJob.employment,
-            location: `${selectedJob.locationCity || ''} ${selectedJob.locationState || ''}`.trim()
-          };
-        }
-      }
 
       const messageData: any = {
         senderId: user.uid,
@@ -432,10 +635,16 @@ export default function CandidateProfilePage() {
       
       setEmployerJobs(jobs);
       const fromUrl = searchParams.get('jobId');
+      let chosenJobId: string | null = null;
       if (fromUrl && jobs.some((j: any) => j.id === fromUrl)) {
         setSelectedJobId(fromUrl);
+        chosenJobId = fromUrl;
       } else if (jobs.length > 0) {
         setSelectedJobId(jobs[0].id);
+        chosenJobId = jobs[0].id;
+      }
+      if (chosenJobId && candidate?.id) {
+        await loadCommunicationForJob(chosenJobId, candidate.id);
       }
     } catch (err) {
       console.error('Error fetching jobs:', err);
@@ -443,6 +652,30 @@ export default function CandidateProfilePage() {
     
     setShowMessageDialog(true);
   };
+
+  useEffect(() => {
+    const recruiterView = profile?.role === 'EMPLOYER' || profile?.role === 'RECRUITER';
+    if (!candidate?.id || !recruiterView) return;
+    const action = searchParams.get('action');
+    if (action === 'message' && !showMessageDialog) {
+      handleOpenMessageDialog();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [candidate?.id, profile?.role, searchParams, showMessageDialog]);
+
+  useEffect(() => {
+    if (!showMessageDialog) return;
+    if (!selectedJobId || !candidate?.id || !user) return;
+    loadCommunicationForJob(selectedJobId, candidate.id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showMessageDialog, selectedJobId, candidate?.id, user?.uid]);
+
+  useEffect(() => {
+    if (!user || !candidate?.id || !jobIdFromContext) return;
+    if (profile?.role !== 'EMPLOYER' && profile?.role !== 'RECRUITER') return;
+    loadCommunicationForJob(jobIdFromContext, candidate.id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.uid, candidate?.id, jobIdFromContext, profile?.role]);
 
   const handleSaveCandidate = async () => {
     if (!user || (profile?.role !== 'EMPLOYER' && profile?.role !== 'RECRUITER') || !candidate) return;
@@ -540,10 +773,25 @@ export default function CandidateProfilePage() {
     ? new Date(followUpRaw?.toDate ? followUpRaw.toDate() : followUpRaw)
     : null;
   const followUpDue = !!nextFollowUpDate && nextFollowUpDate.getTime() < Date.now();
-  const jobIdFromContext = searchParams.get('jobId');
   const isAdminViewer = user?.email === 'officialhiremeapp@gmail.com' || profile?.role === 'ADMIN';
   const isEmployerOrRecruiter = profile?.role === 'EMPLOYER' || profile?.role === 'RECRUITER';
   const viewingAsRecruiter = user?.uid !== candidate.id && isEmployerOrRecruiter && !isAdminViewer;
+  const templateStage = pipelineStage || 'NEW';
+  const selectedTemplate = useMemo(
+    () => templates.find((template) => template.id === selectedTemplateId) || null,
+    [templates, selectedTemplateId]
+  );
+  const suggestedTemplate = useMemo(() => {
+    const wanted = getSuggestedTemplateType(templateStage);
+    return templates.find((template) => template.type === wanted) || null;
+  }, [templates, templateStage]);
+  const interviewScheduledText = interviewEvent?.scheduledAt
+    ? new Date(
+        (interviewEvent.scheduledAt as any)?.toDate
+          ? (interviewEvent.scheduledAt as any).toDate()
+          : (interviewEvent.scheduledAt as any)
+      ).toLocaleString()
+    : '';
 
   return (
     <main className="min-h-screen bg-slate-50 mobile-safe-top mobile-safe-bottom overflow-x-hidden w-full">
@@ -655,6 +903,12 @@ export default function CandidateProfilePage() {
                     >
                       Pipeline
                     </Link>
+                    <Link
+                      href={getJobOverviewUrl(jobIdFromContext)}
+                      className="inline-flex items-center px-3 py-2 rounded-lg border border-slate-200 text-navy-800 text-sm font-medium hover:bg-slate-50 min-h-[48px]"
+                    >
+                      Job overview
+                    </Link>
                   </>
                 ) : (
                   <Link
@@ -667,9 +921,9 @@ export default function CandidateProfilePage() {
                 )}
                 <Link
                   href={getDashboardUrl()}
-                  className="inline-flex items-center px-3 py-2 rounded-lg bg-navy-800 text-white text-sm font-semibold hover:bg-navy-700 min-h-[48px]"
+                  className="inline-flex items-center px-3 py-2 rounded-lg border border-slate-300 text-navy-800 text-sm font-medium hover:bg-slate-50 min-h-[48px]"
                 >
-                  Dashboard
+                  Recruiter home
                 </Link>
               </>
             ) : (
@@ -752,6 +1006,13 @@ export default function CandidateProfilePage() {
                   <Heart className={`h-5 w-5 ${isSaved ? 'fill-current' : ''}`} />
                   <span>Save Candidate</span>
                 </button>
+                {(profile?.role === 'EMPLOYER' || profile?.role === 'RECRUITER' || profile?.role === 'ADMIN') && candidate?.id && (
+                  <AddToTalentPoolButton
+                    candidateId={candidate.id}
+                    className="w-full"
+                    buttonClassName="w-full inline-flex items-center justify-center gap-2 bg-white border border-slate-200 text-navy-900 px-8 py-4 rounded-lg font-semibold shadow-sm hover:bg-slate-50"
+                  />
+                )}
                 {candidate.resumeUrl && (
                   <button
                     onClick={async () => {
@@ -793,7 +1054,21 @@ export default function CandidateProfilePage() {
               </div>
               <div>
                 <h2 className="text-lg font-bold text-navy-900">Recruiter workflow context</h2>
-                <p className="text-sm text-slate-600">Pipeline status and actions for this candidate on the current job.</p>
+                <p className="text-sm text-slate-600">
+                  Shortlist = serious contenders for this job. Pipeline = all active candidates for this job.
+                </p>
+                <p className="text-xs text-slate-500 mt-1">
+                  <span className="font-semibold text-slate-700">Attention:</span>{" "}
+                  {formatRecruiterAttentionLine({
+                    pipelineStage,
+                    hasEvaluation: false,
+                    isEvaluationComplete: true,
+                    reviewStatus: null,
+                    nextFollowUpAt: pipelineEntry?.nextFollowUpAt,
+                    interviewAt: interviewEvent?.scheduledAt,
+                    sequence,
+                  })}
+                </p>
               </div>
             </div>
             <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
@@ -811,6 +1086,20 @@ export default function CandidateProfilePage() {
                     Next follow-up: {nextFollowUpDate.toLocaleDateString()}
                   </span>
                 )}
+                {sequence?.status && (
+                  <span className={`inline-flex rounded-full border px-2 py-1 text-xs font-semibold ${
+                    sequence.status === 'ACTIVE'
+                      ? 'border-violet-200 bg-violet-50 text-violet-700'
+                      : 'border-slate-200 bg-white text-slate-700'
+                  }`}>
+                    Sequence: {sequence.status}
+                  </span>
+                )}
+                {Boolean(interviewEvent?.scheduledAt) && (
+                  <span className="inline-flex rounded-full border border-indigo-200 bg-indigo-50 px-2 py-1 text-xs font-semibold text-indigo-700">
+                    Interview: {interviewScheduledText}
+                  </span>
+                )}
               </div>
               <div className="flex flex-wrap items-center gap-2 mb-3">
                 <Link
@@ -823,13 +1112,31 @@ export default function CandidateProfilePage() {
                   href={getJobPipelineUrl(jobIdFromContext)}
                   className="inline-flex items-center px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-xs font-semibold text-navy-800 hover:bg-slate-100"
                 >
-                  View pipeline
+                  Pipeline
+                </Link>
+                <Link
+                  href={getJobOverviewUrl(jobIdFromContext)}
+                  className="inline-flex items-center px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-xs font-semibold text-navy-800 hover:bg-slate-100"
+                >
+                  Job overview
                 </Link>
                 <Link
                   href={getMessagesUrl(jobIdFromContext)}
                   className="inline-flex items-center px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-xs font-semibold text-navy-800 hover:bg-slate-100"
                 >
                   Job messages
+                </Link>
+                <Link
+                  href={getCandidatesSearchUrl(jobIdFromContext)}
+                  className="inline-flex items-center px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-xs font-semibold text-navy-800 hover:bg-slate-100"
+                >
+                  Source more candidates
+                </Link>
+                <Link
+                  href={getJobCompareUrl(jobIdFromContext)}
+                  className="inline-flex items-center px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-xs font-semibold text-navy-800 hover:bg-slate-100"
+                >
+                  Compare shortlist
                 </Link>
               </div>
               <div className="flex flex-wrap gap-2">
@@ -845,25 +1152,118 @@ export default function CandidateProfilePage() {
                     </option>
                   ))}
                 </select>
-                <input
-                  type="date"
-                  value={nextFollowUpDate ? nextFollowUpDate.toISOString().slice(0, 10) : ''}
-                  onChange={(e) => handlePipelineFollowUpChange(e.target.value)}
-                  disabled={pipelineBusy}
-                  className="px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm text-slate-700"
-                />
                 <button
                   type="button"
-                  onClick={() => handlePipelineFollowUpChange('')}
+                  onClick={() => {
+                    const autoDate = new Date();
+                    autoDate.setDate(autoDate.getDate() + 3);
+                    autoDate.setHours(12, 0, 0, 0);
+                    handlePipelineFollowUpChange(autoDate);
+                  }}
+                  disabled={pipelineBusy}
+                  className="px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm font-medium text-slate-700 hover:bg-slate-100"
+                >
+                  Auto follow-up (+3 days)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handlePipelineFollowUpChange(null)}
                   disabled={pipelineBusy}
                   className="px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm font-medium text-slate-700 hover:bg-slate-100"
                 >
                   Mark follow-up done
                 </button>
+                <button
+                  type="button"
+                  onClick={handleStartSequence}
+                  disabled={sequenceBusy || !jobIdFromContext}
+                  className="px-3 py-2 rounded-lg border border-violet-200 bg-violet-50 text-sm font-medium text-violet-800 hover:bg-violet-100 disabled:opacity-60"
+                >
+                  Start sequence
+                </button>
+                <button
+                  type="button"
+                  onClick={handleStopSequence}
+                  disabled={sequenceBusy || !jobIdFromContext || sequence?.status !== 'ACTIVE'}
+                  className="px-3 py-2 rounded-lg border border-violet-200 bg-violet-50 text-sm font-medium text-violet-800 hover:bg-violet-100 disabled:opacity-60"
+                >
+                  Stop sequence
+                </button>
               </div>
+              <div className="mt-3 rounded-lg border border-indigo-200 bg-indigo-50 p-3">
+                <p className="text-xs font-semibold uppercase tracking-wide text-indigo-700 mb-2">Schedule interview</p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                  <input
+                    type="datetime-local"
+                    value={interviewScheduledAt}
+                    onChange={(e) => setInterviewScheduledAt(e.target.value)}
+                    className="px-2 py-1.5 rounded-md border border-indigo-200 bg-white text-xs text-slate-700"
+                  />
+                  <input
+                    type="number"
+                    min={15}
+                    step={15}
+                    value={interviewDuration}
+                    onChange={(e) => setInterviewDuration(e.target.value)}
+                    className="px-2 py-1.5 rounded-md border border-indigo-200 bg-white text-xs text-slate-700"
+                    placeholder="Duration (min)"
+                  />
+                  <input
+                    value={interviewLocation}
+                    onChange={(e) => setInterviewLocation(e.target.value)}
+                    className="px-2 py-1.5 rounded-md border border-indigo-200 bg-white text-xs text-slate-700"
+                    placeholder="Location / meeting link"
+                  />
+                </div>
+                <input
+                  value={interviewNotes}
+                  onChange={(e) => setInterviewNotes(e.target.value)}
+                  className="mt-2 w-full px-2 py-1.5 rounded-md border border-indigo-200 bg-white text-xs text-slate-700"
+                  placeholder="Interview notes"
+                />
+                <div className="mt-2 flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleScheduleInterview('PROPOSED')}
+                    disabled={interviewBusy || !jobIdFromContext}
+                    className="px-3 py-1.5 rounded-md border border-indigo-200 bg-white text-xs font-semibold text-indigo-800 hover:bg-indigo-100 disabled:opacity-60"
+                  >
+                    Propose interview
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleScheduleInterview('CONFIRMED')}
+                    disabled={interviewBusy || !jobIdFromContext}
+                    className="px-3 py-1.5 rounded-md border border-indigo-200 bg-white text-xs font-semibold text-indigo-800 hover:bg-indigo-100 disabled:opacity-60"
+                  >
+                    Confirm interview
+                  </button>
+                </div>
+              </div>
+              {user?.uid && (
+                <div className="mt-4" id="recruiter-notes">
+                  <div className="mb-4">
+                    <RecruiterDecisionPanel
+                      jobId={jobIdFromContext}
+                      candidateId={candidate.id}
+                      pipelineStage={pipelineStage}
+                    />
+                  </div>
+                  <RecruiterNotesPanel
+                    jobId={jobIdFromContext}
+                    candidateId={candidate.id}
+                    userId={user.uid}
+                    title="Recruiter notes for this candidate + job"
+                  />
+                </div>
+              )}
             </div>
           </section>
         )}
+
+        {user?.uid !== candidate.id &&
+          (profile?.role === 'EMPLOYER' || profile?.role === 'RECRUITER' || profile?.role === 'ADMIN') &&
+          candidate?.id && <CandidateTalentPoolsSection candidateId={candidate.id} />}
 
         {/* Matching Dimensions Snapshot (recruiter-facing) */}
         {user?.uid !== candidate.id && (profile?.role === 'EMPLOYER' || profile?.role === 'RECRUITER' || profile?.role === 'ADMIN') && (
@@ -1436,7 +1836,49 @@ export default function CandidateProfilePage() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-xl border border-slate-100 p-8 w-full max-w-md">
             <h3 className="text-xl font-bold text-navy-900 mb-6">Send Message to {candidate?.firstName || 'Candidate'}</h3>
-            
+
+            {(profile.role === 'EMPLOYER' || profile.role === 'RECRUITER') && (
+              <div className="mb-4 space-y-2">
+                {suggestedTemplate && (
+                  <button
+                    type="button"
+                    onClick={() => handleApplyTemplate(suggestedTemplate)}
+                    className="w-full rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-left text-xs font-semibold text-emerald-800 hover:bg-emerald-100"
+                  >
+                    Suggested message: {suggestedTemplate.name}
+                  </button>
+                )}
+                <div className="flex items-center gap-2">
+                  <select
+                    value={selectedTemplateId}
+                    onChange={(e) => setSelectedTemplateId(e.target.value)}
+                    className="flex-1 p-2 border border-slate-200 rounded-lg text-xs text-navy-900"
+                  >
+                    <option value="">Choose template</option>
+                    {templates.map((template) => (
+                      <option key={template.id} value={template.id}>
+                        {template.name} ({template.type})
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    onClick={() => selectedTemplate && handleApplyTemplate(selectedTemplate)}
+                    disabled={!selectedTemplate}
+                    className="px-3 py-2 rounded-lg border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+                  >
+                    Apply
+                  </button>
+                </div>
+                {selectedTemplate && (
+                  <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2">
+                    <p className="text-[11px] uppercase tracking-wide text-slate-500 font-semibold mb-1">Preview</p>
+                    <pre className="text-xs text-slate-700 whitespace-pre-wrap font-sans">{formatTemplatePreview(selectedTemplate)}</pre>
+                  </div>
+                )}
+              </div>
+            )}
+
             <textarea
               value={messageContent}
               onChange={(e) => setMessageContent(e.target.value)}
@@ -1464,6 +1906,115 @@ export default function CandidateProfilePage() {
                     </option>
                   ))}
                 </select>
+              </div>
+            )}
+            {(profile.role === 'EMPLOYER' || profile.role === 'RECRUITER') && (
+              <div className="mb-4 grid grid-cols-1 gap-2">
+                <div className="flex items-center gap-2">
+                  <input
+                    value={templateName}
+                    onChange={(e) => setTemplateName(e.target.value)}
+                    placeholder="Save current text as template..."
+                    className="flex-1 p-2 border border-slate-200 rounded-lg text-xs text-navy-900"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleSaveTemplate}
+                    disabled={templateSaving || !templateName.trim() || !messageContent.trim()}
+                    className="px-3 py-2 rounded-lg border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+                  >
+                    Save template
+                  </button>
+                  <Link
+                    href={getEmployerTemplatesUrl()}
+                    className="text-xs font-semibold text-sky-700 hover:underline self-center"
+                  >
+                    Manage templates
+                  </Link>
+                </div>
+                <div className="rounded-lg border border-violet-200 bg-violet-50 p-2">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-violet-700 mb-1">
+                    Outreach sequence · {SEQUENCE_ASSISTANT_MODE_LABEL}
+                  </p>
+                  <p className="text-[11px] text-violet-900/85 mb-2 leading-snug">
+                    {describeSequenceAssistantState(sequence)}
+                  </p>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={handleStartSequence}
+                      disabled={sequenceBusy || !selectedJobId}
+                      className="px-2 py-1 rounded-md border border-violet-200 bg-white text-xs font-semibold text-violet-800 hover:bg-violet-100 disabled:opacity-60"
+                    >
+                      Start sequence
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleStopSequence}
+                      disabled={sequenceBusy || !selectedJobId || sequence?.status !== 'ACTIVE'}
+                      className="px-2 py-1 rounded-md border border-violet-200 bg-white text-xs font-semibold text-violet-800 hover:bg-violet-100 disabled:opacity-60"
+                    >
+                      Stop
+                    </button>
+                  </div>
+                </div>
+                <div className="rounded-lg border border-indigo-200 bg-indigo-50 p-2">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-indigo-700 mb-1">Interview scheduling</p>
+                  <div className="grid grid-cols-1 gap-1 mb-2">
+                    <input
+                      type="datetime-local"
+                      value={interviewScheduledAt}
+                      onChange={(e) => setInterviewScheduledAt(e.target.value)}
+                      className="p-2 border border-indigo-200 rounded-lg text-xs text-slate-700 bg-white"
+                    />
+                    <div className="grid grid-cols-2 gap-1">
+                      <input
+                        type="number"
+                        min={15}
+                        step={15}
+                        value={interviewDuration}
+                        onChange={(e) => setInterviewDuration(e.target.value)}
+                        className="p-2 border border-indigo-200 rounded-lg text-xs text-slate-700 bg-white"
+                        placeholder="Duration"
+                      />
+                      <input
+                        value={interviewLocation}
+                        onChange={(e) => setInterviewLocation(e.target.value)}
+                        className="p-2 border border-indigo-200 rounded-lg text-xs text-slate-700 bg-white"
+                        placeholder="Location/link"
+                      />
+                    </div>
+                    <input
+                      value={interviewNotes}
+                      onChange={(e) => setInterviewNotes(e.target.value)}
+                      className="p-2 border border-indigo-200 rounded-lg text-xs text-slate-700 bg-white"
+                      placeholder="Notes"
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleScheduleInterview('PROPOSED')}
+                      disabled={interviewBusy || !selectedJobId}
+                      className="px-2 py-1 rounded-md border border-indigo-200 bg-white text-xs font-semibold text-indigo-800 hover:bg-indigo-100 disabled:opacity-60"
+                    >
+                      Propose
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleScheduleInterview('CONFIRMED')}
+                      disabled={interviewBusy || !selectedJobId}
+                      className="px-2 py-1 rounded-md border border-indigo-200 bg-white text-xs font-semibold text-indigo-800 hover:bg-indigo-100 disabled:opacity-60"
+                    >
+                      Confirm
+                    </button>
+                  </div>
+                  {Boolean(interviewEvent?.scheduledAt) && (
+                    <p className="text-[11px] text-indigo-700 mt-1">
+                      Scheduled: {interviewScheduledText}
+                    </p>
+                  )}
+                </div>
               </div>
             )}
 

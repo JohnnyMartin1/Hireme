@@ -1,15 +1,26 @@
 "use client";
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { useFirebaseAuth } from "@/components/FirebaseAuthProvider";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Search, User, MapPin, GraduationCap, Star, Loader2, Filter, X, MessageSquare, ArrowLeft } from "lucide-react";
-import { getProfilesByRole } from '@/lib/firebase-firestore';
+import { getPipelineByJob, getProfilesByRole, normalizePipelineStage } from '@/lib/firebase-firestore';
+import { postJobPipeline } from '@/lib/pipeline-client';
 import SearchableDropdown from '@/components/SearchableDropdown';
 import MultiSelectDropdown from '@/components/MultiSelectDropdown';
 import { UNIVERSITIES, MAJORS, LOCATIONS, SKILLS, TOP_25_UNIVERSITIES, CAREER_INTERESTS } from '@/lib/profile-data';
-import { getEmployerJobs } from '@/lib/firebase-firestore';
+import { getCompanyJobs, getDocument, getEmployerJobs } from '@/lib/firebase-firestore';
 import { calculateCompletion } from '@/components/ProfileCompletionProvider';
+import { useToast } from '@/components/NotificationSystem';
+import { getCandidateUrl, getEmployerPoolsUrl, getJobCompareUrl, getJobMatchesUrl, getJobOverviewUrl, getJobPipelineUrl } from '@/lib/navigation';
+import {
+  fetchTalentPool,
+  fetchTalentPools,
+  fetchTalentPoolMembershipLookup,
+  type TalentPool,
+  type TalentPoolMembershipBadge,
+} from '@/lib/talent-pools-client';
+import AddToTalentPoolButton from '@/components/employer/AddToTalentPoolButton';
 
 interface Candidate {
   id: string;
@@ -26,8 +37,14 @@ interface Candidate {
 }
 
 export default function SearchCandidatesPage() {
+  const toast = useToast();
   const { user, profile, loading } = useFirebaseAuth();
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const scopedJobId = searchParams.get('jobId');
+  const poolInParam = searchParams.get('poolIn') || '';
+  const poolNotParam = searchParams.get('poolNot') || '';
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -49,8 +66,19 @@ export default function SearchCandidatesPage() {
   const [selectedJobId, setSelectedJobId] = useState('');
   const [availableJobs, setAvailableJobs] = useState<any[]>([]);
   const [selectedJob, setSelectedJob] = useState<any>(null);
+  const [scopedJob, setScopedJob] = useState<any>(null);
+  const [pipelineStageByCandidate, setPipelineStageByCandidate] = useState<Record<string, string>>({});
+  const [pipelineBusyCandidateId, setPipelineBusyCandidateId] = useState<string | null>(null);
   const [matchToJobGpa, setMatchToJobGpa] = useState('');
   const [matchToJobCareerInterests, setMatchToJobCareerInterests] = useState<string[]>([]);
+
+  const [talentPools, setTalentPools] = useState<TalentPool[]>([]);
+  const [poolIncludeId, setPoolIncludeId] = useState('');
+  const [poolExcludeId, setPoolExcludeId] = useState('');
+  const [poolIncludeIds, setPoolIncludeIds] = useState<Set<string> | null>(null);
+  const [poolExcludeIds, setPoolExcludeIds] = useState<Set<string> | null>(null);
+  const [poolFilterLoading, setPoolFilterLoading] = useState(false);
+  const [poolBadgesByCandidate, setPoolBadgesByCandidate] = useState<Record<string, TalentPoolMembershipBadge[]>>({});
 
   useEffect(() => {
     if (!loading && !user) {
@@ -77,11 +105,95 @@ export default function SearchCandidatesPage() {
     }
   }, [user, profile]);
 
-  const loadEmployerJobs = async () => {
+  useEffect(() => {
+    setPoolIncludeId(poolInParam);
+    setPoolExcludeId(poolNotParam);
+  }, [poolInParam, poolNotParam]);
+
+  useEffect(() => {
+    if (!user || !profile || (profile.role !== 'EMPLOYER' && profile.role !== 'RECRUITER' && profile.role !== 'ADMIN')) return;
+    (async () => {
+      const token = await user.getIdToken();
+      const res = await fetchTalentPools(token);
+      if (res.ok) setTalentPools(res.data.pools || []);
+    })();
+  }, [user, profile]);
+
+  useEffect(() => {
     if (!user) return;
+    let cancelled = false;
+    (async () => {
+      setPoolFilterLoading(true);
+      const token = await user.getIdToken();
+      if (poolIncludeId) {
+        const res = await fetchTalentPool(poolIncludeId, token);
+        if (cancelled) return;
+        if (res.ok) {
+          setPoolIncludeIds(new Set((res.data.members || []).map((m: { candidateId?: string }) => String(m.candidateId || ""))));
+        } else setPoolIncludeIds(new Set());
+      } else {
+        setPoolIncludeIds(null);
+      }
+      if (poolExcludeId) {
+        const res = await fetchTalentPool(poolExcludeId, token);
+        if (cancelled) return;
+        if (res.ok) {
+          setPoolExcludeIds(new Set((res.data.members || []).map((m: { candidateId?: string }) => String(m.candidateId || ""))));
+        } else setPoolExcludeIds(new Set());
+      } else {
+        setPoolExcludeIds(null);
+      }
+      if (!cancelled) setPoolFilterLoading(false);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [poolIncludeId, poolExcludeId, user]);
+
+  const displayCandidates = useMemo(() => {
+    let list = candidates;
+    if (poolIncludeId && poolIncludeIds === null) {
+      return [];
+    }
+    if (poolIncludeId && poolIncludeIds) {
+      list = list.filter((c) => poolIncludeIds.has(c.id));
+    }
+    if (poolExcludeId && poolExcludeIds === null) {
+      return [];
+    }
+    if (poolExcludeId && poolExcludeIds) {
+      list = list.filter((c) => !poolExcludeIds.has(c.id));
+    }
+    return list;
+  }, [candidates, poolIncludeId, poolExcludeId, poolIncludeIds, poolExcludeIds]);
+
+  const candidateIdsKey = useMemo(() => candidates.map((c) => c.id).join(","), [candidates]);
+
+  useEffect(() => {
+    if (!scopedJobId || !user || !candidates.length) {
+      setPoolBadgesByCandidate({});
+      return;
+    }
+    let cancelled = false;
+    const ids = candidates.slice(0, 100).map((c) => c.id);
+    (async () => {
+      const token = await user.getIdToken();
+      const res = await fetchTalentPoolMembershipLookup(token, ids);
+      if (!cancelled && res.ok) setPoolBadgesByCandidate(res.data.byCandidate || {});
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [scopedJobId, user, candidateIdsKey]);
+
+  const loadEmployerJobs = async () => {
+    if (!user || !profile) return;
     
     try {
-      const { data: jobs, error } = await getEmployerJobs(user.uid);
+      const { data: jobs, error } =
+        profile.role === 'RECRUITER' && profile.companyId
+          ? await getCompanyJobs(profile.companyId, user.uid, Boolean(profile.isCompanyOwner))
+          : await getEmployerJobs(user.uid);
       if (!error && jobs) {
         setAvailableJobs(jobs);
       }
@@ -89,6 +201,37 @@ export default function SearchCandidatesPage() {
       console.error('Error loading employer jobs:', error);
     }
   };
+
+  useEffect(() => {
+    const loadScopedJobContext = async () => {
+      if (!scopedJobId) {
+        setScopedJob(null);
+        setPipelineStageByCandidate({});
+        return;
+      }
+      const { data: jobData } = await getDocument('jobs', scopedJobId);
+      setScopedJob(jobData || null);
+
+      const { data: entries } = await getPipelineByJob(scopedJobId);
+      const stageByCandidate: Record<string, string> = {};
+      for (const entry of entries || []) {
+        if (entry?.candidateId) {
+          stageByCandidate[String(entry.candidateId)] = normalizePipelineStage(entry.stage as any);
+        }
+      }
+      setPipelineStageByCandidate(stageByCandidate);
+    };
+    loadScopedJobContext();
+  }, [scopedJobId]);
+
+  useEffect(() => {
+    if (!scopedJobId || !availableJobs.length) return;
+    const matchingJob = availableJobs.find((job) => job.id === scopedJobId);
+    if (matchingJob) {
+      setSelectedJobId(scopedJobId);
+      setSelectedJob(matchingJob);
+    }
+  }, [scopedJobId, availableJobs]);
 
   const loadAllCandidates = async () => {
     if (!user) return;
@@ -274,10 +417,45 @@ export default function SearchCandidatesPage() {
     setHasProfileImage(false);
     setHasBio(false);
     setSearchTerm('');
+    setPoolIncludeId('');
+    setPoolExcludeId('');
+    const p = new URLSearchParams(searchParams.toString());
+    p.delete('poolIn');
+    p.delete('poolNot');
+    router.replace(`${pathname}?${p.toString()}`);
     clearJobMatch();
   };
 
-  const hasActiveFilters = selectedUniversities.length > 0 || isTop25Selected || selectedMajors.length > 0 || selectedLocations.length > 0 || selectedSkills.length > 0 || hasVideo || hasResume || hasProfileImage || hasBio || searchTerm.trim() || selectedJobId;
+  const applyPoolInclude = (id: string) => {
+    setPoolIncludeId(id);
+    const p = new URLSearchParams(searchParams.toString());
+    if (id) p.set('poolIn', id);
+    else p.delete('poolIn');
+    router.replace(`${pathname}?${p.toString()}`);
+  };
+
+  const applyPoolExclude = (id: string) => {
+    setPoolExcludeId(id);
+    const p = new URLSearchParams(searchParams.toString());
+    if (id) p.set('poolNot', id);
+    else p.delete('poolNot');
+    router.replace(`${pathname}?${p.toString()}`);
+  };
+
+  const hasActiveFilters =
+    selectedUniversities.length > 0 ||
+    isTop25Selected ||
+    selectedMajors.length > 0 ||
+    selectedLocations.length > 0 ||
+    selectedSkills.length > 0 ||
+    hasVideo ||
+    hasResume ||
+    hasProfileImage ||
+    hasBio ||
+    searchTerm.trim() ||
+    selectedJobId ||
+    Boolean(poolIncludeId) ||
+    Boolean(poolExcludeId);
 
   const handleTop25Schools = () => {
     setIsTop25Selected(true);
@@ -407,6 +585,32 @@ export default function SearchCandidatesPage() {
     return `${first}${last}`.toUpperCase();
   };
 
+  const handleScopedPipelineAction = async (candidateId: string, stage: 'NEW' | 'SHORTLIST') => {
+    if (!scopedJobId || !user) return;
+    setPipelineBusyCandidateId(candidateId);
+    try {
+      const token = await user.getIdToken();
+      const res = await postJobPipeline(scopedJobId, { candidateId, stage }, token);
+      if (!res.ok) {
+        toast.error('Pipeline', res.error || 'Could not update workflow for this job.');
+        return;
+      }
+      setPipelineStageByCandidate((prev) => ({ ...prev, [candidateId]: stage }));
+      if (stage === 'SHORTLIST') {
+        toast.success('Shortlist', 'Added to your working shortlist. Review or compare from the links above.');
+      } else {
+        toast.success('Pipeline', 'Candidate is in the pipeline on NEW. Refine stage from matches or pipeline.');
+      }
+    } finally {
+      setPipelineBusyCandidateId(null);
+    }
+  };
+
+  const getMessageContextUrl = (candidateId: string) => {
+    const base = getCandidateUrl(candidateId, scopedJobId || undefined);
+    return `${base}${base.includes('?') ? '&' : '?'}action=message`;
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen" style={{background: 'linear-gradient(180deg, #E6F0FF 0%, #F8FAFC 100%)'}}>
@@ -424,7 +628,23 @@ export default function SearchCandidatesPage() {
     return null; // Will redirect
   }
 
-  const filterCount = [selectedUniversities.length > 0 ? 1 : 0, isTop25Selected ? 1 : 0, selectedMajors.length, selectedLocations.length, selectedSkills.length, hasVideo, hasResume, hasProfileImage, hasBio, searchTerm.trim() ? 1 : 0, selectedJobId ? 1 : 0].filter(Boolean).length;
+  const filterCount = [
+    selectedUniversities.length > 0 ? 1 : 0,
+    isTop25Selected ? 1 : 0,
+    selectedMajors.length,
+    selectedLocations.length,
+    selectedSkills.length,
+    hasVideo,
+    hasResume,
+    hasProfileImage,
+    hasBio,
+    searchTerm.trim() ? 1 : 0,
+    selectedJobId ? 1 : 0,
+    poolIncludeId ? 1 : 0,
+    poolExcludeId ? 1 : 0,
+  ].filter(Boolean).length;
+  const inPipelineCount = Object.keys(pipelineStageByCandidate).length;
+  const shortlistedCount = Object.values(pipelineStageByCandidate).filter((stage) => String(stage).toUpperCase() === 'SHORTLIST').length;
 
   return (
     <div className="min-h-screen mobile-safe-top mobile-safe-bottom overflow-x-hidden w-full" style={{background: 'linear-gradient(180deg, #E6F0FF 0%, #F8FAFC 100%)'}}>
@@ -432,20 +652,64 @@ export default function SearchCandidatesPage() {
         {/* Breadcrumb */}
         <section className="mb-4 sm:mb-6 md:mb-8 px-2 sm:px-0">
           <Link 
-            href="/home/employer"
+            href={scopedJobId ? getJobOverviewUrl(scopedJobId) : "/home/employer"}
             className="flex items-center text-navy-800 font-semibold hover:text-navy-900 transition-all duration-200 bg-sky-200/10 hover:bg-sky-200/20 px-3 sm:px-4 py-2 rounded-full w-fit min-h-[44px] text-sm sm:text-base hover:shadow-md hover:scale-105"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            <span className="hidden sm:inline">Back to Dashboard</span>
+            <span className="hidden sm:inline">{scopedJobId ? 'Back to Job' : 'Back to Dashboard'}</span>
             <span className="sm:hidden">Back</span>
           </Link>
         </section>
 
         {/* Page Header */}
         <section className="mb-4 sm:mb-6 md:mb-10 px-2 sm:px-0">
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-navy-900 mb-2 break-words">Find Your Perfect Candidate</h1>
-          <p className="text-sm sm:text-base md:text-lg text-slate-600 break-words">Search through talented job seekers to find the right fit for your company.</p>
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-navy-900 mb-2 break-words">
+            {scopedJobId ? 'Source candidates for this requisition' : 'Find Your Perfect Candidate'}
+          </h1>
+          <p className="text-sm sm:text-base md:text-lg text-slate-600 break-words">
+            {scopedJobId
+              ? 'Job-scoped sourcing mode keeps candidate actions tied to your current workflow.'
+              : 'Search through talented job seekers to find the right fit for your company.'}
+          </p>
         </section>
+
+        {scopedJobId && (
+          <section className="mb-4 sm:mb-6 rounded-xl border border-sky-300 bg-gradient-to-r from-sky-50 to-white p-4 sm:p-5">
+            <p className="text-xs font-semibold uppercase tracking-wide text-sky-700 mb-1">Job-scoped sourcing mode</p>
+            <h2 className="text-base sm:text-lg font-semibold text-navy-900">{scopedJob?.title || 'Current requisition'}</h2>
+            <p className="text-sm text-slate-600 mt-1">
+              Source for this requisition, promote contenders into shortlist, then compare and message in the same workflow.
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2 text-xs">
+              <span className="rounded-full border border-violet-200 bg-violet-50 px-2.5 py-1 font-semibold text-violet-700">
+                Shortlist: {shortlistedCount}
+              </span>
+              <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 font-semibold text-slate-700">
+                In pipeline: {inPipelineCount}
+              </span>
+            </div>
+            <div className="mt-3 flex flex-wrap gap-2 text-sm">
+              <Link href={getJobOverviewUrl(scopedJobId)} className="px-3 py-2 rounded-lg border border-slate-200 bg-white text-navy-800 font-medium hover:bg-slate-50">
+                Job overview
+              </Link>
+              <Link href={getJobMatchesUrl(scopedJobId)} className="px-3 py-2 rounded-lg border border-slate-200 bg-white text-navy-800 font-medium hover:bg-slate-50">
+                Matches
+              </Link>
+              <Link href={`${getJobPipelineUrl(scopedJobId)}?stage=SHORTLIST`} className="px-3 py-2 rounded-lg border border-violet-200 bg-violet-50 text-violet-800 font-semibold hover:bg-violet-100">
+                Shortlist column
+              </Link>
+              <Link href={getJobPipelineUrl(scopedJobId)} className="px-3 py-2 rounded-lg border border-slate-200 bg-white text-navy-800 font-medium hover:bg-slate-50">
+                Full pipeline
+              </Link>
+              <Link
+                href={getJobCompareUrl(scopedJobId)}
+                className="px-3 py-2 rounded-lg border border-violet-200 bg-violet-50 text-violet-800 font-semibold hover:bg-violet-100"
+              >
+                Compare shortlist
+              </Link>
+            </div>
+          </section>
+        )}
 
         {/* Search Toolbar */}
         <section className="sticky top-16 sm:top-20 z-30 bg-white/90 backdrop-blur-sm p-4 sm:p-5 md:p-6 rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-slate-200 mb-3 sm:mb-6 md:mb-8 mobile-safe-top">
@@ -609,6 +873,48 @@ export default function SearchCandidatesPage() {
 
               {/* Profile Completeness Filters */}
               <div className="border-t border-gray-200 pt-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">Talent pools</h3>
+                <p className="text-sm text-gray-600 mb-3">
+                  Narrow results by saved pool membership.{" "}
+                  <Link href={getEmployerPoolsUrl()} className="font-semibold text-sky-800 hover:underline">
+                    Manage pools
+                  </Link>
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Only candidates in pool</label>
+                    <select
+                      value={poolIncludeId}
+                      onChange={(e) => applyPoolInclude(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm"
+                    >
+                      <option value="">Any pool</option>
+                      {talentPools.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Exclude candidates in pool</label>
+                    <select
+                      value={poolExcludeId}
+                      onChange={(e) => applyPoolExclude(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm"
+                    >
+                      <option value="">None</option>
+                      {talentPools.map((p) => (
+                        <option key={`ex-${p.id}`} value={p.id}>
+                          {p.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <div className="border-t border-gray-200 pt-6">
                 <h3 className="text-lg font-medium text-gray-900 mb-4">Profile Completeness</h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <label className="flex items-center space-x-3 cursor-pointer">
@@ -680,12 +986,20 @@ export default function SearchCandidatesPage() {
         <section className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
           <div className="flex items-center gap-4">
             <h2 className="text-xl font-bold text-navy-900">
-              {isLoading ? 'Searching...' : `Found ${candidates.length} candidate${candidates.length !== 1 ? 's' : ''}`}
+              {isLoading || poolFilterLoading
+                ? 'Searching...'
+                : `Found ${displayCandidates.length} candidate${displayCandidates.length !== 1 ? 's' : ''}`}
             </h2>
+            <span className={`text-xs font-semibold px-2 py-1 rounded-full ${scopedJobId ? 'bg-sky-100 text-sky-700' : 'bg-slate-100 text-slate-700'}`}>
+              {scopedJobId ? 'Job-scoped mode' : 'Global mode'}
+            </span>
           </div>
-          {candidates.length > 0 && (
+          {displayCandidates.length > 0 && (
             <div className="text-sm text-gray-500">
-              Showing {candidates.length} result{candidates.length !== 1 ? 's' : ''}
+              Showing {displayCandidates.length} result{displayCandidates.length !== 1 ? 's' : ''}
+              {(poolIncludeId || poolExcludeId) && (
+                <span className="ml-2 text-sky-700 font-medium">· Pool filter on</span>
+              )}
             </div>
           )}
         </section>
@@ -701,7 +1015,7 @@ export default function SearchCandidatesPage() {
             <Loader2 className="h-8 w-8 animate-spin text-navy-800 mx-auto mb-4" />
             <p className="text-sm sm:text-base text-gray-600">Searching for candidates...</p>
           </div>
-        ) : candidates.length === 0 ? (
+        ) : displayCandidates.length === 0 ? (
           <div className="w-full min-w-0 text-center py-12 sm:py-16 bg-white rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-slate-200">
             <User className="h-10 w-10 sm:h-12 sm:w-12 text-slate-300 mx-auto mb-4" />
             <p className="text-sm sm:text-base text-slate-500 px-4">No candidates found matching your criteria</p>
@@ -715,7 +1029,7 @@ export default function SearchCandidatesPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
-            {candidates.map((candidate) => (
+            {displayCandidates.map((candidate) => (
               <div key={candidate.id} className="w-full min-w-0 bg-white p-4 sm:p-5 md:p-6 rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-slate-200 hover:shadow-md transition-all duration-200">
                 <div className="flex justify-between items-start mb-4">
                   <div>
@@ -723,6 +1037,18 @@ export default function SearchCandidatesPage() {
                       {candidate.firstName} {candidate.lastName}
                     </h3>
                     <p className="text-xs sm:text-sm text-gray-500 break-words">{candidate.headline || 'No headline'}</p>
+                    {scopedJobId && poolBadgesByCandidate[candidate.id]?.length ? (
+                      <div className="mt-2 flex flex-wrap gap-1">
+                        {poolBadgesByCandidate[candidate.id].map((b) => (
+                          <span
+                            key={`${candidate.id}-${b.poolId}`}
+                            className="inline-flex rounded-full border border-teal-200 bg-teal-50 px-2 py-0.5 text-[10px] font-semibold text-teal-900"
+                          >
+                            Pool: {b.poolName}
+                          </span>
+                        ))}
+                      </div>
+                    ) : null}
                   </div>
                   <div className="w-10 h-10 rounded-full flex items-center justify-center bg-green-100">
                     <span className="font-bold text-green-700">{getInitials(candidate.firstName, candidate.lastName)}</span>
@@ -777,19 +1103,58 @@ export default function SearchCandidatesPage() {
                   <span className="text-xs text-gray-500">
                     Member since {candidate.createdAt ? new Date(candidate.createdAt.toDate ? candidate.createdAt.toDate() : candidate.createdAt).toLocaleDateString() : 'Recently'}
                   </span>
-                  <div className="flex space-x-2">
+                  <div className="flex flex-wrap gap-2 justify-end">
+                    {scopedJobId && (
+                      <>
+                        <span className={`inline-flex items-center rounded-full border px-2 py-1 text-[11px] font-semibold ${
+                          String(pipelineStageByCandidate[candidate.id] || '').toUpperCase() === 'SHORTLIST'
+                            ? 'border-violet-200 bg-violet-50 text-violet-700'
+                            : pipelineStageByCandidate[candidate.id]
+                              ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                              : 'border-amber-200 bg-amber-50 text-amber-700'
+                        }`}>
+                          {String(pipelineStageByCandidate[candidate.id] || '').toUpperCase() === 'SHORTLIST'
+                            ? 'Shortlist contender (working set)'
+                            : pipelineStageByCandidate[candidate.id]
+                              ? `In pipeline · ${String(pipelineStageByCandidate[candidate.id]).toUpperCase()}`
+                              : 'Not on this job’s pipeline yet'}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => handleScopedPipelineAction(candidate.id, 'SHORTLIST')}
+                          disabled={pipelineBusyCandidateId === candidate.id}
+                          className="bg-emerald-600 text-white px-3 py-2 rounded-lg text-xs font-semibold hover:bg-emerald-700 transition-colors disabled:opacity-50"
+                        >
+                          {String(pipelineStageByCandidate[candidate.id] || '').toUpperCase() === 'SHORTLIST' ? 'Shortlisted' : 'Add to shortlist'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleScopedPipelineAction(candidate.id, 'NEW')}
+                          disabled={pipelineBusyCandidateId === candidate.id}
+                          className="bg-white border border-slate-300 text-slate-700 px-3 py-2 rounded-lg text-xs font-semibold hover:bg-slate-50 transition-colors disabled:opacity-50"
+                        >
+                          {pipelineStageByCandidate[candidate.id] ? 'Keep in pipeline' : 'Add to pipeline'}
+                        </button>
+                      </>
+                    )}
                     <Link
-                      href={`/candidate/${candidate.id}`}
+                      href={getCandidateUrl(candidate.id, scopedJobId || undefined)}
                       className="bg-navy-800 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-navy-700 transition-colors"
                     >
                       View Profile
                     </Link>
                     <Link
-                      href={`/candidate/${candidate.id}`}
+                      href={getMessageContextUrl(candidate.id)}
                       className="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-lg w-10 h-10 flex items-center justify-center transition-colors"
+                      title={scopedJobId ? 'Message in this job context' : 'Message candidate'}
                     >
                       <MessageSquare className="h-4 w-4" />
                     </Link>
+                    <AddToTalentPoolButton
+                      candidateId={candidate.id}
+                      alignUp
+                      buttonClassName="inline-flex items-center justify-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-navy-800 hover:bg-slate-50 min-h-[40px]"
+                    />
                   </div>
                 </div>
               </div>

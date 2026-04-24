@@ -6,7 +6,6 @@ import { useEffect, useState, useMemo } from "react";
 import { 
   Building,
   Edit,
-  Eye,
   Trash2,
   Calendar,
   MapPin,
@@ -16,17 +15,23 @@ import {
   Search,
   Filter,
   Users,
-  MessageSquare,
   Workflow,
   ChevronDown,
   SortAsc,
   X,
-  Sparkles
 } from "lucide-react";
 import { getEmployerJobs, getCompanyJobs, getUserMessageThreads, getPipelineByJob, normalizePipelineStage, queryDocuments, where } from '@/lib/firebase-firestore';
 import { deleteDocument } from '@/lib/firebase-firestore';
 import { db } from '@/lib/firebase';
 import { collection, query, getDocs, limit as firestoreLimit } from 'firebase/firestore';
+import {
+  getCandidatesSearchUrl,
+  getEmployerPoolsUrl,
+  getJobCompareUrl,
+  getJobMatchesUrl,
+  getJobOverviewUrl,
+  getJobPipelineUrl,
+} from "@/lib/navigation";
 
 interface EmployerJobsListProps {
   limit?: number;
@@ -45,6 +50,7 @@ interface JobWithMetrics {
   createdAt: any;
   outreachCount: number;
   pipelineCount: number;
+  shortlistCount: number;
   contactedCount: number;
   followUpDueCount: number;
   newStrongMatchesCount: number;
@@ -98,8 +104,9 @@ export default function EmployerJobsList({ limit }: EmployerJobsListProps) {
         // Fetch message threads to count outreach per job
         const { data: threads, error: threadsError } = await getUserMessageThreads(user.uid);
         
-        // Create a map to count outreach per job
+        // Create maps for message-derived workflow counts by job
         const outreachCountMap = new Map<string, number>();
+        const contactedCandidatesByJob = new Map<string, Set<string>>();
         
         if (!threadsError && threads && threads.length > 0) {
           // For each thread, check messages to see which job it's associated with
@@ -113,12 +120,27 @@ export default function EmployerJobsList({ limit }: EmployerJobsListProps) {
               
               const messagesSnapshot = await getDocs(messagesQuery);
               
+              let threadHasRecruiterMessage = false;
+              let threadJobId: string | null = null;
               for (const msgDoc of messagesSnapshot.docs) {
                 const msgData = msgDoc.data();
+                if (String(msgData?.senderId || '') === user.uid) {
+                  threadHasRecruiterMessage = true;
+                }
                 if (msgData.jobDetails && msgData.jobDetails.jobId) {
-                  const jobId = msgData.jobDetails.jobId;
-                  outreachCountMap.set(jobId, (outreachCountMap.get(jobId) || 0) + 1);
-                  break; // Only count once per thread
+                  threadJobId = String(msgData.jobDetails.jobId);
+                }
+              }
+              if (!threadJobId) continue;
+              outreachCountMap.set(threadJobId, (outreachCountMap.get(threadJobId) || 0) + 1);
+              if (threadHasRecruiterMessage) {
+                const otherParticipantId = Array.isArray((thread as any)?.participantIds)
+                  ? ((thread as any).participantIds as string[]).find((id) => id !== user.uid)
+                  : null;
+                if (otherParticipantId) {
+                  const existing = contactedCandidatesByJob.get(threadJobId) || new Set<string>();
+                  existing.add(String(otherParticipantId));
+                  contactedCandidatesByJob.set(threadJobId, existing);
                 }
               }
             } catch (err) {
@@ -142,7 +164,10 @@ export default function EmployerJobsList({ limit }: EmployerJobsListProps) {
               const d = raw?.toDate ? raw.toDate() : new Date(raw);
               return d.getTime() < now;
             }).length;
-            const contactedCount = normalizedEntries.filter((entry: any) => entry.stage === 'CONTACTED').length;
+            const pipelineContactedCount = normalizedEntries.filter((entry: any) => entry.stage === 'CONTACTED').length;
+            const contactedFromThreads = contactedCandidatesByJob.get(job.id)?.size || 0;
+            const contactedCount = Math.max(pipelineContactedCount, contactedFromThreads);
+            const shortlistCount = normalizedEntries.filter((entry: any) => entry.stage === 'SHORTLIST').length;
 
             const { data: matches } = await queryDocuments('jobMatches', [where('jobId', '==', job.id)]);
             const strongMatches = ((matches || []) as any[]).filter((m: any) => Number(m.overallScore || 0) >= 80);
@@ -153,6 +178,7 @@ export default function EmployerJobsList({ limit }: EmployerJobsListProps) {
               ...job,
               outreachCount: outreachCountMap.get(job.id) || 0,
               pipelineCount: normalizedEntries.length,
+              shortlistCount,
               contactedCount,
               followUpDueCount,
               newStrongMatchesCount,
@@ -315,7 +341,14 @@ export default function EmployerJobsList({ limit }: EmployerJobsListProps) {
             </div>
 
             {/* Filter and Sort */}
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
+              <Link
+                href={getEmployerPoolsUrl()}
+                className="px-4 py-2 rounded-lg border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 transition-colors flex items-center gap-2"
+              >
+                <Users className="h-4 w-4" />
+                Talent pools
+              </Link>
               <button
                 onClick={() => setShowFilters(!showFilters)}
                 className={`px-4 py-2 rounded-lg border transition-colors flex items-center gap-2 ${
@@ -388,144 +421,125 @@ export default function EmployerJobsList({ limit }: EmployerJobsListProps) {
         </div>
       ) : (
         <div className="space-y-4">
-          {displayedJobs.map((job) => (
+          {displayedJobs.map((job) => {
+            const lastRaw = (job as any).updatedAt ?? job.createdAt;
+            const lastDate = lastRaw?.toDate ? lastRaw.toDate() : lastRaw ? new Date(lastRaw) : null;
+            const lastActivityLabel =
+              lastDate && !Number.isNaN(lastDate.getTime())
+                ? `Last activity ${lastDate.toLocaleDateString()}`
+                : null;
+            return (
             <div 
               key={job.id} 
-              className={`border rounded-lg p-4 hover:shadow-md transition-all ${
-                job.outreachCount > 0 
-                  ? 'border-sky-200 bg-sky-50/30' 
-                  : 'border-gray-200 bg-white'
-              }`}
+              className="border border-slate-200 rounded-xl p-4 sm:p-5 bg-white hover:shadow-md transition-shadow"
             >
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2 flex-wrap">
-                    <h4 className="text-lg font-semibold text-gray-900">{job.title}</h4>
-                    <span className={`px-2 py-1 text-xs rounded-full ${
-                      job.status === 'ACTIVE' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+              <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2 mb-2">
+                    <h4 className="text-lg font-semibold text-navy-900">{job.title}</h4>
+                    <span className={`px-2 py-0.5 text-xs rounded-full font-medium ${
+                      job.status === 'ACTIVE' ? 'bg-emerald-50 text-emerald-800 border border-emerald-100' : 'bg-slate-100 text-slate-700'
                     }`}>
                       {job.status}
                     </span>
-                    {job.outreachCount > 0 && (
-                      <div className="flex items-center gap-1 px-2 py-1 bg-sky-100 text-sky-700 rounded-full text-xs font-medium">
-                        <MessageSquare className="h-3 w-3" />
-                        <span>{job.outreachCount} outreach{job.outreachCount !== 1 ? 'es' : ''}</span>
-                      </div>
-                    )}
-                    {job.followUpDueCount > 0 && (
-                      <div className="flex items-center gap-1 px-2 py-1 bg-rose-100 text-rose-700 rounded-full text-xs font-medium">
-                        <span>{job.followUpDueCount} follow-up due</span>
-                      </div>
-                    )}
-                    {job.newStrongMatchesCount > 0 && (
-                      <div className="flex items-center gap-1 px-2 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-medium">
-                        <span>{job.newStrongMatchesCount} new strong match{job.newStrongMatchesCount > 1 ? 'es' : ''}</span>
-                      </div>
-                    )}
                   </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
-                    <div className="flex items-center text-sm text-gray-600">
-                      <MapPin className="h-4 w-4 mr-2 flex-shrink-0" />
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-sm text-slate-600 mb-3">
+                    <div className="flex items-center gap-1.5">
+                      <MapPin className="h-4 w-4 shrink-0 text-slate-400" />
                       <span>{job.locationCity && job.locationState ? `${job.locationCity}, ${job.locationState}` : 'Remote'}</span>
                     </div>
-                    <div className="flex items-center text-sm text-gray-600">
-                      <Building className="h-4 w-4 mr-2 flex-shrink-0" />
+                    <div className="flex items-center gap-1.5">
+                      <Building className="h-4 w-4 shrink-0 text-slate-400" />
                       <span>{job.employment || 'Not specified'}</span>
                     </div>
-                    <div className="flex items-center text-sm text-gray-600">
-                      <DollarSign className="h-4 w-4 mr-2 flex-shrink-0" />
+                    <div className="flex items-center gap-1.5">
+                      <DollarSign className="h-4 w-4 shrink-0 text-slate-400" />
                       <span>
-                        {job.salaryMin && job.salaryMax 
-                          ? `$${job.salaryMin.toLocaleString()} - $${job.salaryMax.toLocaleString()}`
-                          : 'Salary not specified'
-                        }
+                        {job.salaryMin && job.salaryMax
+                          ? `$${job.salaryMin.toLocaleString()} – $${job.salaryMax.toLocaleString()}`
+                          : 'Salary not specified'}
                       </span>
                     </div>
                   </div>
-                  
-                  <p className="text-sm text-gray-600 line-clamp-2 mb-3">
-                    {job.description}
-                  </p>
-                  
-                  <div className="flex items-center gap-4 text-xs text-gray-500">
-                    <div className="flex items-center">
-                      <Calendar className="h-3 w-3 mr-1" />
-                      <span>Posted {job.createdAt?.toDate ? new Date(job.createdAt.toDate()).toLocaleDateString() : job.createdAt ? new Date(job.createdAt).toLocaleDateString() : 'Recently'}</span>
-                    </div>
+                  <p className="text-sm text-slate-600 line-clamp-2 mb-3">{job.description}</p>
+                  <div className="flex flex-wrap gap-2 text-xs mb-1">
+                    <span className="rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1 text-slate-800">
+                      Pipeline <span className="font-semibold text-navy-900">{job.pipelineCount || 0}</span>
+                      <span className="text-slate-500 font-normal"> · all active for this job</span>
+                    </span>
+                    <span className="rounded-md border border-violet-100 bg-violet-50 px-2.5 py-1 text-violet-900">
+                      Shortlist <span className="font-semibold">{job.shortlistCount || 0}</span>
+                      <span className="text-violet-800/80 font-normal"> · serious contenders</span>
+                    </span>
+                    <span className="rounded-md border border-amber-100 bg-amber-50 px-2.5 py-1 text-amber-900">
+                      Waiting on <span className="font-semibold">{job.followUpDueCount || 0}</span>
+                      <span className="text-amber-900/80 font-normal"> · follow-ups past due</span>
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
+                    <span className="inline-flex items-center gap-1">
+                      <Calendar className="h-3.5 w-3.5" />
+                      Posted {job.createdAt?.toDate ? new Date(job.createdAt.toDate()).toLocaleDateString() : job.createdAt ? new Date(job.createdAt).toLocaleDateString() : '—'}
+                    </span>
+                    {lastActivityLabel && <span>{lastActivityLabel}</span>}
                     {job.outreachCount > 0 && (
-                      <Link 
+                      <Link
                         href="/employer/candidates-by-job"
-                        className="flex items-center text-sky-600 hover:text-sky-700 hover:underline"
-                        title="View all candidates by job"
+                        className="text-sky-700 font-medium hover:underline"
                       >
-                        <Users className="h-3 w-3 mr-1" />
-                        <span>View candidates</span>
+                        Contacted by requisition →
                       </Link>
                     )}
                   </div>
-                  <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px]">
-                    <div className="rounded-md border border-slate-200 bg-slate-50 px-2 py-1.5">
-                      Pipeline <span className="font-semibold text-navy-900">{job.pipelineCount || 0}</span>
-                    </div>
-                    <div className="rounded-md border border-slate-200 bg-slate-50 px-2 py-1.5">
-                      Contacted <span className="font-semibold text-navy-900">{job.contactedCount || 0}</span>
-                    </div>
-                    <div className="rounded-md border border-slate-200 bg-slate-50 px-2 py-1.5">
-                      Due <span className="font-semibold text-navy-900">{job.followUpDueCount || 0}</span>
-                    </div>
-                    <div className="rounded-md border border-slate-200 bg-slate-50 px-2 py-1.5">
-                      Strong new <span className="font-semibold text-navy-900">{job.newStrongMatchesCount || 0}</span>
-                    </div>
-                  </div>
                 </div>
-                
-                <div className="ml-4 min-w-[180px]">
+
+                <div className="flex flex-col gap-3 w-full lg:w-[220px] shrink-0 border-t border-slate-100 pt-3 lg:border-t-0 lg:pt-0 lg:border-l lg:pl-4">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Primary</p>
                   <div className="flex flex-col gap-2">
                     <Link
-                      href={`/employer/job/${job.id}/matches`}
-                      className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-violet-600 text-white text-xs font-semibold hover:bg-violet-700 transition-colors"
-                      title="Open AI matches"
+                      href={getJobOverviewUrl(job.id)}
+                      className="inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg bg-navy-800 text-white text-sm font-semibold hover:bg-navy-700"
                     >
-                      <Sparkles className="h-3.5 w-3.5" />
-                      Matches
+                      Open workspace
                     </Link>
                     <Link
-                      href={`/employer/job/${job.id}/pipeline`}
-                      className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700 transition-colors"
-                      title="Open candidate pipeline"
+                      href={getJobPipelineUrl(job.id)}
+                      className="inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg bg-emerald-600 text-white text-sm font-semibold hover:bg-emerald-700"
                     >
-                      <Workflow className="h-3.5 w-3.5" />
+                      <Workflow className="h-4 w-4" />
                       Pipeline
                     </Link>
-                    <div className="flex items-center justify-center gap-1">
-                      <Link
-                        href={`/employer/job/${job.id}`}
-                        className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                        title="View job details"
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Link>
-                      <Link
-                        href={`/employer/job/${job.id}/edit`}
-                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                        title="Edit job"
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Link>
-                      <button
-                        onClick={() => handleDeleteJob(job.id)}
-                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                        title="Delete job"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </div>
+                    <Link
+                      href={getCandidatesSearchUrl(job.id)}
+                      className="inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg bg-sky-600 text-white text-sm font-semibold hover:bg-sky-700"
+                    >
+                      Source
+                    </Link>
+                  </div>
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400 pt-1">More</p>
+                  <div className="flex flex-wrap gap-x-3 gap-y-1 text-sm">
+                    <Link href={getJobMatchesUrl(job.id)} className="text-slate-600 hover:text-navy-900 font-medium">
+                      Matches
+                    </Link>
+                    <Link href={getJobCompareUrl(job.id)} className="text-slate-600 hover:text-navy-900 font-medium">
+                      Compare
+                    </Link>
+                    <Link href={`/employer/job/${job.id}/edit`} className="text-slate-600 hover:text-navy-900 font-medium inline-flex items-center gap-1">
+                      <Edit className="h-3.5 w-3.5" /> Edit
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteJob(job.id)}
+                      className="text-rose-600 hover:text-rose-800 font-medium inline-flex items-center gap-1"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" /> Delete
+                    </button>
                   </div>
                 </div>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
 

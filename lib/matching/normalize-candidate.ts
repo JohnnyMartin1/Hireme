@@ -85,7 +85,6 @@ function extractEducationSignals(v: unknown): { majors: string[]; degrees: strin
 }
 
 const SKILL_INFER_HINTS = [
-  'design',
   'designer',
   'ux',
   'ui',
@@ -180,13 +179,20 @@ export function normalizeCandidateForMatching(
     : '';
   const locationStr = String(doc.location || locFromArray || '').toLowerCase();
 
-  const desiredRolesText = [headline, major, minor, ...targetRolesV2, ...functionsV2, ...careerInterests]
+  const roleIdentityLine = [
+    headline,
+    ...targetRolesV2,
+    String(professionalSummaryV2?.targetRoleContext || ''),
+  ]
+    .filter(Boolean)
+    .join(' · ');
+  const desiredRolesText = [roleIdentityLine, major, minor, ...functionsV2, ...careerInterests]
     .filter(Boolean)
     .join(' · ');
   const normalizedRoles = dedupeSkillList(
-    expandTitleMatchSignals(desiredRolesText).concat(
-      normalizeKeywordList(normalizeWhitespaceLower(desiredRolesText).split(/\s+/), 24)
-    )
+    expandTitleMatchSignals(roleIdentityLine)
+      .concat(expandTitleMatchSignals(desiredRolesText))
+      .concat(normalizeKeywordList(normalizeWhitespaceLower(roleIdentityLine).split(/\s+/), 20))
   ).map((s) => s.toLowerCase());
 
   const structuredExperienceText = structuredExperience
@@ -231,7 +237,10 @@ export function normalizeCandidateForMatching(
     .join(' ');
 
   const richLower = normalizeWhitespaceLower(richText);
-  const inferredSkills = SKILL_INFER_HINTS.filter((h) => richLower.includes(h));
+  const inferredSkills = SKILL_INFER_HINTS.filter((h) => {
+    if (h.length < 5 && !['ux', 'ui', 'sql'].includes(h)) return false;
+    return richLower.includes(h);
+  });
   const structuredExpSkills = dedupeSkillList(
     structuredExperience.flatMap((e) =>
       Array.isArray(e.skillsUsed) ? (e.skillsUsed as string[]).map((s) => String(s || '')) : []
@@ -301,12 +310,17 @@ export function normalizeCandidateForMatching(
     )
   );
   const structuredExperienceSignals = dedupeSkillList(
-    structuredExperience.flatMap((e) => [
-      String(e.type || ''),
-      String(e.organization || ''),
-      String(e.industry || ''),
-      ...(Array.isArray(e.skillsUsed) ? (e.skillsUsed as string[]) : []),
-    ])
+    structuredExperience.flatMap((e) => {
+      const bullets = Array.isArray(e.bullets) ? (e.bullets as string[]).map((b) => String(b || '').toLowerCase()) : [];
+      return [
+        String(e.title || ''),
+        String(e.type || ''),
+        String(e.organization || ''),
+        String(e.industry || ''),
+        ...(Array.isArray(e.skillsUsed) ? (e.skillsUsed as string[]) : []),
+        ...bullets.map((b) => b.slice(0, 120)),
+      ];
+    })
   ).map((s) => s.toLowerCase());
 
   const normalizedSummary = normalizeWhitespaceLower(

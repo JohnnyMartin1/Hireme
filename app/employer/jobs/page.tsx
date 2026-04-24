@@ -37,7 +37,7 @@ export default function EmployerJobsPage() {
                 <span className="hidden sm:inline">Back to Dashboard</span>
                 <span className="sm:hidden">Back</span>
               </Link>
-              <h1 className="text-xl sm:text-2xl font-bold text-navy-900 break-words">Requisition Portfolio</h1>
+              <h1 className="text-xl sm:text-2xl font-bold text-navy-900 break-words">Jobs</h1>
             </div>
             <Link
               href="/employer/job/new"
@@ -48,7 +48,7 @@ export default function EmployerJobsPage() {
             </Link>
           </div>
           <p className="text-sm text-slate-500 mb-4">
-            Prioritize requisitions by pipeline activity, follow-up urgency, and unacted strong matches.
+            Your requisitions in one place. Open a workspace to work one req (matches, pipeline, compare, messages).
           </p>
           <EmployerJobsList />
         </div>

@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminAuth, adminDb } from '@/lib/firebase-admin';
 import { canUserAccessJob } from '@/lib/matching/job-access';
+import { canonicalPipelineEntryId, dedupePipelineEntriesByCandidate } from '@/lib/pipeline-canonical';
 import admin from 'firebase-admin';
 
 export const dynamic = 'force-dynamic';
 
-type PipelineStage = 'NEW' | 'SHORTLIST' | 'CONTACTED' | 'RESPONDED' | 'INTERVIEW' | 'REJECTED';
+type PipelineStage = 'NEW' | 'SHORTLIST' | 'CONTACTED' | 'RESPONDED' | 'INTERVIEW' | 'FINALIST' | 'REJECTED';
 
-const ALLOWED_STAGES: PipelineStage[] = ['NEW', 'SHORTLIST', 'CONTACTED', 'RESPONDED', 'INTERVIEW', 'REJECTED'];
+const ALLOWED_STAGES: PipelineStage[] = ['NEW', 'SHORTLIST', 'CONTACTED', 'RESPONDED', 'INTERVIEW', 'FINALIST', 'REJECTED'];
 
 function normalizeStage(value: unknown): PipelineStage {
   const raw = String(value || '').toUpperCase().trim();
@@ -69,7 +70,9 @@ export async function GET(
       ...docSnap.data(),
     }));
 
-    return NextResponse.json({ entries });
+    const deduped = dedupePipelineEntriesByCandidate(entries as { id: string; jobId: string; candidateId: string }[]);
+
+    return NextResponse.json({ entries: deduped });
   } catch (error) {
     console.error('GET /api/job/[jobId]/pipeline', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
@@ -91,7 +94,6 @@ export async function POST(
 
     const body = await request.json().catch(() => ({}));
     const candidateId = String(body?.candidateId || '');
-    const stage = normalizeStage(body?.stage);
     const nextFollowUpAt = normalizeDate(body?.nextFollowUpAt);
     const lastContactedAt = normalizeDate(body?.lastContactedAt);
 
@@ -102,10 +104,16 @@ export async function POST(
     const decoded = auth.decoded!;
     const jobData = auth.jobData!;
 
-    const entryId = `job_${jobId}__candidate_${candidateId}`;
+    const entryId = canonicalPipelineEntryId(jobId, candidateId);
     const entryRef = adminDb.collection('candidatePipelineEntries').doc(entryId);
     const entrySnap = await entryRef.get();
     const existingData = entrySnap.exists ? (entrySnap.data() as Record<string, unknown>) : null;
+
+    const hasExplicitStage = Object.prototype.hasOwnProperty.call(body, 'stage');
+    const previousStage = existingData ? normalizeStage(existingData.stage) : undefined;
+    const stage = hasExplicitStage
+      ? normalizeStage(body?.stage)
+      : previousStage ?? 'NEW';
 
     const payload: Record<string, unknown> = {
       jobId,
@@ -126,7 +134,37 @@ export async function POST(
       payload.nextFollowUpAt = nextFollowUpAt;
     }
 
+    const transitionedToContacted = stage === 'CONTACTED' && previousStage !== 'CONTACTED';
+    if (transitionedToContacted && lastContactedAt === undefined) {
+      payload.lastContactedAt = admin.firestore.FieldValue.serverTimestamp();
+    }
+
     await entryRef.set(payload, { merge: true });
+
+    // Remove legacy duplicate rows for the same job + candidate (non-canonical ids).
+    const dupSnap = await adminDb
+      .collection('candidatePipelineEntries')
+      .where('jobId', '==', jobId)
+      .where('candidateId', '==', candidateId)
+      .get();
+
+    if (dupSnap.size > 1) {
+      let batch = adminDb.batch();
+      let ops = 0;
+      for (const d of dupSnap.docs) {
+        if (d.id === entryId) continue;
+        batch.delete(d.ref);
+        ops++;
+        if (ops >= 450) {
+          await batch.commit();
+          batch = adminDb.batch();
+          ops = 0;
+        }
+      }
+      if (ops > 0) {
+        await batch.commit();
+      }
+    }
 
     const fresh = await entryRef.get();
     return NextResponse.json({

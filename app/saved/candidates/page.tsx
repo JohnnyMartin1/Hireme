@@ -124,9 +124,16 @@ export default function SavedCandidatesPage() {
       <div className="w-full md:max-w-6xl md:mx-auto px-4 sm:px-6 md:p-6 py-4 sm:py-6 min-w-0">
         {/* Page Title */}
         <div className="mb-4 sm:mb-6 md:mb-8">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2 break-words">Saved Candidates</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2 break-words">Saved bookmarks</h1>
           <p className="text-sm sm:text-base text-gray-600 break-words">
-            {savedCandidates.length} candidate{savedCandidates.length !== 1 ? 's' : ''} saved
+            {savedCandidates.length} profile{savedCandidates.length !== 1 ? "s" : ""} you bookmarked for quick access.
+          </p>
+          <p className="text-xs text-slate-500 mt-2 max-w-2xl">
+            This is not your pipeline or shortlist (those live per job in the workspace). For long-term groups across jobs, use{" "}
+            <Link href="/employer/pools" className="font-semibold text-sky-700 hover:underline">
+              Talent pools
+            </Link>
+            .
           </p>
         </div>
 

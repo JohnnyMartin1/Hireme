@@ -14,6 +14,7 @@ import {
   serverTimestamp
 } from 'firebase/firestore';
 import { db } from './firebase';
+import { canonicalPipelineEntryId, dedupePipelineEntriesByCandidate } from '@/lib/pipeline-canonical';
 
 // Generic CRUD operations
 export const createDocument = async (collectionName: string, data: any, id?: string) => {
@@ -250,6 +251,7 @@ export const PIPELINE_STAGES = [
   'CONTACTED',
   'RESPONDED',
   'INTERVIEW',
+  'FINALIST',
   'REJECTED',
 ] as const;
 
@@ -277,77 +279,22 @@ export interface CandidatePipelineEntry {
   nextFollowUpAt?: unknown;
 }
 
-export const createOrUpdatePipelineEntry = async (
-  jobId: string,
-  candidateId: string,
-  updates: Partial<Omit<CandidatePipelineEntry, 'id' | 'jobId' | 'candidateId' | 'companyId' | 'createdAt' | 'updatedAt'>> & {
-    stage?: PipelineStage;
-    ownerId?: string;
-    lastContactedAt?: Date | null;
-    nextFollowUpAt?: Date | null;
-  }
-) => {
-  try {
-    const existing = await queryDocuments('candidatePipelineEntries', [
-      where('jobId', '==', jobId),
-      where('candidateId', '==', candidateId),
-    ]);
-
-    let companyId = '';
-    if (existing.data.length > 0) {
-      companyId = String((existing.data[0] as any).companyId || '');
-    } else {
-      const { data: jobData, error: jobError } = await getDocument('jobs', jobId);
-      if (jobError || !jobData) {
-        return { id: null, error: 'Failed to resolve job for pipeline entry' };
-      }
-      companyId = String((jobData as any).companyId || '');
-    }
-
-    const basePayload: Record<string, unknown> = {
-      stage: normalizePipelineStage(updates.stage || 'NEW'),
-      ownerId: updates.ownerId ?? ((existing.data[0] as any)?.ownerId ?? null),
-      updatedAt: serverTimestamp(),
-    };
-
-    if (updates.lastContactedAt !== undefined) {
-      basePayload.lastContactedAt = updates.lastContactedAt ? updates.lastContactedAt : null;
-    }
-    if (updates.nextFollowUpAt !== undefined) {
-      basePayload.nextFollowUpAt = updates.nextFollowUpAt ? updates.nextFollowUpAt : null;
-    }
-
-    if (existing.data.length > 0) {
-      const existingId = existing.data[0].id as string;
-      const { error } = await updateDocument('candidatePipelineEntries', existingId, basePayload);
-      return { id: existingId, error };
-    }
-
-    const createPayload = {
-      jobId,
-      candidateId,
-      companyId,
-      stage: normalizePipelineStage(updates.stage || 'NEW'),
-      ownerId: updates.ownerId ?? null,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-      lastContactedAt: updates.lastContactedAt ? updates.lastContactedAt : null,
-      nextFollowUpAt: updates.nextFollowUpAt ? updates.nextFollowUpAt : null,
-    };
-
-    const { id, error } = await createDocument('candidatePipelineEntries', createPayload);
-    return { id, error };
-  } catch (error: any) {
-    return { id: null, error: error.message };
-  }
-};
-
 export const getPipelineByJob = async (jobId: string) => {
   try {
     const { data, error } = await queryDocuments('candidatePipelineEntries', [
       where('jobId', '==', jobId),
     ]);
-    return { data: (data || []) as CandidatePipelineEntry[], error };
+    if (error) return { data: [] as CandidatePipelineEntry[], error };
+    const rows = (data || []) as CandidatePipelineEntry[];
+    const deduped = dedupePipelineEntriesByCandidate(
+      rows.map((e) => ({
+        ...e,
+        id: e.id,
+        jobId: String(e.jobId || jobId),
+        candidateId: String(e.candidateId || ''),
+      }))
+    );
+    return { data: deduped as CandidatePipelineEntry[], error: null };
   } catch (error: any) {
     return { data: [] as CandidatePipelineEntry[], error: error.message };
   }
@@ -358,52 +305,160 @@ export const getPipelineEntryForJobCandidate = async (
   candidateId: string
 ) => {
   try {
+    const entryId = canonicalPipelineEntryId(jobId, candidateId);
+    const { data: direct, error: directErr } = await getDocument('candidatePipelineEntries', entryId);
+    if (!directErr && direct) {
+      return { data: { ...(direct as object), id: entryId } as CandidatePipelineEntry, error: null };
+    }
     const { data, error } = await queryDocuments('candidatePipelineEntries', [
       where('jobId', '==', jobId),
       where('candidateId', '==', candidateId),
     ]);
     if (error) return { data: null as CandidatePipelineEntry | null, error };
-    return { data: (data?.[0] || null) as CandidatePipelineEntry | null, error: null };
+    const merged = dedupePipelineEntriesByCandidate(
+      ((data || []) as CandidatePipelineEntry[]).map((e) => ({
+        ...e,
+        id: e.id,
+        jobId: String(e.jobId || jobId),
+        candidateId: String(e.candidateId || candidateId),
+      }))
+    );
+    return { data: (merged[0] || null) as CandidatePipelineEntry | null, error: null };
   } catch (error: any) {
     return { data: null as CandidatePipelineEntry | null, error: error.message };
   }
 };
 
-export const moveCandidateStage = async (
-  pipelineEntryId: string,
-  newStage: PipelineStage
-) => {
+// ============================================
+// RECRUITER NOTES
+// ============================================
+
+export interface RecruiterNote {
+  id: string;
+  jobId: string;
+  candidateId: string;
+  pipelineEntryId?: string | null;
+  authorUserId: string;
+  body: string;
+  createdAt?: unknown;
+  updatedAt?: unknown;
+}
+
+export const getRecruiterNotes = async (jobId: string, candidateId: string) => {
   try {
-    const payload: Record<string, unknown> = {
-      stage: normalizePipelineStage(newStage),
+    const { data, error } = await queryDocuments('recruiterNotes', [
+      where('jobId', '==', jobId),
+      where('candidateId', '==', candidateId),
+    ]);
+    if (error) return { data: [] as RecruiterNote[], error };
+
+    const notes = ((data || []) as RecruiterNote[]).sort((a: any, b: any) => {
+      const aDate = a?.updatedAt?.toDate ? a.updatedAt.toDate() : (a?.updatedAt || a?.createdAt || null);
+      const bDate = b?.updatedAt?.toDate ? b.updatedAt.toDate() : (b?.updatedAt || b?.createdAt || null);
+      const aTime = aDate ? new Date(aDate).getTime() : 0;
+      const bTime = bDate ? new Date(bDate).getTime() : 0;
+      return bTime - aTime;
+    });
+    return { data: notes, error: null };
+  } catch (error: any) {
+    return { data: [] as RecruiterNote[], error: error.message };
+  }
+};
+
+export const createRecruiterNote = async (input: {
+  jobId: string;
+  candidateId: string;
+  pipelineEntryId?: string | null;
+  authorUserId: string;
+  body: string;
+}) => {
+  try {
+    const trimmed = String(input.body || '').trim();
+    if (!trimmed) return { id: null, error: 'Note body is required' };
+
+    const payload = {
+      jobId: input.jobId,
+      candidateId: input.candidateId,
+      pipelineEntryId: input.pipelineEntryId ?? null,
+      authorUserId: input.authorUserId,
+      body: trimmed,
+      createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     };
-
-    if (newStage === 'CONTACTED') {
-      payload.lastContactedAt = serverTimestamp();
-    }
-
-    const { error } = await updateDocument('candidatePipelineEntries', pipelineEntryId, payload);
-    return { error };
+    const { id, error } = await createDocument('recruiterNotes', payload);
+    return { id, error };
   } catch (error: any) {
-    return { error: error.message };
+    return { id: null, error: error.message };
   }
 };
 
-export const setFollowUpDate = async (
-  pipelineEntryId: string,
-  date: Date | null
+export const updateRecruiterNote = async (
+  noteId: string,
+  authorUserId: string,
+  body: string
 ) => {
   try {
-    const { error } = await updateDocument('candidatePipelineEntries', pipelineEntryId, {
-      nextFollowUpAt: date ? date : null,
+    const trimmed = String(body || '').trim();
+    if (!trimmed) return { error: 'Note body is required' };
+    const { data: existing, error: readError } = await getDocument('recruiterNotes', noteId);
+    if (readError || !existing) return { error: 'Note not found' };
+    if ((existing as any).authorUserId !== authorUserId) return { error: 'You can only edit your own note' };
+
+    return updateDocument('recruiterNotes', noteId, {
+      body: trimmed,
       updatedAt: serverTimestamp(),
     });
-    return { error };
   } catch (error: any) {
     return { error: error.message };
   }
 };
+
+export const deleteRecruiterNote = async (noteId: string, authorUserId: string) => {
+  try {
+    const { data: existing, error: readError } = await getDocument('recruiterNotes', noteId);
+    if (readError || !existing) return { error: 'Note not found' };
+    if ((existing as any).authorUserId !== authorUserId) return { error: 'You can only delete your own note' };
+    return deleteDocument('recruiterNotes', noteId);
+  } catch (error: any) {
+    return { error: error.message };
+  }
+};
+
+/** Job snapshot stored on message documents and messageThreads (first-class thread ↔ job). */
+export type MessageJobDetailsShape = {
+  jobId: string;
+  jobTitle: string;
+  employmentType: string;
+  location: string;
+  jobDescription: string;
+};
+
+function buildThreadJobPersistPayload(details: MessageJobDetailsShape): Record<string, unknown> {
+  return {
+    jobId: details.jobId,
+    jobContext: {
+      jobTitle: details.jobTitle,
+      employmentType: details.employmentType,
+      location: details.location,
+      jobDescription: String(details.jobDescription || "").slice(0, 12000),
+    },
+  };
+}
+
+/** Read job context from a messageThreads document (preferred over scanning messages). */
+export function threadDataToJobDetails(threadData: Record<string, unknown> | null | undefined): MessageJobDetailsShape | null {
+  if (!threadData) return null;
+  const jobId = threadData.jobId ? String(threadData.jobId) : "";
+  if (!jobId) return null;
+  const jc = (threadData.jobContext as Record<string, unknown>) || {};
+  return {
+    jobId,
+    jobTitle: String(jc.jobTitle || ""),
+    employmentType: String(jc.employmentType || ""),
+    location: String(jc.location || ""),
+    jobDescription: String(jc.jobDescription || ""),
+  };
+}
 
 // Messaging functions
 export const getMessageThread = async (threadId: string) => {
@@ -455,8 +510,12 @@ export const sendMessage = async (threadId: string, messageData: {
   };
 }, idToken?: string) => {
   try {
-    const resolveThreadJobId = async (data: typeof messageData) => {
+    /** Outbound payload → thread doc → recent messages (backwards compatible). */
+    const resolveThreadJobId = async (data: typeof messageData): Promise<string | null> => {
       if (data.jobDetails?.jobId) return String(data.jobDetails.jobId);
+      const { data: th } = await getDocument("messageThreads", threadId);
+      const fromThread = threadDataToJobDetails(th as Record<string, unknown> | null | undefined);
+      if (fromThread?.jobId) return String(fromThread.jobId);
       const messagesQuery = query(
         collection(db, 'messages'),
         where('threadId', '==', threadId),
@@ -514,7 +573,7 @@ export const sendMessage = async (threadId: string, messageData: {
     }
 
     const syncPipelineWithMessage = async () => {
-      if (!senderRole) return;
+      if (!idToken || !senderRole) return;
 
       const associatedJobId = await resolveThreadJobId(outbound);
       if (!associatedJobId) return;
@@ -537,21 +596,39 @@ export const sendMessage = async (threadId: string, messageData: {
       const { data: existingEntry } = await getPipelineEntryForJobCandidate(associatedJobId, pipelineCandidateId);
       const currentStage = existingEntry?.stage || 'NEW';
 
+      const { postJobPipeline } = await import('@/lib/pipeline-client');
+
       if (senderRole === 'EMPLOYER' || senderRole === 'RECRUITER' || senderRole === 'ADMIN') {
         const stageShouldBecomeContacted =
           currentStage === 'NEW' || currentStage === 'SHORTLIST' || currentStage === 'CONTACTED';
-        await createOrUpdatePipelineEntry(associatedJobId, pipelineCandidateId, {
-          stage: stageShouldBecomeContacted ? 'CONTACTED' : currentStage,
-          ownerId: outbound.senderId,
-          lastContactedAt: new Date(),
-        });
+        await postJobPipeline(
+          associatedJobId,
+          {
+            candidateId: pipelineCandidateId,
+            stage: stageShouldBecomeContacted ? 'CONTACTED' : normalizePipelineStage(currentStage),
+          },
+          idToken
+        );
       }
 
       if (senderRole === 'JOB_SEEKER') {
         const stageShouldBecomeResponded =
           currentStage === 'NEW' || currentStage === 'SHORTLIST' || currentStage === 'CONTACTED' || currentStage === 'RESPONDED';
-        await createOrUpdatePipelineEntry(associatedJobId, pipelineCandidateId, {
-          stage: stageShouldBecomeResponded ? 'RESPONDED' : currentStage,
+        await postJobPipeline(
+          associatedJobId,
+          {
+            candidateId: pipelineCandidateId,
+            stage: stageShouldBecomeResponded ? 'RESPONDED' : normalizePipelineStage(currentStage),
+          },
+          idToken
+        );
+
+        // Candidate response should stop any active recruiter outreach sequence.
+        const seqId = `job_${associatedJobId}__candidate_${pipelineCandidateId}`;
+        await upsertDocument('outreachSequences', seqId, {
+          status: 'STOPPED',
+          stoppedReason: 'CANDIDATE_REPLIED',
+          updatedAt: serverTimestamp(),
         });
       }
     };
@@ -564,10 +641,18 @@ export const sendMessage = async (threadId: string, messageData: {
     };
     
     const messageRef = await addDoc(collection(db, 'messages'), message);
-    
-    await updateDocument('messageThreads', threadId, {
-      lastMessageAt: serverTimestamp()
-    });
+
+    // Persist job on thread for inbox routing. Ensure Firestore rules only allow participants to update threads.
+    const threadPatch: Record<string, unknown> = {
+      lastMessageAt: serverTimestamp(),
+    };
+    if (outbound.jobDetails?.jobId) {
+      Object.assign(
+        threadPatch,
+        buildThreadJobPersistPayload(outbound.jobDetails as MessageJobDetailsShape)
+      );
+    }
+    await updateDocument("messageThreads", threadId, threadPatch);
 
     try {
       await syncPipelineWithMessage();
@@ -631,44 +716,94 @@ export const getThreadMessages = async (threadId: string) => {
   }
 };
 
+/**
+ * If the thread has no jobId but recent messages include jobDetails, persist onto the thread once.
+ */
+export const backfillThreadJobFromMessages = async (threadId: string): Promise<boolean> => {
+  try {
+    const threadRef = doc(db, "messageThreads", threadId);
+    const threadSnap = await getDoc(threadRef);
+    if (!threadSnap.exists()) return false;
+    const existing = threadSnap.data() as Record<string, unknown>;
+    if (existing?.jobId) return false;
+    const { data: msgs } = await getThreadMessages(threadId);
+    const list = (msgs || []) as any[];
+    const withJob = [...list].reverse().find((m) => m?.jobDetails?.jobId);
+    const jd = withJob?.jobDetails;
+    if (!jd?.jobId) return false;
+    const payload: MessageJobDetailsShape = {
+      jobId: String(jd.jobId),
+      jobTitle: String(jd.jobTitle || ""),
+      employmentType: String(jd.employmentType || ""),
+      location: String(jd.location || ""),
+      jobDescription: String(jd.jobDescription || ""),
+    };
+    await updateDoc(threadRef, {
+      ...buildThreadJobPersistPayload(payload),
+      updatedAt: serverTimestamp(),
+    });
+    return true;
+  } catch (e) {
+    console.error("backfillThreadJobFromMessages", e);
+    return false;
+  }
+};
+
 export const markMessageAsRead = async (messageId: string) => {
   return updateDocument('messages', messageId, { read: true });
 };
 
-export const getOrCreateThread = async (participantIds: string[]) => {
+export const getOrCreateThread = async (
+  participantIds: string[],
+  options?: { jobDetails?: MessageJobDetailsShape | null }
+) => {
   try {
-    // Check if thread already exists
     const q = query(
       collection(db, 'messageThreads'),
       where('participantIds', '==', participantIds)
     );
-    
+
     const querySnapshot = await getDocs(q);
-    
+
     if (!querySnapshot.empty) {
-      // Thread exists, return it
       const thread = querySnapshot.docs[0];
-      return { id: thread.id, error: null };
-    } else {
-      // Create new thread
-      return createMessageThread(participantIds);
+      const tid = thread.id;
+      const snap = thread.data() as Record<string, unknown>;
+      if (options?.jobDetails?.jobId && !snap?.jobId) {
+        try {
+          await updateDoc(doc(db, "messageThreads", tid), {
+            ...buildThreadJobPersistPayload(options.jobDetails),
+            updatedAt: serverTimestamp(),
+          });
+        } catch (e) {
+          console.error("getOrCreateThread job context merge", e);
+        }
+      }
+      return { id: tid, error: null };
     }
+    return createMessageThread(participantIds, options?.jobDetails || undefined);
   } catch (error: any) {
     return { id: null, error: error.message };
   }
 };
 
-export const createMessageThread = async (participantIds: string[]) => {
+export const createMessageThread = async (
+  participantIds: string[],
+  jobDetails?: MessageJobDetailsShape | null
+) => {
   try {
-    const threadData = {
+    const threadData: Record<string, unknown> = {
       participantIds,
-      acceptedBy: [], // Track who has accepted this thread
+      acceptedBy: [],
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
-      lastMessageAt: serverTimestamp()
+      lastMessageAt: serverTimestamp(),
     };
-    
-    const docRef = await addDoc(collection(db, 'messageThreads'), threadData);
+    if (jobDetails?.jobId) {
+      Object.assign(threadData, buildThreadJobPersistPayload(jobDetails));
+    }
+
+    const docRef = await addDoc(collection(db, "messageThreads"), threadData);
     return { id: docRef.id, error: null };
   } catch (error: any) {
     return { id: null, error: error.message };

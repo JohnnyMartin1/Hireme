@@ -2,12 +2,56 @@
 
 import { useParams } from 'next/navigation';
 import { useFirebaseAuth } from "@/components/FirebaseAuthProvider";
-import { useRouter } from "next/navigation";
-import { useEffect, useState, useRef } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { User, MessageSquare, Send, ArrowLeft, Loader2, Star } from "lucide-react";
-import { getMessageThread, getThreadMessages, sendMessage, getDocument, createCompanyRating, getPipelineEntryForJobCandidate, moveCandidateStage, setFollowUpDate, createOrUpdatePipelineEntry, PIPELINE_STAGES, normalizePipelineStage, type PipelineStage } from '@/lib/firebase-firestore';
+import {
+  getMessageThread,
+  getThreadMessages,
+  sendMessage,
+  getDocument,
+  createCompanyRating,
+  getPipelineEntryForJobCandidate,
+  PIPELINE_STAGES,
+  normalizePipelineStage,
+  type PipelineStage,
+  threadDataToJobDetails,
+  backfillThreadJobFromMessages,
+} from '@/lib/firebase-firestore';
+import { postJobPipeline } from '@/lib/pipeline-client';
+import { canonicalPipelineEntryId } from '@/lib/pipeline-canonical';
+import {
+  deleteMessageTemplate,
+  fetchJobInterviews,
+  fetchJobSequences,
+  fetchMessageTemplates,
+  patchJobInterview,
+  patchJobSequence,
+  patchMessageTemplate,
+  upsertJobInterview,
+  upsertJobSequence,
+  upsertMessageTemplate,
+} from '@/lib/communication-client';
+import {
+  addDays,
+  formatTemplatePreview,
+  getSuggestedTemplateType,
+  describeSequenceAssistantState,
+  SEQUENCE_ASSISTANT_MODE_LABEL,
+  type InterviewEvent,
+  type MessageTemplate,
+  type OutreachSequence,
+} from '@/lib/communication-workflow';
+import { getCommunicationOperationalChips } from "@/lib/communication-status";
 import Link from 'next/link';
-import { getDashboardUrl, getJobMatchesUrl, getJobOverviewUrl, getJobPipelineUrl } from '@/lib/navigation';
+import {
+  getDashboardUrl,
+  getEmployerTemplatesUrl,
+  getJobMatchesUrl,
+  getJobOverviewUrl,
+  getJobPipelineUrl,
+  getMessagesUrl,
+} from '@/lib/navigation';
 import CompanyRatingModal from '@/components/CompanyRatingModal';
 import CompanyProfile from '@/components/CompanyProfile';
 
@@ -33,10 +77,13 @@ interface Thread {
   createdAt: any;
   updatedAt: any;
   lastMessageAt: any;
+  jobId?: string;
+  jobContext?: Record<string, unknown>;
 }
 
 export default function MessageThreadPage() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const { user, profile, loading } = useFirebaseAuth();
   const router = useRouter();
   const [thread, setThread] = useState<Thread | null>(null);
@@ -52,7 +99,36 @@ export default function MessageThreadPage() {
   const [jobContext, setJobContext] = useState<Message['jobDetails'] | null>(null);
   const [pipelineEntry, setPipelineEntry] = useState<any>(null);
   const [pipelineBusy, setPipelineBusy] = useState(false);
+  const [templates, setTemplates] = useState<MessageTemplate[]>([]);
+  const [selectedTemplateId, setSelectedTemplateId] = useState('');
+  const [templateSaving, setTemplateSaving] = useState(false);
+  const [templateName, setTemplateName] = useState('');
+  const [sequence, setSequence] = useState<OutreachSequence | null>(null);
+  const [sequenceBusy, setSequenceBusy] = useState(false);
+  const [interviewEvent, setInterviewEvent] = useState<InterviewEvent | null>(null);
+  const [interviewBusy, setInterviewBusy] = useState(false);
+  const [interviewScheduledAt, setInterviewScheduledAt] = useState('');
+  const [interviewDuration, setInterviewDuration] = useState('30');
+  const [interviewLocation, setInterviewLocation] = useState('');
+  const [interviewNotes, setInterviewNotes] = useState('');
+  const [showFollowUpSuggestion, setShowFollowUpSuggestion] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const isRecruiterView = profile?.role === 'EMPLOYER' || profile?.role === 'RECRUITER';
+  const candidateIdForPipeline = thread?.participantIds?.find((id) => id !== user?.uid) || null;
+
+  const jobIdForNav = useMemo(() => {
+    return (
+      searchParams.get("jobId") ||
+      (thread?.jobId as string | undefined) ||
+      jobContext?.jobId ||
+      null
+    );
+  }, [searchParams, thread?.jobId, jobContext?.jobId]);
+
+  const messagesInboxUrl = useMemo(() => {
+    if (profile?.role === "JOB_SEEKER") return "/messages/candidate";
+    return jobIdForNav ? getMessagesUrl(jobIdForNav) : "/messages";
+  }, [profile?.role, jobIdForNav]);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -103,32 +179,51 @@ export default function MessageThreadPage() {
 
         setMessages((messagesResult.data as Message[]) || []);
         const loadedMessages = (messagesResult.data as Message[]) || [];
-        let contextFromMessages = loadedMessages.find((msg) => msg.jobDetails?.jobId)?.jobDetails || null;
         const urlJobId =
           typeof window !== "undefined"
             ? new URLSearchParams(window.location.search).get("jobId")
             : null;
+
+        let effectiveJob = threadDataToJobDetails(threadResult.data as unknown as Record<string, unknown>);
+        if (!effectiveJob?.jobId) {
+          effectiveJob = loadedMessages.find((msg) => msg.jobDetails?.jobId)?.jobDetails || null;
+        }
         if (
-          !contextFromMessages?.jobId &&
+          !effectiveJob?.jobId &&
           urlJobId &&
-          (profile?.role === 'EMPLOYER' || profile?.role === 'RECRUITER')
+          (profile?.role === "EMPLOYER" || profile?.role === "RECRUITER")
         ) {
-          const { data: jobRow } = await getDocument('jobs', urlJobId);
+          const { data: jobRow } = await getDocument("jobs", urlJobId);
           if (jobRow) {
             const j = jobRow as any;
-            contextFromMessages = {
+            effectiveJob = {
               jobId: urlJobId,
-              jobTitle: j.title || '',
-              employmentType: j.employment || '',
-              location: `${j.locationCity || ''} ${j.locationState || ''}`.trim() || j.location || '',
-              jobDescription: j.description || '',
+              jobTitle: j.title || "",
+              employmentType: j.employment || "",
+              location: `${j.locationCity || ""} ${j.locationState || ""}`.trim() || j.location || "",
+              jobDescription: j.description || "",
             };
           }
         }
-        setJobContext(contextFromMessages);
+        if (
+          !effectiveJob?.jobId &&
+          loadedMessages.some((m) => m.jobDetails?.jobId) &&
+          (profile?.role === "EMPLOYER" || profile?.role === "RECRUITER")
+        ) {
+          await backfillThreadJobFromMessages(params.threadId as string);
+          const refreshedThread = await getMessageThread(params.threadId as string);
+          if (refreshedThread.data) {
+            setThread(refreshedThread.data as Thread);
+            effectiveJob =
+              threadDataToJobDetails(refreshedThread.data as unknown as Record<string, unknown>) ||
+              loadedMessages.find((msg) => msg.jobDetails?.jobId)?.jobDetails ||
+              null;
+          }
+        }
+        setJobContext(effectiveJob);
 
-        if (contextFromMessages?.jobId && otherId && (profile?.role === 'EMPLOYER' || profile?.role === 'RECRUITER')) {
-          const { data: entry } = await getPipelineEntryForJobCandidate(contextFromMessages.jobId, otherId);
+        if (effectiveJob?.jobId && otherId && (profile?.role === "EMPLOYER" || profile?.role === "RECRUITER")) {
+          const { data: entry } = await getPipelineEntryForJobCandidate(effectiveJob.jobId, otherId);
           setPipelineEntry(entry || null);
         } else {
           setPipelineEntry(null);
@@ -143,6 +238,44 @@ export default function MessageThreadPage() {
 
     fetchThreadData();
   }, [params.threadId, user, profile?.role]);
+
+  useEffect(() => {
+    const loadOperationalData = async () => {
+      if (!user || !isRecruiterView) return;
+      const token = await user.getIdToken();
+      const templatesRes = await fetchMessageTemplates(token);
+      if (templatesRes.ok) {
+        setTemplates((templatesRes.data.templates || []) as MessageTemplate[]);
+      }
+      if (!jobContext?.jobId || !candidateIdForPipeline) {
+        setSequence(null);
+        setInterviewEvent(null);
+        return;
+      }
+      const [sequenceRes, interviewRes] = await Promise.all([
+        fetchJobSequences(jobContext.jobId, token, candidateIdForPipeline),
+        fetchJobInterviews(jobContext.jobId, token, candidateIdForPipeline),
+      ]);
+      if (sequenceRes.ok) {
+        const first = (sequenceRes.data.sequences || [])[0] as OutreachSequence | undefined;
+        setSequence(first || null);
+      }
+      if (interviewRes.ok) {
+        const first = (interviewRes.data.interviews || [])
+          .find((iv: any) => String(iv?.status || "") !== "CANCELLED") as InterviewEvent | undefined;
+        setInterviewEvent(first || null);
+        if (first?.scheduledAt) {
+          const d = first.scheduledAt as any;
+          const date = d?.toDate ? d.toDate() : new Date(d);
+          if (!Number.isNaN(date.getTime())) setInterviewScheduledAt(date.toISOString().slice(0, 16));
+        }
+        if (first?.durationMinutes) setInterviewDuration(String(first.durationMinutes));
+        if (first?.location) setInterviewLocation(String(first.location));
+        if (first?.notes) setInterviewNotes(String(first.notes));
+      }
+    };
+    loadOperationalData();
+  }, [user, isRecruiterView, jobContext?.jobId, candidateIdForPipeline]);
 
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -195,18 +328,29 @@ export default function MessageThreadPage() {
 
       setMessages(prev => [...prev, newMsg]);
       setNewMessage('');
+      if (isRecruiterView && jobContext?.jobId && candidateIdForPipeline) {
+        setShowFollowUpSuggestion(true);
+      }
       
       // Refresh messages to get the real message from Firebase
       setTimeout(async () => {
-        const { data: refreshedMessages } = await getThreadMessages(thread.id);
-        if (refreshedMessages) {
-          const typedMessages = refreshedMessages as Message[];
+        const [threadRes, messagesRes] = await Promise.all([
+          getMessageThread(thread.id),
+          getThreadMessages(thread.id),
+        ]);
+        if (threadRes.data) {
+          setThread(threadRes.data as Thread);
+        }
+        if (messagesRes.data && !messagesRes.error) {
+          const typedMessages = messagesRes.data as Message[];
           setMessages(typedMessages);
-          const contextFromMessages = typedMessages.find((msg) => msg.jobDetails?.jobId)?.jobDetails || null;
-          setJobContext(contextFromMessages);
+          const fromThread = threadDataToJobDetails(threadRes.data as unknown as Record<string, unknown>);
+          const fromMsg = typedMessages.find((msg) => msg.jobDetails?.jobId)?.jobDetails || null;
+          const merged = fromThread?.jobId ? fromThread : fromMsg;
+          setJobContext(merged);
           const candidateId = thread.participantIds.find((id) => id !== user.uid);
-          if (contextFromMessages?.jobId && candidateId && (profile?.role === 'EMPLOYER' || profile?.role === 'RECRUITER')) {
-            const { data: entry } = await getPipelineEntryForJobCandidate(contextFromMessages.jobId, candidateId);
+          if (merged?.jobId && candidateId && (profile?.role === "EMPLOYER" || profile?.role === "RECRUITER")) {
+            const { data: entry } = await getPipelineEntryForJobCandidate(merged.jobId, candidateId);
             setPipelineEntry(entry || null);
           }
         }
@@ -273,32 +417,44 @@ export default function MessageThreadPage() {
     }
   };
 
-  const isRecruiterView = profile?.role === 'EMPLOYER' || profile?.role === 'RECRUITER';
-  const candidateIdForPipeline = thread?.participantIds?.find((id) => id !== user?.uid) || null;
+  const currentStage = normalizePipelineStage(pipelineEntry?.stage);
+
+  const suggestedTemplate = useMemo(() => {
+    const wantedType = getSuggestedTemplateType(currentStage);
+    return templates.find(
+      (template) =>
+        template.type === wantedType &&
+        (!template.stage || normalizePipelineStage(template.stage) === currentStage)
+    ) || templates.find((template) => template.type === wantedType) || null;
+  }, [templates, currentStage]);
+
+  const selectedTemplate = useMemo(
+    () => templates.find((template) => template.id === selectedTemplateId) || null,
+    [templates, selectedTemplateId]
+  );
 
   const handleMoveStage = async (newStage: PipelineStage) => {
     if (!jobContext?.jobId || !candidateIdForPipeline) return;
     if (!user?.uid) return;
     setPipelineBusy(true);
     try {
-      if (pipelineEntry?.id) {
-        const { error: moveError } = await moveCandidateStage(pipelineEntry.id, newStage);
-        if (moveError) {
-          setError(moveError);
-          return;
-        }
-        setPipelineEntry((prev: any) => ({ ...(prev || {}), stage: newStage }));
+      const token = await user.getIdToken();
+      const res = await postJobPipeline(
+        jobContext.jobId,
+        { candidateId: candidateIdForPipeline, stage: newStage },
+        token
+      );
+      if (!res.ok) {
+        setError(res.error || 'Failed to update pipeline');
         return;
       }
-      const { id, error: createError } = await createOrUpdatePipelineEntry(jobContext.jobId, candidateIdForPipeline, {
+      const canonicalId = canonicalPipelineEntryId(jobContext.jobId, candidateIdForPipeline);
+      setPipelineEntry((prev: any) => ({
+        ...(prev || {}),
+        id: canonicalId,
         stage: newStage,
-        ownerId: user.uid,
-      });
-      if (createError || !id) {
-        setError(createError || 'Failed to create pipeline entry');
-        return;
-      }
-      setPipelineEntry((prev: any) => ({ ...(prev || {}), id, stage: newStage }));
+        ...(res.entry || {}),
+      }));
     } finally {
       setPipelineBusy(false);
     }
@@ -310,35 +466,191 @@ export default function MessageThreadPage() {
     const followUpDate = rawDate ? new Date(`${rawDate}T12:00:00`) : null;
     setPipelineBusy(true);
     try {
-      if (pipelineEntry?.id) {
-        const { error: followUpError } = await setFollowUpDate(pipelineEntry.id, followUpDate);
-        if (followUpError) {
-          setError(followUpError);
-          return;
-        }
-        setPipelineEntry((prev: any) => ({ ...(prev || {}), nextFollowUpAt: followUpDate }));
+      const token = await user.getIdToken();
+      const res = await postJobPipeline(
+        jobContext.jobId,
+        {
+          candidateId: candidateIdForPipeline,
+          nextFollowUpAt: followUpDate ? followUpDate.toISOString() : null,
+        },
+        token
+      );
+      if (!res.ok) {
+        setError(res.error || 'Failed to set follow-up date');
         return;
       }
-      const { id, error: createError } = await createOrUpdatePipelineEntry(jobContext.jobId, candidateIdForPipeline, {
-        stage: 'NEW',
-        ownerId: user.uid,
+      const canonicalId = canonicalPipelineEntryId(jobContext.jobId, candidateIdForPipeline);
+      setPipelineEntry((prev: any) => ({
+        ...(prev || {}),
+        id: canonicalId,
+        stage: normalizePipelineStage((res.entry as any)?.stage || prev?.stage || 'NEW'),
         nextFollowUpAt: followUpDate,
-      });
-      if (createError || !id) {
-        setError(createError || 'Failed to set follow-up date');
-        return;
-      }
-      setPipelineEntry((prev: any) => ({ ...(prev || {}), id, stage: 'NEW', nextFollowUpAt: followUpDate }));
+        ...(res.entry || {}),
+      }));
     } finally {
       setPipelineBusy(false);
     }
   };
 
-  // Determine messages page and dashboard URL based on role
-  const messagesPageUrl = profile?.role === 'JOB_SEEKER' ? '/messages/candidate' : '/messages';
-  const dashboardUrl = profile?.role === 'JOB_SEEKER' 
-    ? '/home/seeker' 
-    : '/home/employer';
+  const handleSetFollowUpDays = async (days: number) => {
+    const target = addDays(new Date(), days);
+    await handleSetFollowUp(target.toISOString().slice(0, 10));
+  };
+
+  const handleApplyTemplate = (template: MessageTemplate) => {
+    setNewMessage((prev) => {
+      const prefix = prev.trim().length > 0 ? `${prev.trim()}\n\n` : "";
+      return `${prefix}${template.body}`.trim();
+    });
+  };
+
+  const handleSaveTemplate = async () => {
+    if (!user || !newMessage.trim() || !templateName.trim()) return;
+    setTemplateSaving(true);
+    try {
+      const token = await user.getIdToken();
+      const stage = jobContext?.jobId ? currentStage : null;
+      const payload = selectedTemplate
+        ? {
+            id: selectedTemplate.id,
+            name: templateName.trim(),
+            body: newMessage.trim(),
+            type: selectedTemplate.type,
+            stage,
+          }
+        : {
+            name: templateName.trim(),
+            body: newMessage.trim(),
+            type: getSuggestedTemplateType(currentStage),
+            stage,
+          };
+      const res = selectedTemplate
+        ? await patchMessageTemplate(token, payload)
+        : await upsertMessageTemplate(token, payload);
+      if (!res.ok) return;
+      const refreshed = await fetchMessageTemplates(token);
+      if (refreshed.ok) {
+        setTemplates((refreshed.data.templates || []) as MessageTemplate[]);
+      }
+      setTemplateName('');
+    } finally {
+      setTemplateSaving(false);
+    }
+  };
+
+  const handleDeleteTemplate = async () => {
+    if (!user || !selectedTemplateId) return;
+    setTemplateSaving(true);
+    try {
+      const token = await user.getIdToken();
+      await deleteMessageTemplate(token, selectedTemplateId);
+      const refreshed = await fetchMessageTemplates(token);
+      if (refreshed.ok) {
+        setTemplates((refreshed.data.templates || []) as MessageTemplate[]);
+      }
+      setSelectedTemplateId('');
+    } finally {
+      setTemplateSaving(false);
+    }
+  };
+
+  const handleStartSequence = async () => {
+    if (!user || !jobContext?.jobId || !candidateIdForPipeline) return;
+    setSequenceBusy(true);
+    try {
+      const token = await user.getIdToken();
+      const stepTemplateId = selectedTemplateId || suggestedTemplate?.id || null;
+      const res = await upsertJobSequence(jobContext.jobId, token, {
+        candidateId: candidateIdForPipeline,
+        steps: [
+          {
+            delayDays: 0,
+            messageTemplateId: stepTemplateId,
+            body: stepTemplateId ? null : (newMessage.trim() || null),
+          },
+          {
+            delayDays: 3,
+            messageTemplateId: stepTemplateId,
+            body: null,
+          },
+        ],
+      });
+      if (!res.ok) return;
+      setSequence((res.data.sequence || null) as OutreachSequence | null);
+    } finally {
+      setSequenceBusy(false);
+    }
+  };
+
+  const handleStopSequence = async () => {
+    if (!user || !jobContext?.jobId || !candidateIdForPipeline) return;
+    setSequenceBusy(true);
+    try {
+      const token = await user.getIdToken();
+      const res = await patchJobSequence(jobContext.jobId, token, {
+        candidateId: candidateIdForPipeline,
+        status: "STOPPED",
+        stoppedReason: "MANUAL_STOP",
+      });
+      if (!res.ok) return;
+      setSequence((res.data.sequence || null) as OutreachSequence | null);
+    } finally {
+      setSequenceBusy(false);
+    }
+  };
+
+  const upsertInterview = async (status: "PROPOSED" | "CONFIRMED" | "CANCELLED") => {
+    if (!user || !jobContext?.jobId || !candidateIdForPipeline) return;
+    setInterviewBusy(true);
+    try {
+      const token = await user.getIdToken();
+      let res;
+      if (status === "CANCELLED") {
+        res = await patchJobInterview(jobContext.jobId, token, {
+          candidateId: candidateIdForPipeline,
+          status,
+        });
+      } else {
+        const scheduled = interviewScheduledAt ? new Date(interviewScheduledAt) : null;
+        if (!scheduled || Number.isNaN(scheduled.getTime())) return;
+        res = await upsertJobInterview(jobContext.jobId, token, {
+          candidateId: candidateIdForPipeline,
+          status,
+          scheduledAt: scheduled.toISOString(),
+          durationMinutes: Number(interviewDuration || 30),
+          location: interviewLocation,
+          notes: interviewNotes,
+        });
+      }
+      if (!res.ok) return;
+      setInterviewEvent((res.data.interview || null) as InterviewEvent | null);
+      if (status !== "CANCELLED") {
+        await postJobPipeline(
+          jobContext.jobId,
+          { candidateId: candidateIdForPipeline, stage: "INTERVIEW" },
+          token
+        );
+        setPipelineEntry((prev: any) => ({ ...(prev || {}), stage: "INTERVIEW" }));
+      }
+    } finally {
+      setInterviewBusy(false);
+    }
+  };
+
+  const handleInsertInterviewDetails = () => {
+    if (!interviewScheduledAt) return;
+    const when = new Date(interviewScheduledAt);
+    const text = [
+      "Interview details:",
+      `- Time: ${when.toLocaleString()}`,
+      `- Duration: ${interviewDuration || "30"} minutes`,
+      `- Location: ${interviewLocation || "TBD"}`,
+      interviewNotes ? `- Notes: ${interviewNotes}` : "",
+    ]
+      .filter(Boolean)
+      .join("\n");
+    setNewMessage((prev) => `${prev.trim()}\n\n${text}`.trim());
+  };
 
   if (loading || isLoading) {
     return (
@@ -361,10 +673,10 @@ export default function MessageThreadPage() {
         <div className="text-center">
           <p className="text-red-600 mb-4">{error}</p>
           <Link 
-            href={messagesPageUrl} 
+            href={messagesInboxUrl} 
             className="text-sky-600 hover:text-navy-800 underline"
           >
-            Back to messages
+            {jobIdForNav && isRecruiterView ? "Back to job messages" : "Back to messages"}
           </Link>
         </div>
       </div>
@@ -381,26 +693,56 @@ export default function MessageThreadPage() {
     );
   }
 
-  const currentStage = normalizePipelineStage(pipelineEntry?.stage);
   const followUpRaw = pipelineEntry?.nextFollowUpAt;
   const nextFollowUpDate = followUpRaw
     ? new Date(followUpRaw?.toDate ? followUpRaw.toDate() : followUpRaw)
     : null;
   const followUpDue = !!nextFollowUpDate && nextFollowUpDate.getTime() < Date.now();
+  const threadOperationalLabels = getCommunicationOperationalChips({
+    pipelineStage: currentStage,
+    hasEvaluation: false,
+    isEvaluationComplete: true,
+    reviewStatus: null,
+    awaitingCandidateReply:
+      messages.length > 0 ? messages[messages.length - 1]?.senderId === user.uid : null,
+    nextFollowUpAt: nextFollowUpDate,
+    interviewAt: interviewEvent?.scheduledAt || null,
+    sequence: sequence || null,
+  });
 
   return (
     <main className="min-h-screen bg-slate-50 mobile-safe-top mobile-safe-bottom">
       {/* Header */}
       <header className="sticky top-0 bg-white shadow-sm z-50 border-b border-slate-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
-          <Link
-            href={messagesPageUrl}
-            className="flex items-center gap-2 text-navy-800 hover:text-navy-600 transition-all duration-200 group px-3 py-2 rounded-lg hover:bg-sky-50 hover:shadow-md min-h-[44px]"
-          >
-            <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform duration-200" />
-            <span className="font-medium text-sm hidden sm:inline">Back to Messages</span>
-            <span className="font-medium text-sm sm:hidden">Back</span>
-          </Link>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-2">
+          <div className="flex flex-wrap items-center gap-2 min-w-0">
+            <Link
+              href={messagesInboxUrl}
+              className="flex items-center gap-2 text-navy-800 hover:text-navy-600 transition-all duration-200 group px-3 py-2 rounded-lg hover:bg-sky-50 hover:shadow-md min-h-[44px]"
+            >
+              <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform duration-200 shrink-0" />
+              <span className="font-medium text-sm hidden sm:inline">
+                {jobIdForNav && isRecruiterView ? "Back to job messages" : "Back to messages"}
+              </span>
+              <span className="font-medium text-sm sm:hidden">Back</span>
+            </Link>
+            {isRecruiterView && jobIdForNav && (
+              <>
+                <Link
+                  href={getJobPipelineUrl(jobIdForNav)}
+                  className="inline-flex items-center px-3 py-2 rounded-lg border border-slate-200 text-sm font-medium text-navy-800 hover:bg-slate-50 min-h-[44px]"
+                >
+                  Pipeline
+                </Link>
+                <Link
+                  href={getJobOverviewUrl(jobIdForNav)}
+                  className="inline-flex items-center px-3 py-2 rounded-lg border border-slate-200 text-sm font-medium text-navy-800 hover:bg-slate-50 min-h-[44px]"
+                >
+                  Job overview
+                </Link>
+              </>
+            )}
+          </div>
           <Link href="/" className="shrink-0" aria-label="HireMe home">
             <img src="/logo.svg" alt="HireMe logo" className="h-7 sm:h-8 w-auto" role="img" aria-label="HireMe logo" />
           </Link>
@@ -459,11 +801,24 @@ export default function MessageThreadPage() {
                     <span className="inline-flex items-center rounded-full bg-slate-200 px-2 py-1 text-xs font-semibold text-slate-700">
                       {currentStage}
                     </span>
-                    {followUpDue && (
-                      <span className="inline-flex items-center rounded-full bg-rose-100 px-2 py-1 text-xs font-semibold text-rose-700">
-                        Follow-up due
+                    {threadOperationalLabels.map((label) => (
+                      <span
+                        key={label}
+                        className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-semibold ${
+                          label === 'Overdue'
+                            ? 'bg-rose-100 text-rose-700'
+                            : label === 'Follow-up due'
+                              ? 'bg-amber-100 text-amber-700'
+                              : label === 'Interview scheduled'
+                                ? 'bg-indigo-100 text-indigo-700'
+                                : label === 'Sequence active'
+                                  ? 'bg-violet-100 text-violet-700'
+                                  : 'bg-slate-100 text-slate-700'
+                        }`}
+                      >
+                        {label}
                       </span>
-                    )}
+                    ))}
                   </div>
                   <div className="flex flex-wrap gap-2 mb-3 text-xs font-semibold">
                     <Link
@@ -528,6 +883,121 @@ export default function MessageThreadPage() {
                     >
                       Mark follow-up done
                     </button>
+                    <button
+                      type="button"
+                      onClick={() => handleSetFollowUpDays(2)}
+                      disabled={pipelineBusy}
+                      className="px-2 py-1.5 rounded-md border border-slate-200 bg-white text-xs font-medium text-slate-700 hover:bg-slate-100"
+                    >
+                      Follow up in 2 days
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleSetFollowUpDays(5)}
+                      disabled={pipelineBusy}
+                      className="px-2 py-1.5 rounded-md border border-slate-200 bg-white text-xs font-medium text-slate-700 hover:bg-slate-100"
+                    >
+                      Follow up in 5 days
+                    </button>
+                  </div>
+                  <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-2">
+                    <div className="rounded-md border border-violet-200 bg-violet-50 p-2">
+                      <p className="text-[11px] uppercase tracking-wide text-violet-700 font-semibold">
+                        Outreach sequence · {SEQUENCE_ASSISTANT_MODE_LABEL}
+                      </p>
+                      <p className="text-[11px] text-violet-900/80 mt-1 leading-snug">
+                        {describeSequenceAssistantState(sequence)}
+                      </p>
+                      <div className="mt-2 flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={handleStartSequence}
+                          disabled={sequenceBusy}
+                          className="px-2 py-1 rounded-md border border-violet-200 bg-white text-[11px] font-semibold text-violet-800 hover:bg-violet-100 disabled:opacity-60"
+                        >
+                          Start sequence
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleStopSequence}
+                          disabled={sequenceBusy || sequence?.status !== 'ACTIVE'}
+                          className="px-2 py-1 rounded-md border border-violet-200 bg-white text-[11px] font-semibold text-violet-800 hover:bg-violet-100 disabled:opacity-60"
+                        >
+                          Stop
+                        </button>
+                      </div>
+                    </div>
+                    <div className="rounded-md border border-indigo-200 bg-indigo-50 p-2">
+                      <p className="text-[11px] uppercase tracking-wide text-indigo-700 font-semibold">Interview scheduling</p>
+                      <div className="mt-1 grid grid-cols-1 gap-1">
+                        <input
+                          type="datetime-local"
+                          value={interviewScheduledAt}
+                          onChange={(e) => setInterviewScheduledAt(e.target.value)}
+                          className="px-2 py-1 rounded border border-indigo-200 bg-white text-xs text-slate-700"
+                        />
+                        <div className="grid grid-cols-2 gap-1">
+                          <input
+                            type="number"
+                            min={15}
+                            step={15}
+                            value={interviewDuration}
+                            onChange={(e) => setInterviewDuration(e.target.value)}
+                            className="px-2 py-1 rounded border border-indigo-200 bg-white text-xs text-slate-700"
+                            placeholder="Duration mins"
+                          />
+                          <input
+                            value={interviewLocation}
+                            onChange={(e) => setInterviewLocation(e.target.value)}
+                            className="px-2 py-1 rounded border border-indigo-200 bg-white text-xs text-slate-700"
+                            placeholder="Location/link"
+                          />
+                        </div>
+                        <input
+                          value={interviewNotes}
+                          onChange={(e) => setInterviewNotes(e.target.value)}
+                          className="px-2 py-1 rounded border border-indigo-200 bg-white text-xs text-slate-700"
+                          placeholder="Interview notes"
+                        />
+                      </div>
+                      <div className="mt-2 flex flex-wrap items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => upsertInterview('PROPOSED')}
+                          disabled={interviewBusy}
+                          className="px-2 py-1 rounded-md border border-indigo-200 bg-white text-[11px] font-semibold text-indigo-800 hover:bg-indigo-100 disabled:opacity-60"
+                        >
+                          Propose
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => upsertInterview('CONFIRMED')}
+                          disabled={interviewBusy}
+                          className="px-2 py-1 rounded-md border border-indigo-200 bg-white text-[11px] font-semibold text-indigo-800 hover:bg-indigo-100 disabled:opacity-60"
+                        >
+                          Confirm
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => upsertInterview('CANCELLED')}
+                          disabled={interviewBusy || !interviewEvent}
+                          className="px-2 py-1 rounded-md border border-indigo-200 bg-white text-[11px] font-semibold text-indigo-800 hover:bg-indigo-100 disabled:opacity-60"
+                        >
+                          Cancel interview
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleInsertInterviewDetails}
+                          className="px-2 py-1 rounded-md border border-indigo-200 bg-white text-[11px] font-semibold text-indigo-800 hover:bg-indigo-100"
+                        >
+                          Insert details in message
+                        </button>
+                      </div>
+                      <p className="text-[10px] text-indigo-900/70 mt-2 leading-snug">
+                        Status <span className="font-semibold">Proposed</span> vs <span className="font-semibold">Confirmed</span> is for your team only.
+                        Cancel marks this slot as cancelled and does not change pipeline stage automatically.
+                      </p>
+                    </div>
                   </div>
                 </div>
               )}
@@ -605,6 +1075,99 @@ export default function MessageThreadPage() {
 
             {/* Message Composer */}
             <div className="p-6 border-t border-slate-100">
+              {isRecruiterView && (
+                <div className="mb-3 space-y-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    {suggestedTemplate && (
+                      <button
+                        type="button"
+                        onClick={() => handleApplyTemplate(suggestedTemplate)}
+                        className="rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-800 hover:bg-emerald-100"
+                      >
+                        Suggested message: {suggestedTemplate.name}
+                      </button>
+                    )}
+                    <select
+                      value={selectedTemplateId}
+                      onChange={(e) => setSelectedTemplateId(e.target.value)}
+                      className="px-2 py-1.5 rounded-md border border-slate-200 bg-white text-xs text-slate-700"
+                    >
+                      <option value="">Choose template</option>
+                      {templates.map((template) => (
+                        <option key={template.id} value={template.id}>
+                          {template.name} ({template.type})
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      onClick={() => selectedTemplate && handleApplyTemplate(selectedTemplate)}
+                      disabled={!selectedTemplate}
+                      className="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-60"
+                    >
+                      Apply template
+                    </button>
+                    <input
+                      value={templateName}
+                      onChange={(e) => setTemplateName(e.target.value)}
+                      placeholder="Template name"
+                      className="px-2 py-1 rounded-md border border-slate-200 bg-white text-xs text-slate-700"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleSaveTemplate}
+                      disabled={templateSaving || !templateName.trim() || !newMessage.trim()}
+                      className="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-60"
+                    >
+                      {selectedTemplate ? "Update template" : "Save as template"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleDeleteTemplate}
+                      disabled={templateSaving || !selectedTemplate}
+                      className="rounded-md border border-rose-200 bg-rose-50 px-2 py-1 text-xs font-semibold text-rose-700 hover:bg-rose-100 disabled:opacity-60"
+                    >
+                      Delete template
+                    </button>
+                    <Link
+                      href={getEmployerTemplatesUrl()}
+                      className="text-xs font-semibold text-sky-700 hover:underline px-1"
+                    >
+                      All templates
+                    </Link>
+                  </div>
+                  {selectedTemplate && (
+                    <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2">
+                      <p className="text-[11px] uppercase tracking-wide text-slate-500 font-semibold mb-1">Template preview</p>
+                      <pre className="text-xs text-slate-700 whitespace-pre-wrap font-sans">
+                        {formatTemplatePreview(selectedTemplate)}
+                      </pre>
+                    </div>
+                  )}
+                </div>
+              )}
+              {showFollowUpSuggestion && isRecruiterView && (
+                <div className="mb-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 flex flex-wrap items-center gap-2">
+                  Message sent. Set follow-up reminder?
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      await handleSetFollowUpDays(3);
+                      setShowFollowUpSuggestion(false);
+                    }}
+                    className="rounded-md border border-amber-200 bg-white px-2 py-1 font-semibold hover:bg-amber-100"
+                  >
+                    Set +3 days
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowFollowUpSuggestion(false)}
+                    className="rounded-md border border-amber-200 bg-white px-2 py-1 font-semibold hover:bg-amber-100"
+                  >
+                    Dismiss
+                  </button>
+                </div>
+              )}
               <div className="flex items-end space-x-3">
                 <div className="flex-1">
                   <textarea
