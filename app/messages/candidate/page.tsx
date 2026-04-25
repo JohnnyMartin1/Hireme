@@ -413,8 +413,8 @@ function CandidateMessagesPageContent() {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading messages...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-navy-800 mx-auto mb-4"></div>
+          <p className="text-slate-600">Loading messages...</p>
         </div>
       </div>
     );
@@ -431,7 +431,7 @@ function CandidateMessagesPageContent() {
           <p className="text-red-600 mb-4">{error}</p>
           <button 
             onClick={() => window.location.reload()}
-            className="text-blue-600 hover:text-blue-800 underline"
+            className="text-sky-800 hover:text-navy-900 underline"
           >
             Try again
           </button>
@@ -524,7 +524,7 @@ function CandidateMessagesPageContent() {
                       onClick={() => handleThreadSelect(threadData)}
                       className={`p-4 rounded-lg cursor-pointer transition-colors ${
                         selectedThreadId === threadData.thread.id
-                          ? 'bg-sky-200/20 border border-light-blue/30'
+                          ? "bg-sky-200/20 border border-sky-200"
                           : 'hover:bg-slate-50'
                       }`}
                     >
@@ -567,7 +567,7 @@ function CandidateMessagesPageContent() {
                           )}
                         </div>
                         {!threadData.thread.lastMessageAt && (
-                          <div className="w-2 h-2 bg-orange-500 rounded-full flex-shrink-0"></div>
+                          <div className="w-2 h-2 bg-sky-600 rounded-full flex-shrink-0"></div>
                         )}
                       </div>
                       
@@ -578,7 +578,7 @@ function CandidateMessagesPageContent() {
                             e.stopPropagation();
                             handleAcceptRequest(threadData);
                           }}
-                          className="mt-2 w-full px-4 py-2 bg-gradient-to-r from-[#000080] to-[#ADD8E6] text-white text-sm font-semibold rounded-lg hover:shadow-md transition-all"
+                          className="mt-2 w-full px-4 py-2 bg-navy-800 text-white text-sm font-semibold rounded-lg hover:bg-navy-700 transition-all"
                         >
                           Accept Request
                         </button>
@@ -692,7 +692,7 @@ function CandidateMessagesPageContent() {
                               >
                                 <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-sm hover:shadow-md hover:border-sky-200 transition-all cursor-pointer">
                                   <div className="flex items-start space-x-3">
-                                    <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-navy-800 to-sky-500 rounded-lg flex items-center justify-center shadow-sm">
+                                    <div className="flex-shrink-0 w-10 h-10 bg-navy-800 rounded-lg flex items-center justify-center shadow-sm">
                                       <i className="fa-solid fa-briefcase text-white text-sm"></i>
                                     </div>
                                     <div className="flex-1 min-w-0">
@@ -729,7 +729,7 @@ function CandidateMessagesPageContent() {
                             }`}>
                               <p className="text-sm">{message.content}</p>
                               <p className={`text-xs mt-1 ${
-                                message.senderId === user?.uid ? 'text-blue-100' : 'text-slate-500'
+                                message.senderId === user?.uid ? "text-sky-100" : "text-slate-500"
                               }`}>
                                 {message.createdAt ? new Date(message.createdAt.toDate ? message.createdAt.toDate() : message.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'Now'}
                               </p>
@@ -847,7 +847,7 @@ function CandidateMessagesPageContent() {
                       onClick={() => handleThreadSelect(threadData)}
                       className={`p-4 rounded-lg cursor-pointer transition-colors min-h-[72px] ${
                         selectedThreadId === threadData.thread.id
-                          ? 'bg-sky-200/20 border border-light-blue/30'
+                          ? "bg-sky-200/20 border border-sky-200"
                           : 'hover:bg-slate-50 active:bg-slate-100'
                       }`}
                     >
@@ -890,7 +890,7 @@ function CandidateMessagesPageContent() {
                           )}
                         </div>
                         {!threadData.thread.lastMessageAt && (
-                          <div className="w-2 h-2 bg-orange-500 rounded-full flex-shrink-0"></div>
+                          <div className="w-2 h-2 bg-sky-600 rounded-full flex-shrink-0"></div>
                         )}
                       </div>
                       
@@ -901,7 +901,7 @@ function CandidateMessagesPageContent() {
                             e.stopPropagation();
                             handleAcceptRequest(threadData);
                           }}
-                          className="mt-3 w-full px-4 py-2.5 bg-gradient-to-r from-[#000080] to-[#ADD8E6] text-white text-sm font-semibold rounded-lg hover:shadow-md transition-all min-h-[44px]"
+                          className="mt-3 w-full px-4 py-2.5 bg-navy-800 text-white text-sm font-semibold rounded-lg hover:bg-navy-700 transition-all min-h-[44px]"
                         >
                           Accept Request
                         </button>
@@ -922,7 +922,7 @@ function CandidateMessagesPageContent() {
               <div className="flex items-center justify-between mb-4">
                 <button
                   onClick={() => setMobileView('list')}
-                  className="flex items-center text-navy-800 font-semibold hover:text-blue-900 transition-colors min-h-[44px] pr-2"
+                  className="flex items-center text-navy-800 font-semibold hover:text-navy-900 transition-colors min-h-[44px] pr-2"
                 >
                   <ArrowLeft className="h-5 w-5 mr-2" />
                   <span className="text-sm">Back</span>
@@ -983,7 +983,7 @@ function CandidateMessagesPageContent() {
                             >
                             <div className="p-3 sm:p-4 rounded-xl bg-white border border-slate-200 shadow-sm hover:shadow-md hover:border-sky-200 transition-all active:scale-[0.98]">
                               <div className="flex items-start space-x-3">
-                                <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-navy-800 to-sky-500 rounded-lg flex items-center justify-center shadow-sm">
+                                <div className="flex-shrink-0 w-10 h-10 bg-navy-800 rounded-lg flex items-center justify-center shadow-sm">
                                   <i className="fa-solid fa-briefcase text-white text-sm"></i>
                                 </div>
                                 <div className="flex-1 min-w-0">
@@ -1018,7 +1018,7 @@ function CandidateMessagesPageContent() {
                         }`}>
                           <p className="text-sm sm:text-base break-words">{message.content}</p>
                           <p className={`text-xs mt-1 ${
-                            message.senderId === user?.uid ? 'text-blue-100' : 'text-slate-500'
+                            message.senderId === user?.uid ? "text-sky-100" : "text-slate-500"
                           }`}>
                             {message.createdAt ? new Date(message.createdAt.toDate ? message.createdAt.toDate() : message.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'Now'}
                           </p>
@@ -1090,7 +1090,7 @@ function CandidateMessagesPageContent() {
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="relative bg-gradient-to-br from-sky-50 to-white border-b border-slate-100 rounded-t-2xl px-6 py-8">
+            <div className="relative bg-sky-50 border-b border-slate-100 rounded-t-2xl px-6 py-8">
               <button
                 onClick={() => setShowRecruiterInfo(false)}
                 className="absolute top-4 right-4 w-8 h-8 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-full flex items-center justify-center transition-colors min-h-[44px] min-w-[44px]"
@@ -1108,7 +1108,7 @@ function CandidateMessagesPageContent() {
                       className="w-full h-full rounded-full object-cover"
                     />
                   ) : (
-                    <div className="w-full h-full rounded-full bg-gradient-to-br from-navy-800 to-sky-500 flex items-center justify-center">
+                    <div className="w-full h-full rounded-full bg-navy-800 flex items-center justify-center">
                       <span className="text-3xl sm:text-4xl font-bold text-white">
                         {selectedThread.otherParticipant.firstName?.[0]?.toUpperCase() || 'R'}
                       </span>
@@ -1209,10 +1209,10 @@ function CandidateMessagesPageContent() {
 export default function CandidateMessagesPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-gradient-to-b from-[#E6F0FF] to-white flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="h-12 w-12 text-[#000080] animate-spin mx-auto mb-4" />
-          <p className="text-gray-600">Loading messages...</p>
+          <Loader2 className="h-12 w-12 text-navy-800 animate-spin mx-auto mb-4" />
+          <p className="text-slate-600">Loading messages...</p>
         </div>
       </div>
     }>

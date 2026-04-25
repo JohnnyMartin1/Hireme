@@ -18,12 +18,14 @@ import {
   fetchJobReviews,
   saveJobEvaluationCriteria,
 } from '@/lib/decision-client';
+import { fetchJobInterviews } from "@/lib/communication-client";
 import {
   summarizeCandidateEvaluations,
   type CandidateEvaluation,
   type CandidateReviewRequest,
   type JobEvaluationCriterion,
 } from '@/lib/hiring-decision';
+import { pipelineStageLabel } from "@/lib/recruiter-ui";
 
 export default function ViewJobPage({ params }: { params: { id: string } }) {
   const router = useRouter();
@@ -35,6 +37,7 @@ export default function ViewJobPage({ params }: { params: { id: string } }) {
   const [activePipelineCount, setActivePipelineCount] = useState(0);
   const [criteria, setCriteria] = useState<JobEvaluationCriterion[]>([]);
   const [criteriaSaving, setCriteriaSaving] = useState(false);
+  const [criteriaOpen, setCriteriaOpen] = useState(false);
   const [newCriterionLabel, setNewCriterionLabel] = useState('');
   const [newCriterionDescription, setNewCriterionDescription] = useState('');
   const [newCriterionWeight, setNewCriterionWeight] = useState('');
@@ -43,6 +46,11 @@ export default function ViewJobPage({ params }: { params: { id: string } }) {
     incompleteEvaluations: 0,
     finalists: 0,
     readyForDebrief: 0,
+  });
+  const [interviewSummary, setInterviewSummary] = useState({
+    scheduled: 0,
+    today: 0,
+    awaitingConfirmation: 0,
   });
 
   useEffect(() => {
@@ -109,10 +117,11 @@ export default function ViewJobPage({ params }: { params: { id: string } }) {
       setActivePipelineCount(rows.filter((e: any) => normalizePipelineStage(e.stage) !== 'REJECTED').length);
 
       const token = await user.getIdToken();
-      const [criteriaRes, evaluationsRes, reviewsRes] = await Promise.all([
+      const [criteriaRes, evaluationsRes, reviewsRes, interviewsRes] = await Promise.all([
         fetchJobEvaluationCriteria(params.id, token),
         fetchJobEvaluations(params.id, token),
         fetchJobReviews(params.id, token),
+        fetchJobInterviews(params.id, token),
       ]);
 
       const criteriaRows = criteriaRes.ok ? (criteriaRes.data.criteria || []) : [];
@@ -166,6 +175,21 @@ export default function ViewJobPage({ params }: { params: { id: string } }) {
         incompleteEvaluations,
         finalists,
         readyForDebrief,
+      });
+      const interviews = interviewsRes.ok ? (interviewsRes.data.interviews || []) : [];
+      const today = new Date().toDateString();
+      setInterviewSummary({
+        scheduled: interviews.filter((iv: any) =>
+          ["PROPOSED", "SCHEDULED", "CONFIRMED", "RESCHEDULE_REQUESTED"].includes(String(iv?.status || ""))
+        ).length,
+        today: interviews.filter((iv: any) => {
+          const raw = iv?.scheduledAt;
+          const d = raw?.toDate ? raw.toDate() : raw ? new Date(raw) : null;
+          return d && d.toDateString() === today && String(iv?.status || "") !== "CANCELLED";
+        }).length,
+        awaitingConfirmation: interviews.filter(
+          (iv: any) => String(iv?.candidateResponse || "PENDING") === "PENDING" && String(iv?.status || "") !== "CANCELLED"
+        ).length,
       });
     })();
   }, [loading, user, profile, params.id]);
@@ -226,8 +250,8 @@ export default function ViewJobPage({ params }: { params: { id: string } }) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-blue-600" />
-          <p className="text-gray-600">Loading job details...</p>
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-navy-800" />
+          <p className="text-slate-600">Loading job details...</p>
         </div>
       </div>
     );
@@ -252,43 +276,29 @@ export default function ViewJobPage({ params }: { params: { id: string } }) {
 
   return (
     <div className="min-h-screen bg-slate-50 mobile-safe-top mobile-safe-bottom">
-      {/* Header */}
-      <header className="sticky top-0 bg-white shadow-sm z-50 border-b border-slate-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
-          <Link
-            href="/employer/jobs"
-            className="flex items-center gap-2 text-navy-800 hover:text-navy-600 transition-all duration-200 group px-3 py-2 rounded-lg hover:bg-sky-50 hover:shadow-md min-h-[44px]"
-          >
-            <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5 group-hover:-translate-x-1 transition-transform duration-200" />
-            <span className="font-medium text-sm sm:text-base hidden sm:inline">Back to Jobs</span>
-            <span className="font-medium text-sm sm:text-base sm:hidden">Back</span>
-          </Link>
-          <Link href="/" className="shrink-0" aria-label="HireMe home">
-            <img src="/logo.svg" alt="HireMe logo" className="h-7 sm:h-8 w-auto" role="img" aria-label="HireMe logo" />
-          </Link>
-        </div>
-      </header>
-
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 p-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 p-6">
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">{job.title}</h1>
-          <p className="text-gray-600">Job overview — use workspace tabs for day-to-day matches, pipeline, compare, and messages.</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-navy-900 mb-1">{job.title}</h1>
+          <p className="text-sm text-slate-600">
+            Command center for this requisition — use the workspace tabs for day-to-day hiring work.
+          </p>
         </div>
 
-        <div className="bg-white rounded-xl shadow-lg p-8">
+        <div className="bg-white rounded-xl shadow-lg p-6 sm:p-8">
           {/* Job Header */}
-          <div className="mb-8">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-2xl font-semibold text-gray-900">{job.title}</h2>
-              <span className={`px-3 py-1 text-sm rounded-full ${
-                job.status === 'ACTIVE' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-3">
+              <span className={`px-3 py-1 text-xs font-semibold rounded-full border ${
+                job.status === "ACTIVE"
+                  ? "border-sky-200 bg-sky-50 text-sky-950"
+                  : "border-slate-200 bg-slate-100 text-slate-700"
               }`}>
-                {job.status}
+                {job.status === "ACTIVE" ? "Active" : job.status === "DRAFT" ? "Draft" : pipelineStageLabel(job.status)}
               </span>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-              <div className="flex items-center text-gray-600">
+              <div className="flex items-center text-slate-600">
                 <MapPin className="h-5 w-5 mr-2" />
                 <span>
                   {job.locationCity && job.locationState 
@@ -297,11 +307,11 @@ export default function ViewJobPage({ params }: { params: { id: string } }) {
                   }
                 </span>
               </div>
-              <div className="flex items-center text-gray-600">
+              <div className="flex items-center text-slate-600">
                 <Building className="h-5 w-5 mr-2" />
                 <span>{job.employment}</span>
               </div>
-              <div className="flex items-center text-gray-600">
+              <div className="flex items-center text-slate-600">
                 <DollarSign className="h-5 w-5 mr-2" />
                 <span>
                   {job.salaryMin && job.salaryMax 
@@ -312,7 +322,7 @@ export default function ViewJobPage({ params }: { params: { id: string } }) {
               </div>
             </div>
 
-            <div className="flex items-center text-sm text-gray-500">
+            <div className="flex items-center text-sm text-slate-500">
               <Calendar className="h-4 w-4 mr-2" />
               <span>Posted {job.createdAt ? new Date(job.createdAt).toLocaleDateString() : 'Recently'}</span>
               {job.updatedAt && (
@@ -325,16 +335,16 @@ export default function ViewJobPage({ params }: { params: { id: string } }) {
 
           {/* Job Description */}
           <div className="mb-8">
-            <h3 className="text-lg font-semibold text-gray-900 mb-3">Job Description</h3>
-            <div className="bg-gray-50 rounded-lg p-4">
-              <p className="text-gray-700 whitespace-pre-wrap">{job.description}</p>
+            <h3 className="text-lg font-semibold text-slate-900 mb-3">Job Description</h3>
+            <div className="bg-slate-50 rounded-lg p-4">
+              <p className="text-slate-700 whitespace-pre-wrap">{job.description}</p>
             </div>
           </div>
 
           {/* Tags */}
           {job.tags && job.tags.length > 0 && (
             <div className="mb-8">
-              <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center">
+              <h3 className="text-lg font-semibold text-slate-900 mb-3 flex items-center">
                 <Tag className="h-5 w-5 mr-2" />
                 Skills & Technologies
               </h3>
@@ -342,7 +352,7 @@ export default function ViewJobPage({ params }: { params: { id: string } }) {
                 {job.tags.map((tag: string, index: number) => (
                   <span
                     key={index}
-                    className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm"
+                    className="rounded-full bg-sky-100 px-3 py-1 text-sm text-sky-900"
                   >
                     {tag}
                   </span>
@@ -353,14 +363,42 @@ export default function ViewJobPage({ params }: { params: { id: string } }) {
 
           {(shortlistCount > 0 || activePipelineCount > 0) && (
             <div className="mb-6 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
-              <span className="font-semibold text-navy-900">Workflow snapshot: </span>
-              {shortlistCount} shortlisted contender{shortlistCount === 1 ? '' : 's'}
-              {activePipelineCount > 0 ? ` · ${activePipelineCount} active in pipeline (excl. rejected)` : ''}
+              <span className="font-semibold text-navy-900">Pipeline health: </span>
+              <span className="text-sky-900 font-medium">{shortlistCount} on shortlist</span>
+              {activePipelineCount > 0 ? (
+                <span className="text-slate-700"> · {activePipelineCount} active in pipeline</span>
+              ) : null}
+              <span className="block text-xs text-slate-500 mt-1">
+                Shortlist = serious contenders for this job. Pipeline = everyone you are actively working.
+              </span>
             </div>
           )}
+          <div className="mb-6 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
+            <span className="font-semibold text-navy-900">Interview summary: </span>
+            <span>{interviewSummary.scheduled} scheduled</span>
+            <span className="text-slate-600"> · {interviewSummary.today} upcoming today</span>
+            <span className="text-slate-600"> · {interviewSummary.awaitingConfirmation} awaiting confirmation</span>
+          </div>
 
+          <div className="mb-6 rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-2">
+            <button
+              type="button"
+              onClick={() => setCriteriaOpen((o) => !o)}
+              className="flex w-full items-center justify-between text-left text-sm font-semibold text-navy-900"
+            >
+              <span>Structured evaluation criteria</span>
+              <span className="text-slate-500">{criteriaOpen ? "Hide" : "Show"}</span>
+            </button>
+            {!criteriaOpen ? (
+              <p className="text-xs text-slate-600 mt-1 pr-6">
+                Optional rubric for consistent evaluations — expand when you need to edit.
+              </p>
+            ) : null}
+          </div>
+
+          {criteriaOpen && (
           <div className="mb-6 rounded-xl border border-slate-200 bg-slate-50 px-4 py-4">
-            <h3 className="text-base font-semibold text-navy-900 mb-2">Structured evaluation criteria</h3>
+            <h3 className="text-base font-semibold text-navy-900 mb-2 sr-only">Structured evaluation criteria</h3>
             <p className="text-xs text-slate-600 mb-3">
               Define how this requisition is evaluated so recruiter and hiring manager feedback stays consistent.
             </p>
@@ -457,38 +495,29 @@ export default function ViewJobPage({ params }: { params: { id: string } }) {
               </span>
             </div>
           </div>
+          )}
 
-          <p className="text-xs text-slate-500 pt-4 border-t border-gray-200 mb-3">
-            Shortcuts below mirror the workspace tabs. Prefer the tab bar for your daily loop on this requisition.
-          </p>
-          <div className="flex flex-wrap gap-2 pt-2 border-t border-gray-100">
+          <div className="flex flex-wrap gap-2 pt-4 border-t border-slate-100">
             <button
               type="button"
               onClick={() => router.push(getJobMatchesUrl(params.id))}
               className="px-5 py-2.5 bg-navy-800 text-white rounded-lg hover:bg-navy-700 transition-colors text-sm font-semibold"
             >
-              Matches
+              Review Candidates
             </button>
             <button
               type="button"
               onClick={() => router.push(getJobPipelineUrl(params.id))}
-              className="px-5 py-2.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors text-sm font-semibold"
+              className="px-4 py-2.5 rounded-lg border border-slate-200 bg-white text-sm font-semibold text-navy-900 hover:bg-slate-50"
             >
               Pipeline
             </button>
             <button
               type="button"
-              onClick={() => router.push(getCandidatesSearchUrl(params.id))}
-              className="px-5 py-2.5 bg-sky-600 text-white rounded-lg hover:bg-sky-700 transition-colors text-sm font-semibold"
-            >
-              Source candidates
-            </button>
-            <button
-              type="button"
               onClick={() => router.push(getJobCompareUrl(params.id))}
-              className={`px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors ${
+              className={`px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors ${
                 shortlistCount >= 2
-                  ? "border border-indigo-200 bg-indigo-50 text-indigo-900 hover:bg-indigo-100"
+                  ? "border border-sky-200 bg-sky-50 text-navy-900 hover:bg-sky-100"
                   : "border border-slate-200 text-slate-600 hover:bg-slate-50"
               }`}
             >
@@ -496,17 +525,24 @@ export default function ViewJobPage({ params }: { params: { id: string } }) {
             </button>
             <button
               type="button"
-              onClick={() => router.push(`/employer/job/${params.id}/edit`)}
-              className="px-4 py-2.5 border border-slate-200 text-slate-700 rounded-lg hover:bg-slate-50 text-sm font-medium"
+              onClick={() => router.push(getCandidatesSearchUrl(params.id))}
+              className="px-4 py-2.5 rounded-lg border border-slate-200 bg-white text-sm font-semibold text-navy-900 hover:bg-slate-50"
             >
-              Edit posting
+              Find Candidates
+            </button>
+            <button
+              type="button"
+              onClick={() => router.push(`/employer/job/${params.id}/edit`)}
+              className="px-3 py-2.5 text-sm font-medium text-slate-600 hover:text-navy-900"
+            >
+              Edit job
             </button>
             <button
               type="button"
               onClick={() => router.push(getEmployerJobsListUrl())}
-              className="px-4 py-2.5 text-slate-500 hover:text-navy-800 text-sm font-medium"
+              className="px-3 py-2.5 text-sm font-medium text-slate-500 hover:text-navy-800"
             >
-              All jobs
+              All requisitions
             </button>
           </div>
         </div>

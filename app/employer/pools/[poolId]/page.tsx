@@ -12,7 +12,12 @@ import {
   updateTalentPoolMember,
   type TalentPoolMember,
 } from "@/lib/talent-pools-client";
-import { getCandidateUrl, getCandidatesSearchUrl, getEmployerPoolsUrl, getMessagesUrl } from "@/lib/navigation";
+import {
+  getCandidateUrl,
+  getCandidatesSearchUrl,
+  getEmployerPoolsUrl,
+  getJobPipelineUrl,
+} from "@/lib/navigation";
 import { getDocument, getEmployerJobs, getCompanyJobs } from "@/lib/firebase-firestore";
 import { postJobPipeline } from "@/lib/pipeline-client";
 type MemberRow = TalentPoolMember & { displayName?: string };
@@ -32,6 +37,7 @@ export default function EmployerPoolDetailPage() {
   const [pipelineJobId, setPipelineJobId] = useState("");
   const [pipelineStage, setPipelineStage] = useState<"NEW" | "SHORTLIST">("SHORTLIST");
   const [pipelineBusy, setPipelineBusy] = useState(false);
+  const [pipelineAddedJobId, setPipelineAddedJobId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     if (!user || !poolId) return;
@@ -126,7 +132,9 @@ export default function EmployerPoolDetailPage() {
       }
       toast.success("Pipeline", `Added to job as ${pipelineStage}.`);
       setPipelineOpenFor(null);
+      const addedJobId = pipelineJobId;
       setPipelineJobId("");
+      setPipelineAddedJobId(addedJobId);
     } finally {
       setPipelineBusy(false);
     }
@@ -145,7 +153,7 @@ export default function EmployerPoolDetailPage() {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-sky-50 to-slate-50 pb-16">
+    <main className="min-h-screen bg-slate-50 pb-16">
       <div className="max-w-5xl mx-auto px-4 pt-10 sm:pt-14">
         <Link href={getEmployerPoolsUrl()} className="text-sm font-semibold text-sky-800 hover:underline mb-4 inline-block">
           ← All pools
@@ -159,6 +167,29 @@ export default function EmployerPoolDetailPage() {
             </p>
           </div>
         </div>
+
+        {pipelineAddedJobId && (
+          <div className="mb-6 flex flex-col gap-2 rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm font-medium text-navy-900">
+              Candidate added to that job&apos;s pipeline. Continue there to stage and message them.
+            </p>
+            <div className="flex flex-wrap items-center gap-2">
+              <Link
+                href={getJobPipelineUrl(pipelineAddedJobId)}
+                className="inline-flex rounded-lg bg-navy-800 px-3 py-2 text-xs font-semibold text-white hover:bg-navy-700"
+              >
+                Open job pipeline
+              </Link>
+              <button
+                type="button"
+                onClick={() => setPipelineAddedJobId(null)}
+                className="text-xs font-semibold text-sky-900 underline-offset-2 hover:underline"
+              >
+                Dismiss
+              </button>
+            </div>
+          </div>
+        )}
 
         {allTags.length > 0 && (
           <div className="mb-6 flex flex-wrap items-center gap-2 rounded-xl border border-slate-200 bg-white p-3">
@@ -220,7 +251,7 @@ export default function EmployerPoolDetailPage() {
                       <ExternalLink className="h-3 w-3" />
                     </Link>
                     <Link
-                      href={getMessagesUrl()}
+                      href={`${getCandidateUrl(m.candidateId)}?action=message`}
                       className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-navy-800 hover:bg-slate-50"
                     >
                       <MessageSquare className="h-3.5 w-3.5" />
@@ -232,7 +263,7 @@ export default function EmployerPoolDetailPage() {
                         setPipelineOpenFor(pipelineOpenFor === m.candidateId ? null : m.candidateId);
                         setPipelineJobId("");
                       }}
-                      className="inline-flex items-center gap-1 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-900 hover:bg-emerald-100"
+                      className="inline-flex items-center gap-1 rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-xs font-semibold text-navy-900 hover:bg-sky-100"
                     >
                       <Briefcase className="h-3.5 w-3.5" />
                       Add to job
@@ -249,7 +280,7 @@ export default function EmployerPoolDetailPage() {
                           void load();
                         }
                       }}
-                      className="inline-flex items-center gap-1 rounded-lg border border-rose-200 px-3 py-2 text-xs font-semibold text-rose-700 hover:bg-rose-50"
+                      className="inline-flex items-center gap-1 rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                       Remove
@@ -258,8 +289,8 @@ export default function EmployerPoolDetailPage() {
                 </div>
 
                 {pipelineOpenFor === m.candidateId && (
-                  <div className="mt-4 rounded-xl border border-emerald-100 bg-emerald-50/50 p-3 space-y-2">
-                    <p className="text-xs font-semibold text-emerald-900">Add to job pipeline</p>
+                  <div className="mt-4 rounded-xl border border-sky-100 bg-sky-50/80 p-3 space-y-2">
+                    <p className="text-xs font-semibold text-navy-900">Add to job pipeline</p>
                     <select
                       value={pipelineJobId}
                       onChange={(e) => setPipelineJobId(e.target.value)}
@@ -286,7 +317,7 @@ export default function EmployerPoolDetailPage() {
                         type="button"
                         disabled={pipelineBusy}
                         onClick={() => void addToJobPipeline(m.candidateId)}
-                        className="rounded-lg bg-emerald-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-800 disabled:opacity-50"
+                        className="rounded-lg bg-navy-800 px-3 py-1.5 text-xs font-semibold text-white hover:bg-navy-700 disabled:opacity-50"
                       >
                         {pipelineBusy ? "Saving…" : "Confirm"}
                       </button>

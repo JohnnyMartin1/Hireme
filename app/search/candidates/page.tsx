@@ -3,7 +3,7 @@ import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { useFirebaseAuth } from "@/components/FirebaseAuthProvider";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Search, User, MapPin, GraduationCap, Star, Loader2, Filter, X, MessageSquare, ArrowLeft } from "lucide-react";
+import { Search, User, MapPin, GraduationCap, Star, Loader2, Filter, X, MessageSquare } from "lucide-react";
 import { getPipelineByJob, getProfilesByRole, normalizePipelineStage } from '@/lib/firebase-firestore';
 import { postJobPipeline } from '@/lib/pipeline-client';
 import SearchableDropdown from '@/components/SearchableDropdown';
@@ -13,6 +13,7 @@ import { getCompanyJobs, getDocument, getEmployerJobs } from '@/lib/firebase-fir
 import { calculateCompletion } from '@/components/ProfileCompletionProvider';
 import { useToast } from '@/components/NotificationSystem';
 import { getCandidateUrl, getEmployerPoolsUrl, getJobCompareUrl, getJobMatchesUrl, getJobOverviewUrl, getJobPipelineUrl } from '@/lib/navigation';
+import { pipelineStageLabel } from "@/lib/recruiter-ui";
 import {
   fetchTalentPool,
   fetchTalentPools,
@@ -613,11 +614,11 @@ export default function SearchCandidatesPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen" style={{background: 'linear-gradient(180deg, #E6F0FF 0%, #F8FAFC 100%)'}}>
-        <div className="flex items-center justify-center min-h-screen">
+      <div className="min-h-screen bg-slate-50">
+        <div className="flex min-h-screen items-center justify-center">
           <div className="text-center">
             <Loader2 className="h-12 w-12 animate-spin text-navy-800 mx-auto mb-4" />
-            <p className="text-gray-600">Loading...</p>
+            <p className="text-slate-600">Loading...</p>
           </div>
         </div>
       </div>
@@ -647,41 +648,29 @@ export default function SearchCandidatesPage() {
   const shortlistedCount = Object.values(pipelineStageByCandidate).filter((stage) => String(stage).toUpperCase() === 'SHORTLIST').length;
 
   return (
-    <div className="min-h-screen mobile-safe-top mobile-safe-bottom overflow-x-hidden w-full" style={{background: 'linear-gradient(180deg, #E6F0FF 0%, #F8FAFC 100%)'}}>
+    <div className="min-h-screen bg-slate-50 mobile-safe-top mobile-safe-bottom overflow-x-hidden w-full">
       <div className="w-full md:max-w-7xl md:mx-auto px-0 sm:px-3 md:px-6 lg:px-8 pt-12 sm:pt-16 md:pt-20 pb-4 sm:pb-6 md:pb-10 min-w-0">
-        {/* Breadcrumb */}
-        <section className="mb-4 sm:mb-6 md:mb-8 px-2 sm:px-0">
-          <Link 
-            href={scopedJobId ? getJobOverviewUrl(scopedJobId) : "/home/employer"}
-            className="flex items-center text-navy-800 font-semibold hover:text-navy-900 transition-all duration-200 bg-sky-200/10 hover:bg-sky-200/20 px-3 sm:px-4 py-2 rounded-full w-fit min-h-[44px] text-sm sm:text-base hover:shadow-md hover:scale-105"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            <span className="hidden sm:inline">{scopedJobId ? 'Back to Job' : 'Back to Dashboard'}</span>
-            <span className="sm:hidden">Back</span>
-          </Link>
-        </section>
-
         {/* Page Header */}
         <section className="mb-4 sm:mb-6 md:mb-10 px-2 sm:px-0">
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-navy-900 mb-2 break-words">
-            {scopedJobId ? 'Source candidates for this requisition' : 'Find Your Perfect Candidate'}
+            {scopedJobId ? 'Sourcing candidates for this requisition' : 'Talent Search'}
           </h1>
           <p className="text-sm sm:text-base md:text-lg text-slate-600 break-words">
             {scopedJobId
-              ? 'Job-scoped sourcing mode keeps candidate actions tied to your current workflow.'
-              : 'Search through talented job seekers to find the right fit for your company.'}
+              ? 'Job-scoped sourcing keeps every action tied to this requisition.'
+              : 'Discover talent across the network. Choose a job when you are ready to take job-specific actions.'}
           </p>
         </section>
 
         {scopedJobId && (
-          <section className="mb-4 sm:mb-6 rounded-xl border border-sky-300 bg-gradient-to-r from-sky-50 to-white p-4 sm:p-5">
+          <section className="mb-4 sm:mb-6 rounded-xl border border-sky-200 bg-sky-50 p-4 sm:p-5">
             <p className="text-xs font-semibold uppercase tracking-wide text-sky-700 mb-1">Job-scoped sourcing mode</p>
             <h2 className="text-base sm:text-lg font-semibold text-navy-900">{scopedJob?.title || 'Current requisition'}</h2>
             <p className="text-sm text-slate-600 mt-1">
               Source for this requisition, promote contenders into shortlist, then compare and message in the same workflow.
             </p>
             <div className="mt-3 flex flex-wrap gap-2 text-xs">
-              <span className="rounded-full border border-violet-200 bg-violet-50 px-2.5 py-1 font-semibold text-violet-700">
+              <span className="rounded-full border border-sky-200 bg-sky-50 px-2.5 py-1 font-semibold text-sky-950">
                 Shortlist: {shortlistedCount}
               </span>
               <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 font-semibold text-slate-700">
@@ -695,7 +684,7 @@ export default function SearchCandidatesPage() {
               <Link href={getJobMatchesUrl(scopedJobId)} className="px-3 py-2 rounded-lg border border-slate-200 bg-white text-navy-800 font-medium hover:bg-slate-50">
                 Matches
               </Link>
-              <Link href={`${getJobPipelineUrl(scopedJobId)}?stage=SHORTLIST`} className="px-3 py-2 rounded-lg border border-violet-200 bg-violet-50 text-violet-800 font-semibold hover:bg-violet-100">
+              <Link href={`${getJobPipelineUrl(scopedJobId)}?stage=SHORTLIST`} className="px-3 py-2 rounded-lg border border-sky-200 bg-sky-50 text-navy-900 font-semibold hover:bg-sky-100">
                 Shortlist column
               </Link>
               <Link href={getJobPipelineUrl(scopedJobId)} className="px-3 py-2 rounded-lg border border-slate-200 bg-white text-navy-800 font-medium hover:bg-slate-50">
@@ -703,7 +692,7 @@ export default function SearchCandidatesPage() {
               </Link>
               <Link
                 href={getJobCompareUrl(scopedJobId)}
-                className="px-3 py-2 rounded-lg border border-violet-200 bg-violet-50 text-violet-800 font-semibold hover:bg-violet-100"
+                className="px-3 py-2 rounded-lg border border-sky-200 bg-sky-50 text-navy-900 font-semibold hover:bg-sky-100"
               >
                 Compare shortlist
               </Link>
@@ -712,7 +701,8 @@ export default function SearchCandidatesPage() {
         )}
 
         {/* Search Toolbar */}
-        <section className="sticky top-16 sm:top-20 z-30 bg-white/90 backdrop-blur-sm p-4 sm:p-5 md:p-6 rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-slate-200 mb-3 sm:mb-6 md:mb-8 mobile-safe-top">
+        {/* FIX1: sticky offset matches JobWorkspaceNav / fixed header clearance (top-20) */}
+        <section className="sticky top-20 z-30 bg-white/90 backdrop-blur-sm p-4 sm:p-5 md:p-6 rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-slate-200 mb-3 sm:mb-6 md:mb-8 mobile-safe-top">
           <div className="flex flex-col lg:flex-row gap-4 items-stretch lg:items-center">
             <div className="flex-1 relative">
               <input 
@@ -728,12 +718,12 @@ export default function SearchCandidatesPage() {
                 className="w-full px-4 py-3 pl-10 sm:pl-12 text-base border border-slate-300 rounded-lg bg-white focus:outline-none focus:border-sky-400 focus:ring-2 sm:focus:ring-4 focus:ring-sky-300/30 transition-all duration-200 min-h-[44px]"
                 aria-label="Search candidates"
               />
-              <Search className="absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 text-gray-400" />
+              <Search className="absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 text-slate-400" />
             </div>
             <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
               <button 
                 onClick={() => setShowFilters(!showFilters)}
-                className="relative bg-white border border-gray-300 text-gray-700 font-semibold py-2.5 sm:py-3 px-4 sm:px-6 rounded-lg hover:bg-gray-50 hover:shadow-sm transition-all duration-200 flex items-center justify-center space-x-2 min-h-[44px] text-sm sm:text-base"
+                className="relative bg-white border border-slate-300 text-slate-700 font-semibold py-2.5 sm:py-3 px-4 sm:px-6 rounded-lg hover:bg-slate-50 hover:shadow-sm transition-all duration-200 flex items-center justify-center space-x-2 min-h-[44px] text-sm sm:text-base"
               >
                 <Filter className="h-4 w-4" />
                 <span>Filters</span>
@@ -760,19 +750,19 @@ export default function SearchCandidatesPage() {
 
           {/* Advanced Filters */}
           {showFilters && (
-            <div className="border-t border-gray-200 pt-6 mt-6 space-y-6">
+            <div className="border-t border-slate-200 pt-6 mt-6 space-y-6">
               {/* Match to Job Filter */}
-              <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                <h3 className="text-lg font-semibold text-blue-900 mb-3">Match to Job</h3>
-                <p className="text-sm text-blue-700 mb-4">Select a job to automatically filter candidates based on job requirements.</p>
+              <div className="rounded-lg border border-sky-200 bg-sky-50 p-4">
+                <h3 className="mb-3 text-lg font-semibold text-navy-900">Match to Job</h3>
+                <p className="mb-4 text-sm text-slate-700">Select a job to automatically filter candidates based on job requirements.</p>
                 
                 <div className="flex gap-3 items-end">
                   <div className="flex-1">
-                    <label className="block text-sm font-medium text-blue-800 mb-2">Select Job</label>
+                    <label className="mb-2 block text-sm font-medium text-navy-800">Select Job</label>
                     <select
                       value={selectedJobId}
                       onChange={(e) => handleJobSelection(e.target.value)}
-                      className="w-full px-3 py-2 border border-blue-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full rounded-lg border border-sky-300 bg-white px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-sky-500"
                     >
                       <option value="">Choose a job...</option>
                       {availableJobs.map((job) => (
@@ -786,7 +776,7 @@ export default function SearchCandidatesPage() {
                   {selectedJobId && (
                     <button
                       onClick={clearJobMatch}
-                      className="px-3 py-2 text-blue-600 hover:text-blue-800 border border-blue-300 rounded-lg hover:bg-blue-100 transition-colors"
+                      className="rounded-lg border border-sky-300 px-3 py-2 text-sky-800 transition-colors hover:bg-sky-100 hover:text-navy-900"
                     >
                       Clear
                     </button>
@@ -795,17 +785,17 @@ export default function SearchCandidatesPage() {
 
                 {/* Show applied job requirements */}
                 {selectedJob && (
-                  <div className="mt-4 p-3 bg-white border border-blue-200 rounded-lg">
-                    <h4 className="font-medium text-gray-900 mb-2">Applied Requirements:</h4>
+                  <div className="mt-4 rounded-lg border border-sky-200 bg-white p-3">
+                    <h4 className="mb-2 font-medium text-navy-900">Applied Requirements:</h4>
                     <div className="flex flex-wrap gap-2">
                       {selectedJob.requiredGpa && (
-                        <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
+                        <span className="rounded-full bg-sky-100 px-2 py-1 text-xs font-medium text-sky-900">
                           GPA: {selectedJob.requiredGpa}+
                         </span>
                       )}
                       {selectedJob.requiredCareerInterests && selectedJob.requiredCareerInterests.length > 0 && (
                         selectedJob.requiredCareerInterests.map((interest: string, index: number) => (
-                          <span key={index} className="px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded-full">
+                          <span key={index} className="rounded-full bg-slate-200 px-2 py-1 text-xs font-medium text-slate-800">
                             {interest}
                           </span>
                         ))
@@ -817,14 +807,14 @@ export default function SearchCandidatesPage() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">University</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">University</label>
                   <div className="space-y-2">
                     {isTop25Selected && (
-                      <div className="flex items-center justify-between p-2 bg-blue-100 border border-blue-300 rounded-lg">
-                        <span className="text-sm font-medium text-blue-800">Top 25</span>
+                      <div className="flex items-center justify-between rounded-lg border border-sky-300 bg-sky-100 p-2">
+                        <span className="text-sm font-medium text-navy-800">Top 25</span>
                         <button
                           onClick={removeTop25Filter}
-                          className="text-blue-600 hover:text-blue-800"
+                          className="text-sky-800 hover:text-navy-900"
                         >
                           <X className="h-4 w-4" />
                         </button>
@@ -872,9 +862,9 @@ export default function SearchCandidatesPage() {
               </div>
 
               {/* Profile Completeness Filters */}
-              <div className="border-t border-gray-200 pt-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">Talent pools</h3>
-                <p className="text-sm text-gray-600 mb-3">
+              <div className="border-t border-slate-200 pt-6">
+                <h3 className="text-lg font-semibold text-slate-900 mb-3">Talent pools</h3>
+                <p className="text-sm text-slate-600 mb-3">
                   Narrow results by saved pool membership.{" "}
                   <Link href={getEmployerPoolsUrl()} className="font-semibold text-sky-800 hover:underline">
                     Manage pools
@@ -882,11 +872,11 @@ export default function SearchCandidatesPage() {
                 </p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Only candidates in pool</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">Only candidates in pool</label>
                     <select
                       value={poolIncludeId}
                       onChange={(e) => applyPoolInclude(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm"
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white text-sm"
                     >
                       <option value="">Any pool</option>
                       {talentPools.map((p) => (
@@ -897,11 +887,11 @@ export default function SearchCandidatesPage() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Exclude candidates in pool</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">Exclude candidates in pool</label>
                     <select
                       value={poolExcludeId}
                       onChange={(e) => applyPoolExclude(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm"
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white text-sm"
                     >
                       <option value="">None</option>
                       {talentPools.map((p) => (
@@ -914,17 +904,17 @@ export default function SearchCandidatesPage() {
                 </div>
               </div>
 
-              <div className="border-t border-gray-200 pt-6">
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Profile Completeness</h3>
+              <div className="border-t border-slate-200 pt-6">
+                <h3 className="text-lg font-medium text-slate-900 mb-4">Profile Completeness</h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <label className="flex items-center space-x-3 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={hasVideo}
                       onChange={(e) => setHasVideo(e.target.checked)}
-                      className="h-4 w-4 text-navy-800 focus:ring-navy-800 border-gray-300 rounded"
+                      className="h-4 w-4 text-navy-800 focus:ring-navy-800 border-slate-300 rounded"
                     />
-                    <span className="text-sm text-gray-700">Has Video</span>
+                    <span className="text-sm text-slate-700">Has Video</span>
                   </label>
                   
                   <label className="flex items-center space-x-3 cursor-pointer">
@@ -932,9 +922,9 @@ export default function SearchCandidatesPage() {
                       type="checkbox"
                       checked={hasResume}
                       onChange={(e) => setHasResume(e.target.checked)}
-                      className="h-4 w-4 text-navy-800 focus:ring-navy-800 border-gray-300 rounded"
+                      className="h-4 w-4 text-navy-800 focus:ring-navy-800 border-slate-300 rounded"
                     />
-                    <span className="text-sm text-gray-700">Has Resume</span>
+                    <span className="text-sm text-slate-700">Has Resume</span>
                   </label>
                   
                   <label className="flex items-center space-x-3 cursor-pointer">
@@ -942,9 +932,9 @@ export default function SearchCandidatesPage() {
                       type="checkbox"
                       checked={hasProfileImage}
                       onChange={(e) => setHasProfileImage(e.target.checked)}
-                      className="h-4 w-4 text-navy-800 focus:ring-navy-800 border-gray-300 rounded"
+                      className="h-4 w-4 text-navy-800 focus:ring-navy-800 border-slate-300 rounded"
                     />
-                    <span className="text-sm text-gray-700">Has Photo</span>
+                    <span className="text-sm text-slate-700">Has Photo</span>
                   </label>
                   
                   <label className="flex items-center space-x-3 cursor-pointer">
@@ -952,9 +942,9 @@ export default function SearchCandidatesPage() {
                       type="checkbox"
                       checked={hasBio}
                       onChange={(e) => setHasBio(e.target.checked)}
-                      className="h-4 w-4 text-navy-800 focus:ring-navy-800 border-gray-300 rounded"
+                      className="h-4 w-4 text-navy-800 focus:ring-navy-800 border-slate-300 rounded"
                     />
-                    <span className="text-sm text-gray-700">Has Bio</span>
+                    <span className="text-sm text-slate-700">Has Bio</span>
                   </label>
                 </div>
               </div>
@@ -962,7 +952,7 @@ export default function SearchCandidatesPage() {
               <div className="mt-4 flex justify-between items-center">
                 <button
                   onClick={handleTop25Schools}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center"
+                  className="flex items-center rounded-lg bg-navy-800 px-4 py-2 text-white transition-colors hover:bg-navy-700"
                 >
                   <Star className="h-4 w-4 mr-2" />
                   Top 25
@@ -971,7 +961,7 @@ export default function SearchCandidatesPage() {
                 {hasActiveFilters && (
                   <button
                     onClick={clearFilters}
-                    className="text-gray-500 hover:text-gray-700 text-sm flex items-center"
+                    className="text-slate-500 hover:text-slate-700 text-sm flex items-center"
                   >
                     <X className="h-4 w-4 mr-1" />
                     Clear all filters
@@ -995,7 +985,7 @@ export default function SearchCandidatesPage() {
             </span>
           </div>
           {displayCandidates.length > 0 && (
-            <div className="text-sm text-gray-500">
+            <div className="text-sm text-slate-500">
               Showing {displayCandidates.length} result{displayCandidates.length !== 1 ? 's' : ''}
               {(poolIncludeId || poolExcludeId) && (
                 <span className="ml-2 text-sky-700 font-medium">· Pool filter on</span>
@@ -1006,14 +996,14 @@ export default function SearchCandidatesPage() {
 
         {/* Results Grid */}
         {isInitialLoad && !isLoading ? (
-          <div className="w-full min-w-0 text-center py-12 sm:py-16 bg-white rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-gray-200">
-            <Search className="h-10 w-10 sm:h-12 sm:w-12 text-gray-300 mx-auto mb-4" />
-            <p className="text-sm sm:text-base text-gray-500 px-4">Use the search bar above to find candidates</p>
+          <div className="w-full min-w-0 text-center py-12 sm:py-16 bg-white rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-slate-200">
+            <Search className="h-10 w-10 sm:h-12 sm:w-12 text-slate-300 mx-auto mb-4" />
+            <p className="text-sm sm:text-base text-slate-500 px-4">Use the search bar above to find candidates</p>
           </div>
         ) : isLoading ? (
           <div className="w-full min-w-0 text-center py-12 sm:py-16 bg-white rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-slate-200">
             <Loader2 className="h-8 w-8 animate-spin text-navy-800 mx-auto mb-4" />
-            <p className="text-sm sm:text-base text-gray-600">Searching for candidates...</p>
+            <p className="text-sm sm:text-base text-slate-600">Searching for candidates...</p>
           </div>
         ) : displayCandidates.length === 0 ? (
           <div className="w-full min-w-0 text-center py-12 sm:py-16 bg-white rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-slate-200">
@@ -1036,7 +1026,7 @@ export default function SearchCandidatesPage() {
                     <h3 className="text-base sm:text-lg font-bold text-navy-900 break-words">
                       {candidate.firstName} {candidate.lastName}
                     </h3>
-                    <p className="text-xs sm:text-sm text-gray-500 break-words">{candidate.headline || 'No headline'}</p>
+                    <p className="text-xs sm:text-sm text-slate-500 break-words">{candidate.headline || 'No headline'}</p>
                     {scopedJobId && poolBadgesByCandidate[candidate.id]?.length ? (
                       <div className="mt-2 flex flex-wrap gap-1">
                         {poolBadgesByCandidate[candidate.id].map((b) => (
@@ -1050,29 +1040,29 @@ export default function SearchCandidatesPage() {
                       </div>
                     ) : null}
                   </div>
-                  <div className="w-10 h-10 rounded-full flex items-center justify-center bg-green-100">
-                    <span className="font-bold text-green-700">{getInitials(candidate.firstName, candidate.lastName)}</span>
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-sky-100">
+                    <span className="font-bold text-navy-800">{getInitials(candidate.firstName, candidate.lastName)}</span>
                   </div>
                 </div>
 
-                <div className="space-y-1.5 mb-4 text-sm text-gray-700">
+                <div className="space-y-1.5 mb-4 text-sm text-slate-700">
                   {candidate.school && (
                     <div className="flex items-center space-x-2">
-                      <GraduationCap className="h-4 w-4 text-gray-400" />
+                      <GraduationCap className="h-4 w-4 text-slate-400" />
                       <span>{candidate.school}</span>
                     </div>
                   )}
                   
                   {candidate.major && (
                     <div className="flex items-center space-x-2">
-                      <Star className="h-4 w-4 text-gray-400" />
+                      <Star className="h-4 w-4 text-slate-400" />
                       <span>{candidate.major}</span>
                     </div>
                   )}
                   
                   {candidate.location && (
                     <div className="flex items-center space-x-2">
-                      <MapPin className="h-4 w-4 text-gray-400" />
+                      <MapPin className="h-4 w-4 text-slate-400" />
                       <span>{candidate.location}</span>
                     </div>
                   )}
@@ -1080,7 +1070,7 @@ export default function SearchCandidatesPage() {
 
                 {candidate.skills && candidate.skills.length > 0 && (
                   <div className="mb-4">
-                    <h4 className="font-semibold text-sm text-gray-800 mb-2">Skills</h4>
+                    <h4 className="font-semibold text-sm text-slate-800 mb-2">Skills</h4>
                     <div className="flex flex-wrap gap-2">
                       {candidate.skills.slice(0, 4).map((skill, index) => (
                         <span
@@ -1091,7 +1081,7 @@ export default function SearchCandidatesPage() {
                         </span>
                       ))}
                       {candidate.skills.length > 4 && (
-                        <span className="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-xs font-medium">
+                        <span className="bg-slate-100 text-slate-600 px-3 py-1 rounded-full text-xs font-medium">
                           +{candidate.skills.length - 4} more
                         </span>
                       )}
@@ -1099,31 +1089,31 @@ export default function SearchCandidatesPage() {
                   </div>
                 )}
 
-                <div className="flex justify-between items-center border-t border-gray-100 pt-4 mt-4">
-                  <span className="text-xs text-gray-500">
+                <div className="flex justify-between items-center border-t border-slate-100 pt-4 mt-4">
+                  <span className="text-xs text-slate-500">
                     Member since {candidate.createdAt ? new Date(candidate.createdAt.toDate ? candidate.createdAt.toDate() : candidate.createdAt).toLocaleDateString() : 'Recently'}
                   </span>
                   <div className="flex flex-wrap gap-2 justify-end">
                     {scopedJobId && (
                       <>
                         <span className={`inline-flex items-center rounded-full border px-2 py-1 text-[11px] font-semibold ${
-                          String(pipelineStageByCandidate[candidate.id] || '').toUpperCase() === 'SHORTLIST'
-                            ? 'border-violet-200 bg-violet-50 text-violet-700'
+                          String(pipelineStageByCandidate[candidate.id] || "").toUpperCase() === "SHORTLIST"
+                            ? "border-sky-200 bg-sky-50 text-sky-950"
                             : pipelineStageByCandidate[candidate.id]
-                              ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-                              : 'border-amber-200 bg-amber-50 text-amber-700'
+                              ? "border-slate-200 bg-slate-100 text-slate-800"
+                              : "border-slate-200 bg-slate-50 text-slate-600"
                         }`}>
                           {String(pipelineStageByCandidate[candidate.id] || '').toUpperCase() === 'SHORTLIST'
                             ? 'Shortlist contender (working set)'
                             : pipelineStageByCandidate[candidate.id]
-                              ? `In pipeline · ${String(pipelineStageByCandidate[candidate.id]).toUpperCase()}`
+                              ? `In pipeline · ${pipelineStageLabel(pipelineStageByCandidate[candidate.id])}`
                               : 'Not on this job’s pipeline yet'}
                         </span>
                         <button
                           type="button"
                           onClick={() => handleScopedPipelineAction(candidate.id, 'SHORTLIST')}
                           disabled={pipelineBusyCandidateId === candidate.id}
-                          className="bg-emerald-600 text-white px-3 py-2 rounded-lg text-xs font-semibold hover:bg-emerald-700 transition-colors disabled:opacity-50"
+                          className="bg-navy-800 text-white px-3 py-2 rounded-lg text-xs font-semibold hover:bg-navy-700 transition-colors disabled:opacity-50"
                         >
                           {String(pipelineStageByCandidate[candidate.id] || '').toUpperCase() === 'SHORTLIST' ? 'Shortlisted' : 'Add to shortlist'}
                         </button>
@@ -1145,7 +1135,7 @@ export default function SearchCandidatesPage() {
                     </Link>
                     <Link
                       href={getMessageContextUrl(candidate.id)}
-                      className="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-lg w-10 h-10 flex items-center justify-center transition-colors"
+                      className="flex h-10 w-10 items-center justify-center rounded-lg bg-navy-800 p-2 text-white transition-colors hover:bg-navy-700"
                       title={scopedJobId ? 'Message in this job context' : 'Message candidate'}
                     >
                       <MessageSquare className="h-4 w-4" />

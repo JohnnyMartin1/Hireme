@@ -145,3 +145,21 @@ export function getCommunicationStatusDisplayLabels(input: CommunicationStatusIn
     return true;
   });
 }
+
+export function getRecruiterNextStep(input: CommunicationStatusInput): string {
+  const stage = String(input.pipelineStage || "NEW").toUpperCase();
+  const awaitingCandidate = input.awaitingCandidateReply === true;
+  const interviewSoon = isInterviewUpcoming(input.interviewAt, input.now || new Date());
+
+  if (stage === "NEW") return "Next step: Message candidate";
+  if (stage === "SHORTLIST") return "Next step: Reach out and qualify";
+  if (stage === "CONTACTED" && awaitingCandidate) return "Next step: Follow up";
+  if (stage === "CONTACTED" && input.awaitingCandidateReply === false) return "Next step: Respond";
+  if (stage === "INTERVIEW" || interviewSoon) {
+    if (!input.isEvaluationComplete) return "Next step: Complete scorecard";
+    return "Next step: Request manager review";
+  }
+  if (stage === "FINALIST") return "Next step: Final decision";
+  if (String(input.reviewStatus || "") === "REQUESTED") return "Next step: Wait for manager review";
+  return "Next step: Review candidate";
+}

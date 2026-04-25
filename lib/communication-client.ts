@@ -132,3 +132,19 @@ export async function patchJobInterview(
     }
   );
 }
+
+export async function patchJobInterviewById(
+  jobId: string,
+  interviewId: string,
+  token: string,
+  body: Record<string, unknown>
+) {
+  return authedFetch<{ interview: InterviewEvent }>(
+    `/api/job/${encodeURIComponent(jobId)}/interviews/${encodeURIComponent(interviewId)}`,
+    token,
+    {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    }
+  );
+}

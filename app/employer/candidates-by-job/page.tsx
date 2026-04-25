@@ -241,7 +241,7 @@ export default function CandidatesByJobPage() {
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="h-12 w-12 animate-spin text-navy-700 mx-auto mb-4" />
-          <p className="text-gray-600">Loading candidates...</p>
+          <p className="text-slate-600">Loading candidates...</p>
         </div>
       </div>
     );
@@ -258,7 +258,7 @@ export default function CandidatesByJobPage() {
           <p className="text-red-600 mb-4">{error}</p>
           <Link 
             href="/home/employer"
-            className="text-blue-600 hover:underline flex items-center space-x-1"
+            className="text-navy-800 hover:underline flex items-center space-x-1"
           >
             <ArrowLeft className="h-4 w-4" />
             <span>Back to Dashboard</span>
@@ -291,7 +291,7 @@ export default function CandidatesByJobPage() {
             <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-slate-700 font-semibold">
               Contacted candidates: {totalCandidates}
             </span>
-            <span className="rounded-full border border-violet-200 bg-violet-50 px-2.5 py-1 text-violet-700 font-semibold">
+            <span className="rounded-full border border-sky-200 bg-sky-50 px-2.5 py-1 text-sky-900 font-semibold">
               Jobs with shortlist: {jobsWithShortlist}
             </span>
             <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-slate-700 font-semibold">
@@ -305,8 +305,8 @@ export default function CandidatesByJobPage() {
           {jobs.length === 0 ? (
             <div className="bg-white rounded-xl border border-slate-200 p-12 text-center">
               <Briefcase className="h-16 w-16 text-slate-300 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No requisitions yet</h3>
-              <p className="text-gray-500 mb-6">Create a job posting to start sourcing and outreach.</p>
+              <h3 className="text-lg font-medium text-slate-900 mb-2">No requisitions yet</h3>
+              <p className="text-slate-500 mb-6">Create a job posting to start sourcing and outreach.</p>
               <Link
                 href="/employer/job/new"
                 className="inline-flex items-center px-4 py-2 bg-navy-800 text-white rounded-lg hover:bg-navy-700 transition-colors"
@@ -328,8 +328,8 @@ export default function CandidatesByJobPage() {
                         <Briefcase className="h-6 w-6 text-sky-700" />
                       </div>
                       <div>
-                        <h3 className="text-xl font-bold text-gray-900">{job.title}</h3>
-                        <div className="flex items-center gap-4 mt-1 text-sm text-gray-600">
+                        <h3 className="text-xl font-bold text-slate-900">{job.title}</h3>
+                        <div className="flex items-center gap-4 mt-1 text-sm text-slate-600">
                           <span>{job.company}</span>
                           <span>•</span>
                           <span>{job.location}</span>
@@ -343,7 +343,7 @@ export default function CandidatesByJobPage() {
                           <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-1 font-semibold text-slate-700">
                             Pipeline: {job.pipelineCount}
                           </span>
-                          <span className="rounded-full border border-violet-200 bg-violet-50 px-2 py-1 font-semibold text-violet-700">
+                          <span className="rounded-full border border-sky-200 bg-sky-50 px-2 py-1 font-semibold text-sky-900">
                             Shortlist: {job.shortlistCount}
                           </span>
                         </div>
@@ -353,14 +353,14 @@ export default function CandidatesByJobPage() {
                       <Link
                         href={`/employer/job/${job.id}`}
                         onClick={(e) => e.stopPropagation()}
-                        className="px-3 py-2 text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors text-sm font-medium"
+                        className="px-3 py-2 text-navy-800 bg-sky-50 rounded-lg hover:bg-sky-100 transition-colors text-sm font-medium"
                       >
                         View Job
                       </Link>
                       {job.isExpanded ? (
-                        <ChevronUp className="h-6 w-6 text-gray-400" />
+                        <ChevronUp className="h-6 w-6 text-slate-400" />
                       ) : (
-                        <ChevronDown className="h-6 w-6 text-gray-400" />
+                        <ChevronDown className="h-6 w-6 text-slate-400" />
                       )}
                     </div>
                   </div>
@@ -376,14 +376,14 @@ export default function CandidatesByJobPage() {
                       <Link href={getCandidatesSearchUrl(job.id)} className="px-3 py-2 rounded-lg border border-sky-200 bg-sky-50 text-xs font-semibold text-sky-700 hover:bg-sky-100">
                         Continue sourcing
                       </Link>
-                      <Link href={getJobCompareUrl(job.id)} className="px-3 py-2 rounded-lg border border-violet-200 bg-violet-50 text-xs font-semibold text-violet-700 hover:bg-violet-100">
+                      <Link href={getJobCompareUrl(job.id)} className="px-3 py-2 rounded-lg border border-sky-200 bg-sky-50 text-xs font-semibold text-sky-900 hover:bg-sky-100">
                         Compare contenders
                       </Link>
                     </div>
                     {job.candidates.length === 0 ? (
                       <div className="text-center py-8">
-                        <User className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-                        <p className="text-gray-600">No candidates contacted for this job yet</p>
+                        <User className="h-12 w-12 text-slate-300 mx-auto mb-3" />
+                        <p className="text-slate-600">No candidates contacted for this job yet</p>
                         <Link
                           href={getCandidatesSearchUrl(job.id)}
                           className="inline-block mt-4 text-sky-700 hover:underline font-medium"
@@ -405,17 +405,18 @@ export default function CandidatesByJobPage() {
                                     <User className="h-5 w-5 text-sky-700" />
                                   </div>
                                   <div>
-                                    <h4 className="text-base font-semibold text-gray-900">
+                                    <h4 className="text-base font-semibold text-slate-900">
                                       {candidate.firstName} {candidate.lastName}
                                     </h4>
-                                    <p className="text-sm text-gray-600">{candidate.headline}</p>
+                                    <p className="text-sm text-slate-600">{candidate.headline}</p>
                                   </div>
                                 </div>
                                 
                                 {candidate.school && candidate.major && (
                                   <div className="mb-2">
-                                    <p className="text-xs text-gray-600">
-                                      🎓 {candidate.school} - {candidate.major}
+                                    <p className="text-xs text-slate-600">
+                                      <span className="font-medium text-slate-500">Education:</span>{" "}
+                                      {candidate.school} — {candidate.major}
                                     </p>
                                   </div>
                                 )}
@@ -426,13 +427,13 @@ export default function CandidatesByJobPage() {
                                       {candidate.skills.slice(0, 4).map((skill, index) => (
                                         <span
                                           key={index}
-                                          className="px-2 py-0.5 bg-blue-100 text-blue-800 text-xs rounded-full"
+                                          className="px-2 py-0.5 bg-sky-100 text-sky-900 text-xs rounded-full"
                                         >
                                           {skill}
                                         </span>
                                       ))}
                                       {candidate.skills.length > 4 && (
-                                        <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded-full">
+                                        <span className="px-2 py-0.5 bg-slate-100 text-slate-600 text-xs rounded-full">
                                           +{candidate.skills.length - 4}
                                         </span>
                                       )}
@@ -440,7 +441,7 @@ export default function CandidatesByJobPage() {
                                   </div>
                                 )}
                                 
-                                <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500">
+                                <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
                                   <Calendar className="h-3 w-3 mr-1" />
                                   <span>
                                     Last message: {candidate.lastMessageAt ? 
@@ -449,16 +450,16 @@ export default function CandidatesByJobPage() {
                                   </span>
                                   <span className={`rounded-full border px-2 py-0.5 font-semibold ${
                                     candidate.stage === "SHORTLIST"
-                                      ? "border-violet-200 bg-violet-50 text-violet-700"
+                                      ? "border-sky-200 bg-sky-50 text-sky-900"
                                       : candidate.stage && candidate.stage !== "NOT_IN_PIPELINE"
-                                        ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                                        : "border-amber-200 bg-amber-50 text-amber-700"
+                                        ? "border-slate-200 bg-slate-100 text-slate-800"
+                                        : "border-slate-200 bg-slate-50 text-slate-600"
                                   }`}>
                                     {candidate.stage === "NOT_IN_PIPELINE" ? "Not in pipeline" : `Stage: ${candidate.stage}`}
                                   </span>
                                   <span className={`rounded-full border px-2 py-0.5 font-semibold ${
                                     (candidate.noteCount || 0) > 0
-                                      ? "border-indigo-200 bg-indigo-50 text-indigo-700"
+                                      ? "border-sky-200 bg-sky-50 text-sky-900"
                                       : "border-slate-200 bg-slate-50 text-slate-600"
                                   }`}>
                                     {(candidate.noteCount || 0) > 0 ? `${candidate.noteCount} note${candidate.noteCount === 1 ? "" : "s"}` : "No notes"}
@@ -475,7 +476,7 @@ export default function CandidatesByJobPage() {
                                 </Link>
                                 <Link
                                   href={`/messages/${candidate.threadId}?jobId=${encodeURIComponent(job.id)}`}
-                                  className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium flex items-center"
+                                  className="px-3 py-2 bg-navy-800 text-white rounded-lg hover:bg-navy-700 transition-colors text-sm font-medium flex items-center"
                                 >
                                   <MessageSquare className="h-4 w-4 mr-1" />
                                   Message

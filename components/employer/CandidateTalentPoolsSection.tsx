@@ -132,7 +132,7 @@ export default function CandidateTalentPoolsSection({ candidateId }: { candidate
                     type="button"
                     disabled={busyId === row.id}
                     onClick={() => void remove(row)}
-                    className="inline-flex items-center gap-1 rounded-lg border border-rose-200 bg-white px-2 py-1 text-[11px] font-semibold text-rose-700 hover:bg-rose-50 disabled:opacity-50"
+                    className="inline-flex items-center gap-1 rounded-lg border border-slate-300 bg-white px-2 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
                   >
                     <Trash2 className="h-3 w-3" />
                     Remove

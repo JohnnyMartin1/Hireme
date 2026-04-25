@@ -35,6 +35,7 @@ import {
 
 interface EmployerJobsListProps {
   limit?: number;
+  mode?: "dashboard" | "portfolio";
 }
 
 interface JobWithMetrics {
@@ -59,7 +60,7 @@ interface JobWithMetrics {
 type SortOption = 'date-desc' | 'date-asc' | 'title-asc' | 'title-desc' | 'outreach-desc' | 'outreach-asc';
 type StatusFilter = 'all' | 'ACTIVE' | 'INACTIVE';
 
-export default function EmployerJobsList({ limit }: EmployerJobsListProps) {
+export default function EmployerJobsList({ limit, mode = "portfolio" }: EmployerJobsListProps) {
   const toast = useToast();
   const { user, profile } = useFirebaseAuth();
   const [jobs, setJobs] = useState<any[]>([]);
@@ -274,8 +275,8 @@ export default function EmployerJobsList({ limit }: EmployerJobsListProps) {
   if (isLoading) {
     return (
       <div className="text-center py-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-        <p className="text-gray-600">Loading jobs...</p>
+        <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2 border-navy-800"></div>
+        <p className="text-slate-600">Loading jobs...</p>
       </div>
     );
   }
@@ -286,38 +287,38 @@ export default function EmployerJobsList({ limit }: EmployerJobsListProps) {
         <div className="w-20 h-20 mx-auto bg-slate-100 rounded-full flex items-center justify-center mb-6">
           <FileText className="h-10 w-10 text-slate-400" />
         </div>
-        <h3 className="text-xl font-bold text-gray-700">No jobs posted yet</h3>
-        <p className="text-gray-500 mt-2 max-w-sm mx-auto">Create your first job posting to start attracting candidates.</p>
+        <h3 className="text-xl font-bold text-navy-900">No jobs posted yet</h3>
+        <p className="mx-auto mt-2 max-w-sm text-slate-600">Create your first job posting to start attracting candidates.</p>
       </div>
     );
   }
 
   return (
     <div className="space-y-4">
-      {/* Stats Overview - Only show on full page (no limit) */}
-      {!limit && (
+      {/* Stats Overview - Only show on full portfolio page */}
+      {!limit && mode === "portfolio" && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           <div className="bg-sky-50 rounded-lg p-4 border border-sky-100">
             <div className="text-2xl font-bold text-navy-900">{stats.totalJobs}</div>
             <div className="text-sm text-slate-600">Total Jobs</div>
           </div>
-          <div className="bg-green-50 rounded-lg p-4 border border-green-100">
-            <div className="text-2xl font-bold text-green-700">{stats.activeJobs}</div>
+          <div className="rounded-lg border border-sky-200 bg-sky-50/80 p-4">
+            <div className="text-2xl font-bold text-navy-900">{stats.activeJobs}</div>
             <div className="text-sm text-slate-600">Active Jobs</div>
           </div>
-          <div className="bg-purple-50 rounded-lg p-4 border border-purple-100">
-            <div className="text-2xl font-bold text-purple-700">{stats.jobsWithOutreach}</div>
+          <div className="rounded-lg border border-slate-200 bg-slate-100 p-4">
+            <div className="text-2xl font-bold text-navy-900">{stats.jobsWithOutreach}</div>
             <div className="text-sm text-slate-600">Jobs with Outreach</div>
           </div>
-          <div className="bg-blue-50 rounded-lg p-4 border border-blue-100">
-            <div className="text-2xl font-bold text-blue-700">{stats.totalOutreach}</div>
+          <div className="rounded-lg border border-sky-200 bg-sky-50 p-4">
+            <div className="text-2xl font-bold text-sky-900">{stats.totalOutreach}</div>
             <div className="text-sm text-slate-600">Total Outreach</div>
           </div>
         </div>
       )}
 
-      {/* Search and Filters - Only show on full page (no limit) */}
-      {!limit && (
+      {/* Search and Filters - Only show on full portfolio page */}
+      {!limit && mode === "portfolio" && (
         <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
           <div className="flex flex-col md:flex-row gap-4">
             {/* Search */}
@@ -461,80 +462,75 @@ export default function EmployerJobsList({ limit }: EmployerJobsListProps) {
                       </span>
                     </div>
                   </div>
-                  <p className="text-sm text-slate-600 line-clamp-2 mb-3">{job.description}</p>
-                  <div className="flex flex-wrap gap-2 text-xs mb-1">
-                    <span className="rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1 text-slate-800">
-                      Pipeline <span className="font-semibold text-navy-900">{job.pipelineCount || 0}</span>
-                      <span className="text-slate-500 font-normal"> · all active for this job</span>
-                    </span>
-                    <span className="rounded-md border border-violet-100 bg-violet-50 px-2.5 py-1 text-violet-900">
-                      Shortlist <span className="font-semibold">{job.shortlistCount || 0}</span>
-                      <span className="text-violet-800/80 font-normal"> · serious contenders</span>
-                    </span>
-                    <span className="rounded-md border border-amber-100 bg-amber-50 px-2.5 py-1 text-amber-900">
-                      Waiting on <span className="font-semibold">{job.followUpDueCount || 0}</span>
-                      <span className="text-amber-900/80 font-normal"> · follow-ups past due</span>
-                    </span>
-                  </div>
+                  {mode === "portfolio" && (
+                    <p className="text-sm text-slate-600 line-clamp-1 mb-2">{job.description}</p>
+                  )}
+                  <p className="text-xs text-slate-600 mb-2">
+                    <span className="font-semibold text-navy-900">{job.pipelineCount || 0}</span> in pipeline
+                    <span className="mx-2 text-slate-300">·</span>
+                    <span className="font-semibold text-violet-800">{job.shortlistCount || 0}</span> on shortlist
+                    <span className="mx-2 text-slate-300">·</span>
+                    <span className="font-semibold text-amber-800">{job.followUpDueCount || 0}</span> waiting on follow-up
+                  </p>
                   <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
                     <span className="inline-flex items-center gap-1">
                       <Calendar className="h-3.5 w-3.5" />
                       Posted {job.createdAt?.toDate ? new Date(job.createdAt.toDate()).toLocaleDateString() : job.createdAt ? new Date(job.createdAt).toLocaleDateString() : '—'}
                     </span>
                     {lastActivityLabel && <span>{lastActivityLabel}</span>}
-                    {job.outreachCount > 0 && (
-                      <Link
-                        href="/employer/candidates-by-job"
-                        className="text-sky-700 font-medium hover:underline"
-                      >
-                        Contacted by requisition →
-                      </Link>
+                    {mode === "portfolio" && job.outreachCount > 0 && (
+                      <span className="text-slate-500">
+                        Contacted-by-requisition view available from dashboard tools.
+                      </span>
                     )}
                   </div>
                 </div>
 
-                <div className="flex flex-col gap-3 w-full lg:w-[220px] shrink-0 border-t border-slate-100 pt-3 lg:border-t-0 lg:pt-0 lg:border-l lg:pl-4">
-                  <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Primary</p>
+                <div className="flex flex-col gap-3 w-full lg:w-[240px] shrink-0 border-t border-slate-100 pt-3 lg:border-t-0 lg:pt-0 lg:border-l lg:pl-4">
+                  <Link
+                    href={getJobOverviewUrl(job.id)}
+                    className="inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg bg-navy-800 text-white text-sm font-semibold hover:bg-navy-700"
+                  >
+                    Open workspace
+                  </Link>
                   <div className="flex flex-col gap-2">
                     <Link
-                      href={getJobOverviewUrl(job.id)}
-                      className="inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg bg-navy-800 text-white text-sm font-semibold hover:bg-navy-700"
-                    >
-                      Open workspace
-                    </Link>
-                    <Link
                       href={getJobPipelineUrl(job.id)}
-                      className="inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg bg-emerald-600 text-white text-sm font-semibold hover:bg-emerald-700"
+                      className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm font-semibold text-navy-900 hover:bg-slate-50"
                     >
                       <Workflow className="h-4 w-4" />
                       Pipeline
                     </Link>
                     <Link
                       href={getCandidatesSearchUrl(job.id)}
-                      className="inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg bg-sky-600 text-white text-sm font-semibold hover:bg-sky-700"
+                      className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm font-semibold text-navy-900 hover:bg-slate-50"
                     >
                       Source
                     </Link>
                   </div>
-                  <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400 pt-1">More</p>
-                  <div className="flex flex-wrap gap-x-3 gap-y-1 text-sm">
-                    <Link href={getJobMatchesUrl(job.id)} className="text-slate-600 hover:text-navy-900 font-medium">
-                      Matches
-                    </Link>
-                    <Link href={getJobCompareUrl(job.id)} className="text-slate-600 hover:text-navy-900 font-medium">
-                      Compare
-                    </Link>
-                    <Link href={`/employer/job/${job.id}/edit`} className="text-slate-600 hover:text-navy-900 font-medium inline-flex items-center gap-1">
-                      <Edit className="h-3.5 w-3.5" /> Edit
-                    </Link>
-                    <button
-                      type="button"
-                      onClick={() => handleDeleteJob(job.id)}
-                      className="text-rose-600 hover:text-rose-800 font-medium inline-flex items-center gap-1"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" /> Delete
-                    </button>
-                  </div>
+                  {mode === "portfolio" && (
+                    <div className="flex flex-wrap gap-x-3 gap-y-1.5 text-xs text-slate-500 border-t border-slate-100 pt-2">
+                      <Link href={getJobMatchesUrl(job.id)} className="hover:text-navy-900 font-medium">
+                        Candidates
+                      </Link>
+                      <span className="text-slate-300">|</span>
+                      <Link href={getJobCompareUrl(job.id)} className="hover:text-navy-900 font-medium">
+                        Compare
+                      </Link>
+                      <span className="text-slate-300">|</span>
+                      <Link href={`/employer/job/${job.id}/edit`} className="hover:text-navy-900 font-medium inline-flex items-center gap-1">
+                        <Edit className="h-3 w-3" /> Edit
+                      </Link>
+                      <span className="text-slate-300">|</span>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteJob(job.id)}
+                        className="text-rose-600 hover:text-rose-800 font-medium inline-flex items-center gap-1"
+                      >
+                        <Trash2 className="h-3 w-3" /> Delete
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

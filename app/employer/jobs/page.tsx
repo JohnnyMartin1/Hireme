@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useFirebaseAuth } from "@/components/FirebaseAuthProvider";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { Building, ArrowLeft } from "lucide-react";
+import { Building } from "lucide-react";
 import EmployerJobsList from "@/components/EmployerJobsList";
 
 export default function EmployerJobsPage() {
@@ -28,16 +28,8 @@ export default function EmployerJobsPage() {
       <div className="w-full md:max-w-6xl md:mx-auto px-0 sm:px-3 md:px-6 pt-12 sm:pt-16 md:pt-20 pb-4 sm:pb-6 md:pb-10 min-w-0">
         <div className="w-full min-w-0 bg-white p-4 sm:p-6 md:p-8 rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-slate-200 mb-3 sm:mb-6">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0 mb-4 sm:mb-6">
-            <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
-              <Link 
-                href="/home/employer" 
-                className="flex items-center text-navy-800 font-semibold hover:text-navy-900 transition-all duration-200 bg-sky-200/10 hover:bg-sky-200/20 px-3 sm:px-4 py-2 rounded-full w-fit min-h-[44px] text-sm sm:text-base hover:shadow-md hover:scale-105 flex-shrink-0"
-              >
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                <span className="hidden sm:inline">Back to Dashboard</span>
-                <span className="sm:hidden">Back</span>
-              </Link>
-              <h1 className="text-xl sm:text-2xl font-bold text-navy-900 break-words">Jobs</h1>
+            <div className="min-w-0 flex-1">
+              <h1 className="text-xl sm:text-2xl font-bold text-navy-900 break-words">Requisition Portfolio</h1>
             </div>
             <Link
               href="/employer/job/new"
@@ -48,9 +40,9 @@ export default function EmployerJobsPage() {
             </Link>
           </div>
           <p className="text-sm text-slate-500 mb-4">
-            Your requisitions in one place. Open a workspace to work one req (matches, pipeline, compare, messages).
+            Choose a role to work, review pipeline health, or source more candidates.
           </p>
-          <EmployerJobsList />
+          <EmployerJobsList mode="portfolio" />
         </div>
       </div>
     </main>

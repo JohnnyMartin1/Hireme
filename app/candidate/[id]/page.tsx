@@ -23,9 +23,9 @@ import {
   fetchMessageTemplates,
   fetchJobInterviews,
   fetchJobSequences,
+  patchJobInterviewById,
   upsertMessageTemplate,
   patchJobSequence,
-  upsertJobInterview,
   upsertJobSequence,
 } from '@/lib/communication-client';
 import {
@@ -54,7 +54,13 @@ import RecruiterNotesPanel from '@/components/recruiter/RecruiterNotesPanel';
 import RecruiterDecisionPanel from '@/components/recruiter/RecruiterDecisionPanel';
 import CandidateTalentPoolsSection from '@/components/employer/CandidateTalentPoolsSection';
 import AddToTalentPoolButton from '@/components/employer/AddToTalentPoolButton';
+import SendCandidateForReviewButton from '@/components/recruiter/SendCandidateForReviewButton';
+import ReviewAssignmentPanel from '@/components/recruiter/ReviewAssignmentPanel';
+import InternalCommentsPanel from '@/components/recruiter/InternalCommentsPanel';
+import InterviewCard from '@/components/recruiter/InterviewCard';
+import ScheduleInterviewModal from '@/components/recruiter/ScheduleInterviewModal';
 import { useToast } from '@/components/NotificationSystem';
+import { pipelineStageLabel, recruiterBadge, recruiterBtnPrimaryLg, recruiterBtnSecondary } from "@/lib/recruiter-ui";
 
 interface CandidateProfile {
   id: string;
@@ -121,10 +127,9 @@ export default function CandidateProfilePage() {
   const [sequenceBusy, setSequenceBusy] = useState(false);
   const [interviewBusy, setInterviewBusy] = useState(false);
   const [interviewEvent, setInterviewEvent] = useState<InterviewEvent | null>(null);
-  const [interviewScheduledAt, setInterviewScheduledAt] = useState('');
-  const [interviewDuration, setInterviewDuration] = useState('30');
-  const [interviewLocation, setInterviewLocation] = useState('');
-  const [interviewNotes, setInterviewNotes] = useState('');
+  const [interviewEvents, setInterviewEvents] = useState<InterviewEvent[]>([]);
+  const [showScheduleInterviewModal, setShowScheduleInterviewModal] = useState(false);
+  const [editingInterview, setEditingInterview] = useState<InterviewEvent | null>(null);
   const jobIdFromContext = searchParams.get('jobId');
   const [isSaved, setIsSaved] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -171,6 +176,15 @@ export default function CandidateProfilePage() {
   const [stickyBarVisible, setStickyBarVisible] = useState(false);
   const [copyLinkSuccess, setCopyLinkSuccess] = useState(false);
   const heroCardRef = useRef<HTMLDivElement>(null);
+  const pipelineStageForTemplates = (pipelineEntry?.stage || 'NEW') as PipelineStage;
+  const selectedTemplate = useMemo(
+    () => templates.find((template) => template.id === selectedTemplateId) || null,
+    [templates, selectedTemplateId]
+  );
+  const suggestedTemplate = useMemo(() => {
+    const wanted = getSuggestedTemplateType(pipelineStageForTemplates);
+    return templates.find((template) => template.type === wanted) || null;
+  }, [templates, pipelineStageForTemplates]);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -411,16 +425,15 @@ export default function CandidateProfilePage() {
       setSequence(first || null);
     }
     if (interviewRes.ok) {
-      const first = (interviewRes.data.interviews || [])
-        .find((iv: any) => String(iv?.status || '') !== 'CANCELLED') as InterviewEvent | undefined;
-      setInterviewEvent(first || null);
-      if (first?.scheduledAt) {
-        const d = (first.scheduledAt as any)?.toDate ? (first.scheduledAt as any).toDate() : new Date(first.scheduledAt as any);
-        if (!Number.isNaN(d.getTime())) setInterviewScheduledAt(d.toISOString().slice(0, 16));
-      }
-      if (first?.durationMinutes) setInterviewDuration(String(first.durationMinutes));
-      if (first?.location) setInterviewLocation(String(first.location));
-      if (first?.notes) setInterviewNotes(String(first.notes));
+      const sorted = (interviewRes.data.interviews || [])
+        .filter((iv: any) => String(iv?.status || "") !== "CANCELLED")
+        .sort((a: any, b: any) => {
+          const aTime = new Date(a?.scheduledAt?.toDate ? a.scheduledAt.toDate() : a?.scheduledAt || 0).getTime();
+          const bTime = new Date(b?.scheduledAt?.toDate ? b.scheduledAt.toDate() : b?.scheduledAt || 0).getTime();
+          return aTime - bTime;
+        }) as InterviewEvent[];
+      setInterviewEvents(sorted);
+      setInterviewEvent(sorted[0] || null);
     }
   };
 
@@ -499,35 +512,25 @@ export default function CandidateProfilePage() {
     }
   };
 
-  const handleScheduleInterview = async (status: 'PROPOSED' | 'CONFIRMED') => {
+  const handleInterviewPatch = async (
+    interview: InterviewEvent,
+    body: Record<string, unknown>,
+    successTitle: string
+  ) => {
     const jobForAction = selectedJobId || jobIdFromContext;
-    if (!user || !candidate || !jobForAction || !interviewScheduledAt) return;
+    if (!user || !candidate || !jobForAction || !interview?.id) return;
     setInterviewBusy(true);
     try {
       const token = await user.getIdToken();
-      const when = new Date(interviewScheduledAt);
-      if (Number.isNaN(when.getTime())) return;
-      const res = await upsertJobInterview(jobForAction, token, {
-        candidateId: candidate.id,
-        status,
-        scheduledAt: when.toISOString(),
-        durationMinutes: Number(interviewDuration || 30),
-        location: interviewLocation,
-        notes: interviewNotes,
-      });
-      if (!res.ok) return;
-      setInterviewEvent((res.data.interview || null) as InterviewEvent | null);
-      await fetch(`/api/job/${jobForAction}/pipeline`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          candidateId: candidate.id,
-          stage: 'INTERVIEW',
-        }),
-      });
+      const res = await patchJobInterviewById(jobForAction, interview.id, token, body);
+      if (!res.ok) {
+        toast.error("Interview update failed", res.error || "Please try again.");
+        return;
+      }
+      const updated = res.data.interview as InterviewEvent;
+      setInterviewEvents((prev) => prev.map((iv) => (iv.id === updated.id ? updated : iv)));
+      setInterviewEvent(updated);
+      toast.success(successTitle, "Interview updated.");
     } finally {
       setInterviewBusy(false);
     }
@@ -610,47 +613,57 @@ export default function CandidateProfilePage() {
   };
 
   const handleOpenMessageDialog = async () => {
-    if (!user || (profile?.role !== 'EMPLOYER' && profile?.role !== 'RECRUITER')) {
+    if (!user || !candidate) return;
+
+    if (profile?.role === 'EMPLOYER' || profile?.role === 'RECRUITER') {
+      try {
+        let jobs: any[] = [];
+        if (profile.role === 'RECRUITER' && profile.companyId) {
+          const { data, error } = await getCompanyJobs(profile.companyId, user.uid, profile.isCompanyOwner || false);
+          if (!error && data) jobs = data;
+        } else {
+          const { data, error } = await getEmployerJobs(user.uid);
+          if (!error && data) jobs = data;
+        }
+        setEmployerJobs(jobs);
+
+        const contextJobId = selectedJobId || jobIdFromContext || (jobs[0]?.id || null);
+        const participantIds = [user.uid, candidate.id].sort();
+        let threadJobOpts: { jobDetails?: MessageJobDetailsShape } | undefined;
+        if (contextJobId) {
+          const selectedJob = jobs.find((job) => job.id === contextJobId);
+          if (selectedJob) {
+            threadJobOpts = {
+              jobDetails: {
+                jobId: selectedJob.id,
+                jobTitle: selectedJob.title,
+                jobDescription: String(selectedJob.description || ""),
+                employmentType: String(selectedJob.employment || ""),
+                location: `${selectedJob.locationCity || ""} ${selectedJob.locationState || ""}`.trim(),
+              },
+            };
+          }
+        }
+        const { id: threadId, error: threadError } = await getOrCreateThread(participantIds, threadJobOpts);
+        if (threadError || !threadId) {
+          setError("Failed to open thread");
+          return;
+        }
+        const { acceptMessageThread } = await import('@/lib/firebase-firestore');
+        await acceptMessageThread(threadId, user.uid);
+        router.push(contextJobId ? `/messages/${threadId}?jobId=${encodeURIComponent(contextJobId)}` : `/messages/${threadId}`);
+        return;
+      } catch (err) {
+        console.error("Error opening thread:", err);
+        setError("Failed to open thread");
+        return;
+      }
+    }
+
+    if (profile?.role !== 'EMPLOYER' && profile?.role !== 'RECRUITER') {
       setShowMessageDialog(true);
       return;
     }
-    
-    // Fetch employer/recruiter jobs
-    try {
-      let jobs: any[] = [];
-      
-      if (profile.role === 'RECRUITER' && profile.companyId) {
-        // Fetch company jobs for recruiters (their jobs + owner's jobs)
-        const { data, error } = await getCompanyJobs(profile.companyId, user.uid, profile.isCompanyOwner || false);
-        if (!error && data) {
-          jobs = data;
-        }
-      } else {
-        // Fetch employer's own jobs
-        const { data, error } = await getEmployerJobs(user.uid);
-        if (!error && data) {
-          jobs = data;
-        }
-      }
-      
-      setEmployerJobs(jobs);
-      const fromUrl = searchParams.get('jobId');
-      let chosenJobId: string | null = null;
-      if (fromUrl && jobs.some((j: any) => j.id === fromUrl)) {
-        setSelectedJobId(fromUrl);
-        chosenJobId = fromUrl;
-      } else if (jobs.length > 0) {
-        setSelectedJobId(jobs[0].id);
-        chosenJobId = jobs[0].id;
-      }
-      if (chosenJobId && candidate?.id) {
-        await loadCommunicationForJob(chosenJobId, candidate.id);
-      }
-    } catch (err) {
-      console.error('Error fetching jobs:', err);
-    }
-    
-    setShowMessageDialog(true);
   };
 
   useEffect(() => {
@@ -659,6 +672,10 @@ export default function CandidateProfilePage() {
     const action = searchParams.get('action');
     if (action === 'message' && !showMessageDialog) {
       handleOpenMessageDialog();
+    }
+    if (action === "interview") {
+      setEditingInterview(null);
+      setShowScheduleInterviewModal(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [candidate?.id, profile?.role, searchParams, showMessageDialog]);
@@ -776,15 +793,19 @@ export default function CandidateProfilePage() {
   const isAdminViewer = user?.email === 'officialhiremeapp@gmail.com' || profile?.role === 'ADMIN';
   const isEmployerOrRecruiter = profile?.role === 'EMPLOYER' || profile?.role === 'RECRUITER';
   const viewingAsRecruiter = user?.uid !== candidate.id && isEmployerOrRecruiter && !isAdminViewer;
+  const selectedJobTitle =
+    employerJobs.find((job) => job.id === (selectedJobId || jobIdFromContext))?.title ||
+    jobMatchContext?.jobTitle ||
+    "";
   const templateStage = pipelineStage || 'NEW';
-  const selectedTemplate = useMemo(
-    () => templates.find((template) => template.id === selectedTemplateId) || null,
-    [templates, selectedTemplateId]
-  );
-  const suggestedTemplate = useMemo(() => {
-    const wanted = getSuggestedTemplateType(templateStage);
-    return templates.find((template) => template.type === wanted) || null;
-  }, [templates, templateStage]);
+  const recruiterJobHero = viewingAsRecruiter && !!jobIdFromContext;
+  const heroShortlistPrimary =
+    recruiterJobHero &&
+    (!pipelineEntry || pipelineStage === "NEW" || pipelineStage === "REJECTED");
+  const heroMessagePrimary =
+    recruiterJobHero && ["SHORTLIST", "CONTACTED", "RESPONDED"].includes(pipelineStage);
+  const heroEvaluatePrimary = recruiterJobHero && ["INTERVIEW", "FINALIST"].includes(pipelineStage);
+
   const interviewScheduledText = interviewEvent?.scheduledAt
     ? new Date(
         (interviewEvent.scheduledAt as any)?.toDate
@@ -797,14 +818,14 @@ export default function CandidateProfilePage() {
     <main className="min-h-screen bg-slate-50 mobile-safe-top mobile-safe-bottom overflow-x-hidden w-full">
       {/* Sticky Action Bar */}
       {user?.uid !== candidate.id && (
-        <div className={`fixed top-20 left-0 right-0 bg-white/95 backdrop-blur-sm border-b border-slate-200 z-30 transition-all duration-200 mobile-safe-top ${stickyBarVisible ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'}`}>
+        <div className={`fixed top-14 left-0 right-0 bg-white/95 backdrop-blur-sm border-b border-slate-200 z-30 transition-all duration-200 ${stickyBarVisible ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'}`}>
           <div className="max-w-7xl mx-auto px-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 py-4">
               <div className="flex items-center gap-4 min-w-0 flex-1">
                 {candidate.profileImageUrl ? (
                   <img src={candidate.profileImageUrl} alt={candidateName} className="w-10 h-10 rounded-full object-cover flex-shrink-0" />
                 ) : (
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-sky-200 to-sky-300 flex items-center justify-center flex-shrink-0">
+                  <div className="w-10 h-10 rounded-full bg-sky-200 flex items-center justify-center flex-shrink-0">
                     <span className="font-bold text-navy-900 text-sm">{getInitials(candidate.firstName, candidate.lastName)}</span>
                   </div>
                 )}
@@ -814,41 +835,102 @@ export default function CandidateProfilePage() {
                 </div>
               </div>
               <div className="flex items-center gap-3 w-full sm:w-auto">
-                <button
-                  onClick={handleOpenMessageDialog}
-                  className="bg-navy-800 text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg font-semibold hover:bg-navy-700 transition-all flex items-center justify-center gap-2 text-sm sm:text-base flex-1 sm:flex-initial min-h-[48px]"
-                >
-                  <MessageSquare className="h-4 w-4 sm:h-5 sm:w-5" />
-                  <span>Message</span>
-                </button>
-                <button
-                  onClick={handleSaveCandidate}
-                  disabled={isSaving}
-                  className={`p-2.5 sm:p-3 rounded-lg transition-all w-12 h-12 sm:w-10 sm:h-10 flex items-center justify-center min-h-[48px] sm:min-h-0 ${
-                    isSaved 
-                      ? 'bg-green-50 text-green-600 border-2 border-green-600' 
-                      : 'bg-white border border-slate-200 text-slate-700 hover:border-navy-800 hover:text-navy-900'
-                  }`}
-                >
-                  <Heart className={`h-5 w-5 sm:h-4 sm:w-4 ${isSaved ? 'fill-current' : ''}`} />
-                </button>
-                {candidate.resumeUrl && (
+                {recruiterJobHero ? (
+                  <>
+                    {heroShortlistPrimary && (
+                      <button
+                        type="button"
+                        onClick={() => void handlePipelineStageChange("SHORTLIST")}
+                        disabled={pipelineBusy}
+                        className="bg-navy-800 text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg font-semibold hover:bg-navy-700 transition-all flex items-center justify-center gap-2 text-sm sm:text-base flex-1 sm:flex-initial min-h-[48px] disabled:opacity-60"
+                      >
+                        Shortlist
+                      </button>
+                    )}
+                    {heroMessagePrimary && (
+                      <button
+                        onClick={handleOpenMessageDialog}
+                        className="bg-navy-800 text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg font-semibold hover:bg-navy-700 transition-all flex items-center justify-center gap-2 text-sm sm:text-base flex-1 sm:flex-initial min-h-[48px]"
+                      >
+                        <MessageSquare className="h-4 w-4 sm:h-5 sm:w-5" />
+                        <span>Message</span>
+                      </button>
+                    )}
+                    {heroEvaluatePrimary && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            document.getElementById("recruiter-notes")?.scrollIntoView({ behavior: "smooth" })
+                          }
+                          className="bg-navy-800 text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg font-semibold hover:bg-navy-700 transition-all flex items-center justify-center gap-2 text-sm sm:text-base flex-1 sm:flex-initial min-h-[48px]"
+                        >
+                          Evaluate / review
+                        </button>
+                        <button
+                          onClick={handleOpenMessageDialog}
+                          className="bg-white border border-slate-200 text-navy-900 px-4 py-2.5 sm:py-3 rounded-lg font-semibold hover:bg-slate-50 flex items-center justify-center gap-2 text-sm min-h-[48px]"
+                        >
+                          <MessageSquare className="h-4 w-4" />
+                          Message
+                        </button>
+                      </>
+                    )}
+                    {heroShortlistPrimary && (
+                      <button
+                        onClick={handleOpenMessageDialog}
+                        className="bg-white border border-slate-200 text-navy-900 px-4 py-2.5 rounded-lg font-semibold hover:bg-slate-50 text-sm min-h-[48px]"
+                      >
+                        Message
+                      </button>
+                    )}
+                    {!heroShortlistPrimary && !heroMessagePrimary && !heroEvaluatePrimary && (
+                      <button
+                        onClick={handleOpenMessageDialog}
+                        className="bg-navy-800 text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg font-semibold hover:bg-navy-700 flex items-center justify-center gap-2 text-sm min-h-[48px]"
+                      >
+                        <MessageSquare className="h-4 w-4" />
+                        Message
+                      </button>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <button
+                      onClick={handleOpenMessageDialog}
+                      className="bg-navy-800 text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg font-semibold hover:bg-navy-700 transition-all flex items-center justify-center gap-2 text-sm sm:text-base flex-1 sm:flex-initial min-h-[48px]"
+                    >
+                      <MessageSquare className="h-4 w-4 sm:h-5 sm:w-5" />
+                      <span>Message</span>
+                    </button>
+                    <button
+                      onClick={handleSaveCandidate}
+                      disabled={isSaving}
+                      className={`p-2.5 sm:p-3 rounded-lg transition-all w-12 h-12 sm:w-10 sm:h-10 flex items-center justify-center min-h-[48px] sm:min-h-0 ${
+                        isSaved
+                          ? "bg-sky-50 text-navy-800 border-2 border-sky-600"
+                          : "bg-white border border-slate-200 text-slate-700 hover:border-navy-800 hover:text-navy-900"
+                      }`}
+                    >
+                      <Heart className={`h-5 w-5 sm:h-4 sm:w-4 ${isSaved ? "fill-current" : ""}`} />
+                    </button>
+                  </>
+                )}
+                {!recruiterJobHero && candidate.resumeUrl && (
                   <button
                     onClick={async () => {
                       setShowResumeModal(true);
                       setResumePreviewError(false);
                       setUseGoogleViewer(false);
                       setIsResumeLoading(true);
-                      
-                      // Verify PDF is accessible
+
                       try {
-                        const response = await fetch(candidate.resumeUrl, { method: 'HEAD' });
+                        const response = await fetch(candidate.resumeUrl, { method: "HEAD" });
                         if (!response.ok) {
                           setResumePreviewError(true);
                         }
                       } catch (error) {
-                        console.error('Error checking resume accessibility:', error);
-                        // Don't set error immediately, let the embed/iframe try first
+                        console.error("Error checking resume accessibility:", error);
                       } finally {
                         setIsResumeLoading(false);
                       }
@@ -859,6 +941,29 @@ export default function CandidateProfilePage() {
                     <span className="hidden sm:inline">Resume</span>
                   </button>
                 )}
+                {recruiterJobHero && candidate.resumeUrl && (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      setShowResumeModal(true);
+                      setResumePreviewError(false);
+                      setUseGoogleViewer(false);
+                      setIsResumeLoading(true);
+                      try {
+                        const response = await fetch(candidate.resumeUrl, { method: "HEAD" });
+                        if (!response.ok) setResumePreviewError(true);
+                      } catch (error) {
+                        console.error("Error checking resume accessibility:", error);
+                      } finally {
+                        setIsResumeLoading(false);
+                      }
+                    }}
+                    className="p-2.5 rounded-lg border border-slate-200 text-navy-900 hover:bg-slate-50 min-h-[48px] w-12 flex items-center justify-center"
+                    aria-label="Resume"
+                  >
+                    <FileText className="h-5 w-5" />
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -866,7 +971,7 @@ export default function CandidateProfilePage() {
       )}
 
       {/* Header */}
-      <header className="sticky top-0 bg-white shadow-sm z-50 border-b border-slate-100">
+      <header className="bg-white shadow-sm z-40 border-b border-slate-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-wrap items-center gap-2 min-w-0">
             {isAdminViewer ? (
@@ -888,43 +993,23 @@ export default function CandidateProfilePage() {
             ) : viewingAsRecruiter ? (
               <>
                 {jobIdFromContext ? (
-                  <>
-                    <Link
-                      href={getJobMatchesUrl(jobIdFromContext)}
-                      className="flex items-center gap-2 text-navy-800 hover:text-navy-600 px-3 py-2 rounded-lg hover:bg-sky-50 min-h-[48px] text-sm font-medium"
-                    >
-                      <ArrowLeft className="h-4 w-4 shrink-0" />
-                      <span className="hidden sm:inline">Back to matches</span>
-                      <span className="sm:hidden">Matches</span>
-                    </Link>
-                    <Link
-                      href={getJobPipelineUrl(jobIdFromContext)}
-                      className="inline-flex items-center px-3 py-2 rounded-lg border border-slate-200 text-navy-800 text-sm font-medium hover:bg-slate-50 min-h-[48px]"
-                    >
-                      Pipeline
-                    </Link>
-                    <Link
-                      href={getJobOverviewUrl(jobIdFromContext)}
-                      className="inline-flex items-center px-3 py-2 rounded-lg border border-slate-200 text-navy-800 text-sm font-medium hover:bg-slate-50 min-h-[48px]"
-                    >
-                      Job overview
-                    </Link>
-                  </>
+                  <Link
+                    href={getJobMatchesUrl(jobIdFromContext)}
+                    className="flex items-center gap-2 text-navy-800 hover:text-navy-600 px-3 py-2 rounded-lg hover:bg-sky-50 min-h-[48px] text-sm font-medium"
+                  >
+                    <ArrowLeft className="h-4 w-4 shrink-0" />
+                    <span className="hidden sm:inline">Back to candidates</span>
+                    <span className="sm:hidden">Candidates</span>
+                  </Link>
                 ) : (
                   <Link
                     href="/search/candidates"
                     className="flex items-center gap-2 text-navy-800 hover:text-navy-600 px-3 py-2 rounded-lg hover:bg-sky-50 min-h-[48px] text-sm font-medium"
                   >
                     <ArrowLeft className="h-4 w-4 shrink-0" />
-                    Back to candidate search
+                    Back to talent search
                   </Link>
                 )}
-                <Link
-                  href={getDashboardUrl()}
-                  className="inline-flex items-center px-3 py-2 rounded-lg border border-slate-300 text-navy-800 text-sm font-medium hover:bg-slate-50 min-h-[48px]"
-                >
-                  Recruiter home
-                </Link>
               </>
             ) : (
               <Link
@@ -936,7 +1021,16 @@ export default function CandidateProfilePage() {
               </Link>
             )}
           </div>
-          <Link href="/" className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
+          <Link
+            href={
+              user?.uid === candidate.id
+                ? "/home/seeker"
+                : profile?.role === "EMPLOYER" || profile?.role === "RECRUITER"
+                  ? getDashboardUrl()
+                  : "/"
+            }
+            className="flex items-center gap-2 shrink-0 self-end sm:self-auto"
+          >
             <div className="w-8 h-8 bg-navy-800 rounded-lg flex items-center justify-center">
               <svg width="20" height="20" viewBox="0 0 269 274" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M111.028 0C172.347 0.000238791 222.055 51.647 222.055 115.356C222.055 140.617 214.238 163.98 200.983 182.981L258.517 242.758L238.036 264.036L181.077 204.857C161.97 221.02 137.589 230.713 111.028 230.713C49.7092 230.713 2.76862e-05 179.066 0 115.356C0 51.6468 49.7092 0 111.028 0Z" fill="white"/>
@@ -949,6 +1043,34 @@ export default function CandidateProfilePage() {
       </header>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 lg:py-10 xl:py-12">
+        {jobIdFromContext && (profile?.role === "EMPLOYER" || profile?.role === "RECRUITER") && (
+          <section className="mb-4 rounded-xl border border-sky-200 bg-sky-50 px-4 py-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Viewing for</p>
+            <p className="text-sm font-semibold text-navy-900 mt-0.5">
+              {selectedJobTitle || "This requisition"}
+            </p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              <Link
+                href={getJobMatchesUrl(jobIdFromContext)}
+                className="inline-flex items-center px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-xs font-semibold text-navy-800 hover:bg-slate-100"
+              >
+                Back to candidates
+              </Link>
+              <Link
+                href={getJobPipelineUrl(jobIdFromContext)}
+                className="inline-flex items-center px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-xs font-semibold text-navy-800 hover:bg-slate-100"
+              >
+                Pipeline
+              </Link>
+              <Link
+                href={getJobOverviewUrl(jobIdFromContext)}
+                className="inline-flex items-center px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-xs font-semibold text-navy-800 hover:bg-slate-100"
+              >
+                Job overview
+              </Link>
+            </div>
+          </section>
+        )}
 
         {/* Hero Summary Card */}
         <section ref={heroCardRef} className="bg-white rounded-2xl shadow-xl border border-slate-100 p-8 mb-8">
@@ -957,17 +1079,35 @@ export default function CandidateProfilePage() {
               {candidate.profileImageUrl ? (
                 <img src={candidate.profileImageUrl} alt={candidateName} className="w-20 h-20 rounded-full object-cover flex-shrink-0 border-4 border-white shadow-lg" />
               ) : (
-                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-sky-200 to-sky-300 flex items-center justify-center flex-shrink-0 border-4 border-white shadow-lg">
+                <div className="w-20 h-20 rounded-full bg-sky-200 flex items-center justify-center flex-shrink-0 border-4 border-white shadow-lg">
                   <span className="font-bold text-navy-900 text-2xl">{getInitials(candidate.firstName, candidate.lastName)}</span>
                 </div>
               )}
               <div className="flex-1 min-w-0">
-                <h1 className="text-3xl sm:text-4xl font-bold text-navy-900 tracking-tight mb-2 break-words">{candidateName}</h1>
-                <p className="text-xl text-slate-600 mb-4 break-words">{candidate.headline || 'Job Seeker'}</p>
+                <h1
+                  className={`font-bold text-navy-900 tracking-tight mb-2 break-words ${
+                    recruiterJobHero ? "text-2xl sm:text-3xl" : "text-3xl sm:text-4xl"
+                  }`}
+                >
+                  {candidateName}
+                </h1>
+                <p
+                  className={`mb-4 break-words ${
+                    recruiterJobHero
+                      ? "text-sm sm:text-base text-slate-600"
+                      : "text-xl text-slate-600"
+                  }`}
+                >
+                  {candidate.headline || "Job Seeker"}
+                </p>
                 {candidate.bio && (
                   <p className="text-slate-600 mb-4 leading-relaxed break-words">{candidate.bio}</p>
                 )}
-                <div className="flex flex-wrap items-center gap-4 text-sm text-slate-600">
+                <div
+                  className={`flex flex-wrap items-center gap-4 text-slate-600 ${
+                    recruiterJobHero ? "text-xs sm:text-sm" : "text-sm"
+                  }`}
+                >
                   {candidate.school && (
                     <div className="flex items-center gap-2">
                       <GraduationCap className="h-4 w-4 text-slate-400 flex-shrink-0" />
@@ -989,56 +1129,145 @@ export default function CandidateProfilePage() {
             </div>
             {user?.uid !== candidate.id && (
               <div className="flex flex-col gap-2 sm:gap-3 lg:flex-shrink-0 w-full lg:w-auto">
-                <button
-                  onClick={handleOpenMessageDialog}
-                  className="bg-navy-800 text-white px-8 py-4 rounded-lg font-semibold text-lg shadow-md hover:bg-navy-700 transition-all flex items-center justify-center gap-2"
-                >
-                  <MessageSquare className="h-5 w-5" />
-                  <span>Message {candidate.firstName || 'Candidate'}</span>
-                </button>
-                <button
-                  onClick={handleSaveCandidate}
-                  disabled={isSaving}
-                  className={`bg-white border border-slate-200 text-navy-900 px-8 py-4 rounded-lg font-semibold shadow-sm hover:bg-slate-50 transition-all flex items-center justify-center gap-2 ${
-                    isSaved ? 'text-green-600 border-green-600 bg-green-50' : ''
-                  }`}
-                >
-                  <Heart className={`h-5 w-5 ${isSaved ? 'fill-current' : ''}`} />
-                  <span>Save Candidate</span>
-                </button>
-                {(profile?.role === 'EMPLOYER' || profile?.role === 'RECRUITER' || profile?.role === 'ADMIN') && candidate?.id && (
-                  <AddToTalentPoolButton
-                    candidateId={candidate.id}
-                    className="w-full"
-                    buttonClassName="w-full inline-flex items-center justify-center gap-2 bg-white border border-slate-200 text-navy-900 px-8 py-4 rounded-lg font-semibold shadow-sm hover:bg-slate-50"
-                  />
-                )}
-                {candidate.resumeUrl && (
-                  <button
-                    onClick={async () => {
-                      setShowResumeModal(true);
-                      setResumePreviewError(false);
-                      setUseGoogleViewer(false);
-                      setIsResumeLoading(true);
-                      
-                      // Verify PDF is accessible
-                      try {
-                        const response = await fetch(candidate.resumeUrl, { method: 'HEAD' });
-                        if (!response.ok) {
-                          setResumePreviewError(true);
-                        }
-                      } catch (error) {
-                        console.error('Error checking resume accessibility:', error);
-                        // Don't set error immediately, let the embed/iframe try first
-                      } finally {
-                        setIsResumeLoading(false);
-                      }
-                    }}
-                    className="bg-white border border-slate-200 text-navy-900 px-8 py-4 rounded-lg font-semibold shadow-sm hover:bg-slate-50 transition-all flex items-center justify-center gap-2"
-                  >
-                    <FileText className="h-5 w-5" />
-                    <span>View Resume</span>
-                  </button>
+                {recruiterJobHero ? (
+                  <>
+                    {heroShortlistPrimary && (
+                      <button
+                        type="button"
+                        onClick={() => void handlePipelineStageChange("SHORTLIST")}
+                        disabled={pipelineBusy}
+                        className={`${recruiterBtnPrimaryLg} w-full sm:w-auto px-8 py-4 disabled:opacity-60`}
+                      >
+                        Shortlist for this job
+                      </button>
+                    )}
+                    {heroMessagePrimary && (
+                      <button
+                        onClick={handleOpenMessageDialog}
+                        className={`${recruiterBtnPrimaryLg} w-full sm:w-auto px-8 py-4`}
+                      >
+                        <MessageSquare className="h-5 w-5" />
+                        <span>Message {candidate.firstName || "Candidate"}</span>
+                      </button>
+                    )}
+                    {heroEvaluatePrimary && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            document.getElementById("recruiter-notes")?.scrollIntoView({ behavior: "smooth" })
+                          }
+                          className={`${recruiterBtnPrimaryLg} w-full sm:w-auto px-8 py-4`}
+                        >
+                          Evaluate / review
+                        </button>
+                        <button
+                          onClick={handleOpenMessageDialog}
+                          className={`${recruiterBtnSecondary} w-full sm:w-auto px-8 py-3`}
+                        >
+                          <MessageSquare className="h-5 w-5" />
+                          Message
+                        </button>
+                      </>
+                    )}
+                    {heroShortlistPrimary && (
+                      <button
+                        onClick={handleOpenMessageDialog}
+                        className={`${recruiterBtnSecondary} w-full sm:w-auto px-8 py-3`}
+                      >
+                        Message without shortlisting
+                      </button>
+                    )}
+                    {!heroShortlistPrimary && !heroMessagePrimary && !heroEvaluatePrimary && (
+                      <button
+                        onClick={handleOpenMessageDialog}
+                        className={`${recruiterBtnPrimaryLg} w-full sm:w-auto px-8 py-4`}
+                      >
+                        <MessageSquare className="h-5 w-5" />
+                        <span>Message {candidate.firstName || "Candidate"}</span>
+                      </button>
+                    )}
+                    {candidate?.id && (
+                      <AddToTalentPoolButton
+                        candidateId={candidate.id}
+                        className="w-full"
+                        buttonClassName="w-full inline-flex items-center justify-center gap-2 border border-dashed border-slate-300 text-slate-700 px-4 py-3 rounded-lg text-sm font-medium hover:bg-slate-50"
+                      />
+                    )}
+                    {candidate.resumeUrl && (
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          setShowResumeModal(true);
+                          setResumePreviewError(false);
+                          setUseGoogleViewer(false);
+                          setIsResumeLoading(true);
+                          try {
+                            const response = await fetch(candidate.resumeUrl, { method: "HEAD" });
+                            if (!response.ok) setResumePreviewError(true);
+                          } catch (error) {
+                            console.error("Error checking resume accessibility:", error);
+                          } finally {
+                            setIsResumeLoading(false);
+                          }
+                        }}
+                        className="bg-white border border-slate-200 text-navy-900 px-8 py-3 rounded-lg font-semibold shadow-sm hover:bg-slate-50 flex items-center justify-center gap-2"
+                      >
+                        <FileText className="h-5 w-5" />
+                        <span>View resume</span>
+                      </button>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <button
+                      onClick={handleOpenMessageDialog}
+                      className="bg-navy-800 text-white px-8 py-4 rounded-lg font-semibold text-lg shadow-md hover:bg-navy-700 transition-all flex items-center justify-center gap-2"
+                    >
+                      <MessageSquare className="h-5 w-5" />
+                      <span>Message {candidate.firstName || "Candidate"}</span>
+                    </button>
+                    <button
+                      onClick={handleSaveCandidate}
+                      disabled={isSaving}
+                      className={`bg-white border border-slate-200 text-navy-900 px-8 py-4 rounded-lg font-semibold shadow-sm hover:bg-slate-50 transition-all flex items-center justify-center gap-2 ${
+                        isSaved ? "text-navy-800 border-sky-600 bg-sky-50" : ""
+                      }`}
+                    >
+                      <Heart className={`h-5 w-5 ${isSaved ? "fill-current" : ""}`} />
+                      <span>Save Candidate</span>
+                    </button>
+                    {(profile?.role === "EMPLOYER" || profile?.role === "RECRUITER" || profile?.role === "ADMIN") &&
+                      candidate?.id && (
+                        <AddToTalentPoolButton
+                          candidateId={candidate.id}
+                          className="w-full"
+                          buttonClassName="w-full inline-flex items-center justify-center gap-2 bg-white border border-slate-200 text-navy-900 px-8 py-4 rounded-lg font-semibold shadow-sm hover:bg-slate-50"
+                        />
+                      )}
+                    {candidate.resumeUrl && (
+                      <button
+                        onClick={async () => {
+                          setShowResumeModal(true);
+                          setResumePreviewError(false);
+                          setUseGoogleViewer(false);
+                          setIsResumeLoading(true);
+                          try {
+                            const response = await fetch(candidate.resumeUrl, { method: "HEAD" });
+                            if (!response.ok) setResumePreviewError(true);
+                          } catch (error) {
+                            console.error("Error checking resume accessibility:", error);
+                          } finally {
+                            setIsResumeLoading(false);
+                          }
+                        }}
+                        className="bg-white border border-slate-200 text-navy-900 px-8 py-4 rounded-lg font-semibold shadow-sm hover:bg-slate-50 transition-all flex items-center justify-center gap-2"
+                      >
+                        <FileText className="h-5 w-5" />
+                        <span>View Resume</span>
+                      </button>
+                    )}
+                  </>
                 )}
               </div>
             )}
@@ -1049,13 +1278,13 @@ export default function CandidateProfilePage() {
         {user?.uid !== candidate.id && (profile?.role === 'EMPLOYER' || profile?.role === 'RECRUITER') && jobIdFromContext && (
           <section className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6 mb-8">
             <div className="flex items-center mb-4">
-              <div className="w-12 h-12 bg-emerald-100 rounded-lg flex items-center justify-center mr-4">
-                <Briefcase className="h-6 w-6 text-emerald-700" />
+              <div className="w-12 h-12 bg-sky-100 rounded-lg flex items-center justify-center mr-4">
+                <Briefcase className="h-6 w-6 text-navy-800" />
               </div>
               <div>
-                <h2 className="text-lg font-bold text-navy-900">Recruiter workflow context</h2>
+                <h2 className="text-lg font-bold text-navy-900">Pipeline for this job</h2>
                 <p className="text-sm text-slate-600">
-                  Shortlist = serious contenders for this job. Pipeline = all active candidates for this job.
+                  Shortlist = serious contenders. Pipeline = everyone you are actively working for this requisition.
                 </p>
                 <p className="text-xs text-slate-500 mt-1">
                   <span className="font-semibold text-slate-700">Attention:</span>{" "}
@@ -1073,72 +1302,47 @@ export default function CandidateProfilePage() {
             </div>
             <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
               <div className="flex flex-wrap items-center gap-2 mb-3">
-                <span className="inline-flex rounded-full border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-700">
-                  Stage: {pipelineStage}
+                <span className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${recruiterBadge.neutral}`}>
+                  Stage: {pipelineStageLabel(pipelineStage)}
                 </span>
                 {followUpDue && (
-                  <span className="inline-flex rounded-full border border-rose-200 bg-rose-50 px-2 py-1 text-xs font-semibold text-rose-700">
+                  <span className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${recruiterBadge.urgent}`}>
                     Follow-up due
                   </span>
                 )}
                 {nextFollowUpDate && (
-                  <span className="inline-flex rounded-full border border-amber-200 bg-amber-50 px-2 py-1 text-xs font-semibold text-amber-700">
+                  <span className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${recruiterBadge.pending}`}>
                     Next follow-up: {nextFollowUpDate.toLocaleDateString()}
                   </span>
                 )}
                 {sequence?.status && (
-                  <span className={`inline-flex rounded-full border px-2 py-1 text-xs font-semibold ${
-                    sequence.status === 'ACTIVE'
-                      ? 'border-violet-200 bg-violet-50 text-violet-700'
-                      : 'border-slate-200 bg-white text-slate-700'
+                  <span className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
+                    sequence.status === "ACTIVE"
+                      ? "border border-sky-200 bg-sky-50 text-sky-950"
+                      : recruiterBadge.neutral
                   }`}>
                     Sequence: {sequence.status}
                   </span>
                 )}
                 {Boolean(interviewEvent?.scheduledAt) && (
-                  <span className="inline-flex rounded-full border border-indigo-200 bg-indigo-50 px-2 py-1 text-xs font-semibold text-indigo-700">
+                  <span className="inline-flex rounded-full border border-sky-200 bg-sky-50 px-2 py-1 text-xs font-semibold text-navy-900">
                     Interview: {interviewScheduledText}
                   </span>
                 )}
               </div>
-              <div className="flex flex-wrap items-center gap-2 mb-3">
-                <Link
-                  href={getJobMatchesUrl(jobIdFromContext)}
-                  className="inline-flex items-center px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-xs font-semibold text-navy-800 hover:bg-slate-100"
-                >
-                  Back to matches
-                </Link>
-                <Link
-                  href={getJobPipelineUrl(jobIdFromContext)}
-                  className="inline-flex items-center px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-xs font-semibold text-navy-800 hover:bg-slate-100"
-                >
-                  Pipeline
-                </Link>
-                <Link
-                  href={getJobOverviewUrl(jobIdFromContext)}
-                  className="inline-flex items-center px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-xs font-semibold text-navy-800 hover:bg-slate-100"
-                >
-                  Job overview
-                </Link>
-                <Link
-                  href={getMessagesUrl(jobIdFromContext)}
-                  className="inline-flex items-center px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-xs font-semibold text-navy-800 hover:bg-slate-100"
-                >
+              <p className="mb-3 text-xs text-slate-600">
+                <Link href={getMessagesUrl(jobIdFromContext)} className="font-semibold text-sky-800 hover:underline">
                   Job messages
                 </Link>
-                <Link
-                  href={getCandidatesSearchUrl(jobIdFromContext)}
-                  className="inline-flex items-center px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-xs font-semibold text-navy-800 hover:bg-slate-100"
-                >
-                  Source more candidates
+                <span className="text-slate-400"> · </span>
+                <Link href={getJobCompareUrl(jobIdFromContext)} className="font-semibold text-sky-800 hover:underline">
+                  Compare
                 </Link>
-                <Link
-                  href={getJobCompareUrl(jobIdFromContext)}
-                  className="inline-flex items-center px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-xs font-semibold text-navy-800 hover:bg-slate-100"
-                >
-                  Compare shortlist
+                <span className="text-slate-400"> · </span>
+                <Link href={getCandidatesSearchUrl(jobIdFromContext)} className="font-semibold text-sky-800 hover:underline">
+                  Find candidates
                 </Link>
-              </div>
+              </p>
               <div className="flex flex-wrap gap-2">
                 <select
                   value={pipelineStage}
@@ -1148,7 +1352,7 @@ export default function CandidateProfilePage() {
                 >
                   {PIPELINE_STAGES.map((stage) => (
                     <option key={stage} value={stage}>
-                      {stage}
+                      {pipelineStageLabel(stage)}
                     </option>
                   ))}
                 </select>
@@ -1173,75 +1377,95 @@ export default function CandidateProfilePage() {
                 >
                   Mark follow-up done
                 </button>
-                <button
-                  type="button"
-                  onClick={handleStartSequence}
-                  disabled={sequenceBusy || !jobIdFromContext}
-                  className="px-3 py-2 rounded-lg border border-violet-200 bg-violet-50 text-sm font-medium text-violet-800 hover:bg-violet-100 disabled:opacity-60"
-                >
-                  Start sequence
-                </button>
-                <button
-                  type="button"
-                  onClick={handleStopSequence}
-                  disabled={sequenceBusy || !jobIdFromContext || sequence?.status !== 'ACTIVE'}
-                  className="px-3 py-2 rounded-lg border border-violet-200 bg-violet-50 text-sm font-medium text-violet-800 hover:bg-violet-100 disabled:opacity-60"
-                >
-                  Stop sequence
-                </button>
               </div>
-              <div className="mt-3 rounded-lg border border-indigo-200 bg-indigo-50 p-3">
-                <p className="text-xs font-semibold uppercase tracking-wide text-indigo-700 mb-2">Schedule interview</p>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                  <input
-                    type="datetime-local"
-                    value={interviewScheduledAt}
-                    onChange={(e) => setInterviewScheduledAt(e.target.value)}
-                    className="px-2 py-1.5 rounded-md border border-indigo-200 bg-white text-xs text-slate-700"
-                  />
-                  <input
-                    type="number"
-                    min={15}
-                    step={15}
-                    value={interviewDuration}
-                    onChange={(e) => setInterviewDuration(e.target.value)}
-                    className="px-2 py-1.5 rounded-md border border-indigo-200 bg-white text-xs text-slate-700"
-                    placeholder="Duration (min)"
-                  />
-                  <input
-                    value={interviewLocation}
-                    onChange={(e) => setInterviewLocation(e.target.value)}
-                    className="px-2 py-1.5 rounded-md border border-indigo-200 bg-white text-xs text-slate-700"
-                    placeholder="Location / meeting link"
-                  />
-                </div>
-                <input
-                  value={interviewNotes}
-                  onChange={(e) => setInterviewNotes(e.target.value)}
-                  className="mt-2 w-full px-2 py-1.5 rounded-md border border-indigo-200 bg-white text-xs text-slate-700"
-                  placeholder="Interview notes"
-                />
-                <div className="mt-2 flex gap-2">
+              <details className="mt-3 rounded-lg border border-slate-200 bg-white px-3 py-2">
+                <summary className="cursor-pointer text-xs font-semibold text-slate-600 select-none">
+                  Advanced workflow (optional)
+                </summary>
+                <div className="mt-3 flex flex-wrap gap-2">
                   <button
                     type="button"
-                    onClick={() => handleScheduleInterview('PROPOSED')}
-                    disabled={interviewBusy || !jobIdFromContext}
-                    className="px-3 py-1.5 rounded-md border border-indigo-200 bg-white text-xs font-semibold text-indigo-800 hover:bg-indigo-100 disabled:opacity-60"
+                    onClick={handleStartSequence}
+                    disabled={sequenceBusy || !jobIdFromContext}
+                    className="px-3 py-2 rounded-lg border border-sky-200 bg-sky-50 text-sm font-medium text-navy-900 hover:bg-sky-100 disabled:opacity-60"
                   >
-                    Propose interview
+                    Start sequence
                   </button>
                   <button
                     type="button"
-                    onClick={() => handleScheduleInterview('CONFIRMED')}
-                    disabled={interviewBusy || !jobIdFromContext}
-                    className="px-3 py-1.5 rounded-md border border-indigo-200 bg-white text-xs font-semibold text-indigo-800 hover:bg-indigo-100 disabled:opacity-60"
+                    onClick={handleStopSequence}
+                    disabled={sequenceBusy || !jobIdFromContext || sequence?.status !== "ACTIVE"}
+                    className="px-3 py-2 rounded-lg border border-sky-200 bg-sky-50 text-sm font-medium text-navy-900 hover:bg-sky-100 disabled:opacity-60"
                   >
-                    Confirm interview
+                    Stop sequence
                   </button>
                 </div>
-              </div>
+                <div className="mt-3 rounded-lg border border-slate-200 bg-white p-3">
+                  <div className="mb-2 flex items-center justify-between">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-navy-900">Interviews</p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditingInterview(null);
+                        setShowScheduleInterviewModal(true);
+                      }}
+                      disabled={!jobIdFromContext}
+                      className="rounded-md border border-slate-200 px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-60"
+                    >
+                      Schedule interview
+                    </button>
+                  </div>
+                  <div className="space-y-2">
+                    {interviewEvents.length === 0 ? (
+                      <p className="text-xs text-slate-500">No interviews yet.</p>
+                    ) : (
+                      interviewEvents.map((iv) => (
+                        <InterviewCard
+                          key={iv.id}
+                          interview={iv}
+                          onReschedule={(x) => {
+                            setEditingInterview(x);
+                            setShowScheduleInterviewModal(true);
+                          }}
+                          onCancel={(x) => handleInterviewPatch(x, { status: "CANCELLED" }, "Interview cancelled")}
+                          onComplete={(x) => handleInterviewPatch(x, { status: "COMPLETED" }, "Interview marked completed")}
+                          onCandidateResponse={(x, response) =>
+                            handleInterviewPatch(
+                              x,
+                              {
+                                candidateResponse: response,
+                                status: response === "REQUEST_RESCHEDULE" ? "RESCHEDULE_REQUESTED" : "CONFIRMED",
+                              },
+                              response === "REQUEST_RESCHEDULE" ? "Reschedule requested" : "Candidate response updated"
+                            )
+                          }
+                        />
+                      ))
+                    )}
+                  </div>
+                </div>
+              </details>
               {user?.uid && (
                 <div className="mt-4" id="recruiter-notes">
+                  {jobIdFromContext && (
+                    <div className="mb-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                      <div className="mb-3 flex items-center justify-between gap-2">
+                        <div>
+                          <h3 className="text-sm font-bold text-navy-900">Team collaboration</h3>
+                          <p className="text-xs text-slate-600">Share candidates internally and gather feedback from your hiring team.</p>
+                        </div>
+                        <SendCandidateForReviewButton
+                          jobId={jobIdFromContext}
+                          candidateId={candidate.id}
+                          candidateName={`${candidate.firstName || ""} ${candidate.lastName || ""}`.trim()}
+                        />
+                      </div>
+                      <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
+                        <ReviewAssignmentPanel jobId={jobIdFromContext} candidateId={candidate.id} />
+                        <InternalCommentsPanel jobId={jobIdFromContext} candidateId={candidate.id} />
+                      </div>
+                    </div>
+                  )}
                   <div className="mb-4">
                     <RecruiterDecisionPanel
                       jobId={jobIdFromContext}
@@ -1296,8 +1520,8 @@ export default function CandidateProfilePage() {
         {user?.uid !== candidate.id && (profile?.role === 'EMPLOYER' || profile?.role === 'RECRUITER' || profile?.role === 'ADMIN') && (
           <section className="bg-white rounded-2xl shadow-xl border border-slate-100 p-8 mb-8">
             <div className="flex items-center mb-6">
-              <div className="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center mr-4">
-                <Star className="h-6 w-6 text-indigo-700" />
+              <div className="w-12 h-12 bg-sky-100 rounded-lg flex items-center justify-center mr-4">
+                <Star className="h-6 w-6 text-navy-900" />
               </div>
               <div>
                 <h2 className="text-2xl font-bold text-navy-900">Recruiter Match Summary</h2>
@@ -1305,8 +1529,8 @@ export default function CandidateProfilePage() {
               </div>
             </div>
             {jobMatchContext && (
-              <div className="mb-5 rounded-lg border border-indigo-200 bg-indigo-50 p-4 text-sm">
-                <p className="font-semibold text-indigo-900 mb-2">Why this candidate ranked here</p>
+              <div className="mb-5 rounded-lg border border-sky-200 bg-sky-50 p-4 text-sm">
+                <p className="font-semibold text-navy-900 mb-2">Why this candidate ranked here</p>
                 <p className="text-slate-700">{jobMatchContext.explanation || 'Match explanation unavailable.'}</p>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-3 text-xs text-slate-700">
                   <div>Overall: <span className="font-semibold">{jobMatchContext.overallScore ?? 'N/A'}</span></div>
@@ -1698,7 +1922,7 @@ export default function CandidateProfilePage() {
             <div className="space-y-3">
               {candidate.workAuthorization.authorizedToWork !== null && (
                 <div className="flex items-center gap-3">
-                  <div className={`w-2 h-2 rounded-full ${candidate.workAuthorization.authorizedToWork ? 'bg-green-500' : 'bg-orange-500'}`}></div>
+                  <div className={`w-2 h-2 rounded-full ${candidate.workAuthorization.authorizedToWork ? "bg-sky-600" : "bg-slate-400"}`}></div>
                   <span className="text-slate-600">
                     <strong className="text-navy-900">Authorized to work in the US:</strong> {candidate.workAuthorization.authorizedToWork ? 'Yes' : 'No'}
                   </span>
@@ -1706,7 +1930,7 @@ export default function CandidateProfilePage() {
               )}
               {candidate.workAuthorization.requiresVisaSponsorship !== null && (
                 <div className="flex items-center gap-3">
-                  <div className={`w-2 h-2 rounded-full ${!candidate.workAuthorization.requiresVisaSponsorship ? 'bg-green-500' : 'bg-orange-500'}`}></div>
+                  <div className={`w-2 h-2 rounded-full ${!candidate.workAuthorization.requiresVisaSponsorship ? "bg-sky-600" : "bg-slate-400"}`}></div>
                   <span className="text-slate-600">
                     <strong className="text-navy-900">Requires visa sponsorship:</strong> {candidate.workAuthorization.requiresVisaSponsorship ? 'Yes' : 'No'}
                   </span>
@@ -1736,7 +1960,7 @@ export default function CandidateProfilePage() {
                         className="w-12 h-12 rounded-full object-cover flex-shrink-0"
                       />
                     ) : (
-                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-light-blue to-blue-300 flex items-center justify-center flex-shrink-0">
+                      <div className="w-12 h-12 rounded-full bg-sky-200 flex items-center justify-center flex-shrink-0">
                         <span className="font-bold text-navy-800 text-sm">
                           {endorsement.endorserName?.charAt(0) || 'E'}
                         </span>
@@ -1812,7 +2036,7 @@ export default function CandidateProfilePage() {
                   onClick={handleSaveCandidate}
                   disabled={isSaving}
                   className={`bg-white border border-slate-200 text-navy-900 px-8 py-4 rounded-lg font-semibold shadow-sm hover:bg-slate-50 transition-all flex items-center justify-center gap-2 ${
-                    isSaved ? 'text-green-600 border-green-600 bg-green-50' : ''
+                    isSaved ? "text-navy-800 border-sky-600 bg-sky-50" : ""
                   }`}
                 >
                   <Heart className={`h-5 w-5 ${isSaved ? 'fill-current' : ''}`} />
@@ -1843,7 +2067,7 @@ export default function CandidateProfilePage() {
                   <button
                     type="button"
                     onClick={() => handleApplyTemplate(suggestedTemplate)}
-                    className="w-full rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-left text-xs font-semibold text-emerald-800 hover:bg-emerald-100"
+                    className="w-full rounded-md border border-sky-200 bg-sky-50 px-3 py-2 text-left text-xs font-semibold text-navy-900 hover:bg-sky-100"
                   >
                     Suggested message: {suggestedTemplate.name}
                   </button>
@@ -1932,11 +2156,11 @@ export default function CandidateProfilePage() {
                     Manage templates
                   </Link>
                 </div>
-                <div className="rounded-lg border border-violet-200 bg-violet-50 p-2">
-                  <p className="text-[11px] font-semibold uppercase tracking-wide text-violet-700 mb-1">
+                <div className="rounded-lg border border-sky-200 bg-sky-50 p-2">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-navy-900 mb-1">
                     Outreach sequence · {SEQUENCE_ASSISTANT_MODE_LABEL}
                   </p>
-                  <p className="text-[11px] text-violet-900/85 mb-2 leading-snug">
+                  <p className="text-[11px] text-navy-900/85 mb-2 leading-snug">
                     {describeSequenceAssistantState(sequence)}
                   </p>
                   <div className="flex gap-2">
@@ -1944,7 +2168,7 @@ export default function CandidateProfilePage() {
                       type="button"
                       onClick={handleStartSequence}
                       disabled={sequenceBusy || !selectedJobId}
-                      className="px-2 py-1 rounded-md border border-violet-200 bg-white text-xs font-semibold text-violet-800 hover:bg-violet-100 disabled:opacity-60"
+                      className="px-2 py-1 rounded-md border border-sky-200 bg-white text-xs font-semibold text-navy-900 hover:bg-sky-100 disabled:opacity-60"
                     >
                       Start sequence
                     </button>
@@ -1952,68 +2176,27 @@ export default function CandidateProfilePage() {
                       type="button"
                       onClick={handleStopSequence}
                       disabled={sequenceBusy || !selectedJobId || sequence?.status !== 'ACTIVE'}
-                      className="px-2 py-1 rounded-md border border-violet-200 bg-white text-xs font-semibold text-violet-800 hover:bg-violet-100 disabled:opacity-60"
+                      className="px-2 py-1 rounded-md border border-sky-200 bg-white text-xs font-semibold text-navy-900 hover:bg-sky-100 disabled:opacity-60"
                     >
                       Stop
                     </button>
                   </div>
                 </div>
-                <div className="rounded-lg border border-indigo-200 bg-indigo-50 p-2">
-                  <p className="text-[11px] font-semibold uppercase tracking-wide text-indigo-700 mb-1">Interview scheduling</p>
-                  <div className="grid grid-cols-1 gap-1 mb-2">
-                    <input
-                      type="datetime-local"
-                      value={interviewScheduledAt}
-                      onChange={(e) => setInterviewScheduledAt(e.target.value)}
-                      className="p-2 border border-indigo-200 rounded-lg text-xs text-slate-700 bg-white"
-                    />
-                    <div className="grid grid-cols-2 gap-1">
-                      <input
-                        type="number"
-                        min={15}
-                        step={15}
-                        value={interviewDuration}
-                        onChange={(e) => setInterviewDuration(e.target.value)}
-                        className="p-2 border border-indigo-200 rounded-lg text-xs text-slate-700 bg-white"
-                        placeholder="Duration"
-                      />
-                      <input
-                        value={interviewLocation}
-                        onChange={(e) => setInterviewLocation(e.target.value)}
-                        className="p-2 border border-indigo-200 rounded-lg text-xs text-slate-700 bg-white"
-                        placeholder="Location/link"
-                      />
-                    </div>
-                    <input
-                      value={interviewNotes}
-                      onChange={(e) => setInterviewNotes(e.target.value)}
-                      className="p-2 border border-indigo-200 rounded-lg text-xs text-slate-700 bg-white"
-                      placeholder="Notes"
-                    />
-                  </div>
-                  <div className="flex gap-2">
+                <div className="rounded-lg border border-slate-200 bg-white p-2">
+                  <div className="flex items-center justify-between">
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-navy-900">Interview scheduling</p>
                     <button
                       type="button"
-                      onClick={() => handleScheduleInterview('PROPOSED')}
-                      disabled={interviewBusy || !selectedJobId}
-                      className="px-2 py-1 rounded-md border border-indigo-200 bg-white text-xs font-semibold text-indigo-800 hover:bg-indigo-100 disabled:opacity-60"
+                      onClick={() => {
+                        setEditingInterview(null);
+                        setShowScheduleInterviewModal(true);
+                      }}
+                      disabled={!selectedJobId}
+                      className="px-2 py-1 rounded-md border border-slate-200 bg-white text-xs font-semibold text-slate-700 disabled:opacity-60"
                     >
-                      Propose
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleScheduleInterview('CONFIRMED')}
-                      disabled={interviewBusy || !selectedJobId}
-                      className="px-2 py-1 rounded-md border border-indigo-200 bg-white text-xs font-semibold text-indigo-800 hover:bg-indigo-100 disabled:opacity-60"
-                    >
-                      Confirm
+                      Schedule interview
                     </button>
                   </div>
-                  {Boolean(interviewEvent?.scheduledAt) && (
-                    <p className="text-[11px] text-indigo-700 mt-1">
-                      Scheduled: {interviewScheduledText}
-                    </p>
-                  )}
                 </div>
               </div>
             )}
@@ -2045,6 +2228,29 @@ export default function CandidateProfilePage() {
             </div>
           </div>
         </div>
+      )}
+
+      {candidate?.id && (selectedJobId || jobIdFromContext) && (
+        <ScheduleInterviewModal
+          isOpen={showScheduleInterviewModal}
+          onClose={() => setShowScheduleInterviewModal(false)}
+          jobId={(selectedJobId || jobIdFromContext) as string}
+          candidateId={candidate.id}
+          candidateName={candidateName}
+          existingInterview={editingInterview}
+          onSaved={(iv) => {
+            setInterviewEvents((prev) => {
+              const next = prev.filter((x) => x.id !== iv.id);
+              next.push(iv);
+              return next.sort((a, b) => {
+                const aTime = new Date((a.scheduledAt as any)?.toDate ? (a.scheduledAt as any).toDate() : (a.scheduledAt as any) || 0).getTime();
+                const bTime = new Date((b.scheduledAt as any)?.toDate ? (b.scheduledAt as any).toDate() : (b.scheduledAt as any) || 0).getTime();
+                return aTime - bTime;
+              });
+            });
+            setInterviewEvent(iv);
+          }}
+        />
       )}
 
       {/* Resume Modal */}
@@ -2246,7 +2452,7 @@ export default function CandidateProfilePage() {
                         setIsResumeLoading(false);
                       }
                     }}
-                    className="mt-3 text-sm text-blue-600 hover:text-blue-800 underline"
+                    className="mt-3 text-sm text-sky-800 hover:text-navy-900 underline"
                   >
                     Try Preview Again
                   </button>
@@ -2256,10 +2462,10 @@ export default function CandidateProfilePage() {
             </div>
 
             {/* Modal Footer */}
-            <div className="p-4 border-t bg-gray-50">
+            <div className="p-4 border-t bg-slate-50">
               <div className="flex justify-between items-center">
-                <p className="text-sm text-gray-600">
-                  💡 Tip: Use zoom controls above or pinch-to-zoom to view the resume in detail
+                <p className="text-sm text-slate-600">
+                  Tip: Use zoom controls above or pinch-to-zoom to view the resume in detail
                 </p>
                 <button
                   onClick={() => {
@@ -2269,7 +2475,7 @@ export default function CandidateProfilePage() {
                     setZoomLevel(100); // Reset zoom when closing
                     setIsResumeLoading(false);
                   }}
-                  className="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+                  className="px-6 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition-colors"
                 >
                   Close
                 </button>

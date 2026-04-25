@@ -8,10 +8,11 @@ import { Loader2, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import SearchableDropdown from '@/components/SearchableDropdown';
 import { LOCATIONS } from '@/lib/profile-data';
+import { recruiterBtnPrimary, recruiterBtnSecondary } from "@/lib/recruiter-ui";
 
 export default function EditJobPage({ params }: { params: { id: string } }) {
   const router = useRouter();
-  const { user, profile } = useFirebaseAuth();
+  const { user, profile, loading: authLoading } = useFirebaseAuth();
   const toast = useToast();
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -27,13 +28,13 @@ export default function EditJobPage({ params }: { params: { id: string } }) {
   const [salaryMax, setSalaryMax] = useState('');
   const [tags, setTags] = useState('');
 
-  // Redirect if not logged in or not an employer/recruiter
-  if (!user || !profile || (profile.role !== 'EMPLOYER' && profile.role !== 'RECRUITER')) {
-    router.push('/auth/login');
-    return null;
-  }
-
   useEffect(() => {
+    if (authLoading) return;
+    if (!user || !profile || (profile.role !== 'EMPLOYER' && profile.role !== 'RECRUITER')) {
+      router.replace('/auth/login');
+      return;
+    }
+
     const fetchJob = async () => {
       if (!params.id) return;
       
@@ -84,8 +85,8 @@ export default function EditJobPage({ params }: { params: { id: string } }) {
       }
     };
 
-    fetchJob();
-  }, [params.id, user, profile?.companyId, profile?.role]);
+    void fetchJob();
+  }, [authLoading, user, profile, params.id, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -128,12 +129,34 @@ export default function EditJobPage({ params }: { params: { id: string } }) {
     }
   };
 
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-navy-800" />
+          <p className="text-slate-600">Loading…</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user || !profile || (profile.role !== 'EMPLOYER' && profile.role !== 'RECRUITER')) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-navy-800" />
+          <p className="text-slate-600">Redirecting…</p>
+        </div>
+      </div>
+    );
+  }
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-blue-600" />
-          <p className="text-gray-600">Loading job details...</p>
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-navy-800" />
+          <p className="text-slate-600">Loading job details...</p>
         </div>
       </div>
     );
@@ -181,17 +204,17 @@ export default function EditJobPage({ params }: { params: { id: string } }) {
         </div>
       </header>
 
-      <div className="w-full md:max-w-4xl md:mx-auto px-4 sm:px-6 md:p-6 py-4 sm:py-6 min-w-0">
+      <div className="w-full md:max-w-4xl md:mx-auto px-4 sm:px-6 md:p-6 py-4 sm:py-6 min-w-0 pb-28 sm:pb-32">
         <div className="mb-4 sm:mb-6">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2 break-words">Edit Job</h1>
-          <p className="text-sm sm:text-base text-gray-600 break-words">Update your job posting details</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-2 break-words">Edit Job</h1>
+          <p className="text-sm sm:text-base text-slate-600 break-words">Update your job posting details</p>
         </div>
 
         <div className="w-full min-w-0 bg-white rounded-none sm:rounded-xl shadow-lg p-4 sm:p-6 md:p-8">
           <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
             {/* Job Title */}
             <div>
-              <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="title" className="block text-sm font-medium text-slate-700 mb-2">
                 Job Title *
               </label>
               <input
@@ -199,7 +222,7 @@ export default function EditJobPage({ params }: { params: { id: string } }) {
                 id="title"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[44px]"
+                className="w-full px-4 py-3 text-base border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-transparent min-h-[44px]"
                 placeholder="e.g., Senior Software Engineer"
                 required
               />
@@ -207,7 +230,7 @@ export default function EditJobPage({ params }: { params: { id: string } }) {
 
             {/* Job Description */}
             <div>
-              <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="description" className="block text-sm font-medium text-slate-700 mb-2">
                 Job Description *
               </label>
               <textarea
@@ -215,7 +238,7 @@ export default function EditJobPage({ params }: { params: { id: string } }) {
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={6}
-                className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none min-h-[120px]"
+                className="w-full px-4 py-3 text-base border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-transparent resize-none min-h-[120px]"
                 placeholder="Describe the role, responsibilities, and requirements..."
                 required
               />
@@ -223,7 +246,7 @@ export default function EditJobPage({ params }: { params: { id: string } }) {
 
             {/* Location */}
             <div>
-              <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="location" className="block text-sm font-medium text-slate-700 mb-2">
                 Location
               </label>
               <SearchableDropdown
@@ -238,14 +261,14 @@ export default function EditJobPage({ params }: { params: { id: string } }) {
             {/* Job Type and Work Mode */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label htmlFor="employment" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="employment" className="block text-sm font-medium text-slate-700 mb-2">
                   Job Type
                 </label>
                 <select
                   id="employment"
                   value={employment}
                   onChange={(e) => setEmployment(e.target.value)}
-                  className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[44px]"
+                  className="w-full px-4 py-3 text-base border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-transparent min-h-[44px]"
                 >
                   <option value="FULL_TIME">Full-time</option>
                   <option value="PART_TIME">Part-time</option>
@@ -254,14 +277,14 @@ export default function EditJobPage({ params }: { params: { id: string } }) {
                 </select>
               </div>
               <div>
-                <label htmlFor="workMode" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="workMode" className="block text-sm font-medium text-slate-700 mb-2">
                   Work Mode
                 </label>
                 <select
                   id="workMode"
                   value={workMode}
                   onChange={(e) => setWorkMode(e.target.value)}
-                  className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[44px]"
+                  className="w-full px-4 py-3 text-base border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-transparent min-h-[44px]"
                 >
                   <option value="IN_PERSON">In-person</option>
                   <option value="HYBRID">Hybrid</option>
@@ -273,7 +296,7 @@ export default function EditJobPage({ params }: { params: { id: string } }) {
             {/* Salary Range */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label htmlFor="salaryMin" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="salaryMin" className="block text-sm font-medium text-slate-700 mb-2">
                   Minimum Salary ($)
                 </label>
                 <input
@@ -281,13 +304,13 @@ export default function EditJobPage({ params }: { params: { id: string } }) {
                   id="salaryMin"
                   value={salaryMin}
                   onChange={(e) => setSalaryMin(e.target.value)}
-                  className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[44px]"
+                  className="w-full px-4 py-3 text-base border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-transparent min-h-[44px]"
                   placeholder="e.g., 80000"
                   min="0"
                 />
               </div>
               <div>
-                <label htmlFor="salaryMax" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="salaryMax" className="block text-sm font-medium text-slate-700 mb-2">
                   Maximum Salary ($)
                 </label>
                 <input
@@ -295,7 +318,7 @@ export default function EditJobPage({ params }: { params: { id: string } }) {
                   id="salaryMax"
                   value={salaryMax}
                   onChange={(e) => setSalaryMax(e.target.value)}
-                  className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[44px]"
+                  className="w-full px-4 py-3 text-base border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-transparent min-h-[44px]"
                   placeholder="e.g., 120000"
                   min="0"
                 />
@@ -304,7 +327,7 @@ export default function EditJobPage({ params }: { params: { id: string } }) {
 
             {/* Tags */}
             <div>
-              <label htmlFor="tags" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="tags" className="block text-sm font-medium text-slate-700 mb-2">
                 Tags (comma-separated)
               </label>
               <input
@@ -312,41 +335,45 @@ export default function EditJobPage({ params }: { params: { id: string } }) {
                 id="tags"
                 value={tags}
                 onChange={(e) => setTags(e.target.value)}
-                className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[44px]"
+                className="w-full px-4 py-3 text-base border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-transparent min-h-[44px]"
                 placeholder="e.g., React, TypeScript, Node.js"
               />
             </div>
 
             {/* Error Message */}
             {error && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                <p className="text-red-600">{error}</p>
+              <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3">
+                <p className="text-sm font-medium text-rose-900">{error}</p>
               </div>
             )}
 
-            {/* Submit Button */}
-            <div className="flex gap-4 pt-4">
-              <button
-                type="button"
-                onClick={() => router.push('/home/employer')}
-                className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={isSaving || !title.trim() || !description.trim()}
-                className="flex-1 px-4 sm:px-6 py-2.5 sm:py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center min-h-[44px] text-sm sm:text-base w-full sm:w-auto"
-              >
-                {isSaving ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    Updating Job...
-                  </>
-                ) : (
-                  'Update Job'
-                )}
-              </button>
+            <div
+              className="fixed bottom-0 left-0 right-0 z-40 border-t border-slate-200 bg-white/95 backdrop-blur-sm shadow-[0_-8px_30px_rgba(15,23,42,0.06)]"
+              style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }}
+            >
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end sm:items-center sm:gap-3">
+                <button
+                  type="button"
+                  onClick={() => router.push("/home/employer")}
+                  className={`${recruiterBtnSecondary} w-full justify-center sm:w-auto px-6 py-3`}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSaving || !title.trim() || !description.trim()}
+                  className={`${recruiterBtnPrimary} w-full justify-center sm:w-auto min-h-[44px] px-6 sm:px-8`}
+                >
+                  {isSaving ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Updating job…
+                    </>
+                  ) : (
+                    "Update job"
+                  )}
+                </button>
+              </div>
             </div>
           </form>
         </div>

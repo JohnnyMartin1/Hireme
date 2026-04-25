@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { Loader2, Plus, Users } from "lucide-react";
 import { useFirebaseAuth } from "@/components/FirebaseAuthProvider";
 import { createTalentPool, fetchTalentPools, type TalentPool } from "@/lib/talent-pools-client";
-import { getEmployerPoolDetailUrl, getDashboardUrl } from "@/lib/navigation";
+import { getEmployerPoolDetailUrl } from "@/lib/navigation";
 import { useToast } from "@/components/NotificationSystem";
 
 function formatUpdated(p: TalentPool): string {
@@ -94,11 +94,8 @@ export default function EmployerPoolsPage() {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-sky-50 to-slate-50 pb-12">
+    <main className="min-h-screen bg-slate-50 pb-12">
       <div className="max-w-5xl mx-auto px-4 pt-10 sm:pt-14">
-        <Link href={getDashboardUrl()} className="text-sm font-semibold text-sky-800 hover:underline mb-6 inline-block">
-          ← Dashboard
-        </Link>
         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-8">
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold text-navy-900">Talent pools</h1>

@@ -10,6 +10,7 @@ import { auth } from '@/lib/firebase';
 import SearchableDropdown from '@/components/SearchableDropdown';
 import MultiSelectDropdown from '@/components/MultiSelectDropdown';
 import { LOCATIONS, CAREER_INTERESTS, INDUSTRIES } from '@/lib/profile-data';
+import { recruiterBtnPrimary } from "@/lib/recruiter-ui";
 
 /**
  * Job posting wizard. Simplified to a single form for creating a job.
@@ -256,7 +257,7 @@ export default function NewJobPage() {
   };
 
   return (
-    <main style={{background: 'linear-gradient(180deg, #E6F0FF 0%, #F8FAFC 100%)'}} className="min-h-screen mobile-safe-top mobile-safe-bottom overflow-x-hidden w-full">
+    <main className="min-h-screen bg-slate-50 mobile-safe-top mobile-safe-bottom overflow-x-hidden w-full">
       {/* Header */}
       <header className="sticky top-0 bg-white shadow-sm z-50 border-b border-slate-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
@@ -280,11 +281,11 @@ export default function NewJobPage() {
         </div>
       </header>
 
-      <div className="w-full md:max-w-4xl md:mx-auto px-4 sm:px-6 md:px-6 lg:px-8 pb-4 sm:pb-6 md:pb-10 min-w-0">
+      <div className="w-full md:max-w-4xl md:mx-auto px-4 sm:px-6 md:px-6 lg:px-8 pb-28 sm:pb-32 md:pb-36 min-w-0">
 
         {/* Page Header */}
         <section className="mb-4 sm:mb-6 md:mb-10 px-2 sm:px-0">
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-navy-800 break-words">Post a Job</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-navy-900 break-words">Post a Job</h1>
         </section>
 
         <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4 md:space-y-6 lg:space-y-8">
@@ -298,7 +299,7 @@ export default function NewJobPage() {
                   type="text" 
                   value={title} 
                   onChange={(e) => setTitle(e.target.value)} 
-                  className="form-input w-full px-4 py-3 text-base border border-gray-300 rounded-lg bg-white focus:outline-none focus:border-navy-800 focus:ring-2 sm:focus:ring-4 focus:ring-navy/10 transition-all duration-200 min-h-[44px]" 
+                  className="form-input w-full px-4 py-3 text-base border border-slate-300 rounded-lg bg-white focus:outline-none focus:border-navy-800 focus:ring-2 focus:ring-navy/10 transition-all duration-200 min-h-[44px]" 
                   placeholder="e.g. Software Engineer" 
                   required 
                 />
@@ -311,7 +312,7 @@ export default function NewJobPage() {
                   id="description" 
                   value={description} 
                   onChange={(e) => setDescription(e.target.value)} 
-                  className="form-input w-full px-4 py-3 text-base border border-gray-300 rounded-lg bg-white focus:outline-none focus:border-navy-800 focus:ring-2 sm:focus:ring-4 focus:ring-navy/10 transition-all duration-200 resize-none min-h-[120px]" 
+                  className="form-input w-full px-4 py-3 text-base border border-slate-300 rounded-lg bg-white focus:outline-none focus:border-navy-800 focus:ring-2 focus:ring-navy/10 transition-all duration-200 resize-none min-h-[120px]" 
                   rows={5}
                   placeholder="Describe the role, responsibilities, and what you're looking for..." 
                   required 
@@ -380,7 +381,7 @@ export default function NewJobPage() {
                     id="employment" 
                     value={employment} 
                     onChange={(e) => setEmployment(e.target.value)} 
-                    className="form-input w-full px-4 py-3 border border-gray-300 rounded-lg bg-white focus:outline-none focus:border-navy-800 focus:ring-4 focus:ring-navy/10 transition-all duration-200 appearance-none" 
+                    className="form-input w-full px-4 py-3 border border-slate-300 rounded-lg bg-white focus:outline-none focus:border-navy-800 focus:ring-2 focus:ring-navy/10 transition-all duration-200 appearance-none" 
                     required
                   >
                     <option value="FULL_TIME">Full-time</option>
@@ -389,7 +390,7 @@ export default function NewJobPage() {
                     <option value="INTERNSHIP">Internship</option>
                   </select>
                   <label htmlFor="employment" className="absolute left-4 -top-2 text-sm text-navy-800 bg-white px-1">Job Type *</label>
-                  <i className="fa-solid fa-chevron-down absolute right-4 top-4 text-gray-400 pointer-events-none"></i>
+                  <i className="fa-solid fa-chevron-down absolute right-4 top-4 text-slate-400 pointer-events-none"></i>
                 </div>
 
                 <div className="relative">
@@ -397,7 +398,7 @@ export default function NewJobPage() {
                     id="workMode" 
                     value={workMode} 
                     onChange={(e) => setWorkMode(e.target.value)} 
-                    className="form-input w-full px-4 py-3 border border-gray-300 rounded-lg bg-white focus:outline-none focus:border-navy-800 focus:ring-4 focus:ring-navy/10 transition-all duration-200 appearance-none" 
+                    className="form-input w-full px-4 py-3 border border-slate-300 rounded-lg bg-white focus:outline-none focus:border-navy-800 focus:ring-2 focus:ring-navy/10 transition-all duration-200 appearance-none" 
                     required
                   >
                     <option value="IN_PERSON">In-person</option>
@@ -405,7 +406,7 @@ export default function NewJobPage() {
                     <option value="REMOTE">Remote</option>
                   </select>
                   <label htmlFor="workMode" className="absolute left-4 -top-2 text-sm text-navy-800 bg-white px-1">Work Mode *</label>
-                  <i className="fa-solid fa-chevron-down absolute right-4 top-4 text-gray-400 pointer-events-none"></i>
+                  <i className="fa-solid fa-chevron-down absolute right-4 top-4 text-slate-400 pointer-events-none"></i>
                 </div>
               </div>
 
@@ -417,12 +418,12 @@ export default function NewJobPage() {
                     type="number" 
                     value={salaryMin} 
                     onChange={(e) => setSalaryMin(e.target.value)} 
-                    className="form-input w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg bg-white focus:outline-none focus:border-navy-800 focus:ring-4 focus:ring-navy/10 transition-all duration-200" 
+                    className="form-input w-full pl-12 pr-4 py-3 border border-slate-300 rounded-lg bg-white focus:outline-none focus:border-navy-800 focus:ring-2 focus:ring-navy/10 transition-all duration-200" 
                     placeholder="50000" 
                     min="0" 
                   />
-                  <span className="absolute left-4 top-3 text-gray-500 pointer-events-none">$</span>
-                  <label htmlFor="salaryMin" className="absolute left-12 -top-2 text-sm text-gray-600 bg-white px-1">Salary Min (optional)</label>
+                  <span className="absolute left-4 top-3 text-slate-500 pointer-events-none">$</span>
+                  <label htmlFor="salaryMin" className="absolute left-12 -top-2 text-sm text-slate-600 bg-white px-1">Salary Min (optional)</label>
                 </div>
 
                 <div className="relative">
@@ -431,12 +432,12 @@ export default function NewJobPage() {
                     type="number" 
                     value={salaryMax} 
                     onChange={(e) => setSalaryMax(e.target.value)} 
-                    className="form-input w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg bg-white focus:outline-none focus:border-navy-800 focus:ring-4 focus:ring-navy/10 transition-all duration-200" 
+                    className="form-input w-full pl-12 pr-4 py-3 border border-slate-300 rounded-lg bg-white focus:outline-none focus:border-navy-800 focus:ring-2 focus:ring-navy/10 transition-all duration-200" 
                     placeholder="80000" 
                     min="0" 
                   />
-                  <span className="absolute left-4 top-3 text-gray-500 pointer-events-none">$</span>
-                  <label htmlFor="salaryMax" className="absolute left-12 -top-2 text-sm text-gray-600 bg-white px-1">Salary Max (optional)</label>
+                  <span className="absolute left-4 top-3 text-slate-500 pointer-events-none">$</span>
+                  <label htmlFor="salaryMax" className="absolute left-12 -top-2 text-sm text-slate-600 bg-white px-1">Salary Max (optional)</label>
                 </div>
               </div>
 
@@ -447,10 +448,10 @@ export default function NewJobPage() {
                   type="text" 
                   value={tags} 
                   onChange={(e) => setTags(e.target.value)} 
-                  className="form-input w-full px-4 py-3 text-base border border-gray-300 rounded-lg bg-white focus:outline-none focus:border-navy-800 focus:ring-2 sm:focus:ring-4 focus:ring-navy/10 transition-all duration-200 min-h-[44px]" 
+                  className="form-input w-full px-4 py-3 text-base border border-slate-300 rounded-lg bg-white focus:outline-none focus:border-navy-800 focus:ring-2 focus:ring-navy/10 transition-all duration-200 min-h-[44px]" 
                   placeholder="Enter tags separated by commas (e.g. React, JavaScript, Remote)" 
                 />
-                <label htmlFor="tags" className="absolute left-4 -top-2 text-sm text-gray-600 bg-white px-1">Tags</label>
+                <label htmlFor="tags" className="absolute left-4 -top-2 text-sm text-slate-600 bg-white px-1">Tags</label>
               </div>
 
               <div className="relative">
@@ -471,17 +472,17 @@ export default function NewJobPage() {
                     type="text"
                     value={functionalArea}
                     onChange={(e) => setFunctionalArea(e.target.value)}
-                    className="form-input w-full px-4 py-3 text-base border border-gray-300 rounded-lg bg-white focus:outline-none focus:border-navy-800 focus:ring-2 sm:focus:ring-4 focus:ring-navy/10 transition-all duration-200 min-h-[44px]"
+                    className="form-input w-full px-4 py-3 text-base border border-slate-300 rounded-lg bg-white focus:outline-none focus:border-navy-800 focus:ring-2 focus:ring-navy/10 transition-all duration-200 min-h-[44px]"
                     placeholder="e.g. Financial Analysis, Product Design"
                   />
-                  <label htmlFor="functionalArea" className="absolute left-4 -top-2 text-sm text-gray-600 bg-white px-1">Functional Area / Role Track</label>
+                  <label htmlFor="functionalArea" className="absolute left-4 -top-2 text-sm text-slate-600 bg-white px-1">Functional Area / Role Track</label>
                 </div>
                 <div className="relative">
                   <select
                     id="experienceLevel"
                     value={experienceLevel}
                     onChange={(e) => setExperienceLevel(e.target.value)}
-                    className="form-input w-full px-4 py-3 border border-gray-300 rounded-lg bg-white focus:outline-none focus:border-navy-800 focus:ring-4 focus:ring-navy/10 transition-all duration-200 appearance-none"
+                    className="form-input w-full px-4 py-3 border border-slate-300 rounded-lg bg-white focus:outline-none focus:border-navy-800 focus:ring-2 focus:ring-navy/10 transition-all duration-200 appearance-none"
                   >
                     <option value="">Any experience level</option>
                     <option value="intern">Intern</option>
@@ -490,8 +491,8 @@ export default function NewJobPage() {
                     <option value="senior">Senior</option>
                     <option value="leadership">Leadership</option>
                   </select>
-                  <label htmlFor="experienceLevel" className="absolute left-4 -top-2 text-sm text-gray-600 bg-white px-1">Experience Level</label>
-                  <i className="fa-solid fa-chevron-down absolute right-4 top-4 text-gray-400 pointer-events-none"></i>
+                  <label htmlFor="experienceLevel" className="absolute left-4 -top-2 text-sm text-slate-600 bg-white px-1">Experience Level</label>
+                  <i className="fa-solid fa-chevron-down absolute right-4 top-4 text-slate-400 pointer-events-none"></i>
                 </div>
               </div>
             </div>
@@ -500,7 +501,7 @@ export default function NewJobPage() {
           {/* Candidate Requirements Card */}
           <section className="w-full min-w-0 bg-white/90 backdrop-blur-sm p-4 sm:p-6 md:p-8 rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-slate-200 mb-3 sm:mb-0">
             <h3 className="text-base sm:text-lg md:text-xl font-bold text-navy-800 mb-2">Structured Matching Anchors</h3>
-            <p className="text-xs sm:text-sm text-gray-600 mb-4 sm:mb-6">Optional but high-value fields. AI suggests defaults from your paragraph, then you confirm/edit for matching accuracy.</p>
+            <p className="text-xs sm:text-sm text-slate-600 mb-4 sm:mb-6">Optional but high-value fields. AI suggests defaults from your paragraph, then you confirm/edit for matching accuracy.</p>
 
             <div className="space-y-6">
               {/* Minimum GPA */}
@@ -509,7 +510,7 @@ export default function NewJobPage() {
                   id="requiredGpa" 
                   value={requiredGpa} 
                   onChange={(e) => setRequiredGpa(e.target.value)} 
-                  className="form-input w-full px-4 py-3 border border-gray-300 rounded-lg bg-white focus:outline-none focus:border-navy-800 focus:ring-4 focus:ring-navy/10 transition-all duration-200 appearance-none"
+                  className="form-input w-full px-4 py-3 border border-slate-300 rounded-lg bg-white focus:outline-none focus:border-navy-800 focus:ring-2 focus:ring-navy/10 transition-all duration-200 appearance-none"
                 >
                   <option value="">No GPA requirement</option>
                   <option value="2.5">2.5+</option>
@@ -517,8 +518,8 @@ export default function NewJobPage() {
                   <option value="3.5">3.5+</option>
                   <option value="3.8">3.8+</option>
                 </select>
-                <label htmlFor="requiredGpa" className="absolute left-4 -top-2 text-sm text-gray-600 bg-white px-1">Minimum GPA</label>
-                <i className="fa-solid fa-chevron-down absolute right-4 top-4 text-gray-400 pointer-events-none"></i>
+                <label htmlFor="requiredGpa" className="absolute left-4 -top-2 text-sm text-slate-600 bg-white px-1">Minimum GPA</label>
+                <i className="fa-solid fa-chevron-down absolute right-4 top-4 text-slate-400 pointer-events-none"></i>
               </div>
 
               {/* Required Career Interests */}
@@ -532,7 +533,7 @@ export default function NewJobPage() {
                   allowCustom={false}
                   maxSelections={5}
                 />
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-slate-500 mt-1">
                   Select up to 5 career interests that candidates should have
                 </p>
               </div>
@@ -543,10 +544,10 @@ export default function NewJobPage() {
                   type="text"
                   value={requiredSkillsStructured}
                   onChange={(e) => setRequiredSkillsStructured(e.target.value)}
-                  className="form-input w-full px-4 py-3 text-base border border-gray-300 rounded-lg bg-white focus:outline-none focus:border-navy-800 focus:ring-2 sm:focus:ring-4 focus:ring-navy/10 transition-all duration-200 min-h-[44px]"
+                  className="form-input w-full px-4 py-3 text-base border border-slate-300 rounded-lg bg-white focus:outline-none focus:border-navy-800 focus:ring-2 focus:ring-navy/10 transition-all duration-200 min-h-[44px]"
                   placeholder="e.g. valuation, excel, financial modeling"
                 />
-                <label htmlFor="requiredSkillsStructured" className="absolute left-4 -top-2 text-sm text-gray-600 bg-white px-1">Required Skills</label>
+                <label htmlFor="requiredSkillsStructured" className="absolute left-4 -top-2 text-sm text-slate-600 bg-white px-1">Required Skills</label>
               </div>
 
               <div className="relative">
@@ -555,10 +556,10 @@ export default function NewJobPage() {
                   type="text"
                   value={preferredSkillsStructured}
                   onChange={(e) => setPreferredSkillsStructured(e.target.value)}
-                  className="form-input w-full px-4 py-3 text-base border border-gray-300 rounded-lg bg-white focus:outline-none focus:border-navy-800 focus:ring-2 sm:focus:ring-4 focus:ring-navy/10 transition-all duration-200 min-h-[44px]"
+                  className="form-input w-full px-4 py-3 text-base border border-slate-300 rounded-lg bg-white focus:outline-none focus:border-navy-800 focus:ring-2 focus:ring-navy/10 transition-all duration-200 min-h-[44px]"
                   placeholder="e.g. SQL, Tableau, Python"
                 />
-                <label htmlFor="preferredSkillsStructured" className="absolute left-4 -top-2 text-sm text-gray-600 bg-white px-1">Preferred Skills</label>
+                <label htmlFor="preferredSkillsStructured" className="absolute left-4 -top-2 text-sm text-slate-600 bg-white px-1">Preferred Skills</label>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -568,10 +569,10 @@ export default function NewJobPage() {
                     type="text"
                     value={requiredMajors}
                     onChange={(e) => setRequiredMajors(e.target.value)}
-                    className="form-input w-full px-4 py-3 text-base border border-gray-300 rounded-lg bg-white focus:outline-none focus:border-navy-800 focus:ring-2 sm:focus:ring-4 focus:ring-navy/10 transition-all duration-200 min-h-[44px]"
+                    className="form-input w-full px-4 py-3 text-base border border-slate-300 rounded-lg bg-white focus:outline-none focus:border-navy-800 focus:ring-2 focus:ring-navy/10 transition-all duration-200 min-h-[44px]"
                     placeholder="e.g. Finance, Accounting"
                   />
-                  <label htmlFor="requiredMajors" className="absolute left-4 -top-2 text-sm text-gray-600 bg-white px-1">Required Majors</label>
+                  <label htmlFor="requiredMajors" className="absolute left-4 -top-2 text-sm text-slate-600 bg-white px-1">Required Majors</label>
                 </div>
                 <div className="relative">
                   <input
@@ -579,10 +580,10 @@ export default function NewJobPage() {
                     type="text"
                     value={preferredMajors}
                     onChange={(e) => setPreferredMajors(e.target.value)}
-                    className="form-input w-full px-4 py-3 text-base border border-gray-300 rounded-lg bg-white focus:outline-none focus:border-navy-800 focus:ring-2 sm:focus:ring-4 focus:ring-navy/10 transition-all duration-200 min-h-[44px]"
+                    className="form-input w-full px-4 py-3 text-base border border-slate-300 rounded-lg bg-white focus:outline-none focus:border-navy-800 focus:ring-2 focus:ring-navy/10 transition-all duration-200 min-h-[44px]"
                     placeholder="e.g. Economics, Math"
                   />
-                  <label htmlFor="preferredMajors" className="absolute left-4 -top-2 text-sm text-gray-600 bg-white px-1">Preferred Majors</label>
+                  <label htmlFor="preferredMajors" className="absolute left-4 -top-2 text-sm text-slate-600 bg-white px-1">Preferred Majors</label>
                 </div>
               </div>
 
@@ -595,14 +596,14 @@ export default function NewJobPage() {
                       if (!e.target.value) setSponsorshipAccepted(null);
                       else setSponsorshipAccepted(e.target.value === "yes");
                     }}
-                    className="form-input w-full px-4 py-3 border border-gray-300 rounded-lg bg-white focus:outline-none focus:border-navy-800 focus:ring-4 focus:ring-navy/10 transition-all duration-200 appearance-none"
+                    className="form-input w-full px-4 py-3 border border-slate-300 rounded-lg bg-white focus:outline-none focus:border-navy-800 focus:ring-2 focus:ring-navy/10 transition-all duration-200 appearance-none"
                   >
                     <option value="">Sponsorship not specified</option>
                     <option value="yes">Sponsorship accepted</option>
                     <option value="no">Sponsorship not accepted</option>
                   </select>
-                  <label htmlFor="sponsorshipAccepted" className="absolute left-4 -top-2 text-sm text-gray-600 bg-white px-1">Sponsorship Policy</label>
-                  <i className="fa-solid fa-chevron-down absolute right-4 top-4 text-gray-400 pointer-events-none"></i>
+                  <label htmlFor="sponsorshipAccepted" className="absolute left-4 -top-2 text-sm text-slate-600 bg-white px-1">Sponsorship Policy</label>
+                  <i className="fa-solid fa-chevron-down absolute right-4 top-4 text-slate-400 pointer-events-none"></i>
                 </div>
                 <div className="relative">
                   <select
@@ -612,30 +613,34 @@ export default function NewJobPage() {
                       if (!e.target.value) setRelocationAccepted(null);
                       else setRelocationAccepted(e.target.value === "yes");
                     }}
-                    className="form-input w-full px-4 py-3 border border-gray-300 rounded-lg bg-white focus:outline-none focus:border-navy-800 focus:ring-4 focus:ring-navy/10 transition-all duration-200 appearance-none"
+                    className="form-input w-full px-4 py-3 border border-slate-300 rounded-lg bg-white focus:outline-none focus:border-navy-800 focus:ring-2 focus:ring-navy/10 transition-all duration-200 appearance-none"
                   >
                     <option value="">Relocation not specified</option>
                     <option value="yes">Relocation accepted</option>
                     <option value="no">Relocation not accepted</option>
                   </select>
-                  <label htmlFor="relocationAccepted" className="absolute left-4 -top-2 text-sm text-gray-600 bg-white px-1">Relocation Policy</label>
-                  <i className="fa-solid fa-chevron-down absolute right-4 top-4 text-gray-400 pointer-events-none"></i>
+                  <label htmlFor="relocationAccepted" className="absolute left-4 -top-2 text-sm text-slate-600 bg-white px-1">Relocation Policy</label>
+                  <i className="fa-solid fa-chevron-down absolute right-4 top-4 text-slate-400 pointer-events-none"></i>
                 </div>
               </div>
             </div>
           </section>
 
-          {/* Form Actions */}
-          <section className="pt-6">
-            <button 
-              type="submit" 
-              disabled={loading} 
-              className="bg-navy-800 text-white font-semibold py-2.5 sm:py-3 px-4 sm:px-6 md:px-8 rounded-lg hover:bg-blue-900 hover:shadow-md transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 min-h-[44px] w-full sm:w-auto text-sm sm:text-base"
-            >
-              <span>{loading ? 'Posting...' : 'Post Job'}</span>
-              <i className={`fa-solid ${loading ? 'fa-spinner animate-spin' : 'fa-plus'}`}></i>
-            </button>
-          </section>
+          <div
+            className="fixed bottom-0 left-0 right-0 z-40 border-t border-slate-200 bg-white/95 backdrop-blur-sm shadow-[0_-8px_30px_rgba(15,23,42,0.06)]"
+            style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }}
+          >
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex justify-end">
+              <button
+                type="submit"
+                disabled={loading}
+                className={`${recruiterBtnPrimary} min-h-[44px] px-6 sm:px-8 py-2.5 sm:py-3`}
+              >
+                <span>{loading ? "Posting…" : "Post job"}</span>
+                <i className={`fa-solid ${loading ? "fa-spinner animate-spin" : "fa-plus"}`} />
+              </button>
+            </div>
+          </div>
         </form>
       </div>
     </main>

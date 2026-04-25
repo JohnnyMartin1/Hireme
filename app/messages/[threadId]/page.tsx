@@ -7,6 +7,7 @@ import { useEffect, useMemo, useState, useRef } from "react";
 import { User, MessageSquare, Send, ArrowLeft, Loader2, Star } from "lucide-react";
 import {
   getMessageThread,
+  getUserMessageThreads,
   getThreadMessages,
   sendMessage,
   getDocument,
@@ -21,37 +22,34 @@ import {
 import { postJobPipeline } from '@/lib/pipeline-client';
 import { canonicalPipelineEntryId } from '@/lib/pipeline-canonical';
 import {
-  deleteMessageTemplate,
   fetchJobInterviews,
   fetchJobSequences,
   fetchMessageTemplates,
   patchJobInterview,
   patchJobSequence,
-  patchMessageTemplate,
   upsertJobInterview,
   upsertJobSequence,
-  upsertMessageTemplate,
 } from '@/lib/communication-client';
 import {
   addDays,
   formatTemplatePreview,
   getSuggestedTemplateType,
   describeSequenceAssistantState,
-  SEQUENCE_ASSISTANT_MODE_LABEL,
   type InterviewEvent,
   type MessageTemplate,
   type OutreachSequence,
 } from '@/lib/communication-workflow';
-import { getCommunicationOperationalChips } from "@/lib/communication-status";
+import { getCommunicationOperationalChips, getRecruiterNextStep } from "@/lib/communication-status";
 import Link from 'next/link';
 import {
   getDashboardUrl,
-  getEmployerTemplatesUrl,
   getJobMatchesUrl,
+  getJobCompareUrl,
   getJobOverviewUrl,
   getJobPipelineUrl,
   getMessagesUrl,
-} from '@/lib/navigation';
+} from "@/lib/navigation";
+import { pipelineStageLabel, recruiterBadge } from "@/lib/recruiter-ui";
 import CompanyRatingModal from '@/components/CompanyRatingModal';
 import CompanyProfile from '@/components/CompanyProfile';
 
@@ -81,6 +79,17 @@ interface Thread {
   jobContext?: Record<string, unknown>;
 }
 
+interface ThreadListItem {
+  id: string;
+  candidateId: string | null;
+  candidateName: string;
+  candidateHeadline: string;
+  jobId?: string | null;
+  jobTitle?: string;
+  lastPreview: string;
+  lastMessageAt?: any;
+}
+
 export default function MessageThreadPage() {
   const params = useParams();
   const searchParams = useSearchParams();
@@ -101,8 +110,6 @@ export default function MessageThreadPage() {
   const [pipelineBusy, setPipelineBusy] = useState(false);
   const [templates, setTemplates] = useState<MessageTemplate[]>([]);
   const [selectedTemplateId, setSelectedTemplateId] = useState('');
-  const [templateSaving, setTemplateSaving] = useState(false);
-  const [templateName, setTemplateName] = useState('');
   const [sequence, setSequence] = useState<OutreachSequence | null>(null);
   const [sequenceBusy, setSequenceBusy] = useState(false);
   const [interviewEvent, setInterviewEvent] = useState<InterviewEvent | null>(null);
@@ -112,6 +119,9 @@ export default function MessageThreadPage() {
   const [interviewLocation, setInterviewLocation] = useState('');
   const [interviewNotes, setInterviewNotes] = useState('');
   const [showFollowUpSuggestion, setShowFollowUpSuggestion] = useState(false);
+  const [workflowNotice, setWorkflowNotice] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [threadList, setThreadList] = useState<ThreadListItem[]>([]);
+  const [threadListLoading, setThreadListLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const isRecruiterView = profile?.role === 'EMPLOYER' || profile?.role === 'RECRUITER';
   const candidateIdForPipeline = thread?.participantIds?.find((id) => id !== user?.uid) || null;
@@ -129,6 +139,69 @@ export default function MessageThreadPage() {
     if (profile?.role === "JOB_SEEKER") return "/messages/candidate";
     return jobIdForNav ? getMessagesUrl(jobIdForNav) : "/messages";
   }, [profile?.role, jobIdForNav]);
+
+  const toLocalDateTimeInput = (date: Date) => {
+    const pad = (n: number) => String(n).padStart(2, "0");
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  };
+
+  const safeDateInputValue = (value: Date | null) => {
+    if (!value) return "";
+    if (Number.isNaN(value.getTime())) return "";
+    return value.toISOString().slice(0, 10);
+  };
+
+  useEffect(() => {
+    const loadThreadList = async () => {
+      if (!user || !isRecruiterView) return;
+      setThreadListLoading(true);
+      try {
+        const { data: threadsData } = await getUserMessageThreads(user.uid);
+        const rows = await Promise.all(
+          ((threadsData || []) as any[]).map(async (t: any) => {
+            const candidateId = Array.isArray(t.participantIds)
+              ? (t.participantIds as string[]).find((id) => id !== user.uid) || null
+              : null;
+            let candidateName = "Candidate";
+            let candidateHeadline = "";
+            if (candidateId) {
+              const { data: c } = await getDocument("users", candidateId);
+              if (c) {
+                candidateName = `${(c as any).firstName || ""} ${(c as any).lastName || ""}`.trim() || "Candidate";
+                candidateHeadline = String((c as any).headline || "");
+              }
+            }
+            const { data: threadMessages } = await getThreadMessages(t.id);
+            const typed = (threadMessages || []) as Message[];
+            const last = typed.length > 0 ? typed[typed.length - 1] : null;
+            const threadJob = threadDataToJobDetails(t as unknown as Record<string, unknown>);
+            const mostRecentWithJob = [...typed].reverse().find((m) => m?.jobDetails?.jobId);
+            const jobId = threadJob?.jobId || mostRecentWithJob?.jobDetails?.jobId || null;
+            const jobTitle = threadJob?.jobTitle || mostRecentWithJob?.jobDetails?.jobTitle || "";
+            return {
+              id: String(t.id),
+              candidateId,
+              candidateName,
+              candidateHeadline,
+              jobId,
+              jobTitle,
+              lastPreview: String(last?.content || ""),
+              lastMessageAt: t.lastMessageAt || t.updatedAt || null,
+            } as ThreadListItem;
+          })
+        );
+        rows.sort((a, b) => {
+          const ad = a.lastMessageAt?.toDate ? a.lastMessageAt.toDate().getTime() : (a.lastMessageAt ? new Date(a.lastMessageAt).getTime() : 0);
+          const bd = b.lastMessageAt?.toDate ? b.lastMessageAt.toDate().getTime() : (b.lastMessageAt ? new Date(b.lastMessageAt).getTime() : 0);
+          return bd - ad;
+        });
+        setThreadList(rows);
+      } finally {
+        setThreadListLoading(false);
+      }
+    };
+    loadThreadList();
+  }, [user, isRecruiterView]);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -476,7 +549,7 @@ export default function MessageThreadPage() {
         token
       );
       if (!res.ok) {
-        setError(res.error || 'Failed to set follow-up date');
+        setWorkflowNotice({ type: "error", text: res.error || "Failed to set follow-up date." });
         return;
       }
       const canonicalId = canonicalPipelineEntryId(jobContext.jobId, candidateIdForPipeline);
@@ -487,6 +560,10 @@ export default function MessageThreadPage() {
         nextFollowUpAt: followUpDate,
         ...(res.entry || {}),
       }));
+      setWorkflowNotice({
+        type: "success",
+        text: rawDate ? "Follow-up date updated." : "Follow-up marked done.",
+      });
     } finally {
       setPipelineBusy(false);
     }
@@ -502,56 +579,6 @@ export default function MessageThreadPage() {
       const prefix = prev.trim().length > 0 ? `${prev.trim()}\n\n` : "";
       return `${prefix}${template.body}`.trim();
     });
-  };
-
-  const handleSaveTemplate = async () => {
-    if (!user || !newMessage.trim() || !templateName.trim()) return;
-    setTemplateSaving(true);
-    try {
-      const token = await user.getIdToken();
-      const stage = jobContext?.jobId ? currentStage : null;
-      const payload = selectedTemplate
-        ? {
-            id: selectedTemplate.id,
-            name: templateName.trim(),
-            body: newMessage.trim(),
-            type: selectedTemplate.type,
-            stage,
-          }
-        : {
-            name: templateName.trim(),
-            body: newMessage.trim(),
-            type: getSuggestedTemplateType(currentStage),
-            stage,
-          };
-      const res = selectedTemplate
-        ? await patchMessageTemplate(token, payload)
-        : await upsertMessageTemplate(token, payload);
-      if (!res.ok) return;
-      const refreshed = await fetchMessageTemplates(token);
-      if (refreshed.ok) {
-        setTemplates((refreshed.data.templates || []) as MessageTemplate[]);
-      }
-      setTemplateName('');
-    } finally {
-      setTemplateSaving(false);
-    }
-  };
-
-  const handleDeleteTemplate = async () => {
-    if (!user || !selectedTemplateId) return;
-    setTemplateSaving(true);
-    try {
-      const token = await user.getIdToken();
-      await deleteMessageTemplate(token, selectedTemplateId);
-      const refreshed = await fetchMessageTemplates(token);
-      if (refreshed.ok) {
-        setTemplates((refreshed.data.templates || []) as MessageTemplate[]);
-      }
-      setSelectedTemplateId('');
-    } finally {
-      setTemplateSaving(false);
-    }
   };
 
   const handleStartSequence = async () => {
@@ -575,8 +602,12 @@ export default function MessageThreadPage() {
           },
         ],
       });
-      if (!res.ok) return;
+      if (!res.ok) {
+        setWorkflowNotice({ type: "error", text: res.error || "Failed to start sequence." });
+        return;
+      }
       setSequence((res.data.sequence || null) as OutreachSequence | null);
+      setWorkflowNotice({ type: "success", text: "Sequence started." });
     } finally {
       setSequenceBusy(false);
     }
@@ -592,8 +623,12 @@ export default function MessageThreadPage() {
         status: "STOPPED",
         stoppedReason: "MANUAL_STOP",
       });
-      if (!res.ok) return;
+      if (!res.ok) {
+        setWorkflowNotice({ type: "error", text: res.error || "Failed to stop sequence." });
+        return;
+      }
       setSequence((res.data.sequence || null) as OutreachSequence | null);
+      setWorkflowNotice({ type: "success", text: "Sequence stopped." });
     } finally {
       setSequenceBusy(false);
     }
@@ -611,8 +646,13 @@ export default function MessageThreadPage() {
           status,
         });
       } else {
-        const scheduled = interviewScheduledAt ? new Date(interviewScheduledAt) : null;
-        if (!scheduled || Number.isNaN(scheduled.getTime())) return;
+        let scheduled = interviewScheduledAt ? new Date(interviewScheduledAt) : null;
+        if (!scheduled || Number.isNaN(scheduled.getTime())) {
+          const fallback = addDays(new Date(), 2);
+          fallback.setHours(10, 0, 0, 0);
+          scheduled = fallback;
+          setInterviewScheduledAt(toLocalDateTimeInput(fallback));
+        }
         res = await upsertJobInterview(jobContext.jobId, token, {
           candidateId: candidateIdForPipeline,
           status,
@@ -622,7 +662,10 @@ export default function MessageThreadPage() {
           notes: interviewNotes,
         });
       }
-      if (!res.ok) return;
+      if (!res.ok) {
+        setWorkflowNotice({ type: "error", text: res.error || "Failed to update interview." });
+        return;
+      }
       setInterviewEvent((res.data.interview || null) as InterviewEvent | null);
       if (status !== "CANCELLED") {
         await postJobPipeline(
@@ -632,6 +675,15 @@ export default function MessageThreadPage() {
         );
         setPipelineEntry((prev: any) => ({ ...(prev || {}), stage: "INTERVIEW" }));
       }
+      setWorkflowNotice({
+        type: "success",
+        text:
+          status === "CONFIRMED"
+            ? "Interview confirmed."
+            : status === "CANCELLED"
+              ? "Interview cancelled."
+              : "Interview proposed.",
+      });
     } finally {
       setInterviewBusy(false);
     }
@@ -676,7 +728,7 @@ export default function MessageThreadPage() {
             href={messagesInboxUrl} 
             className="text-sky-600 hover:text-navy-800 underline"
           >
-            {jobIdForNav && isRecruiterView ? "Back to job messages" : "Back to messages"}
+            {jobIdForNav && isRecruiterView ? "Back to job inbox" : "Back to inbox"}
           </Link>
         </div>
       </div>
@@ -709,6 +761,15 @@ export default function MessageThreadPage() {
     interviewAt: interviewEvent?.scheduledAt || null,
     sequence: sequence || null,
   });
+  const nextStepLine = getRecruiterNextStep({
+    pipelineStage: currentStage,
+    awaitingCandidateReply:
+      messages.length > 0 ? messages[messages.length - 1]?.senderId === user.uid : null,
+    nextFollowUpAt: nextFollowUpDate,
+    interviewAt: interviewEvent?.scheduledAt || null,
+    sequence: sequence || null,
+    isEvaluationComplete: currentStage !== "INTERVIEW" ? true : false,
+  });
 
   return (
     <main className="min-h-screen bg-slate-50 mobile-safe-top mobile-safe-bottom">
@@ -722,7 +783,7 @@ export default function MessageThreadPage() {
             >
               <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform duration-200 shrink-0" />
               <span className="font-medium text-sm hidden sm:inline">
-                {jobIdForNav && isRecruiterView ? "Back to job messages" : "Back to messages"}
+                {jobIdForNav && isRecruiterView ? "Back to job inbox" : "Back to inbox"}
               </span>
               <span className="font-medium text-sm sm:hidden">Back</span>
             </Link>
@@ -743,7 +804,17 @@ export default function MessageThreadPage() {
               </>
             )}
           </div>
-          <Link href="/" className="shrink-0" aria-label="HireMe home">
+          <Link
+            href={
+              isRecruiterView
+                ? getDashboardUrl()
+                : profile?.role === "JOB_SEEKER"
+                  ? "/home/seeker"
+                  : "/"
+            }
+            className="shrink-0"
+            aria-label="HireMe home"
+          >
             <img src="/logo.svg" alt="HireMe logo" className="h-7 sm:h-8 w-auto" role="img" aria-label="HireMe logo" />
           </Link>
         </div>
@@ -752,20 +823,50 @@ export default function MessageThreadPage() {
       <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-4 w-full">
         <section className="mb-4 bg-white border border-slate-200 rounded-2xl shadow-sm p-4 sm:p-5">
           <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1">Conversation workspace</p>
-          <h1 className="text-lg sm:text-xl font-bold text-navy-900">
+          <h1 className="text-2xl font-bold text-navy-900">
             {otherParticipant
               ? `${otherParticipant.firstName || ''} ${otherParticipant.lastName || ''}`.trim() || 'Conversation'
               : 'Conversation'}
           </h1>
-          <p className="text-sm text-slate-600 mt-1">
-            Keep messaging, stage management, and job context together in one thread.
+          <p className="text-sm text-slate-700 mt-1 max-w-2xl">
+            Messaging, stage updates, and job context stay in one place.
           </p>
         </section>
 
-        {/* Main Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:items-start">
+          {isRecruiterView && (
+            <aside className="lg:col-span-3 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden" style={{ height: 'calc(100vh - 160px)' }}>
+              <div className="px-4 py-3 border-b border-slate-100">
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Threads</p>
+              </div>
+              <div className="overflow-y-auto h-[calc(100%-44px)]">
+                {threadListLoading ? (
+                  <div className="p-4 text-xs text-slate-500">Loading threads...</div>
+                ) : (
+                  threadList.map((row) => {
+                    const active = String(params.threadId || "") === row.id;
+                    const rowJobId = row.jobId || jobIdForNav || "";
+                    const href = rowJobId
+                      ? `/messages/${row.id}?jobId=${encodeURIComponent(rowJobId)}`
+                      : `/messages/${row.id}`;
+                    return (
+                      <Link
+                        key={row.id}
+                        href={href}
+                        className={`block px-4 py-3 border-b border-slate-100 hover:bg-slate-50 ${active ? "bg-sky-50" : ""}`}
+                      >
+                        <p className="text-sm font-semibold text-navy-900 truncate">{row.candidateName}</p>
+                        {row.jobTitle ? <p className="text-xs text-slate-600 truncate">{row.jobTitle}</p> : null}
+                        <p className="text-xs text-slate-500 truncate mt-0.5">{row.lastPreview || "No messages yet"}</p>
+                      </Link>
+                    );
+                  })
+                )}
+              </div>
+            </aside>
+          )}
           {/* Messages Section */}
-          <div className="lg:col-span-2 bg-white rounded-2xl shadow-xl border border-slate-100 flex flex-col" style={{ height: 'calc(100vh - 160px)' }}>
+          <div className={`${isRecruiterView ? "lg:col-span-6" : "lg:col-span-8"} bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col`} style={{ height: 'calc(100vh - 160px)' }}>
             {/* Conversation Header */}
             <div className="p-6 border-b border-slate-100">
               <div className="flex items-center space-x-4">
@@ -792,213 +893,13 @@ export default function MessageThreadPage() {
                   </p>
                 </div>
               </div>
-              {isRecruiterView && jobContext?.jobId && (
-                <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 px-3 py-3">
-                  <div className="flex flex-wrap items-center gap-2 mb-2">
-                    <span className="inline-flex items-center rounded-full bg-sky-100 px-2 py-1 text-xs font-semibold text-sky-700">
-                      {jobContext.jobTitle || 'Job context'}
+              {isRecruiterView && (
+                <div className="mt-4 flex flex-wrap items-center gap-2">
+                  {threadOperationalLabels.map((label) => (
+                    <span key={label} className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-semibold ${recruiterBadge.neutral}`}>
+                      {label}
                     </span>
-                    <span className="inline-flex items-center rounded-full bg-slate-200 px-2 py-1 text-xs font-semibold text-slate-700">
-                      {currentStage}
-                    </span>
-                    {threadOperationalLabels.map((label) => (
-                      <span
-                        key={label}
-                        className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-semibold ${
-                          label === 'Overdue'
-                            ? 'bg-rose-100 text-rose-700'
-                            : label === 'Follow-up due'
-                              ? 'bg-amber-100 text-amber-700'
-                              : label === 'Interview scheduled'
-                                ? 'bg-indigo-100 text-indigo-700'
-                                : label === 'Sequence active'
-                                  ? 'bg-violet-100 text-violet-700'
-                                  : 'bg-slate-100 text-slate-700'
-                        }`}
-                      >
-                        {label}
-                      </span>
-                    ))}
-                  </div>
-                  <div className="flex flex-wrap gap-2 mb-3 text-xs font-semibold">
-                    <Link
-                      href={getJobMatchesUrl(jobContext.jobId)}
-                      className="text-sky-700 hover:text-sky-900 underline underline-offset-2"
-                    >
-                      View matches
-                    </Link>
-                    <span className="text-slate-300" aria-hidden>
-                      ·
-                    </span>
-                    <Link
-                      href={getJobPipelineUrl(jobContext.jobId)}
-                      className="text-sky-700 hover:text-sky-900 underline underline-offset-2"
-                    >
-                      View pipeline
-                    </Link>
-                    <span className="text-slate-300" aria-hidden>
-                      ·
-                    </span>
-                    <Link
-                      href={getJobOverviewUrl(jobContext.jobId)}
-                      className="text-sky-700 hover:text-sky-900 underline underline-offset-2"
-                    >
-                      View job
-                    </Link>
-                    <span className="text-slate-300" aria-hidden>
-                      ·
-                    </span>
-                    <Link
-                      href={getDashboardUrl()}
-                      className="text-slate-600 hover:text-navy-900 underline underline-offset-2"
-                    >
-                      Dashboard
-                    </Link>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <select
-                      value={currentStage}
-                      onChange={(e) => handleMoveStage(e.target.value as PipelineStage)}
-                      disabled={pipelineBusy}
-                      className="px-2 py-1.5 rounded-md border border-slate-200 bg-white text-xs text-slate-700"
-                    >
-                      {PIPELINE_STAGES.map((stage) => (
-                        <option key={stage} value={stage}>
-                          {stage}
-                        </option>
-                      ))}
-                    </select>
-                    <input
-                      type="date"
-                      value={nextFollowUpDate ? nextFollowUpDate.toISOString().slice(0, 10) : ''}
-                      onChange={(e) => handleSetFollowUp(e.target.value)}
-                      disabled={pipelineBusy}
-                      className="px-2 py-1.5 rounded-md border border-slate-200 bg-white text-xs text-slate-700"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => handleSetFollowUp('')}
-                      disabled={pipelineBusy}
-                      className="px-2 py-1.5 rounded-md border border-slate-200 bg-white text-xs font-medium text-slate-700 hover:bg-slate-100"
-                    >
-                      Mark follow-up done
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleSetFollowUpDays(2)}
-                      disabled={pipelineBusy}
-                      className="px-2 py-1.5 rounded-md border border-slate-200 bg-white text-xs font-medium text-slate-700 hover:bg-slate-100"
-                    >
-                      Follow up in 2 days
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleSetFollowUpDays(5)}
-                      disabled={pipelineBusy}
-                      className="px-2 py-1.5 rounded-md border border-slate-200 bg-white text-xs font-medium text-slate-700 hover:bg-slate-100"
-                    >
-                      Follow up in 5 days
-                    </button>
-                  </div>
-                  <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-2">
-                    <div className="rounded-md border border-violet-200 bg-violet-50 p-2">
-                      <p className="text-[11px] uppercase tracking-wide text-violet-700 font-semibold">
-                        Outreach sequence · {SEQUENCE_ASSISTANT_MODE_LABEL}
-                      </p>
-                      <p className="text-[11px] text-violet-900/80 mt-1 leading-snug">
-                        {describeSequenceAssistantState(sequence)}
-                      </p>
-                      <div className="mt-2 flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={handleStartSequence}
-                          disabled={sequenceBusy}
-                          className="px-2 py-1 rounded-md border border-violet-200 bg-white text-[11px] font-semibold text-violet-800 hover:bg-violet-100 disabled:opacity-60"
-                        >
-                          Start sequence
-                        </button>
-                        <button
-                          type="button"
-                          onClick={handleStopSequence}
-                          disabled={sequenceBusy || sequence?.status !== 'ACTIVE'}
-                          className="px-2 py-1 rounded-md border border-violet-200 bg-white text-[11px] font-semibold text-violet-800 hover:bg-violet-100 disabled:opacity-60"
-                        >
-                          Stop
-                        </button>
-                      </div>
-                    </div>
-                    <div className="rounded-md border border-indigo-200 bg-indigo-50 p-2">
-                      <p className="text-[11px] uppercase tracking-wide text-indigo-700 font-semibold">Interview scheduling</p>
-                      <div className="mt-1 grid grid-cols-1 gap-1">
-                        <input
-                          type="datetime-local"
-                          value={interviewScheduledAt}
-                          onChange={(e) => setInterviewScheduledAt(e.target.value)}
-                          className="px-2 py-1 rounded border border-indigo-200 bg-white text-xs text-slate-700"
-                        />
-                        <div className="grid grid-cols-2 gap-1">
-                          <input
-                            type="number"
-                            min={15}
-                            step={15}
-                            value={interviewDuration}
-                            onChange={(e) => setInterviewDuration(e.target.value)}
-                            className="px-2 py-1 rounded border border-indigo-200 bg-white text-xs text-slate-700"
-                            placeholder="Duration mins"
-                          />
-                          <input
-                            value={interviewLocation}
-                            onChange={(e) => setInterviewLocation(e.target.value)}
-                            className="px-2 py-1 rounded border border-indigo-200 bg-white text-xs text-slate-700"
-                            placeholder="Location/link"
-                          />
-                        </div>
-                        <input
-                          value={interviewNotes}
-                          onChange={(e) => setInterviewNotes(e.target.value)}
-                          className="px-2 py-1 rounded border border-indigo-200 bg-white text-xs text-slate-700"
-                          placeholder="Interview notes"
-                        />
-                      </div>
-                      <div className="mt-2 flex flex-wrap items-center gap-1">
-                        <button
-                          type="button"
-                          onClick={() => upsertInterview('PROPOSED')}
-                          disabled={interviewBusy}
-                          className="px-2 py-1 rounded-md border border-indigo-200 bg-white text-[11px] font-semibold text-indigo-800 hover:bg-indigo-100 disabled:opacity-60"
-                        >
-                          Propose
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => upsertInterview('CONFIRMED')}
-                          disabled={interviewBusy}
-                          className="px-2 py-1 rounded-md border border-indigo-200 bg-white text-[11px] font-semibold text-indigo-800 hover:bg-indigo-100 disabled:opacity-60"
-                        >
-                          Confirm
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => upsertInterview('CANCELLED')}
-                          disabled={interviewBusy || !interviewEvent}
-                          className="px-2 py-1 rounded-md border border-indigo-200 bg-white text-[11px] font-semibold text-indigo-800 hover:bg-indigo-100 disabled:opacity-60"
-                        >
-                          Cancel interview
-                        </button>
-                        <button
-                          type="button"
-                          onClick={handleInsertInterviewDetails}
-                          className="px-2 py-1 rounded-md border border-indigo-200 bg-white text-[11px] font-semibold text-indigo-800 hover:bg-indigo-100"
-                        >
-                          Insert details in message
-                        </button>
-                      </div>
-                      <p className="text-[10px] text-indigo-900/70 mt-2 leading-snug">
-                        Status <span className="font-semibold">Proposed</span> vs <span className="font-semibold">Confirmed</span> is for your team only.
-                        Cancel marks this slot as cancelled and does not change pipeline stage automatically.
-                      </p>
-                    </div>
-                  </div>
+                  ))}
                 </div>
               )}
             </div>
@@ -1023,7 +924,7 @@ export default function MessageThreadPage() {
                           >
                             <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-sm hover:shadow-md hover:border-sky-200 transition-all cursor-pointer">
                               <div className="flex items-start space-x-3">
-                                <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-navy-800 to-sky-500 rounded-lg flex items-center justify-center shadow-sm">
+                                <div className="flex-shrink-0 w-10 h-10 bg-navy-800 rounded-lg flex items-center justify-center shadow-sm">
                                   <i className="fa-solid fa-briefcase text-white text-sm"></i>
                                 </div>
                                 <div className="flex-1 min-w-0">
@@ -1060,7 +961,7 @@ export default function MessageThreadPage() {
                         }`}>
                           <p className="text-sm">{message.content}</p>
                           <p className={`text-xs mt-1 ${
-                            message.senderId === user.uid ? 'text-blue-100' : 'text-slate-500'
+                            message.senderId === user.uid ? "text-sky-100" : "text-slate-500"
                           }`}>
                             {message.createdAt ? new Date(message.createdAt.toDate ? message.createdAt.toDate() : message.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'Now'}
                           </p>
@@ -1082,7 +983,7 @@ export default function MessageThreadPage() {
                       <button
                         type="button"
                         onClick={() => handleApplyTemplate(suggestedTemplate)}
-                        className="rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-800 hover:bg-emerald-100"
+                        className="rounded-md border border-sky-200 bg-sky-50 px-2 py-1 text-xs font-semibold text-navy-900 hover:bg-sky-100"
                       >
                         Suggested message: {suggestedTemplate.name}
                       </button>
@@ -1107,34 +1008,6 @@ export default function MessageThreadPage() {
                     >
                       Apply template
                     </button>
-                    <input
-                      value={templateName}
-                      onChange={(e) => setTemplateName(e.target.value)}
-                      placeholder="Template name"
-                      className="px-2 py-1 rounded-md border border-slate-200 bg-white text-xs text-slate-700"
-                    />
-                    <button
-                      type="button"
-                      onClick={handleSaveTemplate}
-                      disabled={templateSaving || !templateName.trim() || !newMessage.trim()}
-                      className="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-60"
-                    >
-                      {selectedTemplate ? "Update template" : "Save as template"}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleDeleteTemplate}
-                      disabled={templateSaving || !selectedTemplate}
-                      className="rounded-md border border-rose-200 bg-rose-50 px-2 py-1 text-xs font-semibold text-rose-700 hover:bg-rose-100 disabled:opacity-60"
-                    >
-                      Delete template
-                    </button>
-                    <Link
-                      href={getEmployerTemplatesUrl()}
-                      className="text-xs font-semibold text-sky-700 hover:underline px-1"
-                    >
-                      All templates
-                    </Link>
                   </div>
                   {selectedTemplate && (
                     <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2">
@@ -1195,9 +1068,129 @@ export default function MessageThreadPage() {
             </div>
           </div>
 
+          {isRecruiterView && (
+            <aside className="lg:col-span-3 bg-white rounded-2xl border border-slate-200 shadow-sm p-4 overflow-y-auto" style={{ height: 'calc(100vh - 160px)' }}>
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-3">Workflow context</p>
+              {workflowNotice ? (
+                <div
+                  className={`mb-3 rounded-lg border px-3 py-2 text-xs ${
+                    workflowNotice.type === "success"
+                      ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                      : "border-rose-200 bg-rose-50 text-rose-800"
+                  }`}
+                >
+                  {workflowNotice.text}
+                </div>
+              ) : null}
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 mb-3">
+                <p className="text-sm font-semibold text-navy-900">
+                  {otherParticipant ? `${otherParticipant.firstName || ''} ${otherParticipant.lastName || ''}`.trim() || "Candidate" : "Candidate"}
+                </p>
+                <p className="text-xs text-slate-600 mt-0.5">{otherParticipant?.headline || "Candidate profile"}</p>
+                <p className="text-xs text-navy-900 mt-1 font-medium">{nextStepLine}</p>
+              </div>
+
+              {jobContext?.jobId ? (
+                <>
+                  <div className="rounded-lg border border-slate-200 bg-white p-3 mb-3">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Job context</p>
+                    <p className="text-sm font-semibold text-navy-900 mt-1">{jobContext.jobTitle || "Job"}</p>
+                  </div>
+
+                  <div className="rounded-lg border border-slate-200 bg-white p-3 mb-3 space-y-2">
+                    <label className="text-xs font-semibold uppercase tracking-wide text-slate-500 block">Pipeline stage</label>
+                    <select
+                      value={currentStage}
+                      onChange={(e) => handleMoveStage(e.target.value as PipelineStage)}
+                      disabled={pipelineBusy}
+                      className="w-full px-2 py-1.5 rounded-md border border-slate-200 bg-white text-xs text-slate-700"
+                    >
+                      {PIPELINE_STAGES.map((stage) => (
+                        <option key={stage} value={stage}>
+                          {pipelineStageLabel(stage)}
+                        </option>
+                      ))}
+                    </select>
+                    <label className="text-xs font-semibold uppercase tracking-wide text-slate-500 block pt-1">Next follow-up</label>
+                    <input
+                      type="date"
+                      value={safeDateInputValue(nextFollowUpDate)}
+                      onChange={(e) => handleSetFollowUp(e.target.value)}
+                      disabled={pipelineBusy}
+                      className="w-full px-2 py-1.5 rounded-md border border-slate-200 bg-white text-xs text-slate-700"
+                    />
+                    <div className="flex flex-wrap gap-1 pt-1">
+                      <button type="button" onClick={() => handleSetFollowUpDays(1)} disabled={pipelineBusy} className="rounded-md border border-slate-200 px-2 py-1 text-[11px] font-semibold text-slate-700">Tomorrow</button>
+                      <button type="button" onClick={() => handleSetFollowUpDays(3)} disabled={pipelineBusy} className="rounded-md border border-slate-200 px-2 py-1 text-[11px] font-semibold text-slate-700">In 3 days</button>
+                      <button type="button" onClick={() => handleSetFollowUpDays(7)} disabled={pipelineBusy} className="rounded-md border border-slate-200 px-2 py-1 text-[11px] font-semibold text-slate-700">Next week</button>
+                      <button type="button" onClick={() => handleSetFollowUp("")} disabled={pipelineBusy} className="rounded-md border border-slate-200 px-2 py-1 text-[11px] font-semibold text-slate-700">Clear</button>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-2 mb-3">
+                    <Link href={`/candidate/${candidateIdForPipeline}?jobId=${encodeURIComponent(jobContext.jobId)}`} className="rounded-lg bg-navy-800 px-3 py-2 text-center text-xs font-semibold text-white hover:bg-navy-700">
+                      View full profile
+                    </Link>
+                    <Link href={getJobPipelineUrl(jobContext.jobId)} className="rounded-lg border border-slate-200 px-3 py-2 text-center text-xs font-semibold text-navy-900 hover:bg-slate-50">
+                      Open pipeline
+                    </Link>
+                    <Link href={getJobCompareUrl(jobContext.jobId)} className="rounded-lg border border-slate-200 px-3 py-2 text-center text-xs font-semibold text-navy-900 hover:bg-slate-50">
+                      Compare
+                    </Link>
+                  </div>
+
+                  <details className="rounded-lg border border-slate-200 bg-white p-3">
+                    <summary className="cursor-pointer text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      Advanced actions
+                    </summary>
+                    <div className="mt-2 space-y-2">
+                      <p className="text-[11px] text-slate-600">Follow-up sequence: {describeSequenceAssistantState(sequence)}</p>
+                      <div className="flex gap-2">
+                        <button type="button" onClick={handleStartSequence} disabled={sequenceBusy} className="rounded-md border border-slate-200 px-2 py-1 text-[11px] font-semibold text-slate-700">
+                          Start
+                        </button>
+                        <button type="button" onClick={handleStopSequence} disabled={sequenceBusy || sequence?.status !== "ACTIVE"} className="rounded-md border border-slate-200 px-2 py-1 text-[11px] font-semibold text-slate-700">
+                          Stop
+                        </button>
+                      </div>
+                      <p className="text-[11px] font-semibold text-slate-600">Schedule interview</p>
+                      <input type="datetime-local" value={interviewScheduledAt} onChange={(e) => setInterviewScheduledAt(e.target.value)} className="w-full px-2 py-1 rounded border border-slate-200 text-xs" />
+                      <select value={interviewDuration} onChange={(e) => setInterviewDuration(e.target.value)} className="w-full px-2 py-1 rounded border border-slate-200 text-xs">
+                        <option value="15">15 min</option>
+                        <option value="30">30 min</option>
+                        <option value="45">45 min</option>
+                        <option value="60">60 min</option>
+                      </select>
+                      <input value={interviewLocation} onChange={(e) => setInterviewLocation(e.target.value)} placeholder="Location or meeting link" className="w-full px-2 py-1 rounded border border-slate-200 text-xs" />
+                      <textarea value={interviewNotes} onChange={(e) => setInterviewNotes(e.target.value)} placeholder="Notes to candidate" className="w-full px-2 py-1 rounded border border-slate-200 text-xs min-h-[64px]" />
+                      <p className="text-[10px] text-slate-500">Time zone: {Intl.DateTimeFormat().resolvedOptions().timeZone}</p>
+                      <div className="flex gap-2">
+                        <button type="button" onClick={() => upsertInterview("PROPOSED")} disabled={interviewBusy} className="rounded-md border border-slate-200 px-2 py-1 text-[11px] font-semibold text-slate-700">Propose interview</button>
+                        <button type="button" onClick={() => upsertInterview("CONFIRMED")} disabled={interviewBusy} className="rounded-md border border-slate-200 px-2 py-1 text-[11px] font-semibold text-slate-700">Confirm interview</button>
+                        <button type="button" onClick={() => upsertInterview("CANCELLED")} disabled={interviewBusy || !interviewEvent} className="rounded-md border border-rose-200 px-2 py-1 text-[11px] font-semibold text-rose-700">Cancel</button>
+                      </div>
+                      <div className="flex gap-2">
+                        <button type="button" onClick={handleInsertInterviewDetails} className="rounded-md border border-slate-200 px-2 py-1 text-[11px] font-semibold text-slate-700">Send details to candidate</button>
+                      </div>
+                    </div>
+                  </details>
+                  {interviewEvent?.scheduledAt ? (
+                    <div className="mt-3 rounded-lg border border-sky-200 bg-sky-50 p-2">
+                      <p className="text-xs font-semibold text-sky-900">
+                        Interview {String(interviewEvent.status || "PROPOSED").toLowerCase()} · {new Date((interviewEvent.scheduledAt as any)?.toDate ? (interviewEvent.scheduledAt as any).toDate() : interviewEvent.scheduledAt as any).toLocaleString()}
+                      </p>
+                    </div>
+                  ) : null}
+                </>
+              ) : (
+                <p className="text-xs text-slate-500">No job context attached to this thread.</p>
+              )}
+            </aside>
+          )}
+
           {/* Company/Candidate Profile Sidebar - Show for candidates viewing employers */}
           {profile.role === 'JOB_SEEKER' && otherParticipant && (
-            <div className="lg:col-span-1 hidden lg:block">
+            <div className="lg:col-span-4 hidden lg:block">
               <div className="bg-white rounded-2xl shadow-xl border border-slate-100 overflow-y-auto" style={{ height: 'calc(100vh - 160px)' }}>
                 <CompanyProfile employerId={otherParticipant.id || otherParticipant.uid} showDetails={true} clickable={true} />
               </div>

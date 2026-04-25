@@ -6,6 +6,7 @@ import { Menu, ArrowLeft } from "lucide-react";
 import { useFirebaseAuth } from "./FirebaseAuthProvider";
 import HireMeLogo from "./brand/HireMeLogo";
 import MobileNav from "./mobile/MobileNav";
+import { getJobMatchesUrl } from "@/lib/navigation";
 
 // Pages that should show a back button on mobile
 const PAGES_WITH_BACK_BUTTON = [
@@ -19,6 +20,7 @@ const PAGES_WITH_BACK_BUTTON = [
   '/account/uploads',
   '/account/company',
   '/employer/candidates',
+  '/employer/job/',
   '/employer/pools/',
   '/company/view',
   '/company/recruiter/',
@@ -34,16 +36,20 @@ function getBackButtonHref(pathname: string, profile: any, jobIdFromQuery: strin
     return '/home/seeker';
   }
   if (pathname.startsWith('/saved/jobs') || pathname.startsWith('/saved/candidates')) {
-    return profile?.role === 'EMPLOYER' ? '/home/employer' : '/home/seeker';
+    return profile?.role === 'EMPLOYER' || profile?.role === 'RECRUITER' ? '/home/employer' : '/home/seeker';
   }
   if (pathname.startsWith('/search/jobs') || pathname.startsWith('/search/candidates')) {
-    return profile?.role === 'EMPLOYER' ? '/home/employer' : '/home/seeker';
+    if (profile?.role === 'EMPLOYER' || profile?.role === 'RECRUITER') {
+      if (jobIdFromQuery) return `/employer/job/${encodeURIComponent(jobIdFromQuery)}`;
+      return '/home/employer';
+    }
+    return '/home/seeker';
   }
   if (pathname.startsWith('/endorse/')) {
     return '/';
   }
   if (pathname.startsWith('/account/security') || pathname.startsWith('/account/uploads') || pathname.startsWith('/account/company')) {
-    return profile?.role === 'EMPLOYER' ? '/home/employer' : '/home/seeker';
+    return profile?.role === 'EMPLOYER' || profile?.role === 'RECRUITER' ? '/home/employer' : '/home/seeker';
   }
   if (pathname.startsWith('/employer/pools/') && pathname !== '/employer/pools') {
     return '/employer/pools';
@@ -59,7 +65,7 @@ function getBackButtonHref(pathname: string, profile: any, jobIdFromQuery: strin
   }
   if (pathname.startsWith('/candidate/')) {
     if (profile?.role === 'EMPLOYER' || profile?.role === 'RECRUITER') {
-      if (jobIdFromQuery) return `/employer/job/${encodeURIComponent(jobIdFromQuery)}`;
+      if (jobIdFromQuery) return getJobMatchesUrl(jobIdFromQuery);
       return '/search/candidates';
     }
     return '/search/candidates';
@@ -102,14 +108,11 @@ function SiteHeaderInner() {
 
   const inBackPathList = Boolean(user && PAGES_WITH_BACK_BUTTON.some((path) => pathname.startsWith(path)));
   const isEmpOrRec = profile?.role === "EMPLOYER" || profile?.role === "RECRUITER";
-  const hideBackEmployerThread =
-    isEmpOrRec &&
-    pathname.startsWith("/messages/") &&
-    !pathname.startsWith("/messages/candidate");
-  const hideBackEmployerCandidate = isEmpOrRec && pathname.startsWith("/candidate/");
-  const shouldShowBackButton =
-    inBackPathList && !hideBackEmployerThread && !hideBackEmployerCandidate;
-  const backButtonHref = shouldShowBackButton ? getBackButtonHref(pathname, profile, jobIdFromQuery) : '/';
+  const isJobSeeker = profile?.role === "JOB_SEEKER";
+  const logoHref =
+    !user ? "/" : isEmpOrRec ? "/home/employer" : isJobSeeker ? "/home/seeker" : "/";
+  const shouldShowBackButton = inBackPathList;
+  const backButtonHref = shouldShowBackButton ? getBackButtonHref(pathname, profile, jobIdFromQuery) : "/";
 
   return (
     <header className="fixed top-0 left-0 right-0 bg-white/95 backdrop-blur-md shadow-sm z-50 border-b border-slate-100 mobile-safe-top">
@@ -127,12 +130,12 @@ function SiteHeaderInner() {
                 <ArrowLeft className="h-5 w-5 group-hover:-translate-x-1 transition-transform duration-200" />
               </Link>
               {/* Logo - Desktop */}
-              <Link href="/" className="hidden md:block shrink-0 ml-0" aria-label="HireMe home">
+              <Link href={logoHref} className="hidden md:block shrink-0 ml-0" aria-label="HireMe home">
                 <HireMeLogo variant="full" className="h-7 sm:h-8 w-auto" />
               </Link>
             </>
           ) : (
-            <Link href="/" className="shrink-0" aria-label="HireMe home">
+            <Link href={logoHref} className="shrink-0" aria-label="HireMe home">
               <HireMeLogo variant="full" className="h-7 sm:h-8 w-auto" />
             </Link>
           )}
@@ -141,7 +144,7 @@ function SiteHeaderInner() {
         {/* Center: Logo on mobile when back button is shown */}
         {shouldShowBackButton && (
           <div className="md:hidden absolute left-1/2 -translate-x-1/2 pointer-events-none">
-            <Link href="/" className="shrink-0 pointer-events-auto" aria-label="HireMe home">
+            <Link href={logoHref} className="shrink-0 pointer-events-auto" aria-label="HireMe home">
               <HireMeLogo variant="full" className="h-7 w-auto" />
             </Link>
           </div>
@@ -218,7 +221,7 @@ function SiteHeaderInner() {
                     href="/search/candidates"
                     className="text-sm text-navy-900 hover:text-navy-700 font-semibold px-3 py-2 rounded-lg hover:bg-sky-50 transition-all duration-200 whitespace-nowrap"
                   >
-                    Candidates
+                    Search
                   </Link>
                   <Link
                     href="/employer/pools"
@@ -298,7 +301,7 @@ function SiteHeaderInner() {
                       onClick={() => setMobileMenuOpen(false)}
                       className="flex items-center justify-center px-4 py-4 text-base font-medium text-navy-900 hover:bg-sky-50 active:bg-sky-100 transition-colors border-b border-slate-100 min-h-[56px] w-full text-center"
                     >
-                      Candidates
+                      Search
                     </Link>
                     <Link
                       href="/employer/pools"

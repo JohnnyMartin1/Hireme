@@ -124,14 +124,14 @@ export default function EmployerTemplatesPage() {
       <div className="max-w-4xl mx-auto px-4 py-8">
         <div className="flex flex-wrap items-center gap-3 mb-6">
           <Link
-            href={getDashboardUrl()}
+            href={getMessagesUrl()}
             className="inline-flex items-center gap-2 text-sm font-semibold text-navy-800 hover:text-navy-600"
           >
             <ArrowLeft className="h-4 w-4" />
-            Dashboard
+            Back to Messages
           </Link>
-          <Link href={getMessagesUrl()} className="text-sm font-semibold text-sky-700 hover:underline">
-            Messages
+          <Link href={getDashboardUrl()} className="text-sm font-medium text-slate-500 hover:text-navy-800 hover:underline">
+            Dashboard
           </Link>
         </div>
 
@@ -296,7 +296,7 @@ export default function EmployerTemplatesPage() {
                         <button
                           type="button"
                           onClick={() => handleDelete(t.id)}
-                          className="rounded-lg border border-rose-200 bg-rose-50 p-2 text-rose-700 hover:bg-rose-100"
+                          className="rounded-lg border border-slate-300 bg-slate-50 p-2 text-slate-700 hover:bg-slate-100"
                           aria-label="Delete template"
                         >
                           <Trash2 className="h-4 w-4" />

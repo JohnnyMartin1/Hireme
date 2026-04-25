@@ -54,17 +54,43 @@ export type OutreachSequence = {
 
 export type InterviewEvent = {
   id: string;
+  companyId?: string;
   jobId: string;
   candidateId: string;
+  type?: "PHONE_SCREEN" | "VIDEO" | "ONSITE" | "FINAL_ROUND" | "CUSTOM";
+  title?: string;
+  description?: string;
+  interviewerIds?: string[];
+  organizerUserId?: string;
   scheduledAt: unknown;
   durationMinutes: number;
-  location: string;
+  timezone?: string;
+  location?: {
+    type: "VIDEO" | "PHONE" | "IN_PERSON";
+    value: string;
+  } | string;
+  candidateResponse?: "PENDING" | "ACCEPTED" | "DECLINED" | "REQUEST_RESCHEDULE";
   notes?: string;
-  status: "PROPOSED" | "CONFIRMED" | "CANCELLED";
+  status: "PROPOSED" | "SCHEDULED" | "CONFIRMED" | "COMPLETED" | "CANCELLED" | "RESCHEDULE_REQUESTED";
+  calendarProvider?: "google";
+  calendarEventId?: string;
+  calendarHtmlLink?: string;
+  calendarSyncStatus?: "NOT_SYNCED" | "SYNCED" | "FAILED";
+  calendarSyncError?: string | null;
+  calendarSyncedAt?: unknown;
   createdBy: string;
+  completedAt?: unknown;
   createdAt?: unknown;
   updatedAt?: unknown;
 };
+
+export const INTERVIEW_TYPE_OPTIONS = [
+  "PHONE_SCREEN",
+  "VIDEO",
+  "ONSITE",
+  "FINAL_ROUND",
+  "CUSTOM",
+] as const;
 
 function toDate(value: unknown): Date | null {
   if (!value) return null;

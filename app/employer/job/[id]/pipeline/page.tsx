@@ -5,21 +5,22 @@ import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { Loader2, MessageSquare } from "lucide-react";
 import AddToTalentPoolButton from "@/components/employer/AddToTalentPoolButton";
-import { getCandidateUrl, getCandidatesSearchUrl, getDashboardUrl, getJobCompareUrl, getJobMatchesUrl, getJobOverviewUrl, getMessagesUrl } from "@/lib/navigation";
+import { getCandidateUrl, getCandidatesSearchUrl, getJobCompareUrl, getJobMatchesUrl, getJobOverviewUrl } from "@/lib/navigation";
 import { useFirebaseAuth } from "@/components/FirebaseAuthProvider";
 import { PIPELINE_STAGES, getRecruiterNotes, normalizePipelineStage, type PipelineStage } from "@/lib/firebase-firestore";
+import { pipelineStageLabel, recruiterBadge } from "@/lib/recruiter-ui";
 import {
   fetchJobEvaluationCriteria,
   fetchJobEvaluations,
   fetchJobReviews,
-  upsertCandidateReview,
 } from "@/lib/decision-client";
 import {
   fetchJobInterviews,
   fetchJobSequences,
-  patchJobSequence,
-  upsertJobSequence,
 } from "@/lib/communication-client";
+import { fetchReviewAssignments } from "@/lib/collaboration-client";
+import SendCandidateForReviewButton from "@/components/recruiter/SendCandidateForReviewButton";
+import InterviewStatusBadge from "@/components/recruiter/InterviewStatusBadge";
 import {
   summarizeCandidateEvaluations,
   reviewStatusLabel,
@@ -27,7 +28,7 @@ import {
   type CandidateReviewRequest,
   type JobEvaluationCriterion,
 } from "@/lib/hiring-decision";
-import { formatRecruiterAttentionLine } from "@/lib/communication-status";
+import { formatRecruiterAttentionLine, getRecruiterNextStep } from "@/lib/communication-status";
 import type { RecruiterSummary } from "@/types/matching";
 
 type MatchScoreRow = {
@@ -55,9 +56,12 @@ type PipelineCandidateCard = {
   evaluationAvgRating?: number | null;
   reviewStatus?: string | null;
   waitingOn?: string;
+  nextStep?: string;
   sequenceStatus?: string | null;
   interviewAt?: any;
   interviewStatus?: string | null;
+  reviewPendingCount?: number;
+  reviewCompletedCount?: number;
 };
 
 function dateInputValue(v: any): string {
@@ -114,8 +118,6 @@ export default function JobPipelinePage() {
   const [jobTitle, setJobTitle] = useState<string>("");
   const [cards, setCards] = useState<PipelineCandidateCard[]>([]);
   const [busyEntryId, setBusyEntryId] = useState<string | null>(null);
-  const [reviewBusyCandidateId, setReviewBusyCandidateId] = useState<string | null>(null);
-  const [sequenceBusyCandidateId, setSequenceBusyCandidateId] = useState<string | null>(null);
   const [selectedCandidateIds, setSelectedCandidateIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
@@ -159,6 +161,8 @@ export default function JobPipelinePage() {
       const reviews = reviewsRes.ok ? ((reviewsRes.data.reviews || []) as CandidateReviewRequest[]) : [];
       const sequences = sequenceRes.ok ? (sequenceRes.data.sequences || []) : [];
       const interviews = interviewsRes.ok ? (interviewsRes.data.interviews || []) : [];
+      const reviewAssignmentsRes = await fetchReviewAssignments(jobId, token);
+      const reviewAssignments = reviewAssignmentsRes.ok ? reviewAssignmentsRes.data.assignments || [] : [];
       const activeCriteria = [...criteria]
         .filter((c: JobEvaluationCriterion) => c.active !== false)
         .sort((a: JobEvaluationCriterion, b: JobEvaluationCriterion) => Number(a.order || 0) - Number(b.order || 0));
@@ -258,6 +262,17 @@ export default function JobPipelinePage() {
             activeCriteria
           ).avgRating,
           reviewStatus: reviewByCandidate.get(card.candidateId)?.status || null,
+          nextStep: getRecruiterNextStep({
+            pipelineStage: card.stage,
+            hasEvaluation:
+              summarizeCandidateEvaluations(evalsByCandidate.get(card.candidateId) || [], activeCriteria).count > 0,
+            isEvaluationComplete:
+              summarizeCandidateEvaluations(evalsByCandidate.get(card.candidateId) || [], activeCriteria).isComplete,
+            reviewStatus: reviewByCandidate.get(card.candidateId)?.status,
+            nextFollowUpAt: card.nextFollowUpAt,
+            interviewAt: interviewByCandidate.get(card.candidateId)?.scheduledAt,
+            sequence: sequenceByCandidate.get(card.candidateId) || null,
+          }),
           waitingOn: formatRecruiterAttentionLine({
             pipelineStage: card.stage,
             hasEvaluation:
@@ -272,6 +287,8 @@ export default function JobPipelinePage() {
           sequenceStatus: sequenceByCandidate.get(card.candidateId)?.status || null,
           interviewAt: interviewByCandidate.get(card.candidateId)?.scheduledAt || null,
           interviewStatus: interviewByCandidate.get(card.candidateId)?.status || null,
+          reviewPendingCount: reviewAssignments.filter((a: any) => String(a.candidateId || "") === card.candidateId && String(a.status || "") === "REQUESTED").length,
+          reviewCompletedCount: reviewAssignments.filter((a: any) => String(a.candidateId || "") === card.candidateId && String(a.status || "") === "COMPLETED").length,
         }))
       );
     } catch (e) {
@@ -358,71 +375,18 @@ export default function JobPipelinePage() {
     }
   };
 
-  const handleRequestReview = async (candidateId: string) => {
-    if (!user) return;
-    setReviewBusyCandidateId(candidateId);
-    try {
-      const token = await user.getIdToken();
-      const res = await upsertCandidateReview(
-        jobId,
-        {
-          candidateId,
-          status: "REQUESTED",
-        },
-        token
-      );
-      if (!res.ok) return;
-      await load();
-    } finally {
-      setReviewBusyCandidateId(null);
-    }
-  };
-
-  const handleStartSequence = async (candidateId: string) => {
-    if (!user) return;
-    setSequenceBusyCandidateId(candidateId);
-    try {
-      const token = await user.getIdToken();
-      await upsertJobSequence(jobId, token, {
-        candidateId,
-        steps: [
-          { delayDays: 0, body: "Hi! Reaching out with next steps for this role." },
-          { delayDays: 3, body: "Friendly follow-up in case this got buried." },
-        ],
-      });
-      await load();
-    } finally {
-      setSequenceBusyCandidateId(null);
-    }
-  };
-
-  const handleStopSequence = async (candidateId: string) => {
-    if (!user) return;
-    setSequenceBusyCandidateId(candidateId);
-    try {
-      const token = await user.getIdToken();
-      await patchJobSequence(jobId, token, {
-        candidateId,
-        status: "STOPPED",
-        stoppedReason: "MANUAL_STOP",
-      });
-      await load();
-    } finally {
-      setSequenceBusyCandidateId(null);
-    }
-  };
-
   if (!user || !profile) return null;
 
   return (
     <main className="min-h-screen bg-slate-50">
-      <header className="sticky top-0 bg-white/95 backdrop-blur-sm shadow-sm z-40 border-b border-slate-100">
+      {/* FIX1: non-sticky page header — JobWorkspaceNav is the only sticky bar under SiteHeader */}
+      <div className="border-b border-slate-100 bg-white/95 backdrop-blur-sm shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Pipeline</p>
             <p className="text-sm font-semibold text-navy-900">{jobTitle || "Job pipeline"}</p>
             <p className="text-xs text-slate-500 mt-1 max-w-xl">
-              Active candidates for this job (all stages you are still working). Shortlist marks serious contenders; talent pools live under Pools in the main nav.
+              Everyone you are actively working for this requisition. Shortlist = serious contenders. Talent pools = long-term CRM (see Pools).
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2 text-sm">
@@ -436,38 +400,32 @@ export default function JobPipelinePage() {
               href={getJobMatchesUrl(jobId)}
               className="inline-flex items-center px-3 py-2 rounded-lg border border-slate-200 bg-white text-navy-800 font-medium hover:bg-slate-50"
             >
-              Matches
-            </Link>
-            <Link
-              href={getDashboardUrl()}
-              className="inline-flex items-center px-3 py-2 rounded-lg border border-slate-200 bg-white text-navy-800 font-medium hover:bg-slate-50"
-            >
-              Dashboard
+              Candidates
             </Link>
             <Link
               href={getCandidatesSearchUrl(jobId)}
               className="inline-flex items-center px-3 py-2 rounded-lg border border-slate-200 bg-white text-navy-800 font-medium hover:bg-slate-50"
             >
-              Find more candidates
+              Find Candidates
             </Link>
             <button
               type="button"
               onClick={launchCompare}
               disabled={selectedCandidateIds.size < 2}
-              className="inline-flex items-center px-3 py-2 rounded-lg border border-violet-200 bg-violet-50 text-violet-800 font-medium hover:bg-violet-100 disabled:opacity-50"
+              className="inline-flex items-center px-3 py-2 rounded-lg border border-sky-200 bg-sky-50 text-navy-900 font-medium hover:bg-sky-100 disabled:opacity-50"
             >
               Compare selected {selectedCandidateIds.size > 0 ? `(${selectedCandidateIds.size})` : ""}
             </button>
           </div>
         </div>
-      </header>
+      </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
         <section className={`mb-4 rounded-xl border p-3 text-sm ${
-          highlightShortlist ? "border-violet-300 bg-violet-50 text-violet-900" : "border-slate-200 bg-white text-slate-700"
+          highlightShortlist ? "border-sky-300 bg-sky-50 text-navy-900" : "border-slate-200 bg-white text-slate-700"
         }`}>
           <span className="font-semibold">Shortlist is your active working set.</span> Keep top contenders in
-          <span className="font-semibold"> SHORTLIST </span>
+          <span className="font-semibold"> Shortlisted </span>
           and launch compare when you have 2+ ready to decide.
         </section>
         {loading ? (
@@ -481,22 +439,23 @@ export default function JobPipelinePage() {
               <section
                 key={stage}
                 className={`bg-white rounded-xl border p-4 min-h-[280px] ${
-                  stage === "SHORTLIST" ? "border-violet-200 ring-1 ring-violet-100" : "border-slate-200"
+                  stage === "SHORTLIST" ? "border-sky-200 ring-1 ring-sky-100" : "border-slate-200"
                 }`}
               >
                 <div className="flex items-center justify-between mb-3">
-                  <h2 className={`font-semibold ${stage === "SHORTLIST" ? "text-violet-800" : "text-navy-900"}`}>{stage}</h2>
+                  <h2 className="text-lg font-semibold text-navy-900">{pipelineStageLabel(stage)}</h2>
                   <span className="text-xs text-slate-500">{grouped[stage].length}</span>
                 </div>
                 <div className="space-y-3">
                   {grouped[stage].length === 0 ? (
                     <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50 px-3 py-5 text-center text-xs text-slate-500">
-                      No candidates in {stage.toLowerCase()} yet
+                      No candidates in {pipelineStageLabel(stage).toLowerCase()} yet
                     </div>
                   ) : (
                     grouped[stage].map((card) => (
-                      <article key={card.entryId} className="rounded-lg border border-slate-200 p-3 bg-slate-50">
-                        <div className="mb-1">
+                      <article key={card.entryId} className="rounded-lg border border-slate-200 bg-white p-3 space-y-3">
+                        {/* FIX8: grouped blocks — compare row, identity, signals, meta, stage/tools */}
+                        <div className="rounded-md bg-slate-50 border border-slate-100 px-2 py-1.5">
                           <label className="inline-flex items-center gap-2 text-xs text-slate-600">
                             <input
                               type="checkbox"
@@ -509,175 +468,152 @@ export default function JobPipelinePage() {
                                   return next;
                                 })
                               }
-                              className="h-3.5 w-3.5 rounded border-slate-300 text-violet-600 focus:ring-violet-400"
+                              className="h-3.5 w-3.5 rounded border-slate-300 text-navy-800 focus:ring-sky-400"
                             />
                             Add to compare
                           </label>
                         </div>
                         <div className="flex items-start justify-between gap-2">
-                          <Link href={getCandidateUrl(card.candidateId, jobId)} className="font-medium text-navy-900 hover:underline">
+                          <Link href={getCandidateUrl(card.candidateId, jobId)} className="text-base font-medium text-navy-900 hover:underline">
                             {card.name}
                           </Link>
-                          <span className="text-xs font-semibold text-slate-700">
+                          <span className="text-xs font-normal text-slate-400">
                             {card.score == null ? "—" : `${Math.round(card.score)}%`}
                           </span>
                         </div>
-                        <div className="mt-1 flex items-center justify-between gap-2">
-                          <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold ${
-                            card.stage === "SHORTLIST"
-                              ? "border-violet-200 bg-violet-50 text-violet-700"
-                              : "border-slate-200 bg-white text-slate-700"
-                          }`}>
-                            {card.stage}
+                        <div className="flex items-center justify-between gap-2 flex-wrap">
+                          <span
+                            className={`inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-semibold ${
+                              card.stage === "SHORTLIST" ? recruiterBadge.positive : recruiterBadge.neutral
+                            }`}
+                          >
+                            {pipelineStageLabel(card.stage)}
                           </span>
                           <div className="flex items-center gap-2">
                             <Link
                               href={getCandidateUrl(card.candidateId, jobId)}
-                              className="text-[11px] font-medium text-sky-700 hover:text-sky-800"
+                              className="text-[11px] font-medium text-sky-800 hover:underline"
                             >
                               Profile
                             </Link>
                             <Link
-                              href={getMessagesUrl(jobId)}
-                              className="inline-flex items-center gap-1 text-[11px] font-medium text-navy-700 hover:text-navy-900"
+                              href={`${getCandidateUrl(card.candidateId, jobId)}&action=message`}
+                              className="inline-flex items-center gap-1 text-[11px] font-medium text-navy-800 hover:underline"
                             >
                               <MessageSquare className="h-3 w-3" />
-                              Inbox
+                              Message
                             </Link>
                             <AddToTalentPoolButton
                               candidateId={card.candidateId}
-                              buttonClassName="inline-flex items-center gap-1 rounded border border-slate-200 bg-white px-2 py-0.5 text-[11px] font-medium text-navy-700 hover:bg-slate-50"
+                              buttonClassName="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] font-medium text-navy-800 hover:bg-slate-100"
+                            />
+                            <SendCandidateForReviewButton
+                              jobId={jobId}
+                              candidateId={card.candidateId}
+                              candidateName={card.name}
+                              buttonClassName="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] font-medium text-navy-800 hover:bg-slate-100"
                             />
                           </div>
                         </div>
 
-                        {card.positives.length > 0 && (
-                          <div className="mt-2 space-y-1">
-                            {card.positives.map((signal, index) => (
-                              <p key={`${card.entryId}-signal-${index}`} className="text-[11px] text-emerald-800">
-                                + {signal}
+                        {(card.positives.length > 0 || card.keyRisk) && (
+                          <div className="rounded-md border border-slate-100 bg-slate-50/80 px-2 py-2 space-y-1">
+                            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Signals</p>
+                            {card.positives.length > 0 && (
+                              <p className="text-xs text-slate-800 line-clamp-2">
+                                + {card.positives[0]}
+                                {card.positives.length > 1 ? ` (+${card.positives.length - 1} on profile)` : ""}
                               </p>
-                            ))}
+                            )}
+                            {card.keyRisk && <p className="text-xs text-amber-900">Risk: {card.keyRisk}</p>}
                           </div>
                         )}
-                        {card.keyRisk && (
-                          <p className="mt-1 text-[11px] text-amber-800">Risk: {card.keyRisk}</p>
-                        )}
 
-                        <div className="mt-2 space-y-1 text-[11px] text-slate-600">
-                          {card.lastContactedAt && (
-                            <p>
-                              Last contacted: {formatDate(card.lastContactedAt)}
-                            </p>
-                          )}
-                          {card.nextFollowUpAt && (
-                            <p>
-                              Next follow-up: {formatDate(card.nextFollowUpAt)}
-                            </p>
-                          )}
+                        <div className="space-y-0.5 text-xs text-slate-400 font-normal">
+                          {card.lastContactedAt && <p>Last contacted {formatDate(card.lastContactedAt)}</p>}
+                          {card.nextFollowUpAt && <p>Next follow-up {formatDate(card.nextFollowUpAt)}</p>}
                         </div>
-                        <div className="mt-2 flex items-center gap-2">
-                          <span className={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold ${
-                            (card.noteCount || 0) > 0
-                              ? "border-indigo-200 bg-indigo-50 text-indigo-700"
-                              : "border-slate-200 bg-white text-slate-500"
-                          }`}>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span
+                            className={`inline-flex rounded-md px-2 py-0.5 text-[10px] font-semibold ${
+                              (card.noteCount || 0) > 0 ? recruiterBadge.positive : recruiterBadge.inactive
+                            }`}
+                          >
                             {(card.noteCount || 0) > 0 ? `${card.noteCount} note${card.noteCount === 1 ? "" : "s"}` : "No notes"}
                           </span>
                           {card.latestNote && (
-                            <span className="text-[10px] text-slate-500 truncate" title={card.latestNote}>
+                            <span className="text-[10px] text-slate-400 truncate max-w-[140px]" title={card.latestNote}>
                               {card.latestNote}
                             </span>
                           )}
-                        </div>
-                        <div className="mt-1 flex flex-wrap items-center gap-2">
-                          <span className={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold ${
-                            (card.evaluationCount || 0) > 0
-                              ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                              : "border-amber-200 bg-amber-50 text-amber-700"
-                          }`}>
-                            {(card.evaluationCount || 0) > 0
-                              ? `Eval ${card.evaluationCount}${card.evaluationAvgRating == null ? "" : ` · ${card.evaluationAvgRating.toFixed(1)}/5`}`
-                              : "No evaluation"}
-                          </span>
-                          <span className="inline-flex rounded-full border border-violet-200 bg-violet-50 px-2 py-0.5 text-[10px] font-semibold text-violet-700">
-                            {reviewStatusLabel(card.reviewStatus)}
-                          </span>
-                          <span className="text-[10px] text-slate-500">Waiting on {card.waitingOn || "in progress"}</span>
-                          {card.sequenceStatus && (
-                            <span className={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold ${
-                              card.sequenceStatus === "ACTIVE"
-                                ? "border-violet-200 bg-violet-50 text-violet-700"
-                                : "border-slate-200 bg-white text-slate-600"
-                            }`}>
-                              Sequence: {card.sequenceStatus}
+                          {(card.reviewPendingCount || 0) > 0 && (
+                            <span className={`inline-flex rounded-md px-2 py-0.5 text-[10px] font-semibold ${recruiterBadge.pending}`}>
+                              Review pending ({card.reviewPendingCount})
                             </span>
                           )}
-                          {card.interviewAt && (
-                            <span className="inline-flex rounded-full border border-indigo-200 bg-indigo-50 px-2 py-0.5 text-[10px] font-semibold text-indigo-700">
-                              Interview ({String(card.interviewStatus || "SCHEDULED").toLowerCase()}):{" "}
-                              {formatDate(card.interviewAt)}
+                          {(card.reviewCompletedCount || 0) > 0 && (
+                            <span className={`inline-flex rounded-md px-2 py-0.5 text-[10px] font-semibold ${recruiterBadge.positive}`}>
+                              Feedback received ({card.reviewCompletedCount})
                             </span>
                           )}
                         </div>
+                        <p className="text-[10px] text-slate-400 leading-snug font-normal">
+                          <span className="font-medium text-slate-600">{reviewStatusLabel(card.reviewStatus)}</span>
+                          {" · "}
+                          Waiting on {card.waitingOn || "in progress"}
+                          {(card.evaluationCount || 0) > 0
+                            ? ` · ${card.evaluationCount} evaluation${(card.evaluationCount || 0) === 1 ? "" : "s"}`
+                            : " · No evaluation yet"}
+                          {card.interviewAt ? ` · Interview ${formatDate(card.interviewAt)}` : ""}
+                          {card.sequenceStatus ? ` · Follow-up sequence ${card.sequenceStatus}` : ""}
+                        </p>
+                        {card.interviewAt && (
+                          <div className="pt-1">
+                            <InterviewStatusBadge status={card.interviewStatus || "SCHEDULED"} />
+                          </div>
+                        )}
+                        <p className="text-[11px] text-navy-900 font-medium">{card.nextStep || "Next step: Review candidate"}</p>
 
-                        <div className="mt-2">
+                        <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-slate-100">
+                          <Link
+                            href={`${getCandidateUrl(card.candidateId, jobId)}&action=interview`}
+                            className="rounded-md border border-slate-200 px-2 py-1 text-[10px] font-semibold text-slate-700 hover:bg-slate-100"
+                          >
+                            Schedule interview
+                          </Link>
+                          <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Stage</span>
                           <select
                             value={card.stage}
                             onChange={(e) => handleMoveStage(card.entryId, card.candidateId, e.target.value as PipelineStage)}
                             disabled={busyEntryId === card.entryId}
-                            className="w-full px-2 py-1.5 rounded-md border border-slate-200 text-xs bg-white"
+                            className="max-w-[9.5rem] px-2 py-1 rounded-md border border-slate-200 text-xs bg-white"
                           >
                             {PIPELINE_STAGES.map((s) => (
                               <option key={s} value={s}>
-                                {s}
+                                {pipelineStageLabel(s)}
                               </option>
                             ))}
                           </select>
-                        </div>
-
-                        <div className="mt-2">
+                          <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Follow-up</span>
                           <input
                             type="date"
                             value={dateInputValue(card.nextFollowUpAt)}
                             onChange={(e) => handleSetFollowUp(card.entryId, card.candidateId, e.target.value)}
                             disabled={busyEntryId === card.entryId}
-                            className="w-full px-2 py-1.5 rounded-md border border-slate-200 text-xs bg-white"
+                            className="max-w-[9.5rem] px-2 py-1 rounded-md border border-slate-200 text-xs bg-white"
                           />
                         </div>
 
                         {isFollowUpDue(card.nextFollowUpAt) && (
-                          <div className="mt-2 inline-flex rounded-full border border-rose-200 bg-rose-50 px-2 py-0.5 text-xs text-rose-700 font-medium">
+                          <div className={`inline-flex rounded-md px-2 py-0.5 text-xs font-semibold ${recruiterBadge.urgent}`}>
                             Follow-up due
                           </div>
                         )}
                         {!isFollowUpDue(card.nextFollowUpAt) && isFollowUpSoon(card.nextFollowUpAt) && (
-                          <div className="mt-2 inline-flex rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs text-amber-700 font-medium">
+                          <div className={`inline-flex rounded-md px-2 py-0.5 text-xs font-semibold ${recruiterBadge.pending}`}>
                             Follow-up due soon
                           </div>
                         )}
-                        <div className="mt-2">
-                          <button
-                            type="button"
-                            onClick={() => handleRequestReview(card.candidateId)}
-                            disabled={reviewBusyCandidateId === card.candidateId}
-                            className="inline-flex rounded-md border border-violet-200 bg-violet-50 px-2 py-1 text-[11px] font-semibold text-violet-800 hover:bg-violet-100 disabled:opacity-60"
-                          >
-                            {card.reviewStatus === "REQUESTED" ? "Review requested" : "Request review"}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              card.sequenceStatus === "ACTIVE"
-                                ? handleStopSequence(card.candidateId)
-                                : handleStartSequence(card.candidateId)
-                            }
-                            disabled={sequenceBusyCandidateId === card.candidateId}
-                            className="ml-2 inline-flex rounded-md border border-violet-200 bg-violet-50 px-2 py-1 text-[11px] font-semibold text-violet-800 hover:bg-violet-100 disabled:opacity-60"
-                          >
-                            {card.sequenceStatus === "ACTIVE" ? "Stop sequence" : "Start sequence"}
-                          </button>
-                        </div>
                       </article>
                     ))
                   )}

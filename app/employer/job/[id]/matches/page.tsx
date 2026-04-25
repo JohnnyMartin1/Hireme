@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { Loader2, MapPin, RefreshCw, FileText, Video, MessageSquare, User } from "lucide-react";
 import { getCandidateUrl, getCandidatesSearchUrl, getJobCompareUrl } from "@/lib/navigation";
 import AddToTalentPoolButton from "@/components/employer/AddToTalentPoolButton";
@@ -15,6 +15,17 @@ import {
   normalizePipelineStage,
   type PipelineStage,
 } from "@/lib/firebase-firestore";
+import {
+  pipelineStageLabel,
+  recruiterBadge,
+  recruiterBtnGhost,
+  recruiterBtnPrimary,
+  recruiterBtnPrimaryLg,
+  recruiterBtnSecondarySm,
+} from "@/lib/recruiter-ui";
+import { getRecruiterNextStep } from "@/lib/communication-status";
+import { fetchReviewAssignments } from "@/lib/collaboration-client";
+import SendCandidateForReviewButton from "@/components/recruiter/SendCandidateForReviewButton";
 
 type CandidatePreview = {
   firstName?: string | null;
@@ -72,6 +83,11 @@ type CandidateNoteMeta = {
   count: number;
   latestSnippet: string | null;
 };
+type CandidateReviewMeta = {
+  pending: number;
+  completed: number;
+};
+type CandidateSurfaceFilter = "RECOMMENDED" | "SHORTLISTED" | "CONTACTED" | "PIPELINE";
 
 function fitLabelForScore(score: number): RecruiterSummary["fitLabel"] {
   if (score >= 75) return "Strong fit";
@@ -81,10 +97,10 @@ function fitLabelForScore(score: number): RecruiterSummary["fitLabel"] {
 }
 
 function fitBadgeClasses(fitLabel: RecruiterSummary["fitLabel"]): string {
-  if (fitLabel === "Strong fit") return "bg-emerald-50 text-emerald-700 border-emerald-100";
-  if (fitLabel === "Good fit") return "bg-sky-50 text-sky-700 border-sky-100";
-  if (fitLabel === "Stretch fit") return "bg-amber-50 text-amber-800 border-amber-100";
-  return "bg-rose-50 text-rose-700 border-rose-100";
+  if (fitLabel === "Strong fit") return recruiterBadge.positive;
+  if (fitLabel === "Good fit") return "border border-sky-200 bg-sky-50 text-navy-900";
+  if (fitLabel === "Stretch fit") return recruiterBadge.pending;
+  return recruiterBadge.inactive;
 }
 
 function buildFallbackSummary(m: MatchRow): RecruiterSummary {
@@ -128,6 +144,7 @@ function tierForScore(score: number): "top" | "strong" | "potential" | "low" {
 export default function JobMatchesPage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const jobId = params.id as string;
   const { user, profile } = useFirebaseAuth();
   const toast = useToast();
@@ -142,6 +159,15 @@ export default function JobMatchesPage() {
   const [bulkBusy, setBulkBusy] = useState(false);
   const [bulkStage, setBulkStage] = useState<PipelineStage>("SHORTLIST");
   const [noteMetaByCandidateId, setNoteMetaByCandidateId] = useState<Record<string, CandidateNoteMeta>>({});
+  const [reviewMetaByCandidateId, setReviewMetaByCandidateId] = useState<Record<string, CandidateReviewMeta>>({});
+  const [surfaceFilter, setSurfaceFilter] = useState<CandidateSurfaceFilter>("RECOMMENDED");
+
+  useEffect(() => {
+    const f = (searchParams.get("filter") || "").toUpperCase();
+    if (f === "SHORTLISTED" || f === "SHORTLIST") setSurfaceFilter("SHORTLISTED");
+    else if (f === "CONTACTED") setSurfaceFilter("CONTACTED");
+    else if (f === "PIPELINE" || f === "IN_PIPELINE") setSurfaceFilter("PIPELINE");
+  }, [searchParams]);
 
   useEffect(() => {
     if (!user || !profile || (profile.role !== "EMPLOYER" && profile.role !== "RECRUITER")) {
@@ -185,6 +211,20 @@ export default function JobMatchesPage() {
       } else {
         setNoteMetaByCandidateId({});
       }
+      const reviewsRes = await fetchReviewAssignments(jobId, token);
+      if (reviewsRes.ok) {
+        const byCandidate: Record<string, CandidateReviewMeta> = {};
+        for (const assignment of reviewsRes.data.assignments || []) {
+          const cid = String((assignment as any).candidateId || "");
+          if (!cid) continue;
+          if (!byCandidate[cid]) byCandidate[cid] = { pending: 0, completed: 0 };
+          if (String((assignment as any).status || "") === "REQUESTED") byCandidate[cid].pending += 1;
+          if (String((assignment as any).status || "") === "COMPLETED") byCandidate[cid].completed += 1;
+        }
+        setReviewMetaByCandidateId(byCandidate);
+      } else {
+        setReviewMetaByCandidateId({});
+      }
 
       const pipelineRes = await fetch(`/api/job/${jobId}/pipeline`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -223,6 +263,15 @@ export default function JobMatchesPage() {
     () => sortedMatches.filter((m) => (pipelineByCandidateId[m.candidateId]?.stage || "NEW") !== "REJECTED"),
     [sortedMatches, pipelineByCandidateId]
   );
+  const scopedMatches = useMemo(() => {
+    return visibleSortedMatches.filter((m) => {
+      const stage = normalizePipelineStage(pipelineByCandidateId[m.candidateId]?.stage || "NEW");
+      if (surfaceFilter === "RECOMMENDED") return stage === "NEW";
+      if (surfaceFilter === "SHORTLISTED") return stage === "SHORTLIST";
+      if (surfaceFilter === "CONTACTED") return stage === "CONTACTED";
+      return stage !== "NEW" && stage !== "REJECTED";
+    });
+  }, [visibleSortedMatches, pipelineByCandidateId, surfaceFilter]);
 
   const focusNextCandidate = (candidateId: string) => {
     const currentIndex = visibleSortedMatches.findIndex((m) => m.candidateId === candidateId);
@@ -240,7 +289,7 @@ export default function JobMatchesPage() {
     const strong: MatchRow[] = [];
     const potential: MatchRow[] = [];
     const other: MatchRow[] = [];
-    for (const m of visibleSortedMatches) {
+    for (const m of scopedMatches) {
       const t = tierForScore(m.overallScore);
       if (t === "top") top.push(m);
       else if (t === "strong") strong.push(m);
@@ -248,7 +297,7 @@ export default function JobMatchesPage() {
       else other.push(m);
     }
     return { top, strong, potential, other };
-  }, [visibleSortedMatches]);
+  }, [scopedMatches]);
 
   const rankMap = useMemo(() => {
     const map: Record<string, number> = {};
@@ -346,12 +395,6 @@ export default function JobMatchesPage() {
     }
   };
 
-  const handleMoveStage = async (candidateId: string, newStage: PipelineStage) => {
-    const ok = await updatePipelineForCandidate(candidateId, { stage: newStage });
-    if (ok) focusNextCandidate(candidateId);
-    return ok;
-  };
-
   const allCandidateIds = useMemo(() => visibleSortedMatches.map((m) => m.candidateId), [visibleSortedMatches]);
   const allSelected = allCandidateIds.length > 0 && allCandidateIds.every((id) => selectedCandidateIds.has(id));
 
@@ -378,7 +421,10 @@ export default function JobMatchesPage() {
       for (const candidateId of selectedCandidateIds) {
         await updatePipelineForCandidate(candidateId, { stage });
       }
-      toast.success("Updated", `Moved ${selectedCandidateIds.size} candidate(s) to ${stage}`);
+      toast.success(
+        "Updated",
+        `Moved ${selectedCandidateIds.size} candidate(s) to ${pipelineStageLabel(stage)}`
+      );
       setSelectedCandidateIds(new Set());
     } finally {
       setBulkBusy(false);
@@ -396,188 +442,179 @@ export default function JobMatchesPage() {
 
   if (!user || !profile) return null;
 
-  const matchStatus = job?.matchStatus as string | undefined;
-  const matchError = job?.matchError as string | undefined;
-
   return (
     <div className="min-h-screen bg-slate-50 mobile-safe-top mobile-safe-bottom">
-      <header className="sticky top-0 bg-white/95 backdrop-blur-sm shadow-sm z-40 border-b border-slate-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-end gap-2">
-          <button
-            type="button"
-            onClick={() => router.push(getCandidatesSearchUrl(jobId))}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-200 bg-white text-navy-800 text-sm font-medium hover:bg-slate-50"
-          >
-            Find more candidates
-          </button>
-          <button
-            type="button"
-            onClick={handleRerun}
-            disabled={rerunLoading}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-200 bg-white text-navy-800 text-sm font-medium hover:bg-slate-50 disabled:opacity-50"
-          >
-            <RefreshCw className={`h-4 w-4 ${rerunLoading ? "animate-spin" : ""}`} />
-            Rerun matches
-          </button>
-        </div>
-      </header>
-
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6">
+      {/* FIX5: max-w-7xl matches other job workspace tabs · FIX7: title + actions share one surface */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-6">
         {loading ? (
           <div className="flex flex-col items-center justify-center py-24 text-slate-600">
             <Loader2 className="h-10 w-10 animate-spin text-navy-600 mb-4" />
-            <p>Loading matches…</p>
+            <p>Loading candidates…</p>
           </div>
         ) : (
           <>
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 sm:p-6 mb-6">
-              <h1 className="text-lg sm:text-xl font-bold text-navy-900 mb-2">Match triage</h1>
-              <div className="flex flex-wrap gap-3 text-sm text-slate-600 mb-4">
-                <span className="inline-flex items-center gap-1">
-                  <MapPin className="h-4 w-4" />
-                  {job?.location ||
-                    (job?.locationCity && job?.locationState
-                      ? `${job.locationCity}, ${job.locationState}`
-                      : "Location TBD")}
-                </span>
-                {job?.industry && <span>• {job.industry}</span>}
-                {job?.employment && <span>• {String(job.employment).replace(/_/g, " ")}</span>}
-              </div>
-              {job?.aiSummary && (
-                <p className="text-slate-700 text-sm leading-relaxed border-t border-slate-100 pt-4">
-                  {job.aiSummary}
-                </p>
-              )}
-              <div className="mt-4 flex flex-wrap gap-2 text-xs">
-                <span
-                  className={`px-2 py-1 rounded-full font-medium ${
-                    matchStatus === "complete"
-                      ? "bg-green-100 text-green-800"
-                      : matchStatus === "failed"
-                        ? "bg-red-100 text-red-800"
-                        : "bg-amber-100 text-amber-900"
-                  }`}
-                >
-                  Matching: {matchStatus || "unknown"}
-                </span>
-                {matchError && (
-                  <span className="text-red-600 text-xs self-center">Last error: {matchError}</span>
-                )}
-              </div>
-            </div>
-
-            {visibleSortedMatches.length > 0 && (
-              <section className="mb-6 bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-5">
-                <div className="flex items-center justify-between mb-3">
-                  <h2 className="text-lg sm:text-xl font-bold text-navy-900">All evaluated candidates</h2>
-                  <div className="flex items-center gap-3">
+            <div className="mb-6 rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+              <div className="p-5 sm:p-6 border-b border-slate-100">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="min-w-0">
+                    <h1 className="text-2xl font-bold text-navy-900 mb-2">Recommended candidates</h1>
+                    <div className="flex flex-wrap gap-3 text-sm text-slate-700">
+                      <span className="inline-flex items-center gap-1">
+                        <MapPin className="h-4 w-4 text-slate-400 shrink-0" />
+                        {job?.location ||
+                          (job?.locationCity && job?.locationState
+                            ? `${job.locationCity}, ${job.locationState}`
+                            : "Location TBD")}
+                      </span>
+                      {job?.industry && <span className="text-slate-500">• {job.industry}</span>}
+                      {job?.employment && (
+                        <span className="text-slate-500">• {String(job.employment).replace(/_/g, " ")}</span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2 shrink-0">
                     <button
                       type="button"
-                      onClick={toggleSelectAll}
-                      className="text-xs sm:text-sm font-medium text-sky-700 hover:text-sky-800"
+                      onClick={() => router.push(getCandidatesSearchUrl(jobId))}
+                      className={recruiterBtnSecondarySm}
                     >
-                      {allSelected ? "Clear selection" : "Select all"}
+                      Source
                     </button>
-                    <span className="text-xs sm:text-sm text-slate-500">{visibleSortedMatches.length} shown</span>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  {visibleSortedMatches.map((m) => (
-                    <div
-                      key={`row-${m.id}`}
-                      className="flex items-center justify-between rounded-lg border border-slate-100 bg-slate-50 px-3 py-2"
+                    <button
+                      type="button"
+                      onClick={handleRerun}
+                      disabled={rerunLoading}
+                      className={`${recruiterBtnSecondarySm} inline-flex items-center gap-2`}
                     >
-                      <div className="text-sm text-slate-700">
-                        <span className="font-semibold text-navy-800 mr-2">#{rankMap[m.id]}</span>
-                        {(m.candidatePreview?.firstName || m.candidatePreview?.lastName)
-                          ? `${m.candidatePreview?.firstName || ""} ${m.candidatePreview?.lastName || ""}`.trim()
-                          : "Candidate"}
-                      </div>
-                      <div className="text-sm font-semibold text-navy-800">{Math.round(m.overallScore)}%</div>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            )}
-
-            {visibleSortedMatches.length > 0 && (
-              <section className="mb-6 rounded-xl border border-violet-200 bg-violet-50 p-3 sm:p-4">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                  <div>
-                    <p className="text-sm font-semibold text-violet-900">Build a shortlist compare set</p>
-                    <p className="text-xs text-violet-800">
-                      Select contenders, move to shortlist, then compare 2-4 side-by-side.
-                    </p>
+                      <RefreshCw className={`h-3.5 w-3.5 ${rerunLoading ? "animate-spin" : ""}`} />
+                      Refresh
+                    </button>
                   </div>
-                  <button
-                    type="button"
-                    onClick={launchCompare}
-                    disabled={selectedCandidateIds.size < 2}
-                    className="inline-flex items-center justify-center rounded-lg bg-violet-700 px-3 py-2 text-xs font-semibold text-white hover:bg-violet-800 disabled:opacity-50"
-                  >
-                    Compare {selectedCandidateIds.size > 0 ? `(${selectedCandidateIds.size})` : ""}
-                  </button>
                 </div>
-              </section>
-            )}
+                {job?.aiSummary && (
+                  <p className="text-slate-700 text-sm leading-relaxed border-t border-slate-100 mt-4 pt-4">
+                    {job.aiSummary}
+                  </p>
+                )}
+              </div>
 
-            {selectedCandidateIds.size > 0 && (
-              <section className="mb-6 bg-gradient-to-r from-navy-900 to-navy-800 text-white rounded-xl p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center gap-3 shadow-sm">
-                <p className="text-sm font-medium">
-                  {selectedCandidateIds.size} candidate{selectedCandidateIds.size === 1 ? "" : "s"} selected
-                </p>
-                <div className="flex flex-wrap items-center gap-2 sm:ml-auto">
-                  <button
-                    type="button"
-                    onClick={() => runBulkStageUpdate("SHORTLIST")}
-                    disabled={bulkBusy}
-                    className="px-3 py-1.5 rounded-lg bg-white text-navy-900 text-xs font-semibold hover:bg-slate-100 disabled:opacity-60"
-                  >
-                    Shortlist
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => runBulkStageUpdate("REJECTED")}
-                    disabled={bulkBusy}
-                    className="px-3 py-1.5 rounded-lg bg-rose-100 text-rose-800 text-xs font-semibold hover:bg-rose-200 disabled:opacity-60"
-                  >
-                    Reject
-                  </button>
-                  <select
-                    value={bulkStage}
-                    onChange={(e) => setBulkStage(e.target.value as PipelineStage)}
-                    disabled={bulkBusy}
-                    className="px-2 py-1.5 rounded-lg border border-slate-200 text-xs text-slate-800 bg-white"
-                  >
-                    {PIPELINE_STAGES.map((stage) => (
-                      <option key={stage} value={stage}>
-                        Move to {stage}
-                      </option>
-                    ))}
-                  </select>
-                  <button
-                    type="button"
-                    onClick={() => runBulkStageUpdate(bulkStage)}
-                    disabled={bulkBusy}
-                    className="px-3 py-1.5 rounded-lg bg-sky-100 text-sky-800 text-xs font-semibold hover:bg-sky-200 disabled:opacity-60"
-                  >
-                    Apply stage
-                  </button>
-                  <button
-                    type="button"
-                    onClick={launchCompare}
-                    disabled={bulkBusy}
-                    className="px-3 py-1.5 rounded-lg bg-violet-100 text-violet-800 text-xs font-semibold hover:bg-violet-200 disabled:opacity-60"
-                  >
-                    Compare selected
-                  </button>
+              <div className="px-3 sm:px-4 py-3 sm:py-4 border-b border-slate-100 bg-slate-50/80">
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2">Filter</p>
+                <div className="flex flex-wrap gap-2">
+                  {(
+                    [
+                      ["RECOMMENDED", "Recommended"],
+                      ["SHORTLISTED", "Shortlisted"],
+                      ["CONTACTED", "Contacted"],
+                      ["PIPELINE", "In pipeline"],
+                    ] as const
+                  ).map(([key, label]) => {
+                    const count = visibleSortedMatches.filter((m) => {
+                      const stage = normalizePipelineStage(pipelineByCandidateId[m.candidateId]?.stage || "NEW");
+                      if (key === "RECOMMENDED") return stage === "NEW";
+                      if (key === "SHORTLISTED") return stage === "SHORTLIST";
+                      if (key === "CONTACTED") return stage === "CONTACTED";
+                      return stage !== "NEW" && stage !== "REJECTED";
+                    }).length;
+                    const active = surfaceFilter === key;
+                    return (
+                      <button
+                        key={key}
+                        type="button"
+                        onClick={() => setSurfaceFilter(key)}
+                        className={`rounded-lg px-3 py-2 text-sm font-semibold transition-colors ${
+                          active
+                            ? "bg-navy-800 text-white"
+                            : "border border-slate-200 bg-white text-navy-900 hover:bg-slate-50"
+                        }`}
+                      >
+                        {label} ({count})
+                      </button>
+                    );
+                  })}
                 </div>
-              </section>
-            )}
+              </div>
+
+              {scopedMatches.length > 0 && (
+                <div className="px-3 sm:px-4 py-3 sm:py-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-white">
+                  <div>
+                    <p className="text-sm font-semibold text-navy-900">Compare shortlist</p>
+                    <p className="text-xs text-slate-600 mt-0.5">Select 2–4 contenders, then compare.</p>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button type="button" onClick={toggleSelectAll} className={recruiterBtnSecondarySm}>
+                      {allSelected ? "Clear selection" : "Select all in view"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={launchCompare}
+                      disabled={selectedCandidateIds.size < 2}
+                      className={`${recruiterBtnPrimary} text-xs px-3 py-2 disabled:opacity-50`}
+                    >
+                      Compare {selectedCandidateIds.size > 0 ? `(${selectedCandidateIds.size})` : ""}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {selectedCandidateIds.size > 0 && (
+                <div className="px-3 sm:px-4 py-3 sm:py-4 flex flex-col sm:flex-row sm:items-center gap-3 bg-navy-800 text-white">
+                  <p className="text-sm font-medium">
+                    {selectedCandidateIds.size} selected
+                  </p>
+                  <div className="flex flex-wrap items-center gap-2 sm:ml-auto">
+                    <button
+                      type="button"
+                      onClick={() => runBulkStageUpdate("SHORTLIST")}
+                      disabled={bulkBusy}
+                      className="rounded-lg bg-white px-3 py-1.5 text-xs font-semibold text-navy-900 hover:bg-slate-100 disabled:opacity-60"
+                    >
+                      Shortlist
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => runBulkStageUpdate("REJECTED")}
+                      disabled={bulkBusy}
+                      className="rounded-lg border border-white/40 bg-white/10 px-3 py-1.5 text-xs font-semibold text-white hover:bg-white/20 disabled:opacity-60"
+                    >
+                      Reject
+                    </button>
+                    <select
+                      value={bulkStage}
+                      onChange={(e) => setBulkStage(e.target.value as PipelineStage)}
+                      disabled={bulkBusy}
+                      className="rounded-lg border border-white/30 bg-white/10 px-2 py-1.5 text-xs text-white"
+                    >
+                      {PIPELINE_STAGES.map((stage) => (
+                        <option key={stage} value={stage} className="text-navy-900">
+                          Move to {pipelineStageLabel(stage)}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      onClick={() => runBulkStageUpdate(bulkStage)}
+                      disabled={bulkBusy}
+                      className="rounded-lg bg-sky-100 px-3 py-1.5 text-xs font-semibold text-navy-900 hover:bg-sky-200 disabled:opacity-60"
+                    >
+                      Apply stage
+                    </button>
+                    <button
+                      type="button"
+                      onClick={launchCompare}
+                      disabled={bulkBusy}
+                      className="rounded-lg border border-white/40 bg-transparent px-3 py-1.5 text-xs font-semibold text-white hover:bg-white/10 disabled:opacity-60"
+                    >
+                      Compare selected
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
 
             <MatchSection
               jobId={jobId}
-              title="Top matches"
+              title="Top recommended candidates"
               subtitle="Score 85+"
               items={grouped.top}
               rankMap={rankMap}
@@ -595,14 +632,14 @@ export default function JobMatchesPage() {
               }}
               onMessage={async (candidateId) => {
                 await updatePipelineForCandidate(candidateId, { stage: "CONTACTED", lastContactedAt: new Date() });
-                router.push(getCandidateUrl(candidateId, jobId));
+                router.push(`${getCandidateUrl(candidateId, jobId)}&action=message`);
               }}
-              onMoveStage={handleMoveStage}
               noteMetaByCandidateId={noteMetaByCandidateId}
+              reviewMetaByCandidateId={reviewMetaByCandidateId}
             />
             <MatchSection
               jobId={jobId}
-              title="Strong matches"
+              title="Strong recommended candidates"
               subtitle="Score 70–84"
               items={grouped.strong}
               rankMap={rankMap}
@@ -620,14 +657,14 @@ export default function JobMatchesPage() {
               }}
               onMessage={async (candidateId) => {
                 await updatePipelineForCandidate(candidateId, { stage: "CONTACTED", lastContactedAt: new Date() });
-                router.push(getCandidateUrl(candidateId, jobId));
+                router.push(`${getCandidateUrl(candidateId, jobId)}&action=message`);
               }}
-              onMoveStage={handleMoveStage}
               noteMetaByCandidateId={noteMetaByCandidateId}
+              reviewMetaByCandidateId={reviewMetaByCandidateId}
             />
             <MatchSection
               jobId={jobId}
-              title="Potential matches"
+              title="Potential candidates"
               subtitle="Score 50–69"
               items={grouped.potential}
               rankMap={rankMap}
@@ -645,10 +682,10 @@ export default function JobMatchesPage() {
               }}
               onMessage={async (candidateId) => {
                 await updatePipelineForCandidate(candidateId, { stage: "CONTACTED", lastContactedAt: new Date() });
-                router.push(getCandidateUrl(candidateId, jobId));
+                router.push(`${getCandidateUrl(candidateId, jobId)}&action=message`);
               }}
-              onMoveStage={handleMoveStage}
               noteMetaByCandidateId={noteMetaByCandidateId}
+              reviewMetaByCandidateId={reviewMetaByCandidateId}
             />
             <MatchSection
               jobId={jobId}
@@ -670,16 +707,16 @@ export default function JobMatchesPage() {
               }}
               onMessage={async (candidateId) => {
                 await updatePipelineForCandidate(candidateId, { stage: "CONTACTED", lastContactedAt: new Date() });
-                router.push(getCandidateUrl(candidateId, jobId));
+                router.push(`${getCandidateUrl(candidateId, jobId)}&action=message`);
               }}
-              onMoveStage={handleMoveStage}
               noteMetaByCandidateId={noteMetaByCandidateId}
+              reviewMetaByCandidateId={reviewMetaByCandidateId}
             />
 
-            {visibleSortedMatches.length === 0 && (
+            {scopedMatches.length === 0 && (
               <div className="text-center py-16 text-slate-600 bg-white rounded-2xl border border-slate-200">
-                <p className="mb-2">No scored matches yet.</p>
-                <p className="text-sm">Try “Rerun matches” in a few seconds if the job was just created.</p>
+                <p className="mb-2">No candidates in this view yet.</p>
+                <p className="text-sm">Try another filter or refresh recommendations.</p>
               </div>
             )}
           </>
@@ -702,8 +739,8 @@ function MatchSection({
   onShortlist,
   onReject,
   onMessage,
-  onMoveStage,
   noteMetaByCandidateId,
+  reviewMetaByCandidateId,
 }: {
   jobId: string;
   title: string;
@@ -717,15 +754,15 @@ function MatchSection({
   onShortlist: (candidateId: string) => Promise<void>;
   onReject: (candidateId: string) => Promise<void>;
   onMessage: (candidateId: string) => Promise<void>;
-  onMoveStage: (candidateId: string, stage: PipelineStage) => Promise<boolean | void>;
   noteMetaByCandidateId: Record<string, CandidateNoteMeta>;
+  reviewMetaByCandidateId: Record<string, CandidateReviewMeta>;
 }) {
   if (!items.length) return null;
   return (
     <section className="mb-10">
       <div className="mb-4">
-        <h2 className="text-xl font-bold text-navy-900">{title}</h2>
-        <p className="text-sm text-slate-500">{subtitle}</p>
+        <h2 className="text-lg font-semibold text-navy-900">{title}</h2>
+        <p className="text-xs text-slate-400 font-normal">{subtitle}</p>
       </div>
       <div className="space-y-4">
         {items.map((m) => (
@@ -741,8 +778,8 @@ function MatchSection({
             onShortlist={() => onShortlist(m.candidateId)}
             onReject={() => onReject(m.candidateId)}
             onMessage={() => onMessage(m.candidateId)}
-            onMoveStage={(stage) => onMoveStage(m.candidateId, stage)}
             noteMeta={noteMetaByCandidateId[m.candidateId]}
+            reviewMeta={reviewMetaByCandidateId[m.candidateId]}
           />
         ))}
       </div>
@@ -753,7 +790,7 @@ function MatchSection({
 function MatchCard({
   jobId,
   m,
-  rank,
+  rank: _rank,
   pipelineEntry,
   actionBusy,
   selected,
@@ -761,12 +798,12 @@ function MatchCard({
   onShortlist,
   onReject,
   onMessage,
-  onMoveStage,
   noteMeta,
+  reviewMeta,
 }: {
   jobId: string;
   m: MatchRow;
-  rank: number;
+  rank: number; // retained for API compatibility; not shown in simplified cards
   pipelineEntry: any | null;
   actionBusy: boolean;
   selected: boolean;
@@ -774,9 +811,10 @@ function MatchCard({
   onShortlist: () => Promise<void>;
   onReject: () => Promise<void>;
   onMessage: () => Promise<void>;
-  onMoveStage: (stage: PipelineStage) => Promise<boolean | void>;
   noteMeta?: CandidateNoteMeta;
+  reviewMeta?: CandidateReviewMeta;
 }) {
+  const [showWhyMatch, setShowWhyMatch] = useState(false);
   const preview = m.candidatePreview;
   const name =
     preview?.firstName || preview?.lastName
@@ -787,8 +825,24 @@ function MatchCard({
 
   const inPipeline = Boolean(pipelineEntry?.id);
   const currentStage = normalizePipelineStage(pipelineEntry?.stage);
+  const nextStepLine = getRecruiterNextStep({
+    pipelineStage: inPipeline ? currentStage : "NEW",
+  });
   const topSignals = (recruiterSummary.strengths || m.strengths || []).slice(0, 2);
   const topGap = recruiterSummary.gaps?.[0] || m.gaps?.[0] || recruiterSummary.riskNote;
+
+  let primaryAction: "shortlist" | "message" | "profile" = "shortlist";
+  if (!inPipeline || currentStage === "NEW") primaryAction = "shortlist";
+  else if (currentStage === "REJECTED") primaryAction = "profile";
+  else if (
+    currentStage === "SHORTLIST" ||
+    currentStage === "CONTACTED" ||
+    currentStage === "RESPONDED" ||
+    currentStage === "INTERVIEW" ||
+    currentStage === "FINALIST"
+  )
+    primaryAction = "message";
+  else primaryAction = "shortlist";
 
   return (
     <article
@@ -808,28 +862,36 @@ function MatchCard({
             <User className="h-5 w-5 text-navy-700" />
           </div>
           <div>
-            <h3 className="font-semibold text-navy-900 text-lg">{name}</h3>
-            <p className="text-xs text-slate-500">Rank #{rank}</p>
-            {headline && <p className="text-sm text-slate-600 line-clamp-2">{headline}</p>}
+            <h3 className="text-base font-medium text-navy-900">{name}</h3>
+            {headline && <p className="text-sm text-slate-700 line-clamp-2">{headline}</p>}
           </div>
         </div>
         <div className="text-left sm:text-right">
-          <div className="text-2xl font-bold text-navy-800">{Math.round(m.overallScore)}%</div>
-          <div className="text-xs text-slate-500">overall match</div>
+          <div className="text-xl font-bold text-navy-800">{Math.round(m.overallScore)}%</div>
+          <div className="text-xs text-slate-400 font-normal">Match score</div>
         </div>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs mb-4">
-        <ScorePill label="Skills overlap" v={m.skillsScore} />
-        <ScorePill label="Role alignment" v={m.titleScore} />
-        <ScorePill label="Location match" v={m.locationScore} />
-        <ScorePill label="Profile similarity" v={m.semanticScore ?? 0} />
+      <div className="mb-3">
+        <button
+          type="button"
+          onClick={() => setShowWhyMatch((v) => !v)}
+          className={`${recruiterBtnGhost} text-xs font-semibold`}
+        >
+          {showWhyMatch ? "Hide match detail" : "Why this match?"}
+        </button>
+        {showWhyMatch && (
+          <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
+            <ScorePill label="Skills overlap" v={m.skillsScore} />
+            <ScorePill label="Role alignment" v={m.titleScore} />
+          </div>
+        )}
       </div>
 
       <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 mb-4">
         <p className="text-sm font-semibold text-navy-900 mb-2">{recruiterSummary.headline}</p>
         <div className="flex flex-wrap items-center gap-2 text-sm">
-          <span className={`inline-flex items-center rounded-full border px-2.5 py-1 font-medium ${fitBadgeClasses(recruiterSummary.fitLabel)}`}>
+          <span className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs font-medium ${fitBadgeClasses(recruiterSummary.fitLabel)}`}>
             {recruiterSummary.fitLabel}
           </span>
           <p className="text-slate-700">{recruiterSummary.fitReason}</p>
@@ -838,118 +900,139 @@ function MatchCard({
 
       {(topSignals.length > 0 || topGap) && (
         <div className="mb-4 grid grid-cols-1 md:grid-cols-2 gap-3">
-          <div className="rounded-lg border border-emerald-100 bg-emerald-50/70 px-3 py-2">
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-emerald-700 mb-1">Top strengths</p>
+          <div className={`rounded-lg px-3 py-2 ${recruiterBadge.positive}`}>
+            <p className="text-[11px] font-semibold uppercase tracking-wide mb-1">Top strengths</p>
             {topSignals.length > 0 ? (
-              <ul className="text-sm text-emerald-900 space-y-1">
+              <ul className="text-sm text-slate-800 space-y-1">
                 {topSignals.map((s, i) => (
                   <li key={i}>• {s}</li>
                 ))}
               </ul>
             ) : (
-              <p className="text-sm text-emerald-900/70">No strong evidence surfaced yet.</p>
+              <p className="text-sm text-slate-600">No strong evidence surfaced yet.</p>
             )}
           </div>
-          <div className="rounded-lg border border-amber-100 bg-amber-50/70 px-3 py-2">
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-amber-700 mb-1">Primary risk</p>
-            <p className="text-sm text-amber-900">{topGap || "No major risks highlighted."}</p>
+          <div className={`rounded-lg px-3 py-2 ${recruiterBadge.pending}`}>
+            <p className="text-[11px] font-semibold uppercase tracking-wide mb-1">Primary risk</p>
+            <p className="text-sm">{topGap || "No major risks highlighted."}</p>
           </div>
         </div>
       )}
 
-      <div className="flex flex-wrap items-center gap-3 pt-4 border-t border-slate-100">
-        <span
-          className={`inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full border ${
-            inPipeline
-              ? currentStage === "SHORTLIST"
-                ? "bg-violet-50 text-violet-700 border-violet-200"
-                : "bg-emerald-50 text-emerald-700 border-emerald-200"
-              : "bg-amber-50 text-amber-800 border-amber-200"
-          }`}
-        >
-          {inPipeline ? `In pipeline · ${currentStage}` : "Not yet in pipeline"}
-        </span>
-        {currentStage === "SHORTLIST" && (
-          <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full border border-violet-200 bg-violet-100 text-violet-800 font-semibold">
-            Working set contender
+      <div className="pt-4 border-t border-slate-100 space-y-4">
+        <div className="flex flex-wrap items-center gap-2">
+          <span
+            className={`inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium ${
+              inPipeline
+                ? currentStage === "SHORTLIST"
+                  ? recruiterBadge.positive
+                  : currentStage === "REJECTED"
+                    ? recruiterBadge.inactive
+                    : recruiterBadge.pending
+                : recruiterBadge.inactive
+            }`}
+          >
+            {inPipeline ? `Pipeline · ${pipelineStageLabel(currentStage)}` : "Not in pipeline"}
           </span>
-        )}
-        {preview?.resumeUrl ? (
-          <span className="inline-flex items-center gap-1 text-xs text-slate-600">
-            <FileText className="h-3.5 w-3.5 text-green-600" /> Resume
+          {currentStage === "SHORTLIST" && inPipeline && (
+            <span className={`inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-semibold ${recruiterBadge.positive}`}>
+              Working set
+            </span>
+          )}
+          {preview?.resumeUrl ? (
+            <span className="inline-flex items-center gap-1 text-xs text-slate-400 font-normal">
+              <FileText className="h-3.5 w-3.5 text-slate-400" /> Resume
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1 text-xs text-slate-400 font-normal">
+              <FileText className="h-3.5 w-3.5" /> No resume
+            </span>
+          )}
+          {preview?.videoUrl ? (
+            <span className="inline-flex items-center gap-1 text-xs text-slate-400 font-normal">
+              <Video className="h-3.5 w-3.5 text-slate-400" /> Video
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1 text-xs text-slate-400 font-normal">
+              <Video className="h-3.5 w-3.5" /> No video
+            </span>
+          )}
+          <span
+            className={`inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium ${
+              (noteMeta?.count || 0) > 0 ? recruiterBadge.neutral : recruiterBadge.inactive
+            }`}
+          >
+            {(noteMeta?.count || 0) > 0 ? `${noteMeta?.count} note${noteMeta?.count === 1 ? "" : "s"}` : "No notes"}
           </span>
-        ) : (
-          <span className="inline-flex items-center gap-1 text-xs text-slate-400">
-            <FileText className="h-3.5 w-3.5" /> No resume
-          </span>
-        )}
-        {preview?.videoUrl ? (
-          <span className="inline-flex items-center gap-1 text-xs text-slate-600">
-            <Video className="h-3.5 w-3.5 text-sky-600" /> Video
-          </span>
-        ) : (
-          <span className="inline-flex items-center gap-1 text-xs text-slate-400">
-            <Video className="h-3.5 w-3.5" /> No video
-          </span>
-        )}
-        <span
-          className={`inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full border ${
-            (noteMeta?.count || 0) > 0
-              ? "bg-indigo-50 text-indigo-700 border-indigo-200"
-              : "bg-slate-50 text-slate-500 border-slate-200"
-          }`}
-        >
-          {(noteMeta?.count || 0) > 0 ? `${noteMeta?.count} note${noteMeta?.count === 1 ? "" : "s"}` : "No notes"}
-        </span>
-        {noteMeta?.latestSnippet && (
-          <span className="text-xs text-slate-500 max-w-xs truncate" title={noteMeta.latestSnippet}>
-            {noteMeta.latestSnippet}
-          </span>
-        )}
-        <Link
-          href={getCandidateUrl(m.candidateId, jobId)}
-          className="ml-auto inline-flex items-center gap-1 px-4 py-2 rounded-lg bg-navy-800 text-white text-sm font-medium hover:bg-navy-700"
-        >
-          View profile
-        </Link>
-        <button
-          type="button"
-          onClick={onShortlist}
-          disabled={actionBusy}
-          className="inline-flex items-center gap-1 px-4 py-2 rounded-lg border border-slate-200 text-navy-800 text-sm font-medium hover:bg-slate-50 disabled:opacity-50"
-        >
-          {inPipeline ? "Move to shortlist" : "Add to shortlist"}
-        </button>
-        <button
-          type="button"
-          onClick={onReject}
-          disabled={actionBusy}
-          className="inline-flex items-center gap-1 px-4 py-2 rounded-lg border border-rose-200 text-rose-700 text-sm font-medium hover:bg-rose-50 disabled:opacity-50"
-        >
-          Reject
-        </button>
-        <button
-          type="button"
-          onClick={onMessage}
-          disabled={actionBusy}
-          className="inline-flex items-center gap-1 px-4 py-2 rounded-lg border border-slate-200 text-navy-800 text-sm font-medium hover:bg-slate-50 disabled:opacity-50"
-        >
-          <MessageSquare className="h-4 w-4" />
-          Message
-        </button>
-        <AddToTalentPoolButton candidateId={m.candidateId} alignUp />
-        <select
-          value={inPipeline ? currentStage : "NEW"}
-          onChange={(e) => onMoveStage(e.target.value as PipelineStage)}
-          disabled={actionBusy}
-          className="px-3 py-2 rounded-lg border border-slate-200 text-sm text-slate-700 bg-white disabled:opacity-50"
-        >
-          {PIPELINE_STAGES.map((stage) => (
-            <option key={stage} value={stage}>
-              {stage}
-            </option>
-          ))}
-        </select>
+          {noteMeta?.latestSnippet && (
+            <span className="text-xs text-slate-400 max-w-xs truncate font-normal" title={noteMeta.latestSnippet}>
+              {noteMeta.latestSnippet}
+            </span>
+          )}
+          {(reviewMeta?.pending || 0) > 0 && (
+            <span className={`inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium ${recruiterBadge.pending}`}>
+              Review pending
+            </span>
+          )}
+          {(reviewMeta?.completed || 0) > 0 && (
+            <span className={`inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium ${recruiterBadge.positive}`}>
+              Feedback received
+            </span>
+          )}
+        </div>
+        <p className="text-xs text-navy-900 font-medium">{nextStepLine}</p>
+
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0 flex-1">
+            {primaryAction === "shortlist" && (
+              <button type="button" onClick={onShortlist} disabled={actionBusy} className={`${recruiterBtnPrimaryLg} w-full sm:w-auto`}>
+                {inPipeline ? "Move to shortlist" : "Add to shortlist"}
+              </button>
+            )}
+            {primaryAction === "message" && (
+              <button type="button" onClick={onMessage} disabled={actionBusy} className={`${recruiterBtnPrimaryLg} w-full sm:w-auto inline-flex gap-2`}>
+                <MessageSquare className="h-5 w-5 shrink-0" />
+                Message
+              </button>
+            )}
+            {primaryAction === "profile" && (
+              <Link href={getCandidateUrl(m.candidateId, jobId)} className={`${recruiterBtnPrimaryLg} w-full sm:w-auto text-center`}>
+                View profile
+              </Link>
+            )}
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            {primaryAction !== "message" && currentStage !== "REJECTED" && (
+              <button type="button" onClick={onMessage} disabled={actionBusy} className={recruiterBtnSecondarySm}>
+                <span className="inline-flex items-center gap-1">
+                  <MessageSquare className="h-3.5 w-3.5" />
+                  Message
+                </span>
+              </button>
+            )}
+            {currentStage !== "REJECTED" && (
+              <Link href={getCandidateUrl(m.candidateId, jobId)} className={recruiterBtnSecondarySm}>
+                Profile
+              </Link>
+            )}
+            <button type="button" onClick={onReject} disabled={actionBusy} className={`${recruiterBtnGhost} text-xs`}>
+              Reject
+            </button>
+            <AddToTalentPoolButton
+              candidateId={m.candidateId}
+              alignUp
+              buttonClassName={`${recruiterBtnGhost} text-xs border border-dashed border-slate-300`}
+            />
+            {inPipeline && (
+              <SendCandidateForReviewButton
+                jobId={jobId}
+                candidateId={m.candidateId}
+                candidateName={name}
+                buttonClassName={recruiterBtnSecondarySm}
+              />
+            )}
+          </div>
+        </div>
       </div>
     </article>
   );

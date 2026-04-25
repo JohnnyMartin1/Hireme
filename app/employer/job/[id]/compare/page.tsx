@@ -6,7 +6,6 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { Loader2, MessageSquare } from "lucide-react";
 import { useFirebaseAuth } from "@/components/FirebaseAuthProvider";
 import {
-  PIPELINE_STAGES,
   getRecruiterNotes,
   normalizePipelineStage,
   type CandidatePipelineEntry,
@@ -20,6 +19,7 @@ import {
   upsertCandidateReview,
 } from "@/lib/decision-client";
 import { fetchJobInterviews, fetchJobSequences } from "@/lib/communication-client";
+import { fetchReviewAssignments } from "@/lib/collaboration-client";
 import {
   recommendationLabel,
   reviewStatusLabel,
@@ -36,7 +36,10 @@ import {
   getJobPipelineUrl,
   getJobCompareUrl,
 } from "@/lib/navigation";
+import { pipelineStageLabel, recruiterBadge } from "@/lib/recruiter-ui";
 import AddToTalentPoolButton from "@/components/employer/AddToTalentPoolButton";
+import SendCandidateForReviewButton from "@/components/recruiter/SendCandidateForReviewButton";
+import InterviewStatusBadge from "@/components/recruiter/InterviewStatusBadge";
 
 type CompareCandidate = {
   candidateId: string;
@@ -59,6 +62,9 @@ type CompareCandidate = {
   waitingOn: string;
   sequenceStatus: string | null;
   interviewAt: any;
+  interviewStatus?: string | null;
+  reviewPendingCount?: number;
+  reviewCompletedCount?: number;
 };
 
 function parseCandidateIds(raw: string | null): string[] {
@@ -142,6 +148,8 @@ export default function JobComparePage() {
         const criteria = criteriaRes.ok ? (criteriaRes.data.criteria || []) : [];
         const evaluations = evaluationsRes.ok ? ((evaluationsRes.data.evaluations || []) as CandidateEvaluation[]) : [];
         const reviews = reviewsRes.ok ? ((reviewsRes.data.reviews || []) as CandidateReviewRequest[]) : [];
+        const reviewAssignmentsRes = await fetchReviewAssignments(jobId, token);
+        const reviewAssignments = reviewAssignmentsRes.ok ? reviewAssignmentsRes.data.assignments || [] : [];
         const sequences = sequencesRes.ok ? (sequencesRes.data.sequences || []) : [];
         const interviews = interviewsRes.ok ? (interviewsRes.data.interviews || []) : [];
 
@@ -259,6 +267,9 @@ export default function JobComparePage() {
             }),
             sequenceStatus: sequenceByCandidate.get(candidateId)?.status || null,
             interviewAt: interviewByCandidate.get(candidateId)?.scheduledAt || null,
+            interviewStatus: interviewByCandidate.get(candidateId)?.status || null,
+            reviewPendingCount: reviewAssignments.filter((a: any) => String(a.candidateId || "") === candidateId && String(a.status || "") === "REQUESTED").length,
+            reviewCompletedCount: reviewAssignments.filter((a: any) => String(a.candidateId || "") === candidateId && String(a.status || "") === "COMPLETED").length,
           });
         }
         setRows(candidates);
@@ -334,25 +345,25 @@ export default function JobComparePage() {
     <main className="min-h-screen bg-slate-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
         <section className="rounded-2xl border border-slate-200 bg-white p-5 mb-5">
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Candidate compare</p>
-          <h1 className="text-xl font-bold text-navy-900 mt-1">{jobTitle || "Job"} · compare serious contenders</h1>
-          <p className="text-sm text-slate-600 mt-1">
-            Decide among your strongest fits: stage moves, messages, and notes stay on the same canonical pipeline row per candidate.
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Compare</p>
+          <h1 className="text-xl font-bold text-navy-900 mt-1">{jobTitle || "Job"}</h1>
+          <p className="text-sm text-slate-600 mt-1 max-w-2xl">
+            Side-by-side view for finalists and serious contenders. Use Pipeline to manage stages day to day.
           </p>
           {compareError && (
-            <p className="mt-2 text-sm text-rose-700 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2" role="alert">
+            <p className="mt-2 text-sm text-navy-900 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2" role="alert">
               {compareError}
             </p>
           )}
-          <div className="mt-3 flex flex-wrap gap-2 text-sm">
-            <Link href={getJobMatchesUrl(jobId)} className="px-3 py-2 rounded-lg border border-slate-200 text-navy-800 hover:bg-slate-50">
-              Back to matches
-            </Link>
-            <Link href={`${getJobPipelineUrl(jobId)}?stage=SHORTLIST`} className="px-3 py-2 rounded-lg border border-violet-200 text-violet-800 hover:bg-violet-50 font-medium">
-              Review shortlist
+          <div className="mt-4 flex flex-wrap gap-2 text-sm">
+            <Link
+              href={`${getJobMatchesUrl(jobId)}?filter=SHORTLISTED`}
+              className="inline-flex px-3 py-2 rounded-lg bg-navy-800 text-white font-semibold hover:bg-navy-700"
+            >
+              Back to candidates
             </Link>
             <Link href={getJobPipelineUrl(jobId)} className="px-3 py-2 rounded-lg border border-slate-200 text-navy-800 hover:bg-slate-50">
-              Full pipeline
+              Pipeline
             </Link>
           </div>
         </section>
@@ -366,25 +377,31 @@ export default function JobComparePage() {
           <section className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center">
             <p className="text-navy-900 font-semibold mb-1">You need at least two contenders in view</p>
             <p className="text-sm text-slate-600 mb-4">
-              Shortlist serious candidates from matches or sourcing, then open compare again — or we will auto-fill from shortlist when two or more exist.
+              Shortlist serious candidates from candidates or sourcing, then open compare again — or we will auto-fill from shortlist when two or more exist.
             </p>
             <div className="flex flex-wrap justify-center gap-2">
-              <Link href={getJobMatchesUrl(jobId)} className="inline-flex px-4 py-2 rounded-lg bg-navy-800 text-white text-sm font-semibold hover:bg-navy-700">
-                Build shortlist from matches
+              <Link
+                href={`${getJobMatchesUrl(jobId)}?filter=SHORTLISTED`}
+                className="inline-flex px-4 py-2 rounded-lg bg-navy-800 text-white text-sm font-semibold hover:bg-navy-700"
+              >
+                Open shortlisted candidates
               </Link>
-              <Link href={`${getJobPipelineUrl(jobId)}?stage=SHORTLIST`} className="inline-flex px-4 py-2 rounded-lg border border-violet-200 bg-violet-50 text-violet-800 text-sm font-semibold hover:bg-violet-100">
-                Open shortlist column
+              <Link
+                href={getJobPipelineUrl(jobId)}
+                className="inline-flex px-4 py-2 rounded-lg border border-slate-200 bg-white text-navy-800 text-sm font-semibold hover:bg-slate-50"
+              >
+                Pipeline
               </Link>
             </div>
           </section>
         ) : (
           <>
             {compareSource !== "manual" && (
-              <section className="mb-4 rounded-xl border border-sky-200 bg-sky-50 p-3 text-sm text-sky-900">
+              <p className="mb-4 text-xs text-slate-600 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
                 {compareSource === "shortlist"
-                  ? "Showing your shortlist working set first (serious contenders). Add more from matches or sourcing, then return here."
-                  : "Not enough shortlist picks yet — filled from the rest of your active pipeline so you can still compare while you build the shortlist."}
-              </section>
+                  ? "Showing shortlisted candidates first. Add or remove people from the Candidates tab, then return here."
+                  : "Fewer than two shortlisted candidates — temporarily including other active pipeline stages so you can still compare."}
+              </p>
             )}
             <section className="grid grid-cols-1 xl:grid-cols-2 gap-4">
             {rows.map((row) => (
@@ -400,58 +417,78 @@ export default function JobComparePage() {
                   </div>
                 </div>
 
-                <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
-                  <span className={`rounded-md px-2 py-1 ${row.stage === "SHORTLIST" ? "bg-violet-100 text-violet-800 font-semibold" : "bg-slate-100 text-slate-700"}`}>
-                    {row.stage === "SHORTLIST" ? "Shortlist contender" : `Stage: ${row.stage}`}
+                <div className="mt-3 flex flex-wrap gap-2 text-xs">
+                  <span
+                    className={`rounded-md px-2 py-1 text-xs font-medium ${
+                      row.stage === "SHORTLIST" ? recruiterBadge.positive : recruiterBadge.inactive
+                    }`}
+                  >
+                    {pipelineStageLabel(row.stage)}
                   </span>
-                  <span className="rounded-md bg-slate-100 px-2 py-1 text-slate-700">Location: {row.location}</span>
-                  <span className="rounded-md bg-slate-100 px-2 py-1 text-slate-700">{row.hasResume ? "Resume available" : "No resume"}</span>
-                  <span className="rounded-md bg-slate-100 px-2 py-1 text-slate-700">{row.hasVideo ? "Video available" : "No video"}</span>
+                  <span className="rounded-md bg-slate-100 px-2 py-1 text-slate-700">{row.location}</span>
+                  {row.hasResume && <span className="rounded-md bg-slate-100 px-2 py-1 text-slate-700">Resume</span>}
+                  {row.hasVideo && <span className="rounded-md bg-slate-100 px-2 py-1 text-slate-700">Video</span>}
                 </div>
 
                 <div className="mt-3">
-                  <p className="text-[11px] uppercase tracking-wide text-emerald-700 font-semibold mb-1">Top strengths</p>
-                  <p className="text-sm text-slate-700">{row.strengths.length ? row.strengths.join(" • ") : "No strengths highlighted yet."}</p>
+                  <p className="text-[11px] uppercase tracking-wide text-navy-900 font-semibold mb-0.5">Strongest signal</p>
+                  <p className="text-sm text-slate-700">{row.strengths.length ? row.strengths.join(" · ") : "—"}</p>
                 </div>
                 <div className="mt-2">
-                  <p className="text-[11px] uppercase tracking-wide text-amber-700 font-semibold mb-1">Key risk / gap</p>
-                  <p className="text-sm text-slate-700">{row.risk || "No major risk highlighted."}</p>
+                  <p className="text-[11px] uppercase tracking-wide text-slate-500 font-semibold mb-0.5">Biggest concern</p>
+                  <p className="text-sm text-slate-700">{row.risk || "—"}</p>
                 </div>
-                <div className="mt-2">
-                  <p className="text-[11px] uppercase tracking-wide text-slate-500 font-semibold mb-1">Work authorization</p>
-                  <p className="text-sm text-slate-700">{row.authorization}</p>
+                <p className="mt-2 text-[11px] text-slate-500">
+                  Authorization: <span className="text-slate-700">{row.authorization}</span>
+                </p>
+                <p className="mt-1 text-xs text-slate-600">
+                  <span className="font-semibold text-slate-800">{reviewStatusLabel(row.reviewStatus)}</span>
+                  {" · "}Waiting on {row.waitingOn}
+                  {row.evaluationCount > 0
+                    ? ` · ${row.evaluationCount} evaluation${row.evaluationCount === 1 ? "" : "s"} (${recommendationLabel(row.latestRecommendation)})`
+                    : ""}
+                </p>
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  {(row.reviewPendingCount || 0) > 0 && (
+                    <span className={`inline-flex rounded-md px-2 py-0.5 text-[10px] font-semibold ${recruiterBadge.pending}`}>
+                      Pending reviews {row.reviewPendingCount}
+                    </span>
+                  )}
+                  {(row.reviewCompletedCount || 0) > 0 && (
+                    <span className={`inline-flex rounded-md px-2 py-0.5 text-[10px] font-semibold ${recruiterBadge.positive}`}>
+                      Feedback received {row.reviewCompletedCount}
+                    </span>
+                  )}
                 </div>
-                <div className="mt-2 rounded-lg border border-slate-200 bg-slate-50 p-2">
-                  <p className="text-[11px] uppercase tracking-wide text-slate-500 font-semibold mb-1">Recruiter note snapshot</p>
-                  <p className="text-sm text-slate-700">{row.notesSummary}</p>
-                  <p className="text-[11px] mt-1 text-indigo-700 font-medium">
-                    {row.noteCount > 0 ? `${row.noteCount} note${row.noteCount === 1 ? "" : "s"} on this candidate` : "No recruiter notes yet"}
+                <p className="mt-1 text-[11px] text-slate-600 line-clamp-2">
+                  <span className="font-semibold text-slate-700">Notes:</span> {row.notesSummary}
+                </p>
+
+                <details className="mt-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
+                  <summary className="cursor-pointer font-semibold text-slate-600 select-none">Interview & follow-up sequence</summary>
+                  <p className="mt-2 text-slate-600">
+                    Sequence: <span className="font-medium text-slate-800">{row.sequenceStatus || "Not active"}</span>
                   </p>
-                </div>
-                <div className="mt-2 rounded-lg border border-slate-200 bg-slate-50 p-2">
-                  <p className="text-[11px] uppercase tracking-wide text-slate-500 font-semibold mb-1">Structured evaluation</p>
-                  <p className="text-sm text-slate-700">
-                    {row.evaluationCount > 0
-                      ? `${row.evaluationCount} eval${row.evaluationCount === 1 ? "" : "s"} · ${
-                          row.evaluationAvgRating == null ? "no avg rating" : `avg ${row.evaluationAvgRating.toFixed(1)}/5`
-                        } · ${recommendationLabel(row.latestRecommendation)}`
-                      : "No structured evaluation submitted yet."}
-                  </p>
-                  <p className="text-[11px] mt-1 text-slate-600">
-                    Review: <span className="font-semibold">{reviewStatusLabel(row.reviewStatus)}</span> · Waiting on{" "}
-                    <span className="font-semibold">{row.waitingOn}</span>
-                  </p>
-                  <p className="text-[11px] mt-1 text-slate-600">
-                    Sequence: <span className="font-semibold">{row.sequenceStatus || "Not active"}</span>
-                    {" · "}
+                  <p className="mt-1 text-slate-600">
                     Interview:{" "}
-                    <span className="font-semibold">
+                    <span className="font-medium text-slate-800">
                       {row.interviewAt
                         ? new Date(row.interviewAt?.toDate ? row.interviewAt.toDate() : row.interviewAt).toLocaleString()
                         : "Not scheduled"}
                     </span>
                   </p>
-                </div>
+                  {row.interviewAt && (
+                    <div className="mt-1">
+                      <InterviewStatusBadge status={row.interviewStatus || "SCHEDULED"} />
+                    </div>
+                  )}
+                  {row.evaluationCount > 0 && (
+                    <p className="mt-1 text-slate-600">
+                      Avg rating:{" "}
+                      {row.evaluationAvgRating == null ? "—" : `${row.evaluationAvgRating.toFixed(1)}/5`}
+                    </p>
+                  )}
+                </details>
 
                 <div className="mt-4 flex flex-wrap items-center gap-2">
                   <Link
@@ -461,50 +498,65 @@ export default function JobComparePage() {
                     View profile
                   </Link>
                   <Link
-                    href={getCandidateUrl(row.candidateId, jobId) + "&action=message"}
+                    href={`${getCandidateUrl(row.candidateId, jobId)}&action=message`}
                     className="inline-flex items-center gap-1 px-3 py-2 rounded-lg border border-slate-200 text-xs font-semibold text-navy-800 hover:bg-slate-50"
                   >
                     <MessageSquare className="h-3.5 w-3.5" />
                     Message
                   </Link>
-                  <AddToTalentPoolButton
-                    candidateId={row.candidateId}
-                    buttonClassName="inline-flex items-center gap-1 px-3 py-2 rounded-lg border border-slate-200 text-xs font-semibold text-navy-800 hover:bg-slate-50"
-                  />
                   <Link
-                    href={`${getCandidateUrl(row.candidateId, jobId)}#recruiter-notes`}
-                    className="px-3 py-2 rounded-lg border border-slate-200 text-xs font-semibold text-navy-800 hover:bg-slate-50"
+                    href={`${getCandidateUrl(row.candidateId, jobId)}&action=interview`}
+                    className="inline-flex items-center gap-1 px-3 py-2 rounded-lg border border-slate-200 text-xs font-semibold text-navy-800 hover:bg-slate-50"
                   >
-                    Notes{row.noteCount > 0 ? ` (${row.noteCount})` : ""}
+                    Schedule interview
                   </Link>
+                  {row.stage !== "FINALIST" && (
+                    <button
+                      type="button"
+                      onClick={() => handleMoveStage(row.candidateId, "FINALIST")}
+                      disabled={busyCandidateId === row.candidateId}
+                      className="px-3 py-2 rounded-lg border border-sky-200 bg-sky-50 text-navy-900 text-xs font-semibold hover:bg-sky-100 disabled:opacity-60"
+                    >
+                      Move to finalist
+                    </button>
+                  )}
                   <button
                     type="button"
                     onClick={() => handleRequestReview(row.candidateId)}
                     disabled={reviewBusyCandidateId === row.candidateId}
-                    className="px-3 py-2 rounded-lg border border-violet-200 bg-violet-50 text-violet-800 text-xs font-semibold hover:bg-violet-100 disabled:opacity-60"
+                    className="px-3 py-2 rounded-lg border border-slate-200 text-xs font-semibold text-navy-800 hover:bg-slate-50 disabled:opacity-60"
                   >
-                    {row.reviewStatus === "REQUESTED" ? "Review requested" : "Request review"}
+                    {row.reviewStatus === "REQUESTED" ? "Waiting on manager review" : "Request review"}
                   </button>
-                  <select
-                    value={row.stage}
-                    onChange={(e) => handleMoveStage(row.candidateId, e.target.value as PipelineStage)}
-                    disabled={busyCandidateId === row.candidateId}
-                    className="px-2 py-2 rounded-lg border border-slate-200 text-xs bg-white text-slate-700"
-                  >
-                    {PIPELINE_STAGES.map((stage) => (
-                      <option key={stage} value={stage}>
-                        Move to {stage}
-                      </option>
-                    ))}
-                  </select>
-                  <button
-                    type="button"
-                    onClick={() => handleRemove(row.candidateId)}
-                    className="px-3 py-2 rounded-lg border border-rose-200 text-rose-700 text-xs font-semibold hover:bg-rose-50"
-                  >
-                    Remove
-                  </button>
+                  <SendCandidateForReviewButton
+                    jobId={jobId}
+                    candidateId={row.candidateId}
+                    candidateName={row.name}
+                    buttonClassName="px-3 py-2 rounded-lg border border-slate-200 text-xs font-semibold text-navy-800 hover:bg-slate-50"
+                  />
                 </div>
+                <details className="mt-2 text-xs">
+                  <summary className="cursor-pointer font-semibold text-slate-500 select-none">More actions</summary>
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    <AddToTalentPoolButton
+                      candidateId={row.candidateId}
+                      buttonClassName="inline-flex items-center gap-1 px-2 py-1.5 rounded-md border border-dashed border-slate-300 text-xs font-medium text-slate-600 hover:bg-slate-100"
+                    />
+                    <Link
+                      href={`${getCandidateUrl(row.candidateId, jobId)}#recruiter-notes`}
+                      className="text-xs font-semibold text-sky-800 hover:underline"
+                    >
+                      Notes{row.noteCount > 0 ? ` (${row.noteCount})` : ""}
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => handleRemove(row.candidateId)}
+                      className="text-xs font-semibold text-slate-700 hover:underline"
+                    >
+                      Remove from compare
+                    </button>
+                  </div>
+                </details>
               </article>
             ))}
             </section>

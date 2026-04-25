@@ -547,16 +547,11 @@ function SecuritySection({ toast, profile }: { toast: (msg: string) => void; pro
 
 // Privacy Section Component
 function PrivacySection({ toast }: { toast: (msg: string) => void }) {
-  const [settings, setSettings] = useState({
+  const [settings] = useState({
     companyProfile: true,
     candidateMessages: false,
     recruiterNames: true
   });
-
-  const toggleSetting = (key: keyof typeof settings) => {
-    setSettings(prev => ({ ...prev, [key]: !prev[key] }));
-    toast('Setting saved');
-  };
 
   return (
     <section className="space-y-6 ">
@@ -565,27 +560,30 @@ function PrivacySection({ toast }: { toast: (msg: string) => void }) {
           <i className="fa-solid fa-eye text-sky-500 mr-3"></i>
           Privacy & Visibility Settings
         </h2>
+        <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-3 py-2 mb-4">
+          Some privacy controls are not yet connected to persistent account settings. They are shown as read-only for now.
+        </p>
         <div className="space-y-6">
           <div className="flex items-center justify-between p-4 border border-slate-200 rounded-lg">
             <div>
               <h3 className="font-semibold text-navy-900">Show company profile to candidates</h3>
               <p className="text-sm text-slate-600">Allow candidates to view your company profile</p>
             </div>
-            <div className={`toggle-switch ${settings.companyProfile ? 'active' : ''}`} onClick={() => toggleSetting('companyProfile')}></div>
+            <button type="button" disabled className={`toggle-switch ${settings.companyProfile ? 'active' : ''} opacity-60 cursor-not-allowed`} aria-label="Coming soon"></button>
           </div>
           <div className="flex items-center justify-between p-4 border border-slate-200 rounded-lg">
             <div>
               <h3 className="font-semibold text-navy-900">Allow candidates to message first</h3>
-              <p className="text-sm text-slate-600">Let candidates initiate conversations</p>
+              <p className="text-sm text-slate-600">Let candidates initiate conversations · Coming soon</p>
             </div>
-            <div className={`toggle-switch ${settings.candidateMessages ? 'active' : ''}`} onClick={() => toggleSetting('candidateMessages')}></div>
+            <button type="button" disabled className={`toggle-switch ${settings.candidateMessages ? 'active' : ''} opacity-60 cursor-not-allowed`} aria-label="Coming soon"></button>
           </div>
           <div className="flex items-center justify-between p-4 border border-slate-200 rounded-lg">
             <div>
               <h3 className="font-semibold text-navy-900">Share recruiter names in outreach</h3>
-              <p className="text-sm text-slate-600">Include recruiter information in messages</p>
+              <p className="text-sm text-slate-600">Include recruiter information in messages · Coming soon</p>
             </div>
-            <div className={`toggle-switch ${settings.recruiterNames ? 'active' : ''}`} onClick={() => toggleSetting('recruiterNames')}></div>
+            <button type="button" disabled className={`toggle-switch ${settings.recruiterNames ? 'active' : ''} opacity-60 cursor-not-allowed`} aria-label="Coming soon"></button>
           </div>
         </div>
       </div>
@@ -1249,6 +1247,64 @@ function CompanySection({ toast }: { toast: (msg: string) => void }) {
 
 // Integrations Section Component (Employer Only)
 function IntegrationsSection({ toast }: { toast: (msg: string) => void }) {
+  const { user } = useFirebaseAuth();
+  const [googleStatus, setGoogleStatus] = useState<{
+    connected: boolean;
+    connectedEmail: string | null;
+    loading: boolean;
+  }>({ connected: false, connectedEmail: null, loading: true });
+
+  const loadGoogleStatus = async () => {
+    if (!user) return;
+    setGoogleStatus((prev) => ({ ...prev, loading: true }));
+    try {
+      const token = await user.getIdToken();
+      const res = await fetch(`/api/integrations/google-calendar/status?token=${encodeURIComponent(token)}`);
+      const payload = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setGoogleStatus({ connected: false, connectedEmail: null, loading: false });
+        return;
+      }
+      setGoogleStatus({
+        connected: Boolean(payload.connected),
+        connectedEmail: payload.connectedEmail ? String(payload.connectedEmail) : null,
+        loading: false,
+      });
+    } catch {
+      setGoogleStatus({ connected: false, connectedEmail: null, loading: false });
+    }
+  };
+
+  useEffect(() => {
+    loadGoogleStatus();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.uid]);
+
+  const handleConnectGoogle = async () => {
+    if (!user) return;
+    const token = await user.getIdToken();
+    const redirect = `${window.location.pathname}${window.location.search || ""}#integrations`;
+    window.location.href = `/api/integrations/google-calendar/connect?token=${encodeURIComponent(token)}&redirect=${encodeURIComponent(redirect)}`;
+  };
+
+  const handleDisconnectGoogle = async () => {
+    if (!user) return;
+    const token = await user.getIdToken();
+    const res = await fetch("/api/integrations/google-calendar/disconnect", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    if (!res.ok) {
+      toast("Could not disconnect Google Calendar");
+      return;
+    }
+    toast("Google Calendar disconnected");
+    loadGoogleStatus();
+  };
+
   return (
     <section className="space-y-6 ">
       <div className="bg-white rounded-none sm:rounded-lg md:rounded-2xl shadow-xl border border-slate-100 p-8">
@@ -1287,9 +1343,26 @@ function IntegrationsSection({ toast }: { toast: (msg: string) => void }) {
                   <p className="text-sm text-slate-600">Interview Scheduling</p>
                 </div>
               </div>
-              <span className="px-3 py-1 bg-red-100 text-red-800 rounded-full text-xs font-semibold">Disconnected</span>
+              <span
+                className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                  googleStatus.connected ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+                }`}
+              >
+                {googleStatus.loading ? "Checking..." : googleStatus.connected ? "Connected" : "Not connected"}
+              </span>
             </div>
-            <button onClick={() => toast('Connected')} className="px-8 py-4 bg-navy-800 text-white rounded-lg font-semibold text-lg shadow-md hover:bg-navy-700 transition-colors w-full py-2 rounded-lg font-semibold text-sm">Connect</button>
+            {googleStatus.connectedEmail && (
+              <p className="mb-2 text-xs text-slate-600">Connected as {googleStatus.connectedEmail}</p>
+            )}
+            {googleStatus.connected ? (
+              <button onClick={handleDisconnectGoogle} className="px-6 py-3 bg-white border border-slate-200 text-navy-900 rounded-lg font-semibold shadow-sm hover:bg-slate-50 transition-colors w-full py-2 text-sm">
+                Disconnect
+              </button>
+            ) : (
+              <button onClick={handleConnectGoogle} className="px-8 py-4 bg-navy-800 text-white rounded-lg font-semibold text-lg shadow-md hover:bg-navy-700 transition-colors w-full py-2 text-sm">
+                Connect Google Calendar
+              </button>
+            )}
           </div>
 
           <div className="p-6 border border-slate-200 rounded-lg card-hover">

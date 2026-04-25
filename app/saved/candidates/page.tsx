@@ -83,10 +83,10 @@ export default function SavedCandidatesPage() {
 
   if (loading || isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading saved candidates...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-navy-700 mx-auto mb-4"></div>
+          <p className="text-slate-600">Loading saved candidates...</p>
         </div>
       </div>
     );
@@ -97,7 +97,7 @@ export default function SavedCandidatesPage() {
   }
 
   return (
-    <main className="min-h-screen mobile-safe-top mobile-safe-bottom overflow-x-hidden w-full bg-gradient-to-br from-green-50 via-white to-emerald-50">
+    <main className="min-h-screen mobile-safe-top mobile-safe-bottom overflow-x-hidden w-full bg-slate-50">
       {/* Header */}
       <header className="sticky top-0 bg-white shadow-sm z-50 border-b border-slate-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
@@ -124,8 +124,8 @@ export default function SavedCandidatesPage() {
       <div className="w-full md:max-w-6xl md:mx-auto px-4 sm:px-6 md:p-6 py-4 sm:py-6 min-w-0">
         {/* Page Title */}
         <div className="mb-4 sm:mb-6 md:mb-8">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2 break-words">Saved bookmarks</h1>
-          <p className="text-sm sm:text-base text-gray-600 break-words">
+          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-2 break-words">Saved bookmarks (secondary)</h1>
+          <p className="text-sm sm:text-base text-slate-600 break-words">
             {savedCandidates.length} profile{savedCandidates.length !== 1 ? "s" : ""} you bookmarked for quick access.
           </p>
           <p className="text-xs text-slate-500 mt-2 max-w-2xl">
@@ -147,14 +147,14 @@ export default function SavedCandidatesPage() {
         {/* Saved Candidates */}
         {savedCandidates.length === 0 ? (
           <div className="w-full min-w-0 bg-white rounded-none sm:rounded-xl shadow-lg p-8 sm:p-10 md:p-12 text-center">
-            <Heart className="h-12 w-12 sm:h-14 sm:w-14 md:h-16 md:w-16 text-gray-300 mx-auto mb-4" />
-            <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2 px-4">No saved candidates yet</h2>
-            <p className="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6 px-4 break-words">
+            <Heart className="h-12 w-12 sm:h-14 sm:w-14 md:h-16 md:w-16 text-slate-300 mx-auto mb-4" />
+            <h2 className="text-lg sm:text-xl font-semibold text-slate-900 mb-2 px-4">No saved candidates yet</h2>
+            <p className="text-sm sm:text-base text-slate-600 mb-4 sm:mb-6 px-4 break-words">
               When you find candidates you're interested in, click the "Save" button to add them here.
             </p>
             <Link
               href="/search/candidates"
-              className="inline-flex items-center px-4 sm:px-6 py-2.5 sm:py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors min-h-[44px] text-sm sm:text-base"
+              className="inline-flex items-center px-4 sm:px-6 py-2.5 sm:py-3 bg-navy-800 text-white rounded-lg hover:bg-navy-700 transition-colors min-h-[44px] text-sm sm:text-base"
             >
               Search Candidates
             </Link>
@@ -165,28 +165,28 @@ export default function SavedCandidatesPage() {
               <div key={candidate.id} className="w-full min-w-0 bg-white rounded-none sm:rounded-xl shadow-lg p-4 sm:p-5 md:p-6 hover:shadow-xl transition-shadow">
                 <div className="flex items-start justify-between mb-4">
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900">
+                    <h3 className="text-lg font-semibold text-slate-900">
                       {candidate.firstName} {candidate.lastName}
                     </h3>
-                    <p className="text-gray-600 text-sm">{candidate.headline || 'No headline'}</p>
+                    <p className="text-slate-600 text-sm">{candidate.headline || 'No headline'}</p>
                   </div>
-                  <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                    <User className="h-6 w-6 text-green-600" />
+                  <div className="w-12 h-12 bg-sky-100 rounded-full flex items-center justify-center">
+                    <User className="h-6 w-6 text-navy-800" />
                   </div>
                 </div>
 
                 <div className="space-y-3 mb-4">
                   {candidate.school && (
-                    <div className="flex items-center text-sm text-gray-600">
-                      <GraduationCap className="h-4 w-4 mr-2 text-gray-400" />
+                    <div className="flex items-center text-sm text-slate-600">
+                      <GraduationCap className="h-4 w-4 mr-2 text-slate-400" />
                       {candidate.school}
                       {candidate.major && ` - ${candidate.major}`}
                     </div>
                   )}
                   
                   {candidate.location && (
-                    <div className="flex items-center text-sm text-gray-600">
-                      <MapPin className="h-4 w-4 mr-2 text-gray-400" />
+                    <div className="flex items-center text-sm text-slate-600">
+                      <MapPin className="h-4 w-4 mr-2 text-slate-400" />
                       {candidate.location}
                     </div>
                   )}
@@ -194,18 +194,18 @@ export default function SavedCandidatesPage() {
 
                 {candidate.skills && candidate.skills.length > 0 && (
                   <div className="mb-4">
-                    <p className="text-sm font-medium text-gray-700 mb-2">Skills</p>
+                    <p className="text-sm font-medium text-slate-700 mb-2">Skills</p>
                     <div className="flex flex-wrap gap-1">
                       {candidate.skills.slice(0, 3).map((skill: string, index: number) => (
                         <span
                           key={index}
-                          className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full"
+                          className="px-2 py-1 bg-sky-100 text-sky-900 text-xs rounded-full"
                         >
                           {skill}
                         </span>
                       ))}
                       {candidate.skills.length > 3 && (
-                        <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
+                        <span className="px-2 py-1 bg-slate-100 text-slate-600 text-xs rounded-full">
                           +{candidate.skills.length - 3} more
                         </span>
                       )}
@@ -214,13 +214,13 @@ export default function SavedCandidatesPage() {
                 )}
 
                 <div className="flex justify-between items-center">
-                  <span className="text-xs text-gray-500">
+                  <span className="text-xs text-slate-500">
                     Saved {candidate.savedAt ? new Date(candidate.savedAt.toDate ? candidate.savedAt.toDate() : candidate.savedAt).toLocaleDateString() : 'Recently'}
                   </span>
                   <div className="flex gap-2">
                     <Link
                       href={`/candidate/${candidate.id}`}
-                      className="px-3 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors"
+                      className="px-3 py-2 bg-navy-800 text-white text-sm rounded-lg hover:bg-navy-700 transition-colors"
                     >
                       View Profile
                     </Link>

@@ -121,10 +121,10 @@ export default function ContactedCandidatesPage() {
 
   if (loading || isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="h-12 w-12 animate-spin text-green-600 mx-auto mb-4" />
-          <p className="text-gray-600">Loading contacted candidates...</p>
+          <Loader2 className="h-12 w-12 animate-spin text-navy-700 mx-auto mb-4" />
+          <p className="text-slate-600">Loading contacted candidates...</p>
         </div>
       </div>
     );
@@ -136,7 +136,7 @@ export default function ContactedCandidatesPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50 flex items-center justify-center mobile-safe-top mobile-safe-bottom">
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center mobile-safe-top mobile-safe-bottom">
         <div className="text-center">
           <p className="text-red-600 mb-4">{error}</p>
           <Link
@@ -152,7 +152,7 @@ export default function ContactedCandidatesPage() {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50 mobile-safe-top mobile-safe-bottom">
+    <main className="min-h-screen bg-slate-50 mobile-safe-top mobile-safe-bottom">
       {/* Header */}
       <header className="sticky top-0 bg-white shadow-sm z-50 border-b border-slate-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
@@ -180,12 +180,19 @@ export default function ContactedCandidatesPage() {
         {/* Page Title */}
         <div className="mb-6">
           <div className="flex items-center gap-3 mb-4">
-            <div className="p-2 bg-green-100 rounded-lg">
-              <User className="h-6 w-6 text-green-600" />
+            <div className="p-2 bg-sky-100 rounded-lg">
+              <User className="h-6 w-6 text-navy-800" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Candidates Contacted</h1>
-              <p className="text-gray-600">{candidates.length} candidates you've reached out to</p>
+              <h1 className="text-2xl font-bold text-slate-900">Contacted Candidates</h1>
+              <p className="text-slate-600">{candidates.length} candidates you have messaged across threads</p>
+              <p className="text-xs text-slate-500 mt-1 max-w-xl">
+                Job-specific review and pipeline live under <strong>Jobs</strong> → open a workspace. Use{" "}
+                <Link href="/messages" className="font-semibold text-sky-700 hover:underline">
+                  Messages
+                </Link>{" "}
+                for ongoing conversations.
+              </p>
             </div>
           </div>
         </div>
@@ -194,12 +201,12 @@ export default function ContactedCandidatesPage() {
         <div className="bg-white rounded-xl shadow-lg p-6">
           {candidates.length === 0 ? (
             <div className="text-center py-12">
-              <User className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No candidates contacted yet</h3>
-              <p className="text-gray-500 mb-6">Start reaching out to candidates to build your network</p>
+              <User className="h-16 w-16 text-slate-300 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-slate-900 mb-2">No candidates contacted yet</h3>
+              <p className="text-slate-500 mb-6">Start reaching out to candidates to build your network</p>
               <Link
                 href="/search/candidates"
-                className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                className="inline-flex items-center px-4 py-2 bg-navy-800 text-white rounded-lg hover:bg-navy-700 transition-colors"
               >
                 Search Candidates
                 <ArrowRight className="h-4 w-4 ml-2" />
@@ -208,25 +215,26 @@ export default function ContactedCandidatesPage() {
           ) : (
             <div className="space-y-4">
               {candidates.map((candidate) => (
-                <div key={candidate.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                <div key={candidate.id} className="border border-slate-200 rounded-lg p-4 hover:shadow-md transition-shadow">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
-                        <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                          <User className="h-6 w-6 text-green-600" />
+                        <div className="w-12 h-12 bg-sky-100 rounded-full flex items-center justify-center">
+                          <User className="h-6 w-6 text-navy-800" />
                         </div>
                         <div>
-                          <h3 className="text-lg font-semibold text-gray-900">
+                          <h3 className="text-lg font-semibold text-slate-900">
                             {candidate.firstName} {candidate.lastName}
                           </h3>
-                          <p className="text-gray-600">{candidate.headline}</p>
+                          <p className="text-slate-600">{candidate.headline}</p>
                         </div>
                       </div>
                       
                       {candidate.school && candidate.major && (
                         <div className="mb-2">
-                          <p className="text-sm text-gray-600">
-                            🎓 {candidate.school} - {candidate.major}
+                          <p className="text-sm text-slate-600">
+                            <span className="font-medium text-slate-500">Education:</span>{" "}
+                            {candidate.school} — {candidate.major}
                           </p>
                         </div>
                       )}
@@ -237,13 +245,13 @@ export default function ContactedCandidatesPage() {
                             {candidate.skills.slice(0, 5).map((skill, index) => (
                               <span
                                 key={index}
-                                className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full"
+                                className="px-2 py-1 bg-sky-100 text-sky-900 text-xs rounded-full"
                               >
                                 {skill}
                               </span>
                             ))}
                             {candidate.skills.length > 5 && (
-                              <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
+                              <span className="px-2 py-1 bg-slate-100 text-slate-600 text-xs rounded-full">
                                 +{candidate.skills.length - 5} more
                               </span>
                             )}
@@ -251,7 +259,7 @@ export default function ContactedCandidatesPage() {
                         </div>
                       )}
                       
-                      <div className="flex items-center text-xs text-gray-500">
+                      <div className="flex items-center text-xs text-slate-500">
                         <Calendar className="h-3 w-3 mr-1" />
                         <span>
                           Last message: {candidate.lastMessageAt ? 
@@ -264,13 +272,13 @@ export default function ContactedCandidatesPage() {
                     <div className="flex items-center gap-2 ml-4">
                       <Link
                         href={`/candidate/${candidate.id}`}
-                        className="px-3 py-2 text-green-600 bg-green-50 rounded-lg hover:bg-green-100 transition-colors text-sm font-medium"
+                        className="px-3 py-2 text-navy-800 bg-sky-50 rounded-lg hover:bg-sky-100 transition-colors text-sm font-medium"
                       >
                         View Profile
                       </Link>
                       <Link
                         href={`/messages/${candidate.threadId}`}
-                        className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium flex items-center"
+                        className="px-3 py-2 bg-navy-800 text-white rounded-lg hover:bg-navy-700 transition-colors text-sm font-medium flex items-center"
                       >
                         <MessageSquare className="h-4 w-4 mr-1" />
                         Message

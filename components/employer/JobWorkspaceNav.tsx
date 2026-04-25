@@ -3,6 +3,13 @@
 import Link from "next/link";
 import { useParams, usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import {
+  LayoutDashboard,
+  Users,
+  Columns3,
+  GitCompare,
+  Inbox,
+} from "lucide-react";
 import { useFirebaseAuth } from "@/components/FirebaseAuthProvider";
 import {
   getJobCompareUrl,
@@ -13,9 +20,9 @@ import {
 } from "@/lib/navigation";
 
 function tabClass(active: boolean): string {
-  return `inline-flex items-center justify-center px-3 py-2 sm:px-4 rounded-lg text-sm font-semibold transition-colors min-h-[40px] ${
+  return `inline-flex items-center justify-center gap-2 px-3 py-2 sm:px-4 rounded-lg text-sm font-semibold transition-colors min-h-[40px] ${
     active
-      ? "bg-navy-800 text-white shadow-sm ring-1 ring-navy-900/10"
+      ? "bg-navy-800 text-white ring-2 ring-navy-800 ring-offset-2 ring-offset-white"
       : "text-navy-800 bg-white hover:bg-sky-50 border border-slate-200"
   }`;
 }
@@ -66,14 +73,19 @@ export default function JobWorkspaceNav() {
   const onMessages = pathname === "/messages" && messagesJobId === jobId;
 
   return (
+    /* FIX1: single sticky job context bar below fixed SiteHeader — aligns with search toolbar top-20 */
+    /* FIX5: icons + labels on every tab; FIX4: mobile glossary line restored (abbreviated). */
     <div className="border-b border-slate-200 bg-white shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
           <div className="min-w-0">
             <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Job workspace</p>
-            <h1 className="text-lg sm:text-xl font-bold text-navy-900 truncate">{title || "Loading job…"}</h1>
+            <h1 className="text-xl sm:text-2xl font-bold text-navy-900 truncate">{title || "Loading job…"}</h1>
+            <p className="text-xs text-slate-500 mt-0.5 sm:hidden leading-snug">
+              Shortlist = short list of finalists · Pipeline = all active candidates · Pools = saved groups (main nav).
+            </p>
             <p className="text-xs text-slate-500 mt-0.5 hidden sm:block">
-              Work this requisition: shortlist serious contenders, pipeline tracks everyone active, messages stay in context.
+              Shortlist = serious contenders for this job. Pipeline = everyone you are actively working. Talent pools = saved groups across jobs (see Pools in the main nav).
             </p>
           </div>
           <nav
@@ -81,18 +93,23 @@ export default function JobWorkspaceNav() {
             aria-label="Job workspace"
           >
             <Link href={overview} className={tabClass(onOverview)}>
+              <LayoutDashboard className="h-4 w-4 shrink-0" aria-hidden />
               Overview
             </Link>
             <Link href={matches} className={tabClass(onMatches)}>
-              Matches
+              <Users className="h-4 w-4 shrink-0" aria-hidden />
+              Candidates
             </Link>
             <Link href={pipeline} className={tabClass(onPipeline)}>
+              <Columns3 className="h-4 w-4 shrink-0" aria-hidden />
               Pipeline
             </Link>
             <Link href={compare} className={tabClass(onCompare)}>
+              <GitCompare className="h-4 w-4 shrink-0" aria-hidden />
               Compare
             </Link>
             <Link href={messages} className={tabClass(onMessages)}>
+              <Inbox className="h-4 w-4 shrink-0" aria-hidden />
               Messages
             </Link>
           </nav>
