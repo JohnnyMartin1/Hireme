@@ -145,6 +145,29 @@ export default function MessageThreadPage() {
     return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
   };
 
+  const toValidDate = (value: unknown): Date | null => {
+    if (!value) return null;
+    const v = value as {
+      toDate?: () => Date;
+      _seconds?: number;
+      seconds?: number;
+    };
+    if (typeof v.toDate === "function") {
+      const d = v.toDate();
+      return Number.isNaN(d.getTime()) ? null : d;
+    }
+    if (typeof v._seconds === "number") {
+      const d = new Date(v._seconds * 1000);
+      return Number.isNaN(d.getTime()) ? null : d;
+    }
+    if (typeof v.seconds === "number") {
+      const d = new Date(v.seconds * 1000);
+      return Number.isNaN(d.getTime()) ? null : d;
+    }
+    const d = new Date(String(value));
+    return Number.isNaN(d.getTime()) ? null : d;
+  };
+
   const safeDateInputValue = (value: Date | null) => {
     if (!value) return "";
     if (Number.isNaN(value.getTime())) return "";
@@ -338,9 +361,8 @@ export default function MessageThreadPage() {
           .find((iv: any) => String(iv?.status || "") !== "CANCELLED") as InterviewEvent | undefined;
         setInterviewEvent(first || null);
         if (first?.scheduledAt) {
-          const d = first.scheduledAt as any;
-          const date = d?.toDate ? d.toDate() : new Date(d);
-          if (!Number.isNaN(date.getTime())) setInterviewScheduledAt(date.toISOString().slice(0, 16));
+          const date = toValidDate(first.scheduledAt);
+          if (date) setInterviewScheduledAt(toLocalDateTimeInput(date));
         }
         if (first?.durationMinutes) setInterviewDuration(String(first.durationMinutes));
         if (first?.location) setInterviewLocation(String(first.location));
@@ -1177,7 +1199,8 @@ export default function MessageThreadPage() {
                   {interviewEvent?.scheduledAt ? (
                     <div className="mt-3 rounded-lg border border-sky-200 bg-sky-50 p-2">
                       <p className="text-xs font-semibold text-sky-900">
-                        Interview {String(interviewEvent.status || "PROPOSED").toLowerCase()} · {new Date((interviewEvent.scheduledAt as any)?.toDate ? (interviewEvent.scheduledAt as any).toDate() : interviewEvent.scheduledAt as any).toLocaleString()}
+                        Interview {String(interviewEvent.status || "PROPOSED").toLowerCase()} ·{" "}
+                        {toValidDate(interviewEvent.scheduledAt)?.toLocaleString() || "Time unavailable"}
                       </p>
                     </div>
                   ) : null}
