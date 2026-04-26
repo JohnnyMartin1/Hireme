@@ -11,7 +11,10 @@ export const dynamic = "force-dynamic";
 
 function buildCalendarErrorRedirect(request: NextRequest, userId: string, reason: string) {
   return NextResponse.redirect(
-    new URL(`/account/${userId}/settings?calendarError=${encodeURIComponent(reason)}#calendar`, request.url)
+    new URL(
+      `/account/${userId}/settings?calendarError=${encodeURIComponent(reason)}&calendarProvider=microsoft#calendar`,
+      request.url
+    )
   );
 }
 

@@ -9,6 +9,7 @@ import {
   updateCalendarInterviewEvent,
   type CalendarProvider,
 } from "@/lib/integrations/calendar-service";
+import { selectActiveInterview } from "@/lib/interviews/active-interview";
 
 export const dynamic = "force-dynamic";
 
@@ -195,6 +196,11 @@ export async function POST(
       const preferredProvider = normalizeCalendarProvider(body?.calendarProvider);
       const provider = await getConnectedCalendarProvider(auth.decoded!.uid, preferredProvider);
       if (provider) {
+        console.info("interviews/post: syncing calendar event", {
+          interviewId: ref.id,
+          organizerUserId: auth.decoded!.uid,
+          provider,
+        });
         const attendees = await resolveAttendees({ candidateId, interviewerIds });
         const event = await createCalendarInterviewEvent(provider, {
           organizerUserId: auth.decoded!.uid,
@@ -223,7 +229,7 @@ export async function POST(
       await ref.set(
         {
           calendarSyncStatus: "FAILED",
-          calendarSyncError: syncError instanceof Error ? syncError.message : "Google Calendar sync failed",
+          calendarSyncError: syncError instanceof Error ? syncError.message : "External calendar sync failed",
           updatedAt: admin.firestore.FieldValue.serverTimestamp(),
         },
         { merge: true }
@@ -255,7 +261,19 @@ export async function PATCH(request: NextRequest, { params }: { params: { jobId:
         .where("candidateId", "==", candidateId)
         .get();
       if (snapByCandidate.empty) return NextResponse.json({ error: "Interview not found" }, { status: 404 });
-      ref = adminDb.collection("interviewEvents").doc(snapByCandidate.docs[0].id);
+      const candidates = snapByCandidate.docs.map((d) => ({ id: d.id, ...(d.data() as any) }));
+      const selected = selectActiveInterview(candidates);
+      if (selected.ambiguous || !selected.interview?.id) {
+        return NextResponse.json(
+          {
+            error:
+              "Ambiguous interview selection. Please provide interviewId to update this interview safely.",
+            reason: selected.reason,
+          },
+          { status: 409 }
+        );
+      }
+      ref = adminDb.collection("interviewEvents").doc(String(selected.interview.id));
     } else {
       return NextResponse.json({ error: "interviewId or candidateId is required" }, { status: 400 });
     }
@@ -322,6 +340,11 @@ export async function PATCH(request: NextRequest, { params }: { params: { jobId:
       if (activeProvider) {
         if (status === "CANCELLED") {
           if (calendarEventId) {
+            console.info("interviews/patch: cancelling calendar event", {
+              interviewId: ref.id,
+              provider: activeProvider,
+              hasCalendarEventId: Boolean(calendarEventId),
+            });
             await cancelCalendarInterviewEvent(activeProvider, { organizerUserId, eventId: calendarEventId });
           }
           await ref.set(
@@ -348,6 +371,11 @@ export async function PATCH(request: NextRequest, { params }: { params: { jobId:
               ? (existing.interviewerIds as string[])
               : [];
           if (scheduledAt) {
+            console.info("interviews/patch: syncing calendar event", {
+              interviewId: ref.id,
+              provider: activeProvider,
+              hasCalendarEventId: Boolean(calendarEventId),
+            });
             const attendees = await resolveAttendees({ candidateId, interviewerIds });
             const shouldUpdateExisting = Boolean(calendarEventId && (!existingProvider || existingProvider === activeProvider));
             const event = shouldUpdateExisting
@@ -392,7 +420,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { jobId:
       await ref.set(
         {
           calendarSyncStatus: "FAILED",
-          calendarSyncError: syncError instanceof Error ? syncError.message : "Google Calendar sync failed",
+          calendarSyncError: syncError instanceof Error ? syncError.message : "External calendar sync failed",
           updatedAt: admin.firestore.FieldValue.serverTimestamp(),
         },
         { merge: true }

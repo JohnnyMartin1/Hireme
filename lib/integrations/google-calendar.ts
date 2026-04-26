@@ -1,6 +1,10 @@
 import { google } from "googleapis";
 import { adminDb } from "@/lib/firebase-admin";
 import admin from "firebase-admin";
+import {
+  decryptCalendarToken,
+  maybeEncryptTokenField,
+} from "@/lib/integrations/calendar-token-crypto";
 
 export type CalendarIntegrationStatus = "CONNECTED" | "DISCONNECTED" | "ERROR";
 
@@ -63,13 +67,19 @@ export async function upsertGoogleCalendarIntegration(
   userId: string,
   fields: Partial<GoogleCalendarIntegrationDoc>
 ) {
-  // TODO: encrypt OAuth tokens before production hardening.
+  // Migration behavior:
+  // - legacy plaintext tokens are still readable
+  // - all new writes persist encrypted token values when CALENDAR_TOKEN_ENCRYPTION_KEY is configured
+  const accessToken = maybeEncryptTokenField(fields.accessToken || null);
+  const refreshToken = maybeEncryptTokenField(fields.refreshToken || null);
   await integrationDocRef(userId).set(
     {
       userId,
       provider: "google",
       status: "CONNECTED",
       ...fields,
+      accessToken,
+      refreshToken,
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
     },
@@ -95,16 +105,20 @@ export async function getAuthorizedGoogleClient(userId: string) {
   if (!integration || integration.status !== "CONNECTED") {
     throw new Error("Google Calendar not connected");
   }
+  const accessToken =
+    decryptCalendarToken(String(integration.accessToken || "")) || String(integration.accessToken || "");
+  const refreshToken =
+    decryptCalendarToken(String(integration.refreshToken || "")) || String(integration.refreshToken || "");
   const client = getGoogleOAuthClient();
   client.setCredentials({
-    access_token: integration.accessToken || undefined,
-    refresh_token: integration.refreshToken || undefined,
+    access_token: accessToken || undefined,
+    refresh_token: refreshToken || undefined,
     expiry_date: integration.expiryDate || undefined,
   });
   client.on("tokens", async (tokens) => {
     await upsertGoogleCalendarIntegration(userId, {
-      accessToken: tokens.access_token || integration.accessToken || null,
-      refreshToken: tokens.refresh_token || integration.refreshToken || null,
+      accessToken: tokens.access_token || accessToken || null,
+      refreshToken: tokens.refresh_token || refreshToken || null,
       expiryDate: tokens.expiry_date || integration.expiryDate || null,
       scope: tokens.scope || integration.scope || null,
     });

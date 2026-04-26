@@ -8,6 +8,7 @@ type Props = {
   onReschedule?: (interview: InterviewEvent) => void;
   onCancel?: (interview: InterviewEvent) => void;
   onComplete?: (interview: InterviewEvent) => void;
+  onRetrySync?: (interview: InterviewEvent) => void;
   onCandidateResponse?: (interview: InterviewEvent, response: "ACCEPTED" | "DECLINED" | "REQUEST_RESCHEDULE") => void;
 };
 
@@ -30,7 +31,14 @@ function toDate(value: unknown): Date | null {
   return Number.isNaN(d.getTime()) ? null : d;
 }
 
-export default function InterviewCard({ interview, onReschedule, onCancel, onComplete, onCandidateResponse }: Props) {
+export default function InterviewCard({
+  interview,
+  onReschedule,
+  onCancel,
+  onComplete,
+  onRetrySync,
+  onCandidateResponse,
+}: Props) {
   const when = toDate(interview.scheduledAt);
   const location =
     typeof interview.location === "string"
@@ -54,7 +62,18 @@ export default function InterviewCard({ interview, onReschedule, onCancel, onCom
         {interview.calendarSyncStatus === "SYNCED" ? (
           <p className="text-emerald-700">{providerLabel} synced</p>
         ) : interview.calendarSyncStatus === "FAILED" ? (
-          <p className="text-rose-700">{providerLabel} sync failed</p>
+          <div className="flex items-center gap-2">
+            <p className="text-rose-700">{providerLabel} sync failed</p>
+            {onRetrySync ? (
+              <button
+                type="button"
+                onClick={() => onRetrySync(interview)}
+                className="rounded border border-rose-200 bg-white px-1.5 py-0.5 text-[10px] font-semibold text-rose-700 hover:bg-rose-50"
+              >
+                Retry calendar sync
+              </button>
+            ) : null}
+          </div>
         ) : (
           <p className="text-slate-500">Not synced to external calendar</p>
         )}

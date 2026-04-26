@@ -24,6 +24,7 @@ import {
   fetchJobInterviews,
   fetchJobSequences,
   patchJobInterviewById,
+  retryJobInterviewSync,
   upsertMessageTemplate,
   patchJobSequence,
   upsertJobSequence,
@@ -37,6 +38,7 @@ import {
   type MessageTemplate,
   type OutreachSequence,
 } from '@/lib/communication-workflow';
+import { selectActiveInterview } from "@/lib/interviews/active-interview";
 import {
   getCandidatesSearchUrl,
   getDashboardUrl,
@@ -433,7 +435,8 @@ export default function CandidateProfilePage() {
           return aTime - bTime;
         }) as InterviewEvent[];
       setInterviewEvents(sorted);
-      setInterviewEvent(sorted[0] || null);
+      const selected = selectActiveInterview(sorted as any[]);
+      setInterviewEvent((selected.interview as InterviewEvent) || sorted[0] || null);
     }
   };
 
@@ -531,6 +534,30 @@ export default function CandidateProfilePage() {
       setInterviewEvents((prev) => prev.map((iv) => (iv.id === updated.id ? updated : iv)));
       setInterviewEvent(updated);
       toast.success(successTitle, "Interview updated.");
+    } finally {
+      setInterviewBusy(false);
+    }
+  };
+
+  const handleRetryInterviewSync = async (interview: InterviewEvent) => {
+    const jobForAction = selectedJobId || jobIdFromContext;
+    if (!user || !jobForAction || !interview?.id) return;
+    setInterviewBusy(true);
+    try {
+      const token = await user.getIdToken();
+      const res = await retryJobInterviewSync(jobForAction, interview.id, token);
+      if (!res.ok) {
+        toast.error("Calendar sync failed again", res.error || "Please try again.");
+        return;
+      }
+      const updated = res.data.interview as InterviewEvent;
+      setInterviewEvents((prev) => prev.map((iv) => (iv.id === updated.id ? updated : iv)));
+      setInterviewEvent(updated);
+      if (String(updated.calendarSyncStatus || "") === "SYNCED") {
+        toast.success("Calendar sync restored", "Interview synced successfully.");
+      } else {
+        toast.error("Calendar sync failed again", "Please reconnect your calendar and retry.");
+      }
     } finally {
       setInterviewBusy(false);
     }
@@ -1427,6 +1454,7 @@ export default function CandidateProfilePage() {
                             setEditingInterview(x);
                             setShowScheduleInterviewModal(true);
                           }}
+                          onRetrySync={handleRetryInterviewSync}
                           onCancel={(x) => handleInterviewPatch(x, { status: "CANCELLED" }, "Interview cancelled")}
                           onComplete={(x) => handleInterviewPatch(x, { status: "COMPLETED" }, "Interview marked completed")}
                           onCandidateResponse={(x, response) =>

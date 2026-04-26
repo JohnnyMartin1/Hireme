@@ -38,6 +38,7 @@ import {
   type MessageTemplate,
   type OutreachSequence,
 } from '@/lib/communication-workflow';
+import { selectActiveInterview } from "@/lib/interviews/active-interview";
 import { getCommunicationOperationalChips, getRecruiterNextStep } from "@/lib/communication-status";
 import Link from 'next/link';
 import {
@@ -115,6 +116,7 @@ export default function MessageThreadPage() {
   const [sequenceBusy, setSequenceBusy] = useState(false);
   const [interviewEvent, setInterviewEvent] = useState<InterviewEvent | null>(null);
   const [interviewBusy, setInterviewBusy] = useState(false);
+  const [interviewSelectionAmbiguous, setInterviewSelectionAmbiguous] = useState(false);
   const [showScheduleInterviewModal, setShowScheduleInterviewModal] = useState(false);
   const [scheduleDefaultStatus, setScheduleDefaultStatus] = useState<"PROPOSED" | "SCHEDULED" | "CONFIRMED">("SCHEDULED");
   const [showFollowUpSuggestion, setShowFollowUpSuggestion] = useState(false);
@@ -340,6 +342,7 @@ export default function MessageThreadPage() {
       if (!jobContext?.jobId || !candidateIdForPipeline) {
         setSequence(null);
         setInterviewEvent(null);
+        setInterviewSelectionAmbiguous(false);
         return;
       }
       const [sequenceRes, interviewRes] = await Promise.all([
@@ -351,9 +354,16 @@ export default function MessageThreadPage() {
         setSequence(first || null);
       }
       if (interviewRes.ok) {
-        const first = (interviewRes.data.interviews || [])
-          .find((iv: any) => String(iv?.status || "") !== "CANCELLED") as InterviewEvent | undefined;
+        const selected = selectActiveInterview((interviewRes.data.interviews || []) as any[]);
+        const first = selected.interview as InterviewEvent | null;
+        setInterviewSelectionAmbiguous(selected.ambiguous);
         setInterviewEvent(first || null);
+        if (selected.ambiguous) {
+          setWorkflowNotice({
+            type: "error",
+            text: "Multiple active interviews found. Open candidate profile to manage a specific interview.",
+          });
+        }
       }
     };
     loadOperationalData();
@@ -1148,10 +1158,18 @@ export default function MessageThreadPage() {
                       <button
                         type="button"
                         onClick={() => {
+                          if (interviewSelectionAmbiguous) {
+                            setWorkflowNotice({
+                              type: "error",
+                              text: "Multiple active interviews found. Open candidate profile to pick the exact interview.",
+                            });
+                            return;
+                          }
                           setScheduleDefaultStatus("SCHEDULED");
                           setShowScheduleInterviewModal(true);
                         }}
-                        className="rounded-lg bg-navy-800 px-3 py-2 text-xs font-semibold text-white hover:bg-navy-700"
+                        disabled={interviewSelectionAmbiguous}
+                        className="rounded-lg bg-navy-800 px-3 py-2 text-xs font-semibold text-white hover:bg-navy-700 disabled:opacity-60"
                       >
                         {interviewEvent ? "Reschedule" : "Schedule"}
                       </button>

@@ -11,9 +11,7 @@ export type ServerAuthedUser = {
 
 export async function getServerAuthedUser(request: NextRequest): Promise<ServerAuthedUser | null> {
   const authHeader = request.headers.get("authorization");
-  const headerToken = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
-  const queryToken = request.nextUrl.searchParams.get("token");
-  const token = headerToken || queryToken;
+  const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
   if (!token) return null;
   const decoded = await adminAuth.verifyIdToken(token);
   const profileSnap = await adminDb.collection("users").doc(decoded.uid).get();

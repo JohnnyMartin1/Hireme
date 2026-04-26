@@ -1274,11 +1274,14 @@ function CalendarIntegrationsSection({ toast }: { toast: (msg: string) => void }
     if (typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
     const calendarError = params.get("calendarError");
+    const provider = String(params.get("calendarProvider") || "").toLowerCase();
     if (!calendarError) return;
+    const providerLabel =
+      provider === "microsoft" ? "Outlook Calendar" : provider === "google" ? "Google Calendar" : "Calendar";
     const readable =
       calendarError === "oauth_state_expired"
-        ? "Google connection expired before completion. Please try connecting again."
-        : "Google Calendar connection failed. Please try again.";
+        ? `${providerLabel} connection expired before completion. Please try connecting again.`
+        : `${providerLabel} connection failed. Please try again.`;
     setOauthError(readable);
   }, []);
 
@@ -1339,7 +1342,21 @@ function CalendarIntegrationsSection({ toast }: { toast: (msg: string) => void }
     if (!user) return;
     const token = await user.getIdToken();
     const redirect = `${window.location.pathname}${window.location.search || ""}#calendar`;
-    window.location.href = `/api/integrations/${provider}-calendar/connect?token=${encodeURIComponent(token)}&redirect=${encodeURIComponent(redirect)}`;
+    const res = await fetch(`/api/integrations/${provider}-calendar/connect`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ redirect }),
+    });
+    const payload = await res.json().catch(() => ({}));
+    if (!res.ok || !payload?.url) {
+      const providerLabel = provider === "google" ? "Google Calendar" : "Outlook Calendar";
+      setStatusError(String(payload?.error || `Could not start ${providerLabel} connection.`));
+      return;
+    }
+    window.location.href = String(payload.url);
   };
 
   const disconnectProvider = async (provider: "google" | "microsoft") => {

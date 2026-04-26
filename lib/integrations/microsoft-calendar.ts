@@ -1,5 +1,9 @@
 import { adminDb } from "@/lib/firebase-admin";
 import admin from "firebase-admin";
+import {
+  decryptCalendarToken,
+  maybeEncryptTokenField,
+} from "@/lib/integrations/calendar-token-crypto";
 
 export type MicrosoftCalendarIntegrationDoc = {
   userId: string;
@@ -81,12 +85,18 @@ export async function upsertMicrosoftCalendarIntegration(
   userId: string,
   fields: Partial<MicrosoftCalendarIntegrationDoc>
 ) {
+  // Migration behavior mirrors Google integration:
+  // read accepts legacy plaintext, all new writes store encrypted fields when key is configured.
+  const accessToken = maybeEncryptTokenField(fields.accessToken || null);
+  const refreshToken = maybeEncryptTokenField(fields.refreshToken || null);
   await integrationDocRef(userId).set(
     {
       userId,
       provider: "microsoft",
       status: "CONNECTED",
       ...fields,
+      accessToken,
+      refreshToken,
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
     },
@@ -130,8 +140,10 @@ export async function getMicrosoftAccessToken(userId: string) {
   if (!integration || integration.status !== "CONNECTED") {
     throw new Error("Microsoft Calendar not connected");
   }
-  const accessToken = String(integration.accessToken || "");
-  const refreshToken = String(integration.refreshToken || "");
+  const accessToken =
+    decryptCalendarToken(String(integration.accessToken || "")) || String(integration.accessToken || "");
+  const refreshToken =
+    decryptCalendarToken(String(integration.refreshToken || "")) || String(integration.refreshToken || "");
   const expiryDate = Number(integration.expiryDate || 0);
   const expiresSoon = expiryDate > 0 && expiryDate < Date.now() + 60_000;
   if (accessToken && !expiresSoon) return accessToken;

@@ -148,3 +148,15 @@ export async function patchJobInterviewById(
     }
   );
 }
+
+export async function retryJobInterviewSync(
+  jobId: string,
+  interviewId: string,
+  token: string
+) {
+  return authedFetch<{ interview: InterviewEvent }>(
+    `/api/job/${encodeURIComponent(jobId)}/interviews/${encodeURIComponent(interviewId)}/retry-sync`,
+    token,
+    { method: "POST", body: JSON.stringify({}) }
+  );
+}
