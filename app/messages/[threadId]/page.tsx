@@ -365,7 +365,14 @@ export default function MessageThreadPage() {
           if (date) setInterviewScheduledAt(toLocalDateTimeInput(date));
         }
         if (first?.durationMinutes) setInterviewDuration(String(first.durationMinutes));
-        if (first?.location) setInterviewLocation(String(first.location));
+        if (first?.location) {
+          const rawLocation = first.location as any;
+          const normalizedLocation =
+            typeof rawLocation === "string"
+              ? rawLocation
+              : String(rawLocation?.value || rawLocation?.location || "");
+          setInterviewLocation(normalizedLocation);
+        }
         if (first?.notes) setInterviewNotes(String(first.notes));
       }
     };

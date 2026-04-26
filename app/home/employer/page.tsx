@@ -43,6 +43,25 @@ import { isSequenceStepDue } from "@/lib/communication-status";
 import CompanyRatingDisplay from '@/components/CompanyRatingDisplay';
 import UpcomingInterviewsPanel from "@/components/recruiter/UpcomingInterviewsPanel";
 
+function toSafeDate(value: unknown): Date | null {
+  const v: any = value;
+  if (!v) return null;
+  if (typeof v.toDate === "function") {
+    const d = v.toDate();
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
+  if (typeof v._seconds === "number") {
+    const d = new Date(v._seconds * 1000);
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
+  if (typeof v.seconds === "number") {
+    const d = new Date(v.seconds * 1000);
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
+  const d = new Date(String(v));
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
 export default function EmployerHomePage() {
   const { user, profile, loading } = useFirebaseAuth();
   const router = useRouter();
@@ -298,7 +317,7 @@ export default function EmployerHomePage() {
               jobTitle: (job as any).title || "Job",
             });
             const atRaw = interview?.scheduledAt;
-            const at = atRaw?.toDate ? atRaw.toDate() : (atRaw ? new Date(atRaw) : null);
+            const at = toSafeDate(atRaw);
             if (at && at.getTime() >= now && at.getTime() <= threeDaysFromNow.getTime()) {
               interviewsSoonCount += 1;
               queueItems.push({

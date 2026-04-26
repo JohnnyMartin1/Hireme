@@ -6,8 +6,19 @@ import InterviewStatusBadge from "@/components/recruiter/InterviewStatusBadge";
 function toDate(value: unknown): Date | null {
   const v: any = value;
   if (!v) return null;
-  if (typeof v.toDate === "function") return v.toDate();
-  const d = new Date(v);
+  if (typeof v.toDate === "function") {
+    const d = v.toDate();
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
+  if (typeof v._seconds === "number") {
+    const d = new Date(v._seconds * 1000);
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
+  if (typeof v.seconds === "number") {
+    const d = new Date(v.seconds * 1000);
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
+  const d = new Date(String(v));
   return Number.isNaN(d.getTime()) ? null : d;
 }
 
