@@ -12,7 +12,16 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
     const integration = await getGoogleCalendarIntegration(user.uid);
-    const connected = Boolean(integration && integration.status === "CONNECTED" && integration.refreshToken);
+    const integrationDocId = `google_${user.uid}`;
+    const connected = Boolean(integration && integration.status === "CONNECTED");
+    console.info("google-calendar/status: read integration", {
+      userId: user.uid,
+      integrationDocId,
+      found: Boolean(integration),
+      status: integration?.status || "DISCONNECTED",
+      connected,
+      hasConnectedEmail: Boolean(integration?.connectedEmail),
+    });
     return NextResponse.json({
       connected,
       provider: "google",

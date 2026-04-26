@@ -6,6 +6,12 @@ import { google } from "googleapis";
 
 export const dynamic = "force-dynamic";
 
+function buildCalendarErrorRedirect(request: NextRequest, userId: string, reason: string) {
+  return NextResponse.redirect(
+    new URL(`/account/${userId}/settings?calendarError=${encodeURIComponent(reason)}#calendar`, request.url)
+  );
+}
+
 function decodeState(value: string | null): { n: string; u: string; p: string } | null {
   if (!value) return null;
   try {
@@ -25,6 +31,12 @@ export async function GET(request: NextRequest) {
   try {
     const stateRef = adminDb.collection("oauthStates").doc(state.n);
     const stateSnap = await stateRef.get();
+    console.info("google-calendar/callback: received state", {
+      stateUserId: state.u,
+      stateNonce: state.n,
+      stateProvider: state.p,
+      hasCode: Boolean(code),
+    });
     if (!stateSnap.exists) return NextResponse.redirect(new URL("/auth/login", request.url));
     const stateData = stateSnap.data() as Record<string, unknown>;
     if (String(stateData.userId || "") !== state.u) {
@@ -33,7 +45,7 @@ export async function GET(request: NextRequest) {
     const expiresAt = Number(stateData.expiresAt || 0);
     if (!expiresAt || expiresAt < Date.now()) {
       await stateRef.delete().catch(() => {});
-      return NextResponse.redirect(new URL(`/account/${state.u}/settings#integrations`, request.url));
+      return buildCalendarErrorRedirect(request, state.u, "oauth_state_expired");
     }
 
     const tokens = await exchangeCodeForTokens(code);
@@ -50,8 +62,15 @@ export async function GET(request: NextRequest) {
       status: "CONNECTED",
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     });
+    const integrationDocId = `google_${state.u}`;
+    console.info("google-calendar/callback: integration upserted", {
+      userId: state.u,
+      integrationDocId,
+      connectedEmail: connectedEmail || null,
+      status: "CONNECTED",
+    });
     await stateRef.delete().catch(() => {});
-    const redirectPath = String(stateData.redirectPath || `/account/${state.u}/settings#integrations`);
+    const redirectPath = String(stateData.redirectPath || `/account/${state.u}/settings#calendar`);
     return NextResponse.redirect(new URL(redirectPath, request.url));
   } catch (error) {
     console.error("GET /api/integrations/google-calendar/callback", error);
@@ -68,6 +87,6 @@ export async function GET(request: NextRequest) {
     } catch {
       // ignore
     }
-    return NextResponse.redirect(new URL(`/account/${state.u}/settings#integrations`, request.url));
+    return buildCalendarErrorRedirect(request, state.u, "oauth_callback_failed");
   }
 }

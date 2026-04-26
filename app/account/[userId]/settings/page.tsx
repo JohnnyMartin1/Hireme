@@ -1263,10 +1263,25 @@ function CalendarIntegrationsSection({ toast }: { toast: (msg: string) => void }
     connectedEmail: string | null;
     loading: boolean;
   }>({ connected: false, connectedEmail: null, loading: true });
+  const [statusError, setStatusError] = useState<string | null>(null);
+  const [oauthError, setOauthError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const calendarError = params.get("calendarError");
+    if (!calendarError) return;
+    const readable =
+      calendarError === "oauth_state_expired"
+        ? "Google connection expired before completion. Please try connecting again."
+        : "Google Calendar connection failed. Please try again.";
+    setOauthError(readable);
+  }, []);
 
   const loadGoogleStatus = async () => {
     if (!user) return;
     setGoogleStatus((prev) => ({ ...prev, loading: true }));
+    setStatusError(null);
     try {
       const token = await user.getIdToken();
       const res = await fetch("/api/integrations/google-calendar/status", {
@@ -1275,6 +1290,7 @@ function CalendarIntegrationsSection({ toast }: { toast: (msg: string) => void }
       const payload = await res.json().catch(() => ({}));
       if (!res.ok) {
         setGoogleStatus({ connected: false, connectedEmail: null, loading: false });
+        setStatusError(String(payload?.error || "Could not check Google Calendar connection."));
         return;
       }
       setGoogleStatus({
@@ -1284,6 +1300,7 @@ function CalendarIntegrationsSection({ toast }: { toast: (msg: string) => void }
       });
     } catch {
       setGoogleStatus({ connected: false, connectedEmail: null, loading: false });
+      setStatusError("Could not check Google Calendar connection.");
     }
   };
 
@@ -1327,6 +1344,16 @@ function CalendarIntegrationsSection({ toast }: { toast: (msg: string) => void }
         <p className="text-sm text-slate-600 mb-6">
           Connect your calendar to automatically create interview events and send invites.
         </p>
+        {oauthError && (
+          <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+            {oauthError}
+          </div>
+        )}
+        {statusError && (
+          <div className="mb-4 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-900">
+            {statusError}
+          </div>
+        )}
         <div className="max-w-xl">
           <div className="p-6 border border-slate-200 rounded-lg card-hover">
             <div className="flex items-center justify-between mb-4 gap-3">

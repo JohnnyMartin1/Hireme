@@ -7,9 +7,9 @@ import admin from "firebase-admin";
 export const dynamic = "force-dynamic";
 
 function safeRedirectPath(raw: string | null, uid: string) {
-  if (!raw) return `/account/${uid}/settings#integrations`;
-  if (!raw.startsWith("/")) return `/account/${uid}/settings#integrations`;
-  if (raw.startsWith("//")) return `/account/${uid}/settings#integrations`;
+  if (!raw) return `/account/${uid}/settings#calendar`;
+  if (!raw.startsWith("/")) return `/account/${uid}/settings#calendar`;
+  if (raw.startsWith("//")) return `/account/${uid}/settings#calendar`;
   return raw;
 }
 
@@ -23,6 +23,11 @@ export async function GET(request: NextRequest) {
 
     const redirectPath = safeRedirectPath(request.nextUrl.searchParams.get("redirect"), user.uid);
     const nonce = crypto.randomUUID();
+    console.info("google-calendar/connect: start oauth", {
+      userId: user.uid,
+      redirectPath,
+      stateNonce: nonce,
+    });
     await adminDb.collection("oauthStates").doc(nonce).set({
       userId: user.uid,
       provider: "google",
