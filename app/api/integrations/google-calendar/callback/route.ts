@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebase-admin";
 import admin from "firebase-admin";
-import { exchangeCodeForTokens, upsertGoogleCalendarIntegration } from "@/lib/integrations/google-calendar";
+import {
+  exchangeCodeForTokens,
+  getGoogleOAuthClient,
+  upsertGoogleCalendarIntegration,
+} from "@/lib/integrations/google-calendar";
 import { google } from "googleapis";
 
 export const dynamic = "force-dynamic";
@@ -49,10 +53,18 @@ export async function GET(request: NextRequest) {
     }
 
     const tokens = await exchangeCodeForTokens(code);
-    const oauth2 = new google.auth.OAuth2();
+    const oauth2 = getGoogleOAuthClient();
     oauth2.setCredentials(tokens);
-    const me = await google.oauth2({ version: "v2", auth: oauth2 }).userinfo.get();
-    const connectedEmail = me.data.email || null;
+    let connectedEmail: string | null = null;
+    try {
+      const me = await google.oauth2({ version: "v2", auth: oauth2 }).userinfo.get();
+      connectedEmail = me.data.email || null;
+    } catch (userinfoError) {
+      console.warn("google-calendar/callback: could not fetch userinfo email", {
+        stateUserId: state.u,
+        reason: userinfoError instanceof Error ? userinfoError.message : "Unknown userinfo error",
+      });
+    }
     await upsertGoogleCalendarIntegration(state.u, {
       connectedEmail,
       accessToken: tokens.access_token || null,

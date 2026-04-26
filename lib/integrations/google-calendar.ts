@@ -33,7 +33,12 @@ export function buildGoogleAuthUrl(state: string) {
     access_type: "offline",
     prompt: "consent",
     include_granted_scopes: true,
-    scope: ["https://www.googleapis.com/auth/calendar.events"],
+    scope: [
+      "openid",
+      "email",
+      "profile",
+      "https://www.googleapis.com/auth/calendar.events",
+    ],
     state,
   });
 }
