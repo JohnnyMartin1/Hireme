@@ -72,7 +72,7 @@ export type InterviewEvent = {
   candidateResponse?: "PENDING" | "ACCEPTED" | "DECLINED" | "REQUEST_RESCHEDULE";
   notes?: string;
   status: "PROPOSED" | "SCHEDULED" | "CONFIRMED" | "COMPLETED" | "CANCELLED" | "RESCHEDULE_REQUESTED";
-  calendarProvider?: "google";
+  calendarProvider?: "google" | "microsoft";
   calendarEventId?: string;
   calendarHtmlLink?: string;
   calendarSyncStatus?: "NOT_SYNCED" | "SYNCED" | "FAILED";

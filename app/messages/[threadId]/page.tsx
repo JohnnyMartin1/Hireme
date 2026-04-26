@@ -25,9 +25,8 @@ import {
   fetchJobInterviews,
   fetchJobSequences,
   fetchMessageTemplates,
-  patchJobInterview,
+  patchJobInterviewById,
   patchJobSequence,
-  upsertJobInterview,
   upsertJobSequence,
 } from '@/lib/communication-client';
 import {
@@ -52,6 +51,8 @@ import {
 import { pipelineStageLabel, recruiterBadge } from "@/lib/recruiter-ui";
 import CompanyRatingModal from '@/components/CompanyRatingModal';
 import CompanyProfile from '@/components/CompanyProfile';
+import ScheduleInterviewModal from "@/components/recruiter/ScheduleInterviewModal";
+import InterviewStatusBadge from "@/components/recruiter/InterviewStatusBadge";
 
 interface Message {
   id: string;
@@ -114,10 +115,8 @@ export default function MessageThreadPage() {
   const [sequenceBusy, setSequenceBusy] = useState(false);
   const [interviewEvent, setInterviewEvent] = useState<InterviewEvent | null>(null);
   const [interviewBusy, setInterviewBusy] = useState(false);
-  const [interviewScheduledAt, setInterviewScheduledAt] = useState('');
-  const [interviewDuration, setInterviewDuration] = useState('30');
-  const [interviewLocation, setInterviewLocation] = useState('');
-  const [interviewNotes, setInterviewNotes] = useState('');
+  const [showScheduleInterviewModal, setShowScheduleInterviewModal] = useState(false);
+  const [scheduleDefaultStatus, setScheduleDefaultStatus] = useState<"PROPOSED" | "SCHEDULED" | "CONFIRMED">("SCHEDULED");
   const [showFollowUpSuggestion, setShowFollowUpSuggestion] = useState(false);
   const [workflowNotice, setWorkflowNotice] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [threadList, setThreadList] = useState<ThreadListItem[]>([]);
@@ -139,11 +138,6 @@ export default function MessageThreadPage() {
     if (profile?.role === "JOB_SEEKER") return "/messages/candidate";
     return jobIdForNav ? getMessagesUrl(jobIdForNav) : "/messages";
   }, [profile?.role, jobIdForNav]);
-
-  const toLocalDateTimeInput = (date: Date) => {
-    const pad = (n: number) => String(n).padStart(2, "0");
-    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
-  };
 
   const toValidDate = (value: unknown): Date | null => {
     if (!value) return null;
@@ -360,20 +354,6 @@ export default function MessageThreadPage() {
         const first = (interviewRes.data.interviews || [])
           .find((iv: any) => String(iv?.status || "") !== "CANCELLED") as InterviewEvent | undefined;
         setInterviewEvent(first || null);
-        if (first?.scheduledAt) {
-          const date = toValidDate(first.scheduledAt);
-          if (date) setInterviewScheduledAt(toLocalDateTimeInput(date));
-        }
-        if (first?.durationMinutes) setInterviewDuration(String(first.durationMinutes));
-        if (first?.location) {
-          const rawLocation = first.location as any;
-          const normalizedLocation =
-            typeof rawLocation === "string"
-              ? rawLocation
-              : String(rawLocation?.value || rawLocation?.location || "");
-          setInterviewLocation(normalizedLocation);
-        }
-        if (first?.notes) setInterviewNotes(String(first.notes));
       }
     };
     loadOperationalData();
@@ -663,74 +643,41 @@ export default function MessageThreadPage() {
     }
   };
 
-  const upsertInterview = async (status: "PROPOSED" | "CONFIRMED" | "CANCELLED") => {
-    if (!user || !jobContext?.jobId || !candidateIdForPipeline) return;
+  const handlePatchInterview = async (body: Record<string, unknown>, successText: string) => {
+    if (!user || !jobContext?.jobId || !interviewEvent?.id) return;
     setInterviewBusy(true);
     try {
       const token = await user.getIdToken();
-      let res;
-      if (status === "CANCELLED") {
-        res = await patchJobInterview(jobContext.jobId, token, {
-          candidateId: candidateIdForPipeline,
-          status,
-        });
-      } else {
-        let scheduled = interviewScheduledAt ? new Date(interviewScheduledAt) : null;
-        if (!scheduled || Number.isNaN(scheduled.getTime())) {
-          const fallback = addDays(new Date(), 2);
-          fallback.setHours(10, 0, 0, 0);
-          scheduled = fallback;
-          setInterviewScheduledAt(toLocalDateTimeInput(fallback));
-        }
-        res = await upsertJobInterview(jobContext.jobId, token, {
-          candidateId: candidateIdForPipeline,
-          status,
-          scheduledAt: scheduled.toISOString(),
-          durationMinutes: Number(interviewDuration || 30),
-          location: interviewLocation,
-          notes: interviewNotes,
-        });
-      }
+      const res = await patchJobInterviewById(jobContext.jobId, interviewEvent.id, token, body);
       if (!res.ok) {
         setWorkflowNotice({ type: "error", text: res.error || "Failed to update interview." });
         return;
       }
       setInterviewEvent((res.data.interview || null) as InterviewEvent | null);
-      if (status !== "CANCELLED") {
-        await postJobPipeline(
-          jobContext.jobId,
-          { candidateId: candidateIdForPipeline, stage: "INTERVIEW" },
-          token
-        );
-        setPipelineEntry((prev: any) => ({ ...(prev || {}), stage: "INTERVIEW" }));
-      }
-      setWorkflowNotice({
-        type: "success",
-        text:
-          status === "CONFIRMED"
-            ? "Interview confirmed."
-            : status === "CANCELLED"
-              ? "Interview cancelled."
-              : "Interview proposed.",
-      });
+      setWorkflowNotice({ type: "success", text: successText });
     } finally {
       setInterviewBusy(false);
     }
   };
 
-  const handleInsertInterviewDetails = () => {
-    if (!interviewScheduledAt) return;
-    const when = new Date(interviewScheduledAt);
+  const handleCopyInterviewDetails = () => {
+    if (!interviewEvent) return;
+    const when = toValidDate(interviewEvent.scheduledAt);
+    const locationRaw = interviewEvent.location as any;
+    const locationValue =
+      typeof locationRaw === "string" ? locationRaw : String(locationRaw?.value || locationRaw?.location || "TBD");
     const text = [
       "Interview details:",
-      `- Time: ${when.toLocaleString()}`,
-      `- Duration: ${interviewDuration || "30"} minutes`,
-      `- Location: ${interviewLocation || "TBD"}`,
-      interviewNotes ? `- Notes: ${interviewNotes}` : "",
+      `- Time: ${when ? when.toLocaleString() : "TBD"}`,
+      `- Duration: ${interviewEvent.durationMinutes || 30} minutes`,
+      `- Location: ${locationValue || "TBD"}`,
+      interviewEvent.notes ? `- Notes: ${interviewEvent.notes}` : "",
     ]
       .filter(Boolean)
       .join("\n");
     setNewMessage((prev) => `${prev.trim()}\n\n${text}`.trim());
+    navigator.clipboard?.writeText(text).catch(() => {});
+    setWorkflowNotice({ type: "success", text: "Interview details copied and added to draft." });
   };
 
   if (loading || isLoading) {
@@ -1168,6 +1115,86 @@ export default function MessageThreadPage() {
                     </Link>
                   </div>
 
+                  <div className="rounded-xl border border-slate-200 bg-white p-3">
+                    <div className="mb-2 flex items-center justify-between">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Interview actions</p>
+                      {interviewEvent ? <InterviewStatusBadge status={interviewEvent.status} /> : null}
+                    </div>
+                    {interviewEvent ? (
+                      <div className="space-y-2 text-xs text-slate-700">
+                        <p>
+                          {toValidDate(interviewEvent.scheduledAt)?.toLocaleString() || "Time unavailable"}
+                          {interviewEvent.timezone ? ` (${interviewEvent.timezone})` : ""}
+                        </p>
+                        <p>
+                          {String(interviewEvent.durationMinutes || 30)} min •{" "}
+                          {typeof interviewEvent.location === "string"
+                            ? interviewEvent.location
+                            : String((interviewEvent.location as any)?.value || "Location TBD")}
+                        </p>
+                        <p className="text-[11px] text-slate-500">
+                          {String(interviewEvent.calendarProvider || "").toLowerCase() === "microsoft" ? "Outlook Calendar" : "Google Calendar"} •{" "}
+                          {interviewEvent.calendarSyncStatus === "SYNCED"
+                            ? "Synced"
+                            : interviewEvent.calendarSyncStatus === "FAILED"
+                              ? "Sync failed"
+                              : "Not synced"}
+                        </p>
+                      </div>
+                    ) : (
+                      <p className="text-xs text-slate-500">No interview scheduled yet.</p>
+                    )}
+                    <div className="mt-3 grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setScheduleDefaultStatus("SCHEDULED");
+                          setShowScheduleInterviewModal(true);
+                        }}
+                        className="rounded-lg bg-navy-800 px-3 py-2 text-xs font-semibold text-white hover:bg-navy-700"
+                      >
+                        {interviewEvent ? "Reschedule" : "Schedule"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handlePatchInterview({ status: "CONFIRMED" }, "Interview confirmed.")}
+                        disabled={interviewBusy || !interviewEvent}
+                        className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 disabled:opacity-60"
+                      >
+                        Confirm
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (!window.confirm("Cancel this interview and external calendar event?")) return;
+                          handlePatchInterview({ status: "CANCELLED" }, "Interview cancelled.");
+                        }}
+                        disabled={interviewBusy || !interviewEvent}
+                        className="rounded-lg border border-rose-200 px-3 py-2 text-xs font-semibold text-rose-700 disabled:opacity-60"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleCopyInterviewDetails}
+                        disabled={!interviewEvent}
+                        className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 disabled:opacity-60"
+                      >
+                        Copy details
+                      </button>
+                    </div>
+                    {interviewEvent?.calendarHtmlLink ? (
+                      <a
+                        href={interviewEvent.calendarHtmlLink}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="mt-2 inline-block text-xs font-semibold text-sky-700 underline"
+                      >
+                        Open in {String(interviewEvent.calendarProvider || "").toLowerCase() === "microsoft" ? "Outlook Calendar" : "Google Calendar"}
+                      </a>
+                    ) : null}
+                  </div>
+
                   <details className="rounded-lg border border-slate-200 bg-white p-3">
                     <summary className="cursor-pointer text-xs font-semibold uppercase tracking-wide text-slate-500">
                       Advanced actions
@@ -1182,35 +1209,8 @@ export default function MessageThreadPage() {
                           Stop
                         </button>
                       </div>
-                      <p className="text-[11px] font-semibold text-slate-600">Schedule interview</p>
-                      <input type="datetime-local" value={interviewScheduledAt} onChange={(e) => setInterviewScheduledAt(e.target.value)} className="w-full px-2 py-1 rounded border border-slate-200 text-xs" />
-                      <select value={interviewDuration} onChange={(e) => setInterviewDuration(e.target.value)} className="w-full px-2 py-1 rounded border border-slate-200 text-xs">
-                        <option value="15">15 min</option>
-                        <option value="30">30 min</option>
-                        <option value="45">45 min</option>
-                        <option value="60">60 min</option>
-                      </select>
-                      <input value={interviewLocation} onChange={(e) => setInterviewLocation(e.target.value)} placeholder="Location or meeting link" className="w-full px-2 py-1 rounded border border-slate-200 text-xs" />
-                      <textarea value={interviewNotes} onChange={(e) => setInterviewNotes(e.target.value)} placeholder="Notes to candidate" className="w-full px-2 py-1 rounded border border-slate-200 text-xs min-h-[64px]" />
-                      <p className="text-[10px] text-slate-500">Time zone: {Intl.DateTimeFormat().resolvedOptions().timeZone}</p>
-                      <div className="flex gap-2">
-                        <button type="button" onClick={() => upsertInterview("PROPOSED")} disabled={interviewBusy} className="rounded-md border border-slate-200 px-2 py-1 text-[11px] font-semibold text-slate-700">Propose interview</button>
-                        <button type="button" onClick={() => upsertInterview("CONFIRMED")} disabled={interviewBusy} className="rounded-md border border-slate-200 px-2 py-1 text-[11px] font-semibold text-slate-700">Confirm interview</button>
-                        <button type="button" onClick={() => upsertInterview("CANCELLED")} disabled={interviewBusy || !interviewEvent} className="rounded-md border border-rose-200 px-2 py-1 text-[11px] font-semibold text-rose-700">Cancel</button>
-                      </div>
-                      <div className="flex gap-2">
-                        <button type="button" onClick={handleInsertInterviewDetails} className="rounded-md border border-slate-200 px-2 py-1 text-[11px] font-semibold text-slate-700">Send details to candidate</button>
-                      </div>
                     </div>
                   </details>
-                  {interviewEvent?.scheduledAt ? (
-                    <div className="mt-3 rounded-lg border border-sky-200 bg-sky-50 p-2">
-                      <p className="text-xs font-semibold text-sky-900">
-                        Interview {String(interviewEvent.status || "PROPOSED").toLowerCase()} ·{" "}
-                        {toValidDate(interviewEvent.scheduledAt)?.toLocaleString() || "Time unavailable"}
-                      </p>
-                    </div>
-                  ) : null}
                 </>
               ) : (
                 <p className="text-xs text-slate-500">No job context attached to this thread.</p>
@@ -1228,6 +1228,26 @@ export default function MessageThreadPage() {
           )}
         </div>
       </div>
+
+      {jobContext?.jobId && candidateIdForPipeline ? (
+        <ScheduleInterviewModal
+          isOpen={showScheduleInterviewModal}
+          onClose={() => setShowScheduleInterviewModal(false)}
+          jobId={jobContext.jobId}
+          jobTitle={jobContext.jobTitle}
+          candidateId={candidateIdForPipeline}
+          candidateName={otherParticipant ? `${otherParticipant.firstName || ""} ${otherParticipant.lastName || ""}`.trim() : "Candidate"}
+          existingInterview={interviewEvent}
+          defaultStatus={scheduleDefaultStatus}
+          onSaved={async (iv) => {
+            setInterviewEvent(iv);
+            if (!user) return;
+            const token = await user.getIdToken();
+            await postJobPipeline(jobContext.jobId, { candidateId: candidateIdForPipeline, stage: "INTERVIEW" }, token);
+            setPipelineEntry((prev: any) => ({ ...(prev || {}), stage: "INTERVIEW" }));
+          }}
+        />
+      ) : null}
 
       {/* Company Rating Modal */}
       {jobToRate && (

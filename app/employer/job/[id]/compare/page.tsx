@@ -63,6 +63,9 @@ type CompareCandidate = {
   sequenceStatus: string | null;
   interviewAt: any;
   interviewStatus?: string | null;
+  interviewSyncStatus?: string | null;
+  interviewCalendarLink?: string | null;
+  interviewCalendarProvider?: string | null;
   reviewPendingCount?: number;
   reviewCompletedCount?: number;
 };
@@ -268,6 +271,9 @@ export default function JobComparePage() {
             sequenceStatus: sequenceByCandidate.get(candidateId)?.status || null,
             interviewAt: interviewByCandidate.get(candidateId)?.scheduledAt || null,
             interviewStatus: interviewByCandidate.get(candidateId)?.status || null,
+            interviewSyncStatus: interviewByCandidate.get(candidateId)?.calendarSyncStatus || null,
+            interviewCalendarLink: interviewByCandidate.get(candidateId)?.calendarHtmlLink || null,
+            interviewCalendarProvider: interviewByCandidate.get(candidateId)?.calendarProvider || null,
             reviewPendingCount: reviewAssignments.filter((a: any) => String(a.candidateId || "") === candidateId && String(a.status || "") === "REQUESTED").length,
             reviewCompletedCount: reviewAssignments.filter((a: any) => String(a.candidateId || "") === candidateId && String(a.status || "") === "COMPLETED").length,
           });
@@ -478,8 +484,16 @@ export default function JobComparePage() {
                     </span>
                   </p>
                   {row.interviewAt && (
-                    <div className="mt-1">
+                    <div className="mt-1 flex items-center gap-2">
                       <InterviewStatusBadge status={row.interviewStatus || "SCHEDULED"} />
+                      <span className="text-xs text-slate-500">
+                        {row.interviewCalendarProvider === "microsoft" ? "Outlook" : "Google"} {row.interviewSyncStatus === "SYNCED" ? "synced" : row.interviewSyncStatus === "FAILED" ? "sync failed" : "not synced"}
+                      </span>
+                      {row.interviewCalendarLink ? (
+                        <a href={row.interviewCalendarLink} target="_blank" rel="noreferrer" className="text-xs font-semibold text-sky-700 underline">
+                          Open
+                        </a>
+                      ) : null}
                     </div>
                   )}
                   {row.evaluationCount > 0 && (

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { canManageCalendarIntegration, getServerAuthedUser } from "@/lib/server-auth";
-import { getGoogleCalendarIntegration } from "@/lib/integrations/google-calendar";
+import { getMicrosoftCalendarIntegration } from "@/lib/integrations/microsoft-calendar";
 
 export const dynamic = "force-dynamic";
 
@@ -11,27 +11,18 @@ export async function GET(request: NextRequest) {
     if (!canManageCalendarIntegration(user.role)) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
-    const integration = await getGoogleCalendarIntegration(user.uid);
-    const integrationDocId = `google_${user.uid}`;
+    const integration = await getMicrosoftCalendarIntegration(user.uid);
     const connected = Boolean(integration && integration.status === "CONNECTED");
-    console.info("google-calendar/status: read integration", {
-      userId: user.uid,
-      integrationDocId,
-      found: Boolean(integration),
-      status: integration?.status || "DISCONNECTED",
-      connected,
-      hasConnectedEmail: Boolean(integration?.connectedEmail),
-    });
     const syncReady = Boolean(connected && (integration?.refreshToken || integration?.accessToken));
     return NextResponse.json({
       connected,
-      provider: "google",
+      provider: "microsoft",
       status: integration?.status || "DISCONNECTED",
       connectedEmail: integration?.connectedEmail || null,
       syncReady,
     });
   } catch (error) {
-    console.error("GET /api/integrations/google-calendar/status", error);
+    console.error("GET /api/integrations/microsoft-calendar/status", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

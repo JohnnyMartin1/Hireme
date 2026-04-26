@@ -60,6 +60,9 @@ type PipelineCandidateCard = {
   sequenceStatus?: string | null;
   interviewAt?: any;
   interviewStatus?: string | null;
+  interviewSyncStatus?: string | null;
+  interviewCalendarLink?: string | null;
+  interviewCalendarProvider?: string | null;
   reviewPendingCount?: number;
   reviewCompletedCount?: number;
 };
@@ -287,6 +290,9 @@ export default function JobPipelinePage() {
           sequenceStatus: sequenceByCandidate.get(card.candidateId)?.status || null,
           interviewAt: interviewByCandidate.get(card.candidateId)?.scheduledAt || null,
           interviewStatus: interviewByCandidate.get(card.candidateId)?.status || null,
+          interviewSyncStatus: interviewByCandidate.get(card.candidateId)?.calendarSyncStatus || null,
+          interviewCalendarLink: interviewByCandidate.get(card.candidateId)?.calendarHtmlLink || null,
+          interviewCalendarProvider: interviewByCandidate.get(card.candidateId)?.calendarProvider || null,
           reviewPendingCount: reviewAssignments.filter((a: any) => String(a.candidateId || "") === card.candidateId && String(a.status || "") === "REQUESTED").length,
           reviewCompletedCount: reviewAssignments.filter((a: any) => String(a.candidateId || "") === card.candidateId && String(a.status || "") === "COMPLETED").length,
         }))
@@ -568,8 +574,16 @@ export default function JobPipelinePage() {
                           {card.sequenceStatus ? ` · Follow-up sequence ${card.sequenceStatus}` : ""}
                         </p>
                         {card.interviewAt && (
-                          <div className="pt-1">
+                          <div className="pt-1 flex items-center gap-2">
                             <InterviewStatusBadge status={card.interviewStatus || "SCHEDULED"} />
+                            <span className="text-[10px] text-slate-500">
+                              {card.interviewCalendarProvider === "microsoft" ? "Outlook" : "Google"} {card.interviewSyncStatus === "SYNCED" ? "synced" : card.interviewSyncStatus === "FAILED" ? "sync failed" : "not synced"}
+                            </span>
+                            {card.interviewCalendarLink ? (
+                              <a href={card.interviewCalendarLink} target="_blank" rel="noreferrer" className="text-[10px] font-semibold text-sky-700 underline">
+                                Open
+                              </a>
+                            ) : null}
                           </div>
                         )}
                         <p className="text-[11px] text-navy-900 font-medium">{card.nextStep || "Next step: Review candidate"}</p>

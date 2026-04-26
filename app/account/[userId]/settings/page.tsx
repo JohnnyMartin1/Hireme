@@ -1258,11 +1258,15 @@ function CompanySection({ toast }: { toast: (msg: string) => void }) {
 // Calendar integrations (OAuth to Google Calendar — separate from login providers)
 function CalendarIntegrationsSection({ toast }: { toast: (msg: string) => void }) {
   const { user } = useFirebaseAuth();
-  const [googleStatus, setGoogleStatus] = useState<{
-    connected: boolean;
-    connectedEmail: string | null;
+  const [providerStatus, setProviderStatus] = useState<{
     loading: boolean;
-  }>({ connected: false, connectedEmail: null, loading: true });
+    google: { connected: boolean; connectedEmail: string | null; syncReady: boolean };
+    microsoft: { connected: boolean; connectedEmail: string | null; syncReady: boolean };
+  }>({
+    loading: true,
+    google: { connected: false, connectedEmail: null, syncReady: false },
+    microsoft: { connected: false, connectedEmail: null, syncReady: false },
+  });
   const [statusError, setStatusError] = useState<string | null>(null);
   const [oauthError, setOauthError] = useState<string | null>(null);
 
@@ -1278,60 +1282,79 @@ function CalendarIntegrationsSection({ toast }: { toast: (msg: string) => void }
     setOauthError(readable);
   }, []);
 
-  const loadGoogleStatus = async () => {
+  const loadStatus = async () => {
     if (!user) return;
-    setGoogleStatus((prev) => ({ ...prev, loading: true }));
+    setProviderStatus((prev) => ({ ...prev, loading: true }));
     setStatusError(null);
     try {
       const token = await user.getIdToken();
-      const res = await fetch("/api/integrations/google-calendar/status", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const payload = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setGoogleStatus({ connected: false, connectedEmail: null, loading: false });
-        setStatusError(String(payload?.error || "Could not check Google Calendar connection."));
+      const [googleRes, microsoftRes] = await Promise.all([
+        fetch("/api/integrations/google-calendar/status", {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+        fetch("/api/integrations/microsoft-calendar/status", {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      ]);
+      const googlePayload = await googleRes.json().catch(() => ({}));
+      const microsoftPayload = await microsoftRes.json().catch(() => ({}));
+      if (!googleRes.ok && !microsoftRes.ok) {
+        setProviderStatus({
+          loading: false,
+          google: { connected: false, connectedEmail: null, syncReady: false },
+          microsoft: { connected: false, connectedEmail: null, syncReady: false },
+        });
+        setStatusError(String(googlePayload?.error || microsoftPayload?.error || "Could not check calendar connections."));
         return;
       }
-      setGoogleStatus({
-        connected: Boolean(payload.connected),
-        connectedEmail: payload.connectedEmail ? String(payload.connectedEmail) : null,
+      setProviderStatus({
         loading: false,
+        google: {
+          connected: Boolean(googlePayload.connected),
+          connectedEmail: googlePayload.connectedEmail ? String(googlePayload.connectedEmail) : null,
+          syncReady: Boolean(googlePayload.syncReady),
+        },
+        microsoft: {
+          connected: Boolean(microsoftPayload.connected),
+          connectedEmail: microsoftPayload.connectedEmail ? String(microsoftPayload.connectedEmail) : null,
+          syncReady: Boolean(microsoftPayload.syncReady),
+        },
       });
     } catch {
-      setGoogleStatus({ connected: false, connectedEmail: null, loading: false });
-      setStatusError("Could not check Google Calendar connection.");
+      setProviderStatus({
+        loading: false,
+        google: { connected: false, connectedEmail: null, syncReady: false },
+        microsoft: { connected: false, connectedEmail: null, syncReady: false },
+      });
+      setStatusError("Could not check calendar connections.");
     }
   };
 
   useEffect(() => {
-    loadGoogleStatus();
+    loadStatus();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.uid]);
 
-  const handleConnectGoogle = async () => {
+  const connectProvider = async (provider: "google" | "microsoft") => {
     if (!user) return;
     const token = await user.getIdToken();
     const redirect = `${window.location.pathname}${window.location.search || ""}#calendar`;
-    window.location.href = `/api/integrations/google-calendar/connect?token=${encodeURIComponent(token)}&redirect=${encodeURIComponent(redirect)}`;
+    window.location.href = `/api/integrations/${provider}-calendar/connect?token=${encodeURIComponent(token)}&redirect=${encodeURIComponent(redirect)}`;
   };
 
-  const handleDisconnectGoogle = async () => {
+  const disconnectProvider = async (provider: "google" | "microsoft") => {
     if (!user) return;
     const token = await user.getIdToken();
-    const res = await fetch("/api/integrations/google-calendar/disconnect", {
+    const res = await fetch(`/api/integrations/${provider}-calendar/disconnect`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-    });
+        headers: { Authorization: `Bearer ${token}` },
+      });
     if (!res.ok) {
-      toast("Could not disconnect Google Calendar");
+      toast(`Could not disconnect ${provider === "google" ? "Google" : "Outlook"} Calendar`);
       return;
     }
-    toast("Google Calendar disconnected");
-    loadGoogleStatus();
+    toast(`${provider === "google" ? "Google" : "Outlook"} Calendar disconnected`);
+    loadStatus();
   };
 
   return (
@@ -1354,39 +1377,64 @@ function CalendarIntegrationsSection({ toast }: { toast: (msg: string) => void }
             {statusError}
           </div>
         )}
-        <div className="max-w-xl">
-          <div className="p-6 border border-slate-200 rounded-lg card-hover">
-            <div className="flex items-center justify-between mb-4 gap-3">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {([
+            {
+              id: "google",
+              title: "Google Calendar",
+              subtitle: "Interview events & invites",
+              icon: "fa-brands fa-google",
+              iconClass: "text-red-500",
+            },
+            {
+              id: "microsoft",
+              title: "Outlook Calendar",
+              subtitle: "Microsoft 365 calendar sync",
+              icon: "fa-brands fa-microsoft",
+              iconClass: "text-sky-600",
+            },
+          ] as const).map((provider) => {
+            const state = provider.id === "google" ? providerStatus.google : providerStatus.microsoft;
+            return (
+              <div key={provider.id} className="p-6 border border-slate-200 rounded-lg card-hover">
+                <div className="flex items-center justify-between mb-4 gap-3">
               <div className="flex items-center space-x-3 min-w-0">
                 <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center shrink-0">
-                  <i className="fa-solid fa-calendar text-blue-600"></i>
+                      <i className={`${provider.icon} ${provider.iconClass}`}></i>
                 </div>
                 <div className="min-w-0">
-                  <h3 className="font-bold text-navy-900">Google Calendar</h3>
-                  <p className="text-sm text-slate-600">Interview events & invites</p>
+                      <h3 className="font-bold text-navy-900">{provider.title}</h3>
+                      <p className="text-sm text-slate-600">{provider.subtitle}</p>
                 </div>
               </div>
               <span
                 className={`shrink-0 px-3 py-1 rounded-full text-xs font-semibold ${
-                  googleStatus.loading
+                      providerStatus.loading
                     ? "bg-slate-100 text-slate-700"
-                    : googleStatus.connected
+                        : state.connected
                       ? "bg-green-100 text-green-800"
                       : "bg-amber-100 text-amber-900"
                 }`}
               >
-                {googleStatus.loading ? "Checking…" : googleStatus.connected ? "Connected" : "Not connected"}
+                    {providerStatus.loading ? "Checking…" : state.connected ? "Connected" : "Not connected"}
               </span>
             </div>
-            {googleStatus.connected && googleStatus.connectedEmail && (
+                {state.connected && state.connectedEmail && (
               <p className="mb-3 text-sm text-slate-700">
-                Connected as <span className="font-medium text-navy-900">{googleStatus.connectedEmail}</span>
+                    Connected as <span className="font-medium text-navy-900">{state.connectedEmail}</span>
               </p>
             )}
-            {googleStatus.connected ? (
+                <p className="mb-3 text-xs text-slate-500">
+                  {state.syncReady
+                    ? "Ready to create and update interview events."
+                    : state.connected
+                      ? "Connected, but calendar permission is incomplete. Reconnect recommended."
+                      : "Not connected. Events will only be saved in HireMe."}
+                </p>
+                {state.connected ? (
               <button
                 type="button"
-                onClick={handleDisconnectGoogle}
+                    onClick={() => disconnectProvider(provider.id)}
                 className="px-6 py-3 bg-white border border-slate-200 text-navy-900 rounded-lg font-semibold shadow-sm hover:bg-slate-50 transition-colors w-full py-2 text-sm"
               >
                 Disconnect
@@ -1394,13 +1442,15 @@ function CalendarIntegrationsSection({ toast }: { toast: (msg: string) => void }
             ) : (
               <button
                 type="button"
-                onClick={handleConnectGoogle}
+                    onClick={() => connectProvider(provider.id)}
                 className="px-8 py-4 bg-navy-800 text-white rounded-lg font-semibold text-lg shadow-md hover:bg-navy-700 transition-colors w-full py-2 text-sm"
               >
                 Connect
               </button>
             )}
           </div>
+            );
+          })}
         </div>
       </div>
     </section>
@@ -1428,11 +1478,11 @@ function IntegrationsSection({ toast }: { toast: (msg: string) => void }) {
                   <p className="text-sm text-slate-600">ATS Integration</p>
                 </div>
               </div>
-              <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">Connected</span>
+              <span className="px-3 py-1 bg-slate-100 text-slate-700 rounded-full text-xs font-semibold">Coming soon</span>
             </div>
             <div className="space-y-2">
               <input type="text" placeholder="API Key" className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-sky-200 focus:border-sky-400 text-navy-900 placeholder-slate-400" />
-              <button onClick={() => toast('Disconnected')} className="px-6 py-3 bg-white border border-slate-200 text-navy-900 rounded-lg font-semibold shadow-sm hover:bg-slate-50 transition-colors w-full py-2 rounded-lg font-semibold text-sm">Disconnect</button>
+              <button onClick={() => toast('Greenhouse integration is not enabled yet.')} className="px-6 py-3 bg-white border border-slate-200 text-navy-900 rounded-lg font-semibold shadow-sm hover:bg-slate-50 transition-colors w-full py-2 rounded-lg font-semibold text-sm">Request access</button>
             </div>
           </div>
 
@@ -1447,12 +1497,12 @@ function IntegrationsSection({ toast }: { toast: (msg: string) => void }) {
                   <p className="text-sm text-slate-600">SAML/SCIM</p>
                 </div>
               </div>
-              <span className="px-3 py-1 bg-red-100 text-red-800 rounded-full text-xs font-semibold">Not Configured</span>
+              <span className="px-3 py-1 bg-slate-100 text-slate-700 rounded-full text-xs font-semibold">Coming soon</span>
             </div>
             <div className="space-y-2">
               <input type="text" placeholder="ACS URL" className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-sky-200 focus:border-sky-400 text-navy-900 placeholder-slate-400" />
               <input type="text" placeholder="Entity ID" className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-sky-200 focus:border-sky-400 text-navy-900 placeholder-slate-400" />
-              <button onClick={() => toast('Metadata uploaded')} className="px-6 py-3 bg-white border border-slate-200 text-navy-900 rounded-lg font-semibold shadow-sm hover:bg-slate-50 transition-colors w-full py-2 rounded-lg font-semibold text-sm">Upload Metadata</button>
+              <button onClick={() => toast('SSO setup is not available yet.')} className="px-6 py-3 bg-white border border-slate-200 text-navy-900 rounded-lg font-semibold shadow-sm hover:bg-slate-50 transition-colors w-full py-2 rounded-lg font-semibold text-sm">Request setup</button>
             </div>
           </div>
 
@@ -1467,7 +1517,7 @@ function IntegrationsSection({ toast }: { toast: (msg: string) => void }) {
                   <p className="text-sm text-slate-600">Event Notifications</p>
                 </div>
               </div>
-              <button onClick={() => toast('Webhook added')} className="px-8 py-4 bg-navy-800 text-white rounded-lg font-semibold text-lg shadow-md hover:bg-navy-700 transition-colors px-4 py-1 rounded-lg font-semibold text-sm">+ Add</button>
+              <button onClick={() => toast('Webhooks are planned in a future phase.')} className="px-8 py-4 bg-slate-300 text-slate-700 rounded-lg font-semibold text-lg shadow-sm px-4 py-1 rounded-lg font-semibold text-sm">Planned</button>
             </div>
             <div className="text-sm text-slate-600">
               <p>No webhooks configured</p>

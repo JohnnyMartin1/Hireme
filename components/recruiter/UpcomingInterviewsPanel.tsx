@@ -61,6 +61,17 @@ export default function UpcomingInterviewsPanel({
                 <InterviewStatusBadge status={iv.status} />
               </div>
               <p className="text-xs text-slate-600 mt-0.5">{toDate(iv.scheduledAt)?.toLocaleString() || "Unscheduled"} {iv.timezone ? `(${iv.timezone})` : ""}</p>
+              <div className="mt-1 flex items-center gap-2 text-[11px]">
+                <span className="text-slate-500">
+                  {iv.calendarProvider === "microsoft" ? "Outlook" : "Google"}:{" "}
+                  {iv.calendarSyncStatus === "SYNCED" ? "Synced" : iv.calendarSyncStatus === "FAILED" ? "Sync failed" : "Not synced"}
+                </span>
+                {iv.calendarHtmlLink ? (
+                  <a href={iv.calendarHtmlLink} target="_blank" rel="noreferrer" className="text-sky-700 underline">
+                    Open
+                  </a>
+                ) : null}
+              </div>
             </div>
           ))
         )}

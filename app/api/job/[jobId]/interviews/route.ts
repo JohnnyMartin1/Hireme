@@ -3,11 +3,12 @@ import { adminAuth, adminDb } from "@/lib/firebase-admin";
 import { canUserAccessJob } from "@/lib/matching/job-access";
 import admin from "firebase-admin";
 import {
-  createGoogleCalendarInterviewEvent,
-  getGoogleCalendarIntegration,
-  updateGoogleCalendarInterviewEvent,
-  cancelGoogleCalendarInterviewEvent,
-} from "@/lib/integrations/google-calendar";
+  cancelCalendarInterviewEvent,
+  createCalendarInterviewEvent,
+  getConnectedCalendarProvider,
+  updateCalendarInterviewEvent,
+  type CalendarProvider,
+} from "@/lib/integrations/calendar-service";
 
 export const dynamic = "force-dynamic";
 
@@ -25,6 +26,12 @@ const CANDIDATE_RESPONSES = ["PENDING", "ACCEPTED", "DECLINED", "REQUEST_RESCHED
 
 type InterviewStatus = (typeof INTERVIEW_STATUSES)[number];
 type InterviewType = (typeof INTERVIEW_TYPES)[number];
+
+function normalizeCalendarProvider(value: unknown): CalendarProvider | null {
+  const raw = String(value || "").toLowerCase().trim();
+  if (raw === "google" || raw === "microsoft") return raw;
+  return null;
+}
 
 function normalizeStatus(value: unknown): InterviewStatus {
   const raw = String(value || "").toUpperCase().trim();
@@ -185,10 +192,11 @@ export async function POST(
       completedAt: status === "COMPLETED" ? admin.firestore.FieldValue.serverTimestamp() : null,
     });
     try {
-      const organizerIntegration = await getGoogleCalendarIntegration(auth.decoded!.uid);
-      if (organizerIntegration && organizerIntegration.status === "CONNECTED" && organizerIntegration.refreshToken) {
+      const preferredProvider = normalizeCalendarProvider(body?.calendarProvider);
+      const provider = await getConnectedCalendarProvider(auth.decoded!.uid, preferredProvider);
+      if (provider) {
         const attendees = await resolveAttendees({ candidateId, interviewerIds });
-        const event = await createGoogleCalendarInterviewEvent({
+        const event = await createCalendarInterviewEvent(provider, {
           organizerUserId: auth.decoded!.uid,
           title,
           description,
@@ -200,7 +208,7 @@ export async function POST(
         });
         await ref.set(
           {
-            calendarProvider: "google",
+            calendarProvider: provider,
             calendarEventId: event.id || null,
             calendarHtmlLink: event.htmlLink || null,
             calendarSyncStatus: "SYNCED",
@@ -301,18 +309,20 @@ export async function PATCH(request: NextRequest, { params }: { params: { jobId:
       const organizerUserId = String(existing?.organizerUserId || existing?.createdBy || "");
       const calendarEventId = String(existing?.calendarEventId || "");
       const status = String((updates.status ?? existing?.status) || "").toUpperCase();
-      const organizerIntegration = organizerUserId ? await getGoogleCalendarIntegration(organizerUserId) : null;
-      const canSyncWithGoogle = Boolean(
-        organizerUserId &&
-          organizerIntegration &&
-          organizerIntegration.status === "CONNECTED" &&
-          organizerIntegration.refreshToken
-      );
+      const requestedProvider = normalizeCalendarProvider(body?.calendarProvider);
+      const existingProvider = normalizeCalendarProvider(existing?.calendarProvider);
+      const chosenProvider = requestedProvider || existingProvider || null;
+      const activeProvider =
+        organizerUserId && chosenProvider
+          ? await getConnectedCalendarProvider(organizerUserId, chosenProvider)
+          : organizerUserId
+            ? await getConnectedCalendarProvider(organizerUserId)
+            : null;
 
-      if (canSyncWithGoogle) {
+      if (activeProvider) {
         if (status === "CANCELLED") {
           if (calendarEventId) {
-            await cancelGoogleCalendarInterviewEvent({ organizerUserId, eventId: calendarEventId });
+            await cancelCalendarInterviewEvent(activeProvider, { organizerUserId, eventId: calendarEventId });
           }
           await ref.set(
             {
@@ -339,8 +349,9 @@ export async function PATCH(request: NextRequest, { params }: { params: { jobId:
               : [];
           if (scheduledAt) {
             const attendees = await resolveAttendees({ candidateId, interviewerIds });
-            const event = calendarEventId
-              ? await updateGoogleCalendarInterviewEvent({
+            const shouldUpdateExisting = Boolean(calendarEventId && (!existingProvider || existingProvider === activeProvider));
+            const event = shouldUpdateExisting
+              ? await updateCalendarInterviewEvent(activeProvider, {
                   organizerUserId,
                   eventId: calendarEventId,
                   title,
@@ -351,7 +362,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { jobId:
                   location: locationValue,
                   attendees,
                 })
-              : await createGoogleCalendarInterviewEvent({
+              : await createCalendarInterviewEvent(activeProvider, {
                   organizerUserId,
                   title,
                   description,
@@ -364,7 +375,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { jobId:
 
             await ref.set(
               {
-                calendarProvider: "google",
+                calendarProvider: activeProvider,
                 calendarEventId: event.id || existing?.calendarEventId || null,
                 calendarHtmlLink: event.htmlLink || existing?.calendarHtmlLink || null,
                 calendarSyncStatus: "SYNCED",
