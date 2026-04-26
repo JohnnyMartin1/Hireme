@@ -157,6 +157,9 @@ export default function UserSettingsPage() {
                   { id: 'security', icon: 'shield-halved', label: 'Security' },
                   { id: 'privacy', icon: 'eye', label: 'Privacy & Visibility' },
                   { id: 'notifications', icon: 'bell', label: 'Notifications' },
+                  ...(profile.role === 'EMPLOYER' || profile.role === 'RECRUITER' || profile.role === 'ADMIN'
+                    ? [{ id: 'calendar', icon: 'calendar-days', label: 'Calendars' }]
+                    : []),
                   { id: 'billing', icon: 'credit-card', label: 'Billing' },
                   { id: 'team', icon: 'users', label: 'Team & Recruiters' },
                   { id: 'company', icon: 'building', label: 'Company Profile' },
@@ -192,6 +195,10 @@ export default function UserSettingsPage() {
             {activeTab === 'billing' && (profile.role === 'EMPLOYER' || profile.role === 'RECRUITER') && <BillingSection />}
             {activeTab === 'team' && (profile.role === 'EMPLOYER' || profile.role === 'RECRUITER') && <TeamSection toast={toast} />}
             {activeTab === 'company' && (profile.role === 'EMPLOYER' || profile.role === 'RECRUITER') && <CompanySection toast={toast} />}
+            {activeTab === 'calendar' &&
+              (profile.role === 'EMPLOYER' || profile.role === 'RECRUITER' || profile.role === 'ADMIN') && (
+                <CalendarIntegrationsSection toast={toast} />
+              )}
             {activeTab === 'integrations' && (profile.role === 'EMPLOYER' || profile.role === 'RECRUITER') && <IntegrationsSection toast={toast} />}
             {activeTab === 'data' && (profile.role === 'EMPLOYER' || profile.role === 'RECRUITER') && <DataSection />}
             {activeTab === 'accessibility' && (profile.role === 'EMPLOYER' || profile.role === 'RECRUITER') && <AccessibilitySection toast={toast} />}
@@ -263,7 +270,10 @@ function AccountSection({ toast, profile }: { toast: (msg: string) => void; prof
                 <input type="text" defaultValue="johnsmith" className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-sky-200 focus:border-sky-400 text-navy-900 placeholder-slate-400" />
               </div>
               <div>
-                <h4 className="font-semibold text-navy-900 mb-3">Connected Accounts</h4>
+                <h4 className="font-semibold text-navy-900 mb-2">Login Providers</h4>
+                <p className="text-xs text-slate-600 mb-3">
+                  Used only for signing into HireMe. Does NOT connect calendar or integrations.
+                </p>
                 <div className="space-y-3">
                   <div className="flex items-center justify-between p-3 border border-slate-200 rounded-lg">
                     <div className="flex items-center space-x-3">
@@ -1245,8 +1255,8 @@ function CompanySection({ toast }: { toast: (msg: string) => void }) {
   );
 }
 
-// Integrations Section Component (Employer Only)
-function IntegrationsSection({ toast }: { toast: (msg: string) => void }) {
+// Calendar integrations (OAuth to Google Calendar — separate from login providers)
+function CalendarIntegrationsSection({ toast }: { toast: (msg: string) => void }) {
   const { user } = useFirebaseAuth();
   const [googleStatus, setGoogleStatus] = useState<{
     connected: boolean;
@@ -1259,7 +1269,9 @@ function IntegrationsSection({ toast }: { toast: (msg: string) => void }) {
     setGoogleStatus((prev) => ({ ...prev, loading: true }));
     try {
       const token = await user.getIdToken();
-      const res = await fetch(`/api/integrations/google-calendar/status?token=${encodeURIComponent(token)}`);
+      const res = await fetch("/api/integrations/google-calendar/status", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       const payload = await res.json().catch(() => ({}));
       if (!res.ok) {
         setGoogleStatus({ connected: false, connectedEmail: null, loading: false });
@@ -1283,7 +1295,7 @@ function IntegrationsSection({ toast }: { toast: (msg: string) => void }) {
   const handleConnectGoogle = async () => {
     if (!user) return;
     const token = await user.getIdToken();
-    const redirect = `${window.location.pathname}${window.location.search || ""}#integrations`;
+    const redirect = `${window.location.pathname}${window.location.search || ""}#calendar`;
     window.location.href = `/api/integrations/google-calendar/connect?token=${encodeURIComponent(token)}&redirect=${encodeURIComponent(redirect)}`;
   };
 
@@ -1305,6 +1317,71 @@ function IntegrationsSection({ toast }: { toast: (msg: string) => void }) {
     loadGoogleStatus();
   };
 
+  return (
+    <section className="space-y-6">
+      <div className="bg-white rounded-none sm:rounded-lg md:rounded-2xl shadow-xl border border-slate-100 p-8">
+        <h2 className="text-xl font-bold text-navy-900 mb-2 flex items-center">
+          <i className="fa-solid fa-calendar-days text-sky-500 mr-3"></i>
+          Calendar Integrations
+        </h2>
+        <p className="text-sm text-slate-600 mb-6">
+          Connect your calendar to automatically create interview events and send invites.
+        </p>
+        <div className="max-w-xl">
+          <div className="p-6 border border-slate-200 rounded-lg card-hover">
+            <div className="flex items-center justify-between mb-4 gap-3">
+              <div className="flex items-center space-x-3 min-w-0">
+                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center shrink-0">
+                  <i className="fa-solid fa-calendar text-blue-600"></i>
+                </div>
+                <div className="min-w-0">
+                  <h3 className="font-bold text-navy-900">Google Calendar</h3>
+                  <p className="text-sm text-slate-600">Interview events & invites</p>
+                </div>
+              </div>
+              <span
+                className={`shrink-0 px-3 py-1 rounded-full text-xs font-semibold ${
+                  googleStatus.loading
+                    ? "bg-slate-100 text-slate-700"
+                    : googleStatus.connected
+                      ? "bg-green-100 text-green-800"
+                      : "bg-amber-100 text-amber-900"
+                }`}
+              >
+                {googleStatus.loading ? "Checking…" : googleStatus.connected ? "Connected" : "Not connected"}
+              </span>
+            </div>
+            {googleStatus.connected && googleStatus.connectedEmail && (
+              <p className="mb-3 text-sm text-slate-700">
+                Connected as <span className="font-medium text-navy-900">{googleStatus.connectedEmail}</span>
+              </p>
+            )}
+            {googleStatus.connected ? (
+              <button
+                type="button"
+                onClick={handleDisconnectGoogle}
+                className="px-6 py-3 bg-white border border-slate-200 text-navy-900 rounded-lg font-semibold shadow-sm hover:bg-slate-50 transition-colors w-full py-2 text-sm"
+              >
+                Disconnect
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={handleConnectGoogle}
+                className="px-8 py-4 bg-navy-800 text-white rounded-lg font-semibold text-lg shadow-md hover:bg-navy-700 transition-colors w-full py-2 text-sm"
+              >
+                Connect
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// Integrations Section Component (Employer Only)
+function IntegrationsSection({ toast }: { toast: (msg: string) => void }) {
   return (
     <section className="space-y-6 ">
       <div className="bg-white rounded-none sm:rounded-lg md:rounded-2xl shadow-xl border border-slate-100 p-8">
@@ -1330,39 +1407,6 @@ function IntegrationsSection({ toast }: { toast: (msg: string) => void }) {
               <input type="text" placeholder="API Key" className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-sky-200 focus:border-sky-400 text-navy-900 placeholder-slate-400" />
               <button onClick={() => toast('Disconnected')} className="px-6 py-3 bg-white border border-slate-200 text-navy-900 rounded-lg font-semibold shadow-sm hover:bg-slate-50 transition-colors w-full py-2 rounded-lg font-semibold text-sm">Disconnect</button>
             </div>
-          </div>
-
-          <div className="p-6 border border-slate-200 rounded-lg card-hover">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <i className="fa-solid fa-calendar text-blue-600"></i>
-                </div>
-                <div>
-                  <h3 className="font-bold text-navy-900">Google Calendar</h3>
-                  <p className="text-sm text-slate-600">Interview Scheduling</p>
-                </div>
-              </div>
-              <span
-                className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                  googleStatus.connected ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
-                }`}
-              >
-                {googleStatus.loading ? "Checking..." : googleStatus.connected ? "Connected" : "Not connected"}
-              </span>
-            </div>
-            {googleStatus.connectedEmail && (
-              <p className="mb-2 text-xs text-slate-600">Connected as {googleStatus.connectedEmail}</p>
-            )}
-            {googleStatus.connected ? (
-              <button onClick={handleDisconnectGoogle} className="px-6 py-3 bg-white border border-slate-200 text-navy-900 rounded-lg font-semibold shadow-sm hover:bg-slate-50 transition-colors w-full py-2 text-sm">
-                Disconnect
-              </button>
-            ) : (
-              <button onClick={handleConnectGoogle} className="px-8 py-4 bg-navy-800 text-white rounded-lg font-semibold text-lg shadow-md hover:bg-navy-700 transition-colors w-full py-2 text-sm">
-                Connect Google Calendar
-              </button>
-            )}
           </div>
 
           <div className="p-6 border border-slate-200 rounded-lg card-hover">

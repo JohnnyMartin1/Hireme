@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { useFirebaseAuth } from "@/components/FirebaseAuthProvider";
 import { useToast } from "@/components/NotificationSystem";
 import { fetchCompanyTeamMembers } from "@/lib/collaboration-client";
@@ -58,7 +59,6 @@ export default function ScheduleInterviewModal({
   const [description, setDescription] = useState("");
   const [notes, setNotes] = useState("");
   const [googleCalendarConnected, setGoogleCalendarConnected] = useState<boolean | null>(null);
-  const [googleCalendarEmail, setGoogleCalendarEmail] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isOpen || !user) return;
@@ -66,14 +66,14 @@ export default function ScheduleInterviewModal({
       const token = await user.getIdToken();
       const res = await fetchCompanyTeamMembers(token);
       if (res.ok) setTeamMembers((res.data.members || []).map((m: any) => ({ id: m.id, name: m.name, role: m.role })));
-      const statusRes = await fetch(`/api/integrations/google-calendar/status?token=${encodeURIComponent(token)}`);
+      const statusRes = await fetch("/api/integrations/google-calendar/status", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       const statusPayload = await statusRes.json().catch(() => ({}));
       if (statusRes.ok) {
         setGoogleCalendarConnected(Boolean(statusPayload.connected));
-        setGoogleCalendarEmail(statusPayload.connectedEmail ? String(statusPayload.connectedEmail) : null);
       } else {
         setGoogleCalendarConnected(false);
-        setGoogleCalendarEmail(null);
       }
     };
     load();
@@ -170,25 +170,25 @@ export default function ScheduleInterviewModal({
       <div className="mx-auto mt-10 max-w-2xl rounded-2xl border border-slate-200 bg-white p-5 shadow-xl">
         <h3 className="text-lg font-bold text-navy-900">{existingInterview ? "Reschedule interview" : "Schedule interview"}</h3>
         <p className="text-sm text-slate-600 mt-1">Candidate: {candidateName || "Candidate"}</p>
-        <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700">
-          {googleCalendarConnected ? (
-            <div className="flex items-center justify-between gap-3">
-              <p>This interview will be added to your Google Calendar{googleCalendarEmail ? ` (${googleCalendarEmail})` : ""}.</p>
+        <div className="mt-3 text-sm">
+          {googleCalendarConnected === null ? (
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-slate-600">Checking Google Calendar connection…</div>
+          ) : googleCalendarConnected ? (
+            <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-emerald-900">
+              This interview will be added to your Google Calendar.
             </div>
           ) : (
-            <div className="flex items-center justify-between gap-3">
-              <p>Connect Google Calendar to create real calendar events and send invites.</p>
-              <button
-                type="button"
-                onClick={async () => {
-                  if (!user) return;
-                  const token = await user.getIdToken();
-                  window.location.href = `/api/integrations/google-calendar/connect?token=${encodeURIComponent(token)}&redirect=${encodeURIComponent(window.location.pathname + window.location.search + "#integrations")}`;
-                }}
-                className="shrink-0 rounded-md border border-slate-300 bg-white px-2 py-1 font-semibold text-slate-700 hover:bg-slate-100"
-              >
-                Connect Google Calendar
-              </button>
+            <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-amber-950 space-y-2">
+              <p className="font-medium">Google Calendar not connected. Interviews will not be added to your calendar.</p>
+              {user?.uid ? (
+                <p className="text-xs text-amber-900/90">
+                  Connect under{" "}
+                  <Link href={`/account/${user.uid}/settings#calendar`} className="font-semibold underline underline-offset-2">
+                    Settings → Calendar Integrations
+                  </Link>
+                  .
+                </p>
+              ) : null}
             </div>
           )}
         </div>
