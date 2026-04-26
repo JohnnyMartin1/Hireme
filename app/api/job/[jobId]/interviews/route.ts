@@ -300,10 +300,20 @@ export async function PATCH(request: NextRequest, { params }: { params: { jobId:
     try {
       const organizerUserId = String(existing?.organizerUserId || existing?.createdBy || "");
       const calendarEventId = String(existing?.calendarEventId || "");
-      if (organizerUserId && calendarEventId) {
-        const status = String((updates.status ?? existing?.status) || "").toUpperCase();
+      const status = String((updates.status ?? existing?.status) || "").toUpperCase();
+      const organizerIntegration = organizerUserId ? await getGoogleCalendarIntegration(organizerUserId) : null;
+      const canSyncWithGoogle = Boolean(
+        organizerUserId &&
+          organizerIntegration &&
+          organizerIntegration.status === "CONNECTED" &&
+          organizerIntegration.refreshToken
+      );
+
+      if (canSyncWithGoogle) {
         if (status === "CANCELLED") {
-          await cancelGoogleCalendarInterviewEvent({ organizerUserId, eventId: calendarEventId });
+          if (calendarEventId) {
+            await cancelGoogleCalendarInterviewEvent({ organizerUserId, eventId: calendarEventId });
+          }
           await ref.set(
             {
               calendarSyncStatus: "SYNCED",
@@ -329,20 +339,33 @@ export async function PATCH(request: NextRequest, { params }: { params: { jobId:
               : [];
           if (scheduledAt) {
             const attendees = await resolveAttendees({ candidateId, interviewerIds });
-            const event = await updateGoogleCalendarInterviewEvent({
-              organizerUserId,
-              eventId: calendarEventId,
-              title,
-              description,
-              scheduledAtIso: scheduledAt.toISOString(),
-              durationMinutes,
-              timezone,
-              location: locationValue,
-              attendees,
-            });
+            const event = calendarEventId
+              ? await updateGoogleCalendarInterviewEvent({
+                  organizerUserId,
+                  eventId: calendarEventId,
+                  title,
+                  description,
+                  scheduledAtIso: scheduledAt.toISOString(),
+                  durationMinutes,
+                  timezone,
+                  location: locationValue,
+                  attendees,
+                })
+              : await createGoogleCalendarInterviewEvent({
+                  organizerUserId,
+                  title,
+                  description,
+                  scheduledAtIso: scheduledAt.toISOString(),
+                  durationMinutes,
+                  timezone,
+                  location: locationValue,
+                  attendees,
+                });
+
             await ref.set(
               {
                 calendarProvider: "google",
+                calendarEventId: event.id || existing?.calendarEventId || null,
                 calendarHtmlLink: event.htmlLink || existing?.calendarHtmlLink || null,
                 calendarSyncStatus: "SYNCED",
                 calendarSyncError: null,
