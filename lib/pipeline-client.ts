@@ -1,12 +1,7 @@
-/** Mirrors `PipelineStage` in firebase-firestore (kept here to avoid import cycles). */
-export type PostJobPipelineStage =
-  | "NEW"
-  | "SHORTLIST"
-  | "CONTACTED"
-  | "RESPONDED"
-  | "INTERVIEW"
-  | "FINALIST"
-  | "REJECTED";
+import type { PipelineStage } from "@/lib/firebase-firestore";
+
+/** Keep API client stage union in lockstep with canonical pipeline stages. */
+export type PostJobPipelineStage = PipelineStage;
 
 export type PostJobPipelineBody = {
   candidateId: string;
