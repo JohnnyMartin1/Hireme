@@ -2,13 +2,26 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { Loader2, MessageSquare } from "lucide-react";
 import AddToTalentPoolButton from "@/components/employer/AddToTalentPoolButton";
+import { pickLatestOfferForCandidate, offerStatusLabel } from "@/lib/offers/client";
+import type { CandidateOfferRecord } from "@/lib/offers/types";
+import { useToast } from "@/components/NotificationSystem";
 import { getCandidateUrl, getCandidatesSearchUrl, getJobCompareUrl, getJobMatchesUrl, getJobOverviewUrl } from "@/lib/navigation";
 import { useFirebaseAuth } from "@/components/FirebaseAuthProvider";
-import { PIPELINE_STAGES, getRecruiterNotes, normalizePipelineStage, type PipelineStage } from "@/lib/firebase-firestore";
-import { pipelineStageLabel, recruiterBadge } from "@/lib/recruiter-ui";
+import {
+  PIPELINE_STAGES,
+  getRecruiterNotes,
+  normalizePipelineStage,
+  type PipelineStage,
+  getOrCreateThread,
+  acceptMessageThread,
+  type MessageJobDetailsShape,
+} from "@/lib/firebase-firestore";
+import { formatInterviewWhenLabel } from "@/lib/recruiter-datetime";
+import { pipelineStageLabel, recruiterBadge, recruiterChip } from "@/lib/recruiter-ui";
 import {
   fetchJobEvaluationCriteria,
   fetchJobEvaluations,
@@ -16,6 +29,9 @@ import {
 } from "@/lib/decision-client";
 import {
   fetchJobInterviews,
+  fetchJobInterviewPlan,
+  fetchInterviewFeedback,
+  fetchCandidateDebriefs,
   fetchJobSequences,
 } from "@/lib/communication-client";
 import { fetchReviewAssignments } from "@/lib/collaboration-client";
@@ -30,6 +46,9 @@ import {
 } from "@/lib/hiring-decision";
 import { formatRecruiterAttentionLine, getRecruiterNextStep } from "@/lib/communication-status";
 import type { RecruiterSummary } from "@/types/matching";
+
+const ScheduleInterviewModal = dynamic(() => import("@/components/recruiter/ScheduleInterviewModal"), { ssr: false });
+const OfferModal = dynamic(() => import("@/components/recruiter/OfferModal"), { ssr: false });
 
 type MatchScoreRow = {
   candidateId: string;
@@ -60,11 +79,18 @@ type PipelineCandidateCard = {
   sequenceStatus?: string | null;
   interviewAt?: any;
   interviewStatus?: string | null;
+  interviewRoundName?: string | null;
   interviewSyncStatus?: string | null;
   interviewCalendarLink?: string | null;
   interviewCalendarProvider?: string | null;
   reviewPendingCount?: number;
   reviewCompletedCount?: number;
+  feedbackSubmittedCount?: number;
+  feedbackRequestedCount?: number;
+  debriefStatus?: string | null;
+  offerId?: string | null;
+  offerStatus?: string | null;
+  latestOffer?: CandidateOfferRecord | null;
 };
 
 function dateInputValue(v: any): string {
@@ -116,12 +142,25 @@ export default function JobPipelinePage() {
   const searchParams = useSearchParams();
   const jobId = params.id as string;
   const { user, profile } = useFirebaseAuth();
+  const toast = useToast();
 
   const [loading, setLoading] = useState(true);
   const [jobTitle, setJobTitle] = useState<string>("");
+  const [jobThreadDetails, setJobThreadDetails] = useState<MessageJobDetailsShape | null>(null);
   const [cards, setCards] = useState<PipelineCandidateCard[]>([]);
   const [busyEntryId, setBusyEntryId] = useState<string | null>(null);
   const [selectedCandidateIds, setSelectedCandidateIds] = useState<Set<string>>(new Set());
+  const [scheduleFor, setScheduleFor] = useState<{ candidateId: string; name: string } | null>(null);
+  const [messageBusyCandidateId, setMessageBusyCandidateId] = useState<string | null>(null);
+  const [offerModal, setOfferModal] = useState<{
+    candidateId: string;
+    name: string;
+    existing: CandidateOfferRecord | null;
+  } | null>(null);
+
+  const offerStageHint = useCallback((stage: PipelineStage) => {
+    return ["SHORTLIST", "CONTACTED", "RESPONDED", "INTERVIEW", "FINALIST", "OFFER"].includes(stage);
+  }, []);
 
   useEffect(() => {
     if (!user || !profile || (profile.role !== "EMPLOYER" && profile.role !== "RECRUITER")) {
@@ -133,10 +172,11 @@ export default function JobPipelinePage() {
     if (!jobId || !user) return;
     setLoading(true);
     try {
+      if (process.env.NODE_ENV === "development") console.time("pipeline:load");
       const token = await user.getIdToken();
       const auth = { Authorization: `Bearer ${token}` };
 
-      const [jobRes, pipelineRes, matchesRes, criteriaRes, evaluationsRes, reviewsRes, sequenceRes, interviewsRes] = await Promise.all([
+      const [jobRes, pipelineRes, matchesRes, criteriaRes, evaluationsRes, reviewsRes, sequenceRes, interviewsRes, feedbackRes, debriefRes, planRes] = await Promise.all([
         fetch(`/api/job/${jobId}`, { headers: auth }),
         fetch(`/api/job/${jobId}/pipeline`, { headers: auth }),
         fetch(`/api/job/${jobId}/matches`, { headers: auth }),
@@ -145,10 +185,29 @@ export default function JobPipelinePage() {
         fetchJobReviews(jobId, token),
         fetchJobSequences(jobId, token),
         fetchJobInterviews(jobId, token),
+        fetchInterviewFeedback(jobId, token),
+        fetchCandidateDebriefs(jobId, token),
+        fetchJobInterviewPlan(jobId, token),
       ]);
 
       const jobPayload = await jobRes.json().catch(() => ({}));
-      setJobTitle(String(jobPayload?.job?.title || ""));
+      const j = jobPayload?.job as Record<string, unknown> | undefined;
+      setJobTitle(String(j?.title || ""));
+      if (j) {
+        setJobThreadDetails({
+          jobId,
+          jobTitle: String(j.title || ""),
+          employmentType: String(j.employment || ""),
+          location: String(
+            j.location ||
+              [j.locationCity, j.locationState].filter(Boolean).join(", ") ||
+              ""
+          ),
+          jobDescription: String(j.description || ""),
+        });
+      } else {
+        setJobThreadDetails(null);
+      }
 
       const pipelinePayload = await pipelineRes.json().catch(() => ({}));
       const pipelineEntries = Array.isArray(pipelinePayload.entries) ? pipelinePayload.entries : [];
@@ -164,8 +223,17 @@ export default function JobPipelinePage() {
       const reviews = reviewsRes.ok ? ((reviewsRes.data.reviews || []) as CandidateReviewRequest[]) : [];
       const sequences = sequenceRes.ok ? (sequenceRes.data.sequences || []) : [];
       const interviews = interviewsRes.ok ? (interviewsRes.data.interviews || []) : [];
+      const feedback = feedbackRes.ok ? (feedbackRes.data.feedback || []) : [];
+      const debriefs = debriefRes.ok ? (debriefRes.data.debriefs || []) : [];
       const reviewAssignmentsRes = await fetchReviewAssignments(jobId, token);
       const reviewAssignments = reviewAssignmentsRes.ok ? reviewAssignmentsRes.data.assignments || [] : [];
+
+      const offersRes = await fetch(`/api/job/${jobId}/offers`, { headers: auth });
+      const offersPayload = await offersRes.json().catch(() => ({}));
+      const offersList =
+        offersRes.ok && Array.isArray((offersPayload as { offers?: unknown }).offers)
+          ? ((offersPayload as { offers: CandidateOfferRecord[] }).offers || [])
+          : [];
       const activeCriteria = [...criteria]
         .filter((c: JobEvaluationCriterion) => c.active !== false)
         .sort((a: JobEvaluationCriterion, b: JobEvaluationCriterion) => Number(a.order || 0) - Number(b.order || 0));
@@ -190,12 +258,34 @@ export default function JobPipelinePage() {
         if (!cid) continue;
         if (!sequenceByCandidate.has(cid)) sequenceByCandidate.set(cid, seq);
       }
+      const roundNamesById: Record<string, string> = {};
+      if (planRes.ok) {
+        for (const round of planRes.data.rounds || []) {
+          const id = String((round as any)?.id || "").trim();
+          const name = String((round as any)?.roundName || "").trim();
+          if (id && name) roundNamesById[id] = name;
+        }
+      }
       const interviewByCandidate = new Map<string, any>();
       for (const interview of interviews as any[]) {
         const cid = String(interview?.candidateId || "");
         if (!cid) continue;
         if (String(interview?.status || "") === "CANCELLED") continue;
         if (!interviewByCandidate.has(cid)) interviewByCandidate.set(cid, interview);
+      }
+      const feedbackByCandidate = new Map<string, any[]>();
+      for (const row of feedback as any[]) {
+        const cid = String(row?.candidateId || "");
+        if (!cid) continue;
+        const list = feedbackByCandidate.get(cid) || [];
+        list.push(row);
+        feedbackByCandidate.set(cid, list);
+      }
+      const debriefByCandidate = new Map<string, any>();
+      for (const row of debriefs as any[]) {
+        const cid = String(row?.candidateId || "");
+        if (!cid || debriefByCandidate.has(cid)) continue;
+        debriefByCandidate.set(cid, row);
       }
 
       const matchDetailsByCandidate = new Map<string, {
@@ -251,26 +341,43 @@ export default function JobPipelinePage() {
       );
       const noteMetaByCandidate = Object.fromEntries(notePairs) as Record<string, { count: number; latest: string | null }>;
 
+      const evalSummaryByCandidate = new Map<string, ReturnType<typeof summarizeCandidateEvaluations>>();
+      for (const card of mappedCards) {
+        evalSummaryByCandidate.set(
+          card.candidateId,
+          summarizeCandidateEvaluations(evalsByCandidate.get(card.candidateId) || [], activeCriteria)
+        );
+      }
+      const reviewAssignmentCounts = new Map<string, { pending: number; completed: number }>();
+      for (const assignment of reviewAssignments as any[]) {
+        const cid = String(assignment?.candidateId || "");
+        if (!cid) continue;
+        const prev = reviewAssignmentCounts.get(cid) || { pending: 0, completed: 0 };
+        const status = String(assignment?.status || "");
+        if (status === "REQUESTED") prev.pending += 1;
+        if (status === "COMPLETED") prev.completed += 1;
+        reviewAssignmentCounts.set(cid, prev);
+      }
+
       setCards(
-        mappedCards.map((card) => ({
+        mappedCards.map((card) => {
+          const latestOffer = pickLatestOfferForCandidate(offersList, card.candidateId);
+          const evalSummary = evalSummaryByCandidate.get(card.candidateId);
+          const reviewCounts = reviewAssignmentCounts.get(card.candidateId) || { pending: 0, completed: 0 };
+          return {
           ...card,
+          offerId: latestOffer?.id || null,
+          offerStatus: latestOffer ? String(latestOffer.status || "") : null,
+          latestOffer: latestOffer || null,
           noteCount: noteMetaByCandidate[card.candidateId]?.count || 0,
           latestNote: noteMetaByCandidate[card.candidateId]?.latest || null,
-          evaluationCount: summarizeCandidateEvaluations(
-            evalsByCandidate.get(card.candidateId) || [],
-            activeCriteria
-          ).count,
-          evaluationAvgRating: summarizeCandidateEvaluations(
-            evalsByCandidate.get(card.candidateId) || [],
-            activeCriteria
-          ).avgRating,
+          evaluationCount: evalSummary?.count || 0,
+          evaluationAvgRating: evalSummary?.avgRating ?? null,
           reviewStatus: reviewByCandidate.get(card.candidateId)?.status || null,
           nextStep: getRecruiterNextStep({
             pipelineStage: card.stage,
-            hasEvaluation:
-              summarizeCandidateEvaluations(evalsByCandidate.get(card.candidateId) || [], activeCriteria).count > 0,
-            isEvaluationComplete:
-              summarizeCandidateEvaluations(evalsByCandidate.get(card.candidateId) || [], activeCriteria).isComplete,
+            hasEvaluation: (evalSummary?.count || 0) > 0,
+            isEvaluationComplete: Boolean(evalSummary?.isComplete),
             reviewStatus: reviewByCandidate.get(card.candidateId)?.status,
             nextFollowUpAt: card.nextFollowUpAt,
             interviewAt: interviewByCandidate.get(card.candidateId)?.scheduledAt,
@@ -278,10 +385,8 @@ export default function JobPipelinePage() {
           }),
           waitingOn: formatRecruiterAttentionLine({
             pipelineStage: card.stage,
-            hasEvaluation:
-              summarizeCandidateEvaluations(evalsByCandidate.get(card.candidateId) || [], activeCriteria).count > 0,
-            isEvaluationComplete:
-              summarizeCandidateEvaluations(evalsByCandidate.get(card.candidateId) || [], activeCriteria).isComplete,
+            hasEvaluation: (evalSummary?.count || 0) > 0,
+            isEvaluationComplete: Boolean(evalSummary?.isComplete),
             reviewStatus: reviewByCandidate.get(card.candidateId)?.status,
             nextFollowUpAt: card.nextFollowUpAt,
             interviewAt: interviewByCandidate.get(card.candidateId)?.scheduledAt,
@@ -290,17 +395,25 @@ export default function JobPipelinePage() {
           sequenceStatus: sequenceByCandidate.get(card.candidateId)?.status || null,
           interviewAt: interviewByCandidate.get(card.candidateId)?.scheduledAt || null,
           interviewStatus: interviewByCandidate.get(card.candidateId)?.status || null,
+          interviewRoundName: String(
+            roundNamesById[String(interviewByCandidate.get(card.candidateId)?.roundId || "")] || ""
+          ).trim() || (interviewByCandidate.get(card.candidateId)?.roundId ? "Interview round" : "Manual interview"),
           interviewSyncStatus: interviewByCandidate.get(card.candidateId)?.calendarSyncStatus || null,
           interviewCalendarLink: interviewByCandidate.get(card.candidateId)?.calendarHtmlLink || null,
           interviewCalendarProvider: interviewByCandidate.get(card.candidateId)?.calendarProvider || null,
-          reviewPendingCount: reviewAssignments.filter((a: any) => String(a.candidateId || "") === card.candidateId && String(a.status || "") === "REQUESTED").length,
-          reviewCompletedCount: reviewAssignments.filter((a: any) => String(a.candidateId || "") === card.candidateId && String(a.status || "") === "COMPLETED").length,
-        }))
+          reviewPendingCount: reviewCounts.pending,
+          reviewCompletedCount: reviewCounts.completed,
+          feedbackSubmittedCount: (feedbackByCandidate.get(card.candidateId) || []).filter((f: any) => String(f.status || "") === "SUBMITTED").length,
+          feedbackRequestedCount: (feedbackByCandidate.get(card.candidateId) || []).filter((f: any) => String(f.status || "") !== "WAIVED").length,
+          debriefStatus: String((debriefByCandidate.get(card.candidateId) || {})?.status || ""),
+        };
+        })
       );
     } catch (e) {
       console.error("Pipeline page load failed:", e);
       setCards([]);
     } finally {
+      if (process.env.NODE_ENV === "development") console.timeEnd("pipeline:load");
       setLoading(false);
     }
   }, [jobId, user]);
@@ -317,6 +430,8 @@ export default function JobPipelinePage() {
       RESPONDED: [],
       INTERVIEW: [],
       FINALIST: [],
+      OFFER: [],
+      HIRED: [],
       REJECTED: [],
     };
     for (const c of cards) {
@@ -325,7 +440,7 @@ export default function JobPipelinePage() {
     return out;
   }, [cards]);
   const orderedStages: PipelineStage[] = useMemo(
-    () => ["SHORTLIST", "NEW", "CONTACTED", "RESPONDED", "INTERVIEW", "FINALIST", "REJECTED"],
+    () => ["SHORTLIST", "NEW", "CONTACTED", "RESPONDED", "INTERVIEW", "FINALIST", "OFFER", "HIRED", "REJECTED"],
     []
   );
   const highlightShortlist = (searchParams.get("stage") || "").toUpperCase() === "SHORTLIST";
@@ -353,6 +468,26 @@ export default function JobPipelinePage() {
       await load();
     } finally {
       setBusyEntryId(null);
+    }
+  };
+
+  const handleOpenMessageThread = async (card: PipelineCandidateCard) => {
+    if (!user) return;
+    setMessageBusyCandidateId(card.candidateId);
+    try {
+      const participantIds = [user.uid, card.candidateId].sort();
+      const threadOpts = jobThreadDetails ? { jobDetails: jobThreadDetails } : undefined;
+      const { id: threadId, error } = await getOrCreateThread(participantIds, threadOpts);
+      if (error || !threadId) {
+        toast.error("Messages", error || "Could not open message thread.");
+        return;
+      }
+      await acceptMessageThread(threadId, user.uid);
+      router.push(`/messages/${threadId}?jobId=${encodeURIComponent(jobId)}`);
+    } catch (e: any) {
+      toast.error("Messages", e?.message || "Could not open message thread.");
+    } finally {
+      setMessageBusyCandidateId(null);
     }
   };
 
@@ -502,13 +637,15 @@ export default function JobPipelinePage() {
                             >
                               Profile
                             </Link>
-                            <Link
-                              href={`${getCandidateUrl(card.candidateId, jobId)}&action=message`}
-                              className="inline-flex items-center gap-1 text-[11px] font-medium text-navy-800 hover:underline"
+                            <button
+                              type="button"
+                              onClick={() => void handleOpenMessageThread(card)}
+                              disabled={messageBusyCandidateId === card.candidateId}
+                              className="inline-flex items-center gap-1 text-[11px] font-medium text-navy-800 hover:underline disabled:opacity-50"
                             >
                               <MessageSquare className="h-3 w-3" />
-                              Message
-                            </Link>
+                              {messageBusyCandidateId === card.candidateId ? "Opening…" : "Message"}
+                            </button>
                             <AddToTalentPoolButton
                               candidateId={card.candidateId}
                               buttonClassName="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] font-medium text-navy-800 hover:bg-slate-100"
@@ -570,12 +707,13 @@ export default function JobPipelinePage() {
                           {(card.evaluationCount || 0) > 0
                             ? ` · ${card.evaluationCount} evaluation${(card.evaluationCount || 0) === 1 ? "" : "s"}`
                             : " · No evaluation yet"}
-                          {card.interviewAt ? ` · Interview ${formatDate(card.interviewAt)}` : ""}
+                          {card.interviewAt ? ` · Interview ${formatInterviewWhenLabel(card.interviewAt)}` : ""}
                           {card.sequenceStatus ? ` · Follow-up sequence ${card.sequenceStatus}` : ""}
                         </p>
                         {card.interviewAt && (
                           <div className="pt-1 flex items-center gap-2">
                             <InterviewStatusBadge status={card.interviewStatus || "SCHEDULED"} />
+                            <span className="text-[10px] text-slate-500">{card.interviewRoundName || "Interview round"}</span>
                             <span className="text-[10px] text-slate-500">
                               {card.interviewCalendarProvider === "microsoft" ? "Outlook" : "Google"} {card.interviewSyncStatus === "SYNCED" ? "synced" : card.interviewSyncStatus === "FAILED" ? "sync failed" : "not synced"}
                             </span>
@@ -586,15 +724,85 @@ export default function JobPipelinePage() {
                             ) : null}
                           </div>
                         )}
+                        <div className="flex flex-wrap items-center gap-1.5 text-[10px]">
+                          <span className={recruiterChip.round}>
+                            {card.interviewRoundName || "Interview round"}
+                          </span>
+                          <span className={recruiterChip.requested}>
+                            Feedback requested {card.feedbackRequestedCount || 0}
+                          </span>
+                          <span className={recruiterChip.submitted}>
+                            {card.feedbackSubmittedCount || 0} feedback submitted
+                          </span>
+                          {card.debriefStatus ? (
+                            <span className={String(card.debriefStatus).toUpperCase() === "COMPLETED" ? recruiterChip.submitted : recruiterChip.ready}>
+                              {String(card.debriefStatus).toUpperCase() === "COMPLETED" ? "Debrief completed" : "Ready for debrief"}
+                            </span>
+                          ) : null}
+                          {card.offerStatus ? (
+                            <span
+                              className={
+                                String(card.offerStatus).toUpperCase() === "SENT"
+                                  ? recruiterChip.requested
+                                  : String(card.offerStatus).toUpperCase() === "ACCEPTED"
+                                    ? recruiterChip.submitted
+                                    : String(card.offerStatus).toUpperCase() === "DECLINED" ||
+                                        String(card.offerStatus).toUpperCase() === "WITHDRAWN"
+                                      ? recruiterChip.missing
+                                      : String(card.offerStatus).toUpperCase() === "PENDING_APPROVAL"
+                                        ? recruiterChip.blocked
+                                        : String(card.offerStatus).toUpperCase() === "APPROVED"
+                                          ? recruiterChip.ready
+                                          : recruiterChip.draft
+                              }
+                            >
+                              Offer: {offerStatusLabel(card.offerStatus)}
+                            </span>
+                          ) : null}
+                        </div>
+                        {(card.offerStatus || offerStageHint(card.stage)) && (
+                          <div className="flex flex-wrap items-center gap-2 text-[10px]">
+                            {card.offerStatus && card.latestOffer ? (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setOfferModal({
+                                    candidateId: card.candidateId,
+                                    name: card.name,
+                                    existing: card.latestOffer || null,
+                                  })
+                                }
+                                className="font-semibold text-navy-800 underline-offset-2 hover:underline"
+                              >
+                                View offer
+                              </button>
+                            ) : offerStageHint(card.stage) ? (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setOfferModal({
+                                    candidateId: card.candidateId,
+                                    name: card.name,
+                                    existing: null,
+                                  })
+                                }
+                                className="font-semibold text-navy-800 underline-offset-2 hover:underline"
+                              >
+                                Create offer
+                              </button>
+                            ) : null}
+                          </div>
+                        )}
                         <p className="text-[11px] text-navy-900 font-medium">{card.nextStep || "Next step: Review candidate"}</p>
 
                         <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-slate-100">
-                          <Link
-                            href={`${getCandidateUrl(card.candidateId, jobId)}&action=interview`}
+                          <button
+                            type="button"
+                            onClick={() => setScheduleFor({ candidateId: card.candidateId, name: card.name })}
                             className="rounded-md border border-slate-200 px-2 py-1 text-[10px] font-semibold text-slate-700 hover:bg-slate-100"
                           >
                             Schedule interview
-                          </Link>
+                          </button>
                           <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Stage</span>
                           <select
                             value={card.stage}
@@ -637,6 +845,32 @@ export default function JobPipelinePage() {
           </div>
         )}
       </div>
+
+      <ScheduleInterviewModal
+        jobId={jobId}
+        candidateId={scheduleFor?.candidateId || ""}
+        jobTitle={jobTitle}
+        candidateName={scheduleFor?.name}
+        isOpen={Boolean(scheduleFor)}
+        onClose={() => setScheduleFor(null)}
+        onSaved={() => {
+          setScheduleFor(null);
+          void load();
+        }}
+      />
+      <OfferModal
+        jobId={jobId}
+        candidateId={offerModal?.candidateId || ""}
+        candidateName={offerModal?.name}
+        jobTitle={jobTitle}
+        isOpen={Boolean(offerModal)}
+        onClose={() => setOfferModal(null)}
+        existingOffer={offerModal?.existing ?? null}
+        onSaved={() => {
+          setOfferModal(null);
+          void load();
+        }}
+      />
     </main>
   );
 }

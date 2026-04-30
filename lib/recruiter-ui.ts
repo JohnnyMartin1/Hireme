@@ -10,6 +10,8 @@ const PIPELINE_STAGE_LABELS: Record<string, string> = {
   RESPONDED: "Responded",
   INTERVIEW: "Interview",
   FINALIST: "Finalist",
+  OFFER: "Offer",
+  HIRED: "Hired",
   REJECTED: "Rejected",
   NOT_IN_PIPELINE: "Not in pipeline",
 };
@@ -51,4 +53,19 @@ export const recruiterBadge = {
   inactive: "border border-slate-200 bg-slate-50 text-slate-600",
   urgent: "border border-rose-200 bg-rose-50 text-rose-900",
   neutral: "border border-slate-200 bg-white text-slate-700",
+} as const;
+
+/** Compact chips for Phase 3 status signals. */
+export const recruiterChip = {
+  round: "inline-flex rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] font-semibold text-slate-700",
+  requested: "inline-flex rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-900",
+  submitted: "inline-flex rounded-full border border-green-200 bg-green-50 px-2 py-0.5 text-[10px] font-semibold text-green-900",
+  missing: "inline-flex rounded-full border border-rose-200 bg-rose-50 px-2 py-0.5 text-[10px] font-semibold text-rose-900",
+  draft: "inline-flex rounded-full border border-indigo-200 bg-indigo-50 px-2 py-0.5 text-[10px] font-semibold text-indigo-800",
+  ready: "inline-flex rounded-full border border-violet-200 bg-violet-50 px-2 py-0.5 text-[10px] font-semibold text-violet-800",
+  blocked: "inline-flex rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-900",
+  required: "inline-flex rounded-full border border-rose-200 bg-rose-50 px-2 py-0.5 text-[10px] font-semibold text-rose-900",
+  optional: "inline-flex rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-semibold text-slate-600",
+  synced: "inline-flex rounded-full border border-green-200 bg-green-50 px-2 py-0.5 text-[10px] font-semibold text-green-900",
+  syncFailed: "inline-flex rounded-full border border-rose-200 bg-rose-50 px-2 py-0.5 text-[10px] font-semibold text-rose-900",
 } as const;
