@@ -1,6 +1,7 @@
 "use client";
 
 import { useParams } from 'next/navigation';
+import dynamic from "next/dynamic";
 import { useFirebaseAuth } from "@/components/FirebaseAuthProvider";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState, useRef } from "react";
@@ -23,6 +24,8 @@ import { postJobPipeline } from '@/lib/pipeline-client';
 import { canonicalPipelineEntryId } from '@/lib/pipeline-canonical';
 import {
   fetchJobInterviews,
+  fetchJobInterviewPlan,
+  fetchInterviewFeedback,
   fetchJobSequences,
   fetchMessageTemplates,
   patchJobInterviewById,
@@ -35,25 +38,31 @@ import {
   getSuggestedTemplateType,
   describeSequenceAssistantState,
   type InterviewEvent,
+  type InterviewFeedback,
   type MessageTemplate,
   type OutreachSequence,
 } from '@/lib/communication-workflow';
 import { selectActiveInterview } from "@/lib/interviews/active-interview";
+import { formatRecruiterDateTime } from "@/lib/recruiter-datetime";
 import { getCommunicationOperationalChips, getRecruiterNextStep } from "@/lib/communication-status";
 import Link from 'next/link';
 import {
   getDashboardUrl,
+  getCandidateUrl,
   getJobMatchesUrl,
   getJobCompareUrl,
   getJobOverviewUrl,
   getJobPipelineUrl,
   getMessagesUrl,
 } from "@/lib/navigation";
-import { pipelineStageLabel, recruiterBadge } from "@/lib/recruiter-ui";
+import { fetchJobOffers, pickLatestOfferForCandidate, offerStatusLabel } from "@/lib/offers/client";
+import type { CandidateOfferRecord } from "@/lib/offers/types";
+import { pipelineStageLabel, recruiterBadge, recruiterChip } from "@/lib/recruiter-ui";
 import CompanyRatingModal from '@/components/CompanyRatingModal';
 import CompanyProfile from '@/components/CompanyProfile';
-import ScheduleInterviewModal from "@/components/recruiter/ScheduleInterviewModal";
 import InterviewStatusBadge from "@/components/recruiter/InterviewStatusBadge";
+
+const ScheduleInterviewModal = dynamic(() => import("@/components/recruiter/ScheduleInterviewModal"), { ssr: false });
 
 interface Message {
   id: string;
@@ -117,12 +126,15 @@ export default function MessageThreadPage() {
   const [interviewEvent, setInterviewEvent] = useState<InterviewEvent | null>(null);
   const [interviewBusy, setInterviewBusy] = useState(false);
   const [interviewSelectionAmbiguous, setInterviewSelectionAmbiguous] = useState(false);
+  const [interviewFeedback, setInterviewFeedback] = useState<InterviewFeedback[]>([]);
+  const [roundNamesById, setRoundNamesById] = useState<Record<string, string>>({});
   const [showScheduleInterviewModal, setShowScheduleInterviewModal] = useState(false);
   const [scheduleDefaultStatus, setScheduleDefaultStatus] = useState<"PROPOSED" | "SCHEDULED" | "CONFIRMED">("SCHEDULED");
   const [showFollowUpSuggestion, setShowFollowUpSuggestion] = useState(false);
   const [workflowNotice, setWorkflowNotice] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [threadList, setThreadList] = useState<ThreadListItem[]>([]);
   const [threadListLoading, setThreadListLoading] = useState(false);
+  const [latestJobOffer, setLatestJobOffer] = useState<CandidateOfferRecord | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const isRecruiterView = profile?.role === 'EMPLOYER' || profile?.role === 'RECRUITER';
   const candidateIdForPipeline = thread?.participantIds?.find((id) => id !== user?.uid) || null;
@@ -184,19 +196,27 @@ export default function MessageThreadPage() {
             let candidateName = "Candidate";
             let candidateHeadline = "";
             if (candidateId) {
-              const { data: c } = await getDocument("users", candidateId);
+              const { data: c, error: candidateError } = await getDocument("users", candidateId);
+              if (candidateError) {
+                return {
+                  id: String(t.id),
+                  candidateId,
+                  candidateName,
+                  candidateHeadline,
+                  jobId: threadDataToJobDetails(t as unknown as Record<string, unknown>)?.jobId || null,
+                  jobTitle: threadDataToJobDetails(t as unknown as Record<string, unknown>)?.jobTitle || "",
+                  lastPreview: String((t as any)?.lastMessagePreview || ""),
+                  lastMessageAt: t.lastMessageAt || t.updatedAt || null,
+                } as ThreadListItem;
+              }
               if (c) {
                 candidateName = `${(c as any).firstName || ""} ${(c as any).lastName || ""}`.trim() || "Candidate";
                 candidateHeadline = String((c as any).headline || "");
               }
             }
-            const { data: threadMessages } = await getThreadMessages(t.id);
-            const typed = (threadMessages || []) as Message[];
-            const last = typed.length > 0 ? typed[typed.length - 1] : null;
             const threadJob = threadDataToJobDetails(t as unknown as Record<string, unknown>);
-            const mostRecentWithJob = [...typed].reverse().find((m) => m?.jobDetails?.jobId);
-            const jobId = threadJob?.jobId || mostRecentWithJob?.jobDetails?.jobId || null;
-            const jobTitle = threadJob?.jobTitle || mostRecentWithJob?.jobDetails?.jobTitle || "";
+            const jobId = threadJob?.jobId || null;
+            const jobTitle = threadJob?.jobTitle || "";
             return {
               id: String(t.id),
               candidateId,
@@ -204,7 +224,7 @@ export default function MessageThreadPage() {
               candidateHeadline,
               jobId,
               jobTitle,
-              lastPreview: String(last?.content || ""),
+              lastPreview: String((t as any)?.lastMessagePreview || ""),
               lastMessageAt: t.lastMessageAt || t.updatedAt || null,
             } as ThreadListItem;
           })
@@ -235,11 +255,8 @@ export default function MessageThreadPage() {
 
       setIsLoading(true);
       try {
-        // Fetch thread, participant, and messages in parallel
-        const [threadResult, messagesResult] = await Promise.all([
-          getMessageThread(params.threadId as string),
-          getThreadMessages(params.threadId as string)
-        ]);
+        // First verify thread access; load messages only for authorized thread.
+        const threadResult = await getMessageThread(params.threadId as string);
         
         if (threadResult.error) {
           setError(`Thread not found: ${threadResult.error}`);
@@ -264,6 +281,7 @@ export default function MessageThreadPage() {
         }
 
         // Set messages
+        const messagesResult = await getThreadMessages(params.threadId as string);
         if (messagesResult.error) {
           setError(`Failed to load messages: ${messagesResult.error}`);
           return;
@@ -343,12 +361,25 @@ export default function MessageThreadPage() {
         setSequence(null);
         setInterviewEvent(null);
         setInterviewSelectionAmbiguous(false);
+        setRoundNamesById({});
+        setLatestJobOffer(null);
         return;
       }
-      const [sequenceRes, interviewRes] = await Promise.all([
+      const [sequenceRes, interviewRes, feedbackRes, planRes] = await Promise.all([
         fetchJobSequences(jobContext.jobId, token, candidateIdForPipeline),
         fetchJobInterviews(jobContext.jobId, token, candidateIdForPipeline),
+        fetchInterviewFeedback(jobContext.jobId, token, { candidateId: candidateIdForPipeline }),
+        fetchJobInterviewPlan(jobContext.jobId, token),
       ]);
+      const nextRoundNames: Record<string, string> = {};
+      if (planRes.ok) {
+        for (const round of planRes.data.rounds || []) {
+          const id = String((round as any)?.id || "").trim();
+          const name = String((round as any)?.roundName || "").trim();
+          if (id && name) nextRoundNames[id] = name;
+        }
+      }
+      setRoundNamesById(nextRoundNames);
       if (sequenceRes.ok) {
         const first = (sequenceRes.data.sequences || [])[0] as OutreachSequence | undefined;
         setSequence(first || null);
@@ -364,6 +395,15 @@ export default function MessageThreadPage() {
             text: "Multiple active interviews found. Open candidate profile to manage a specific interview.",
           });
         }
+      }
+      if (feedbackRes.ok) {
+        setInterviewFeedback((feedbackRes.data.feedback || []) as InterviewFeedback[]);
+      }
+      const offersRes = await fetchJobOffers(jobContext.jobId, token, candidateIdForPipeline);
+      if (offersRes.ok) {
+        setLatestJobOffer(pickLatestOfferForCandidate(offersRes.data.offers, candidateIdForPipeline));
+      } else {
+        setLatestJobOffer(null);
       }
     };
     loadOperationalData();
@@ -424,30 +464,14 @@ export default function MessageThreadPage() {
         setShowFollowUpSuggestion(true);
       }
       
-      // Refresh messages to get the real message from Firebase
-      setTimeout(async () => {
-        const [threadRes, messagesRes] = await Promise.all([
-          getMessageThread(thread.id),
-          getThreadMessages(thread.id),
-        ]);
-        if (threadRes.data) {
-          setThread(threadRes.data as Thread);
-        }
-        if (messagesRes.data && !messagesRes.error) {
-          const typedMessages = messagesRes.data as Message[];
-          setMessages(typedMessages);
-          const fromThread = threadDataToJobDetails(threadRes.data as unknown as Record<string, unknown>);
-          const fromMsg = typedMessages.find((msg) => msg.jobDetails?.jobId)?.jobDetails || null;
-          const merged = fromThread?.jobId ? fromThread : fromMsg;
-          setJobContext(merged);
-          const candidateId = thread.participantIds.find((id) => id !== user.uid);
-          if (merged?.jobId && candidateId && (profile?.role === "EMPLOYER" || profile?.role === "RECRUITER")) {
-            const { data: entry } = await getPipelineEntryForJobCandidate(merged.jobId, candidateId);
-            setPipelineEntry(entry || null);
-          }
-        }
-      }, 500);
-      
+      setThread((prev) =>
+        prev
+          ? {
+              ...prev,
+              lastMessageAt: new Date(),
+            }
+          : prev
+      );
     } catch (error) {
       console.error('Error sending message:', error);
       setError('Failed to send message');
@@ -672,13 +696,12 @@ export default function MessageThreadPage() {
 
   const handleCopyInterviewDetails = () => {
     if (!interviewEvent) return;
-    const when = toValidDate(interviewEvent.scheduledAt);
     const locationRaw = interviewEvent.location as any;
     const locationValue =
       typeof locationRaw === "string" ? locationRaw : String(locationRaw?.value || locationRaw?.location || "TBD");
     const text = [
       "Interview details:",
-      `- Time: ${when ? when.toLocaleString() : "TBD"}`,
+      `- Time: ${formatRecruiterDateTime(interviewEvent.scheduledAt, { placeholder: "Interview date not set" })}`,
       `- Duration: ${interviewEvent.durationMinutes || 30} minutes`,
       `- Location: ${locationValue || "TBD"}`,
       interviewEvent.notes ? `- Notes: ${interviewEvent.notes}` : "",
@@ -1083,6 +1106,32 @@ export default function MessageThreadPage() {
                     <p className="text-sm font-semibold text-navy-900 mt-1">{jobContext.jobTitle || "Job"}</p>
                   </div>
 
+                  {candidateIdForPipeline ? (
+                    latestJobOffer ? (
+                      <div className="rounded-lg border border-indigo-100 bg-indigo-50/60 p-3 mb-3">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">Offer status</p>
+                        <p className="text-sm font-semibold text-navy-900 mt-1">{offerStatusLabel(latestJobOffer.status)}</p>
+                        <Link
+                          href={`${getCandidateUrl(candidateIdForPipeline, jobContext.jobId)}#recruiter-offer-panel`}
+                          className="mt-2 inline-block text-xs font-semibold text-sky-800 underline underline-offset-2 hover:text-navy-900"
+                        >
+                          Manage on candidate profile
+                        </Link>
+                      </div>
+                    ) : (
+                      <div className="rounded-lg border border-slate-100 bg-slate-50 p-3 mb-3 text-xs text-slate-600">
+                        <span className="font-semibold text-slate-700">Offer: </span>
+                        No active offer for this job.{" "}
+                        <Link
+                          href={`${getCandidateUrl(candidateIdForPipeline, jobContext.jobId)}#recruiter-offer-panel`}
+                          className="font-semibold text-sky-800 underline"
+                        >
+                          Create from profile
+                        </Link>
+                      </div>
+                    )
+                  ) : null}
+
                   <div className="rounded-lg border border-slate-200 bg-white p-3 mb-3 space-y-2">
                     <label className="text-xs font-semibold uppercase tracking-wide text-slate-500 block">Pipeline stage</label>
                     <select
@@ -1133,22 +1182,38 @@ export default function MessageThreadPage() {
                     {interviewEvent ? (
                       <div className="space-y-2 text-xs text-slate-700">
                         <p>
-                          {toValidDate(interviewEvent.scheduledAt)?.toLocaleString() || "Time unavailable"}
+                          {formatRecruiterDateTime(interviewEvent.scheduledAt, { placeholder: "Interview date not set" })}
                           {interviewEvent.timezone ? ` (${interviewEvent.timezone})` : ""}
                         </p>
                         <p>
                           {String(interviewEvent.durationMinutes || 30)} min •{" "}
                           {typeof interviewEvent.location === "string"
                             ? interviewEvent.location
-                            : String((interviewEvent.location as any)?.value || "Location TBD")}
+                            : `${String((interviewEvent.location as any)?.type || "VIDEO").replace("_", " ")}: ${String(
+                                (interviewEvent.location as any)?.value || "—"
+                              )}`}
                         </p>
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <span className={recruiterChip.round}>
+                            {String(roundNamesById[String(interviewEvent.roundId || "")] || "").trim() ||
+                              (interviewEvent.roundId ? "Interview round" : "Saved in HireMe only")}
+                          </span>
+                          <span className={interviewEvent.calendarSyncStatus === "SYNCED" ? recruiterChip.synced : interviewEvent.calendarSyncStatus === "FAILED" ? recruiterChip.syncFailed : recruiterChip.optional}>
+                            {String(interviewEvent.calendarProvider || "").toLowerCase() === "microsoft" ? "Outlook" : "Google"}{" "}
+                            {interviewEvent.calendarSyncStatus === "SYNCED" ? "synced" : interviewEvent.calendarSyncStatus === "FAILED" ? "sync failed" : "not synced"}
+                          </span>
+                          <span className={recruiterChip.submitted}>
+                            {interviewFeedback.filter(
+                              (f) => String(f.interviewEventId || "") === String(interviewEvent.id || "") && f.status === "SUBMITTED"
+                            ).length}{" "}
+                            feedback submitted
+                          </span>
+                        </div>
                         <p className="text-[11px] text-slate-500">
-                          {String(interviewEvent.calendarProvider || "").toLowerCase() === "microsoft" ? "Outlook Calendar" : "Google Calendar"} •{" "}
-                          {interviewEvent.calendarSyncStatus === "SYNCED"
-                            ? "Synced"
-                            : interviewEvent.calendarSyncStatus === "FAILED"
-                              ? "Sync failed"
-                              : "Not synced"}
+                          Next action:{" "}
+                          {interviewFeedback.filter((f) => String(f.interviewEventId || "") === String(interviewEvent.id || "") && f.status !== "SUBMITTED" && f.status !== "WAIVED").length > 0
+                            ? "complete missing scorecards"
+                            : "proceed to debrief decision"}
                         </p>
                       </div>
                     ) : (
@@ -1211,6 +1276,9 @@ export default function MessageThreadPage() {
                         Open in {String(interviewEvent.calendarProvider || "").toLowerCase() === "microsoft" ? "Outlook Calendar" : "Google Calendar"}
                       </a>
                     ) : null}
+                    <Link href="/employer/feedback" className="mt-2 inline-block text-xs font-semibold text-sky-700 underline">
+                      Open feedback queue
+                    </Link>
                   </div>
 
                   <details className="rounded-lg border border-slate-200 bg-white p-3">

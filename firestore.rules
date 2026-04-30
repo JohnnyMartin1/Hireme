@@ -1,0 +1,518 @@
+rules_version = '2';
+
+// HireMe — production-oriented Firestore rules (closed beta).
+// Deny-by-default. Deploy manually: firebase deploy --only firestore:rules
+//
+// REMAINING RISKS / INTENDED MIGRATIONS (do not weaken rules to “fix” these):
+// 1) users: employers/recruiters may read JOB_SEEKER profiles (cannot field-mask in rules).
+//    Prefer server APIs or a publicCandidateProfiles collection for sourcing.
+// 2) companyInvitations: invitee lookup before Firebase Auth (getInvitationByEmail) requires
+//    a secure HTTPS API — client Firestore query cannot be both unauthenticated and safe.
+// 3) companies: recruiter signup calls getCompany(companyId) before auth — set publicProfile=true
+//    on company docs used in invitations, or serve company preview via API.
+// 4) jobs: public read for ACTIVE/PUBLIC exposes full job documents — split internal vs public later.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---------------------------------------------------------------------------
+    // Helpers
+    // ---------------------------------------------------------------------------
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function userPath(uid) {
+      return /databases/$(database)/documents/users/$(uid);
+    }
+
+    function currentUserDoc() {
+      return get(userPath(request.auth.uid)).data;
+    }
+
+    function currentUserRole() {
+      return signedIn()
+        && exists(userPath(request.auth.uid))
+        && currentUserDoc().keys().hasAny(['role'])
+        ? string(currentUserDoc().role)
+        : '';
+    }
+
+    function currentUserCompanyId() {
+      return signedIn()
+        && exists(userPath(request.auth.uid))
+        && currentUserDoc().keys().hasAny(['companyId'])
+        ? string(currentUserDoc().companyId)
+        : '';
+    }
+
+    function isAdmin() {
+      return signedIn() && currentUserRole() == 'ADMIN';
+    }
+
+    function isEmployerOrRecruiter() {
+      return signedIn()
+        && (currentUserRole() == 'EMPLOYER'
+            || currentUserRole() == 'RECRUITER'
+            || currentUserRole() == 'ADMIN');
+    }
+
+    function belongsToCompany(companyId) {
+      return signedIn()
+        && companyId != null
+        && companyId != ''
+        && exists(userPath(request.auth.uid))
+        && currentUserDoc().keys().hasAny(['companyId'])
+        && string(currentUserDoc().companyId) == companyId;
+    }
+
+    function isCompanyOwner(companyId) {
+      return belongsToCompany(companyId)
+        && exists(userPath(request.auth.uid))
+        && currentUserDoc().keys().hasAny(['isCompanyOwner'])
+        && currentUserDoc().isCompanyOwner == true;
+    }
+
+    function jobData(jobId) {
+      return get(/databases/$(database)/documents/jobs/$(jobId)).data;
+    }
+
+    function jobExists(jobId) {
+      return exists(/databases/$(database)/documents/jobs/$(jobId));
+    }
+
+    // Employer owns job OR same companyId as job (recruiters).
+    function canAccessJob(jobId) {
+      return signedIn()
+        && jobExists(jobId)
+        && (
+          jobData(jobId).employerId == request.auth.uid
+          || (
+            jobData(jobId).keys().hasAny(['companyId'])
+            && jobData(jobId).companyId != null
+            && string(jobData(jobId).companyId) != ''
+            && belongsToCompany(string(jobData(jobId).companyId))
+          )
+        );
+    }
+
+    function isJobPubliclyReadable() {
+      return (resource.data.keys().hasAny(['status']) && resource.data.status == 'ACTIVE')
+        || (resource.data.keys().hasAny(['visibility']) && resource.data.visibility == 'PUBLIC');
+    }
+
+    function threadDoc(threadId) {
+      return get(/databases/$(database)/documents/messageThreads/$(threadId)).data;
+    }
+
+    function threadExists(threadId) {
+      return exists(/databases/$(database)/documents/messageThreads/$(threadId));
+    }
+
+    function isThreadParticipant(threadId) {
+      return signedIn()
+        && threadExists(threadId)
+        && threadDoc(threadId).participantIds is list
+        && threadDoc(threadId).participantIds.hasAny([request.auth.uid]);
+    }
+
+    function isThreadCompanyMember(threadId) {
+      return signedIn()
+        && threadExists(threadId)
+        && threadDoc(threadId).keys().hasAny(['companyId'])
+        && threadDoc(threadId).companyId != null
+        && string(threadDoc(threadId).companyId) != ''
+        && belongsToCompany(string(threadDoc(threadId).companyId));
+    }
+
+    function canReadThread(threadId) {
+      return signedIn()
+        && threadExists(threadId)
+        && (
+          isThreadParticipant(threadId)
+          || isThreadCompanyMember(threadId)
+        );
+    }
+
+    // ---------------------------------------------------------------------------
+    // users
+    // ---------------------------------------------------------------------------
+    match /users/{userId} {
+      allow read: if signedIn() && (
+        request.auth.uid == userId
+        || isAdmin()
+        || (
+          isEmployerOrRecruiter()
+          && resource.data.keys().hasAny(['role'])
+          && resource.data.role == 'JOB_SEEKER'
+        )
+        || (
+          isEmployerOrRecruiter()
+          && resource.data.keys().hasAny(['companyId'])
+          && string(resource.data.companyId) != ''
+          && string(resource.data.companyId) == currentUserCompanyId()
+          && resource.data.keys().hasAny(['role'])
+          && (resource.data.role == 'EMPLOYER'
+              || resource.data.role == 'RECRUITER'
+              || resource.data.role == 'ADMIN')
+        )
+      );
+
+      allow create: if signedIn() && request.auth.uid == userId;
+
+      allow update: if signedIn() && request.auth.uid == userId;
+
+      allow delete: if signedIn() && (
+        request.auth.uid == userId
+        || (
+          resource.data.keys().hasAny(['role', 'companyId'])
+          && resource.data.role == 'RECRUITER'
+          && isCompanyOwner(string(resource.data.companyId))
+        )
+      );
+    }
+
+    // ---------------------------------------------------------------------------
+    // Token / verification collections — server / Admin SDK only
+    // ---------------------------------------------------------------------------
+    match /emailVerificationTokens/{tokenId} {
+      allow read, write: if false;
+    }
+
+    match /verificationCodes/{codeId} {
+      allow read, write: if false;
+    }
+
+    match /verifyCodeAttempts/{id} {
+      allow read, write: if false;
+    }
+
+    match /oauthStates/{stateId} {
+      allow read, write: if false;
+    }
+
+    // ---------------------------------------------------------------------------
+    // companies
+    // ---------------------------------------------------------------------------
+    match /companies/{companyId} {
+      allow read: if signedIn() && (
+        (resource.data.keys().hasAny(['publicProfile']) && resource.data.publicProfile == true)
+        || belongsToCompany(companyId)
+      );
+
+      allow create: if signedIn()
+        && request.resource.data.createdBy == request.auth.uid;
+
+      allow update, delete: if signedIn()
+        && resource.data.createdBy == request.auth.uid;
+    }
+
+    // ---------------------------------------------------------------------------
+    // companyInvitations
+    // ---------------------------------------------------------------------------
+    match /companyInvitations/{invitationId} {
+      allow read: if signedIn()
+        && resource.data.keys().hasAny(['companyId', 'invitedEmail'])
+        && (
+          isCompanyOwner(string(resource.data.companyId))
+          || (
+            request.auth.token.email != null
+            && string(request.auth.token.email).lower() == string(resource.data.invitedEmail).lower()
+          )
+        );
+
+      allow create: if signedIn()
+        && request.resource.data.keys().hasAny(['companyId'])
+        && isCompanyOwner(string(request.resource.data.companyId));
+
+      allow update: if signedIn()
+        && resource.data.keys().hasAny(['companyId', 'invitedEmail'])
+        && (
+          isCompanyOwner(string(resource.data.companyId))
+          || (
+            request.auth.token.email != null
+            && string(request.auth.token.email).lower() == string(resource.data.invitedEmail).lower()
+          )
+        );
+
+      allow delete: if signedIn()
+        && resource.data.keys().hasAny(['companyId'])
+        && isCompanyOwner(string(resource.data.companyId));
+    }
+
+    // ---------------------------------------------------------------------------
+    // jobs
+    // ---------------------------------------------------------------------------
+    match /jobs/{jobId} {
+      allow read: if isJobPubliclyReadable()
+        || (signedIn() && canAccessJob(jobId));
+
+      allow create: if signedIn()
+        && isEmployerOrRecruiter()
+        && request.resource.data.employerId == request.auth.uid
+        && (
+          !request.resource.data.keys().hasAny(['companyId'])
+          || request.resource.data.companyId == null
+          || string(request.resource.data.companyId) == ''
+          || string(request.resource.data.companyId) == currentUserCompanyId()
+        );
+
+      allow update, delete: if signedIn() && (
+        resource.data.employerId == request.auth.uid
+        || (
+          resource.data.keys().hasAny(['companyId'])
+          && resource.data.companyId != null
+          && belongsToCompany(string(resource.data.companyId))
+        )
+      );
+    }
+
+    // ---------------------------------------------------------------------------
+    // Messaging
+    // ---------------------------------------------------------------------------
+    match /messageThreads/{threadId} {
+      allow read: if signedIn() && (
+        (resource.data.participantIds is list && resource.data.participantIds.hasAny([request.auth.uid]))
+        || (
+          resource.data.keys().hasAny(['companyId'])
+          && resource.data.companyId != null
+          && belongsToCompany(string(resource.data.companyId))
+        )
+      );
+
+      allow create: if signedIn()
+        && request.resource.data.participantIds is list
+        && request.resource.data.participantIds.size() >= 2
+        && request.resource.data.participantIds.hasAny([request.auth.uid])
+        && (
+          !request.resource.data.keys().hasAny(['companyId'])
+          || request.resource.data.companyId == null
+          || string(request.resource.data.companyId) == ''
+          || belongsToCompany(string(request.resource.data.companyId))
+        );
+
+      allow update: if signedIn() && (
+        (resource.data.participantIds is list && resource.data.participantIds.hasAny([request.auth.uid]))
+        || (
+          resource.data.keys().hasAny(['companyId'])
+          && resource.data.companyId != null
+          && belongsToCompany(string(resource.data.companyId))
+        )
+      );
+
+      allow delete: if false;
+    }
+
+    match /messages/{messageId} {
+      allow read: if signedIn()
+        && resource.data.keys().hasAny(['threadId'])
+        && canReadThread(string(resource.data.threadId));
+
+      allow create: if signedIn()
+        && request.resource.data.senderId == request.auth.uid
+        && request.resource.data.keys().hasAny(['threadId'])
+        && canReadThread(string(request.resource.data.threadId));
+
+      allow update: if signedIn()
+        && resource.data.keys().hasAny(['threadId'])
+        && canReadThread(string(resource.data.threadId));
+
+      allow delete: if false;
+    }
+
+    // ---------------------------------------------------------------------------
+    // savedCandidates
+    // ---------------------------------------------------------------------------
+    match /savedCandidates/{saveId} {
+      allow read, delete: if signedIn()
+        && resource.data.employerId == request.auth.uid;
+
+      allow create: if signedIn()
+        && request.resource.data.employerId == request.auth.uid;
+
+      allow update: if false;
+    }
+
+    // ---------------------------------------------------------------------------
+    // profileViews
+    // ---------------------------------------------------------------------------
+    match /profileViews/{viewId} {
+      allow read: if signedIn() && (
+        resource.data.viewerId == request.auth.uid
+        || resource.data.candidateId == request.auth.uid
+      );
+
+      allow create: if signedIn()
+        && request.resource.data.viewerId == request.auth.uid;
+
+      allow update, delete: if false;
+    }
+
+    // ---------------------------------------------------------------------------
+    // companyRatings
+    // ---------------------------------------------------------------------------
+    match /companyRatings/{ratingId} {
+      allow read: if true;
+
+      allow create: if signedIn()
+        && request.resource.data.userId == request.auth.uid;
+
+      allow update, delete: if signedIn()
+        && resource.data.userId == request.auth.uid;
+    }
+
+    // ---------------------------------------------------------------------------
+    // endorsements
+    // ---------------------------------------------------------------------------
+    match /endorsements/{endorsementId} {
+      allow read: if true;
+
+      allow create: if signedIn();
+
+      allow update, delete: if signedIn()
+        && resource.data.userId == request.auth.uid;
+    }
+
+    // ---------------------------------------------------------------------------
+    // jobMatches (client reads on dashboard / job list)
+    // ---------------------------------------------------------------------------
+    match /jobMatches/{matchId} {
+      allow read: if signedIn()
+        && resource.data.keys().hasAny(['jobId'])
+        && canAccessJob(string(resource.data.jobId));
+
+      allow write: if false;
+    }
+
+    // ---------------------------------------------------------------------------
+    // candidatePipelineEntries (client reads; writes via REST API + Admin SDK)
+    // ---------------------------------------------------------------------------
+    match /candidatePipelineEntries/{entryId} {
+      allow read: if signedIn() && (
+        (resource.data.keys().hasAny(['jobId']) && canAccessJob(string(resource.data.jobId)))
+        || (
+          resource.data.keys().hasAny(['candidateId'])
+          && resource.data.candidateId == request.auth.uid
+        )
+      );
+
+      allow write: if false;
+    }
+
+    // ---------------------------------------------------------------------------
+    // recruiterNotes (client reads in matches/compare/pipeline; writes via API)
+    // ---------------------------------------------------------------------------
+    match /recruiterNotes/{noteId} {
+      allow read: if signedIn()
+        && resource.data.keys().hasAny(['jobId'])
+        && canAccessJob(string(resource.data.jobId));
+
+      allow write: if false;
+    }
+
+    // ---------------------------------------------------------------------------
+    // outreachSequences (client merge when candidate replies to stop sequence)
+    // ---------------------------------------------------------------------------
+    match /outreachSequences/{seqId} {
+      allow read: if signedIn() && (
+        (resource.data.keys().hasAny(['candidateId']) && resource.data.candidateId == request.auth.uid)
+        || (
+          resource.data.keys().hasAny(['jobId'])
+          && canAccessJob(string(resource.data.jobId))
+        )
+      );
+
+      // Writes: mostly Admin SDK; client may merge-stop sequence when candidate replies.
+      allow create: if signedIn() && (
+        (
+          request.resource.data.keys().hasAny(['jobId'])
+          && canAccessJob(string(request.resource.data.jobId))
+        )
+        || (
+          request.resource.data.keys().hasAll(['jobId', 'candidateId'])
+          && request.resource.data.candidateId == request.auth.uid
+        )
+      );
+
+      allow update: if signedIn() && (
+        (
+          resource.data.keys().hasAny(['candidateId'])
+          && resource.data.candidateId == request.auth.uid
+        )
+        || (
+          resource.data.keys().hasAny(['jobId'])
+          && canAccessJob(string(resource.data.jobId))
+        )
+      );
+
+      allow delete: if false;
+    }
+
+    // ---------------------------------------------------------------------------
+    // Sensitive hiring collections — REST + Admin SDK only (deny client)
+    // ---------------------------------------------------------------------------
+    match /candidateOffers/{id} {
+      allow read, write: if false;
+    }
+
+    match /candidateInternalComments/{id} {
+      allow read, write: if false;
+    }
+
+    match /candidateReviewAssignments/{id} {
+      allow read, write: if false;
+    }
+
+    match /candidateDebriefs/{id} {
+      allow read, write: if false;
+    }
+
+    match /interviewFeedback/{id} {
+      allow read, write: if false;
+    }
+
+    match /interviewEvents/{id} {
+      allow read, write: if false;
+    }
+
+    match /calendarIntegrations/{id} {
+      allow read, write: if false;
+    }
+
+    match /interviewPlans/{id} {
+      allow read, write: if false;
+    }
+
+    match /interviewPlanRounds/{id} {
+      allow read, write: if false;
+    }
+
+    match /scorecardTemplates/{id} {
+      allow read, write: if false;
+    }
+
+    match /talentPools/{id} {
+      allow read, write: if false;
+    }
+
+    match /talentPoolMembers/{id} {
+      allow read, write: if false;
+    }
+
+    match /candidateEvaluations/{id} {
+      allow read, write: if false;
+    }
+
+    match /messageTemplates/{id} {
+      allow read, write: if false;
+    }
+
+    // ---------------------------------------------------------------------------
+    // Deny everything else
+    // ---------------------------------------------------------------------------
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

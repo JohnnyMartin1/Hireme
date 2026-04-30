@@ -252,6 +252,8 @@ export const PIPELINE_STAGES = [
   'RESPONDED',
   'INTERVIEW',
   'FINALIST',
+  'OFFER',
+  'HIRED',
   'REJECTED',
 ] as const;
 
@@ -273,6 +275,12 @@ export interface CandidatePipelineEntry {
   companyId: string;
   stage: PipelineStage;
   ownerId?: string;
+  /** Phase 4 — id of primary `candidateOffers` doc for this candidate+job */
+  currentOfferId?: string | null;
+  /** Mirror of latest offer `status` for recruiter UI */
+  offerStatus?: string | null;
+  /** Phase 4 hiring outcome for this candidate on this job */
+  hiringOutcome?: string | null;
   createdAt?: unknown;
   updatedAt?: unknown;
   lastContactedAt?: unknown;
@@ -465,13 +473,18 @@ export const getMessageThread = async (threadId: string) => {
   return getDocument('messageThreads', threadId);
 };
 
-export const getUserMessageThreads = async (userId: string) => {
+export const getUserMessageThreads = async (
+  userId: string,
+  options?: { jobId?: string | null }
+) => {
   try {
-    // Simplified query that doesn't require a composite index
-    const q = query(
-      collection(db, 'messageThreads'),
-      where('participantIds', 'array-contains', userId)
-    );
+    // Always scope to participantIds so query matches strict security rules.
+    const constraints: any[] = [where('participantIds', 'array-contains', userId)];
+    const scopedJobId = String(options?.jobId || '').trim();
+    if (scopedJobId) {
+      constraints.push(where('jobId', '==', scopedJobId));
+    }
+    const q = query(collection(db, 'messageThreads'), ...constraints);
 
     const querySnapshot = await getDocs(q);
     const threads = querySnapshot.docs.map(doc => ({
@@ -645,6 +658,8 @@ export const sendMessage = async (threadId: string, messageData: {
     // Persist job on thread for inbox routing. Ensure Firestore rules only allow participants to update threads.
     const threadPatch: Record<string, unknown> = {
       lastMessageAt: serverTimestamp(),
+      lastMessagePreview: String(outbound.content || "").slice(0, 240),
+      lastMessageSenderId: String(outbound.senderId || ""),
     };
     if (outbound.jobDetails?.jobId) {
       Object.assign(

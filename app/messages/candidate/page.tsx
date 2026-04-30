@@ -98,8 +98,8 @@ function CandidateMessagesPageContent() {
             let otherParticipant = null;
             
             if (otherId) {
-              const { data: otherProfile } = await getDocument('users', otherId);
-              otherParticipant = otherProfile;
+              const { data: otherProfile, error: otherProfileError } = await getDocument('users', otherId);
+              otherParticipant = otherProfileError ? null : otherProfile;
             }
             
             return {

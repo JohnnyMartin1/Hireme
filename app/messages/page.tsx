@@ -6,14 +6,12 @@ import { User, MessageSquare, ArrowRight, Loader2, Filter, Briefcase, X } from "
 import {
   getUserMessageThreads,
   getDocument,
-  getThreadMessages,
   getEmployerJobs,
   getCompanyJobs,
   getPipelineEntryForJobCandidate,
   normalizePipelineStage,
   threadDataToJobDetails,
 } from '@/lib/firebase-firestore';
-import { fetchJobInterviews, fetchJobSequences } from "@/lib/communication-client";
 import { getCommunicationStatusDisplayLabels, getRecruiterNextStep } from "@/lib/communication-status";
 import Link from 'next/link';
 import { getCandidatesSearchUrl, getEmployerTemplatesUrl, getJobOverviewUrl } from "@/lib/navigation";
@@ -141,8 +139,10 @@ export default function MessagesPage() {
       
       setIsLoading(true);
       try {
-        const token = await user.getIdToken();
-        const { data: threadsData, error: threadsError } = await getUserMessageThreads(user.uid);
+        const scopedJobId = selectedJobId !== 'all' ? selectedJobId : null;
+        const { data: threadsData, error: threadsError } = await getUserMessageThreads(user.uid, {
+          jobId: scopedJobId,
+        });
         
         if (threadsError) {
           setError(`Failed to load message threads: ${threadsError}`);
@@ -154,19 +154,38 @@ export default function MessagesPage() {
           return;
         }
         
+        const threadRows = threadsData as any[];
+        const otherIds = Array.from(
+          new Set(
+            threadRows
+              .map((thread) =>
+                Array.isArray(thread.participantIds)
+                  ? (thread.participantIds as string[]).find((id) => id !== user.uid)
+                  : undefined
+              )
+              .filter(Boolean)
+          )
+        ) as string[];
+        const profileEntries = await Promise.all(
+          otherIds.map(async (id) => {
+            const { data: otherProfile, error: otherProfileError } = await getDocument("users", id);
+            if (otherProfileError) {
+              // Keep inbox usable even if one participant profile is restricted or missing.
+              return [id, null] as const;
+            }
+            return [id, otherProfile || null] as const;
+          })
+        );
+        const profileById = new Map<string, any>(profileEntries);
+
         // Fetch other participant info and job associations for each thread
         const threadsWithParticipants = await Promise.all(
-          (threadsData as any[]).map(async (thread: any) => {
+          threadRows.map(async (thread: any) => {
             const otherId = Array.isArray(thread.participantIds)
               ? (thread.participantIds as string[]).find((id) => id !== user.uid)
               : undefined;
-            let otherParticipant = null;
-            
-            if (otherId) {
-              const { data: otherProfile } = await getDocument('users', otherId);
-              otherParticipant = otherProfile;
-            }
-            
+            const otherParticipant = otherId ? profileById.get(otherId) || null : null;
+
             // Check messages for workflow context (only for employers/recruiters)
             let jobId: string | undefined = undefined;
             let jobTitle: string | undefined = undefined;
@@ -186,27 +205,13 @@ export default function MessagesPage() {
             }
 
             if (profile && (profile.role === 'EMPLOYER' || profile.role === 'RECRUITER')) {
-              try {
-                const { data: threadMessages } = await getThreadMessages(thread.id);
-                if (threadMessages && threadMessages.length > 0) {
-                  lastMessage = threadMessages[threadMessages.length - 1];
-                  if (!jobId) {
-                    const mostRecentWithJob = [...threadMessages]
-                      .reverse()
-                      .find((msg: any) => msg?.jobDetails?.jobId);
-                    if (mostRecentWithJob?.jobDetails?.jobId) {
-                      jobId = mostRecentWithJob.jobDetails.jobId;
-                      jobTitle = mostRecentWithJob.jobDetails.jobTitle;
-                    }
-                  }
-                  if (lastMessage?.senderId === user.uid) {
-                    awaitingLabel = 'Awaiting candidate';
-                  } else {
-                    awaitingLabel = 'Candidate replied';
-                  }
-                }
-              } catch (err) {
-                console.error('Error checking messages for job:', err);
+              const lastMessageSenderId = String(thread?.lastMessageSenderId || "");
+              const lastMessagePreview = String(thread?.lastMessagePreview || "");
+              if (lastMessageSenderId) {
+                lastMessage = { senderId: lastMessageSenderId, content: lastMessagePreview };
+                awaitingLabel = lastMessageSenderId === user.uid ? "Awaiting candidate" : "Candidate replied";
+              } else if (lastMessagePreview) {
+                lastMessage = { content: lastMessagePreview };
               }
             }
 
@@ -219,20 +224,6 @@ export default function MessagesPage() {
                   const nextDate = nextFollowUpAt?.toDate ? nextFollowUpAt.toDate() : new Date(nextFollowUpAt);
                   followUpDue = nextDate.getTime() < Date.now();
                 }
-              }
-              const [interviewsRes, sequenceRes] = await Promise.all([
-                fetchJobInterviews(jobId, token, otherId),
-                fetchJobSequences(jobId, token, otherId),
-              ]);
-              if (interviewsRes.ok && (interviewsRes.data.interviews || []).length > 0) {
-                const activeInterview = (interviewsRes.data.interviews || [])
-                  .find((iv: any) => String(iv.status || '') !== 'CANCELLED');
-                interviewAt = activeInterview?.scheduledAt || null;
-              }
-              if (sequenceRes.ok) {
-                const rows = (sequenceRes.data.sequences || []) as any[];
-                activeSequenceRow = rows.find((s: any) => String(s.status || '') === 'ACTIVE') || null;
-                hasActiveSequence = Boolean(activeSequenceRow);
               }
             }
             const awaitingReply =
@@ -275,7 +266,7 @@ export default function MessagesPage() {
     };
 
     fetchThreads();
-  }, [user, profile]);
+  }, [user, profile, selectedJobId]);
 
   // Filter threads based on selected job
   const filteredThreads = useMemo(() => {
