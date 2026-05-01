@@ -40,7 +40,6 @@
     "**/*.tsx",
     "prisma/**/*",
     "scripts/**/*",
-    "build/types/**/*.ts",
     "build/types/**/*.ts"
   ],
   "exclude": [

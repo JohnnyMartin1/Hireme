@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Default `.next` can be cleared by sync/AV tooling on some machines; `build` is stable.
+  // Custom distDir (see `outputDirectory` in vercel.json). Default `.next` can be unstable on some local disks.
   distDir: "build",
   reactStrictMode: true,
   images: {
