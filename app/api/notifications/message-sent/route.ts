@@ -28,15 +28,22 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    // Get thread to find recipient
     const threadDoc = await adminDb.collection('messageThreads').doc(threadId).get();
     if (!threadDoc.exists) {
       return NextResponse.json({ error: 'Thread not found' }, { status: 404 });
     }
 
     const threadData = threadDoc.data();
-    const recipientId = threadData?.participantIds?.find((id: string) => id !== senderId);
-    
+    const participantIds = Array.isArray(threadData?.participantIds)
+      ? (threadData.participantIds as string[])
+      : [];
+
+    if (!participantIds.includes(senderId)) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
+    const recipientId = participantIds.find((id: string) => id !== senderId);
+
     if (!recipientId) {
       return NextResponse.json({ error: 'Recipient not found' }, { status: 404 });
     }
@@ -97,9 +104,9 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({ success: true, message: 'No notification needed' });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error sending message notification:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminAuth, adminDb } from '@/lib/firebase-admin';
+import { isServerAdminUser } from '@/lib/admin-access';
 
 export async function POST(request: NextRequest) {
   try {
@@ -19,14 +20,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'userIds must be an array' }, { status: 400 });
     }
 
+    const callerDoc = await adminDb.collection("users").doc(decodedToken.uid).get();
+    const callerData = callerDoc.data();
+    if (!isServerAdminUser(callerData?.role as string | undefined, decodedToken.email)) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
     if (userIds.length === 0) {
-      const adminEmail = process.env.ADMIN_EMAIL || 'officialhiremeapp@gmail.com';
-      const userDoc = await adminDb.collection('users').doc(decodedToken.uid).get();
-      const userData = userDoc.data();
-      const isAdmin = userData?.role === 'ADMIN' || decodedToken.email === adminEmail;
-      if (!isAdmin) {
-        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-      }
       const listUsersResult = await adminAuth.listUsers();
       const allUserIds = listUsersResult.users.map(user => user.uid);
       return NextResponse.json({
@@ -69,9 +69,6 @@ export async function POST(request: NextRequest) {
 
   } catch (error: any) {
     console.error('Error verifying users:', error);
-    return NextResponse.json({ 
-      error: 'Failed to verify users',
-      details: error.message 
-    }, { status: 500 });
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

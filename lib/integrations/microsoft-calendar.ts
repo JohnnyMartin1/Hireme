@@ -1,6 +1,7 @@
 import { adminDb } from "@/lib/firebase-admin";
 import admin from "firebase-admin";
 import {
+  assertCalendarEncryptionKeyForTokenWrites,
   decryptCalendarToken,
   maybeEncryptTokenField,
 } from "@/lib/integrations/calendar-token-crypto";
@@ -85,6 +86,9 @@ export async function upsertMicrosoftCalendarIntegration(
   userId: string,
   fields: Partial<MicrosoftCalendarIntegrationDoc>
 ) {
+  if (fields.accessToken || fields.refreshToken) {
+    assertCalendarEncryptionKeyForTokenWrites();
+  }
   // Migration behavior mirrors Google integration:
   // read accepts legacy plaintext, all new writes store encrypted fields when key is configured.
   const accessToken = maybeEncryptTokenField(fields.accessToken || null);

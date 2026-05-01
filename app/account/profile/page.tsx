@@ -410,7 +410,19 @@ export default function EditProfilePage() {
         toast.error('Update Failed', 'Failed to update profile. Please try again.');
       } else {
         toast.success('Profile Updated', 'Your profile has been saved successfully!');
-        
+
+        if (profile.role === "JOB_SEEKER" && user) {
+          try {
+            const token = await user.getIdToken();
+            await fetch("/api/auth/sync-public-candidate-profile", {
+              method: "POST",
+              headers: { Authorization: `Bearer ${token}` },
+            });
+          } catch {
+            // non-fatal
+          }
+        }
+
         // Update the shared completion state with the saved data (use filtered data)
         updateCompletion(dataToSave);
         

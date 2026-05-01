@@ -22,6 +22,7 @@ import {
   type TalentPoolMembershipBadge,
 } from '@/lib/talent-pools-client';
 import AddToTalentPoolButton from '@/components/employer/AddToTalentPoolButton';
+import { isClientAdminUser } from "@/lib/admin-access";
 
 interface Candidate {
   id: string;
@@ -32,7 +33,7 @@ interface Candidate {
   major?: string;
   skills?: string[];
   location?: string;
-  email: string;
+  email?: string;
   createdAt: any; // Firestore timestamp
   [key: string]: any; // Allow additional properties from Firestore
 }
@@ -247,20 +248,21 @@ export default function SearchCandidatesPage() {
         setCandidates([]);
       } else {
         // Check if user is admin - admins can see all profiles regardless of completion
-        const isAdmin = user?.email === 'officialhiremeapp@gmail.com' || profile?.role === 'ADMIN';
+        const isAdmin = isClientAdminUser(profile?.role as string | undefined, user?.email);
         
         // Filter out profiles without basic information and ensure 70%+ completion (unless admin)
         const validCandidates = candidateProfiles.filter((candidate: any) => {
-          if (!candidate.firstName || !candidate.lastName || !candidate.email) {
+          if (!candidate.firstName || !candidate.lastName || !candidate.id) {
             return false;
           }
           // Admins can see all profiles, others need 70%+ completion
           if (isAdmin) {
             return true;
           }
-          // Calculate completion percentage
-          const completion = calculateCompletion(candidate);
-          // Only show candidates with 70% or more completion
+          const completion =
+            typeof candidate.profileCompletionPercent === "number"
+              ? candidate.profileCompletionPercent
+              : calculateCompletion(candidate);
           return completion >= 70;
         }) as Candidate[];
         setCandidates(validCandidates);
@@ -357,20 +359,20 @@ export default function SearchCandidatesPage() {
 
         // Profile completeness filters
         if (hasVideo) {
-          filteredCandidates = filteredCandidates.filter((candidate: any) =>
-            candidate.videoUrl
+          filteredCandidates = filteredCandidates.filter(
+            (candidate: any) => candidate.videoUrl || candidate.hasVideo
           );
         }
 
         if (hasResume) {
-          filteredCandidates = filteredCandidates.filter((candidate: any) =>
-            candidate.resumeUrl
+          filteredCandidates = filteredCandidates.filter(
+            (candidate: any) => candidate.resumeUrl || candidate.hasResume
           );
         }
 
         if (hasProfileImage) {
-          filteredCandidates = filteredCandidates.filter((candidate: any) =>
-            candidate.profileImageUrl
+          filteredCandidates = filteredCandidates.filter(
+            (candidate: any) => candidate.profileImageUrl || candidate.hasProfileImage
           );
         }
 
@@ -381,20 +383,20 @@ export default function SearchCandidatesPage() {
         }
 
         // Check if user is admin - admins can see all profiles regardless of completion
-        const isAdmin = user?.email === 'officialhiremeapp@gmail.com' || profile?.role === 'ADMIN';
+        const isAdmin = isClientAdminUser(profile?.role as string | undefined, user?.email);
         
         // Filter out profiles without basic information and ensure 70%+ completion (unless admin)
         const validCandidates = filteredCandidates.filter((candidate: any) => {
-          if (!candidate.firstName || !candidate.lastName || !candidate.email) {
+          if (!candidate.firstName || !candidate.lastName || !candidate.id) {
             return false;
           }
-          // Admins can see all profiles, others need 70%+ completion
           if (isAdmin) {
             return true;
           }
-          // Calculate completion percentage
-          const completion = calculateCompletion(candidate);
-          // Only show candidates with 70% or more completion
+          const completion =
+            typeof candidate.profileCompletionPercent === "number"
+              ? candidate.profileCompletionPercent
+              : calculateCompletion(candidate);
           return completion >= 70;
         }) as Candidate[];
         
@@ -522,10 +524,8 @@ export default function SearchCandidatesPage() {
         return;
       }
 
-      let filteredCandidates = candidateProfiles.filter((candidate: any) => 
-        candidate.firstName && 
-        candidate.lastName && 
-        candidate.email
+      let filteredCandidates = candidateProfiles.filter(
+        (candidate: any) => candidate.firstName && candidate.lastName && candidate.id
       ) as Candidate[];
 
       // Apply GPA filter if specified

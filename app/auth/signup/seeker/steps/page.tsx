@@ -145,6 +145,15 @@ export default function NextStepsOnboarding() {
       };
       
       await updateDocument('users', user.uid, currentData);
+      try {
+        const token = await user.getIdToken();
+        await fetch("/api/auth/sync-public-candidate-profile", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+        });
+      } catch {
+        // non-fatal
+      }
     } catch (error) {
       console.error('Error saving slide data:', error);
     }
@@ -213,7 +222,16 @@ export default function NextStepsOnboarding() {
       };
 
       if (user?.uid) {
-        await updateDocument('users', user.uid, profileUpdate);
+        await updateDocument("users", user.uid, profileUpdate);
+        try {
+          const token = await user.getIdToken();
+          await fetch("/api/auth/sync-public-candidate-profile", {
+            method: "POST",
+            headers: { Authorization: `Bearer ${token}` },
+          });
+        } catch {
+          // non-fatal
+        }
       }
 
       // Redirect to dashboard

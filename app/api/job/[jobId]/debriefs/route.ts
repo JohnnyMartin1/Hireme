@@ -4,7 +4,7 @@ import { canonicalPipelineEntryId } from "@/lib/pipeline-canonical";
 import {
   DEBRIEF_DECISIONS,
   DEBRIEF_STATUSES,
-  assertCandidateInCompany,
+  assertCandidateTiedToJob,
   authorizeJobRequest,
   normalizeEnum,
   normalizeOptionalString,
@@ -36,8 +36,10 @@ export async function POST(request: NextRequest, { params }: { params: { jobId: 
     const body = await request.json().catch(() => ({}));
     const candidateId = String(body?.candidateId || "");
     if (!candidateId) return NextResponse.json({ error: "candidateId is required" }, { status: 400 });
-    const candidateOk = await assertCandidateInCompany(candidateId, context.companyId);
-    if (!candidateOk) return NextResponse.json({ error: "Candidate is not valid for this company" }, { status: 400 });
+    const candidateOk = await assertCandidateTiedToJob(params.jobId, candidateId);
+    if (!candidateOk) {
+      return NextResponse.json({ error: "Candidate is not associated with this job" }, { status: 403 });
+    }
 
     const debriefId = String(body?.id || `job_${params.jobId}__candidate_${candidateId}`);
     const ref = adminDb.collection("candidateDebriefs").doc(debriefId);

@@ -132,6 +132,18 @@ export default function EditJobPage({ params }: { params: { id: string } }) {
         return;
       }
 
+      if (user) {
+        try {
+          const token = await user.getIdToken();
+          await fetch(`/api/job/${params.id}/sync-public`, {
+            method: "POST",
+            headers: { Authorization: `Bearer ${token}` },
+          });
+        } catch {
+          // non-fatal
+        }
+      }
+
       toast.success('Success', 'Job updated successfully!');
       router.push('/home/employer');
     } catch (error) {

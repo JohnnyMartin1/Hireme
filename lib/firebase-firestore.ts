@@ -13,7 +13,7 @@ import {
   addDoc,
   serverTimestamp
 } from 'firebase/firestore';
-import { db } from './firebase';
+import { db, auth } from './firebase';
 import { canonicalPipelineEntryId, dedupePipelineEntriesByCandidate } from '@/lib/pipeline-canonical';
 
 // Generic CRUD operations
@@ -52,6 +52,25 @@ export const getDocument = async (collectionName: string, id: string) => {
   } catch (error: any) {
     return { data: null, error: error.message };
   }
+};
+
+/** Employer messaging: prefer public candidate slice; fall back to users for employer↔employer threads. */
+export const getParticipantProfileForMessaging = async (
+  otherId: string,
+  viewerRole?: string | null
+) => {
+  const isEmployerLike =
+    viewerRole === "EMPLOYER" || viewerRole === "RECRUITER" || viewerRole === "ADMIN";
+  if (isEmployerLike) {
+    const pub = await getDocument("publicCandidateProfiles", otherId);
+    if (pub.data) {
+      return {
+        data: { ...pub.data, role: (pub.data as any).role || "JOB_SEEKER" },
+        error: null as string | null,
+      };
+    }
+  }
+  return getDocument("users", otherId);
 };
 
 export const updateDocument = async (collectionName: string, id: string, data: any) => {
@@ -112,7 +131,10 @@ export const getProfilesByRole = async (
   idToken?: string,
   options?: { verifyAuthUsers?: boolean }
 ) => {
-  const result = await queryDocuments('users', [where('role', '==', role)]);
+  const result =
+    role === "JOB_SEEKER"
+      ? await queryDocuments("publicCandidateProfiles", [where("role", "==", "JOB_SEEKER")])
+      : await queryDocuments("users", [where("role", "==", role)]);
   const shouldVerifyAuthUsers = options?.verifyAuthUsers !== false;
 
   if (shouldVerifyAuthUsers && result.data && result.data.length > 0 && idToken) {
@@ -201,11 +223,13 @@ export const getSavedCandidates = async (employerId: string) => {
     const candidates = [];
     
     for (const candidateId of candidateIds) {
-      const { data: candidate } = await getDocument('users', candidateId);
+      const { data: candidate } = await getDocument("publicCandidateProfiles", candidateId);
       if (candidate) {
         candidates.push({
           ...candidate,
-          savedAt: typedSavedData.find(save => save.candidateId === candidateId)?.savedAt
+          id: candidateId,
+          role: "JOB_SEEKER",
+          savedAt: typedSavedData.find((save) => save.candidateId === candidateId)?.savedAt,
         });
       }
     }
@@ -1245,8 +1269,16 @@ export const createEndorsement = async (userId: string, endorsement: {
   message?: string;
 }, idToken?: string) => {
   try {
+    const endorserUserId = auth.currentUser?.uid;
+    if (!endorserUserId) {
+      return { id: null, error: "You must be signed in to submit an endorsement." };
+    }
+    if (userId === endorserUserId) {
+      return { id: null, error: "You cannot endorse your own profile." };
+    }
     const { id, error } = await createDocument('endorsements', {
       userId,
+      endorserUserId,
       ...endorsement
     });
     

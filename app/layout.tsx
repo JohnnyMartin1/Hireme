@@ -8,7 +8,10 @@ import ConditionalLayout from "@/components/ConditionalLayout";
 
 const GA_MEASUREMENT_ID = "G-ELC38YVCE3";
 
-export const metadata = { 
+const siteUrl = process.env.NEXT_PUBLIC_APP_URL || "https://officialhireme.com";
+
+export const metadata = {
+  metadataBase: new URL(siteUrl),
   title: "HireMe - The Complete Hiring System That Closes The Loop",
   description: "HireMe is an end-to-end hiring platform that connects sourcing, screening, collaboration, and onboarding into one seamless workflow. Built for candidates, employers, and recruiters.",
   keywords: "job search, hiring platform, recruitment, talent acquisition, job seekers, employers",

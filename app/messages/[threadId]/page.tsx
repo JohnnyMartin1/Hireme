@@ -12,6 +12,7 @@ import {
   getThreadMessages,
   sendMessage,
   getDocument,
+  getParticipantProfileForMessaging,
   createCompanyRating,
   getPipelineEntryForJobCandidate,
   PIPELINE_STAGES,
@@ -196,7 +197,10 @@ export default function MessageThreadPage() {
             let candidateName = "Candidate";
             let candidateHeadline = "";
             if (candidateId) {
-              const { data: c, error: candidateError } = await getDocument("users", candidateId);
+              const { data: c, error: candidateError } = await getParticipantProfileForMessaging(
+                candidateId,
+                profile?.role
+              );
               if (candidateError) {
                 return {
                   id: String(t.id),
@@ -240,7 +244,7 @@ export default function MessageThreadPage() {
       }
     };
     loadThreadList();
-  }, [user, isRecruiterView]);
+  }, [user, isRecruiterView, profile?.role]);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -274,7 +278,7 @@ export default function MessageThreadPage() {
         const otherId = (threadResult.data as Thread).participantIds.find((id: string) => id !== user.uid);
         
         if (otherId) {
-          const { data: otherProfile } = await getDocument('users', otherId);
+          const { data: otherProfile } = await getParticipantProfileForMessaging(otherId, profile?.role);
           if (otherProfile) {
             setOtherParticipant(otherProfile);
           }

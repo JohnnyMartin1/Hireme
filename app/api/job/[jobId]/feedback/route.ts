@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebase-admin";
 import {
   FEEDBACK_STATUSES,
-  assertCandidateInCompany,
+  assertCandidateTiedToJob,
   assertInterviewBelongsToJob,
   authorizeJobRequest,
   feedbackDocId,
@@ -50,8 +50,10 @@ export async function POST(request: NextRequest, { params }: { params: { jobId: 
     if (!candidateId || !interviewEventId || interviewerIds.length === 0) {
       return NextResponse.json({ error: "candidateId, interviewEventId and interviewerIds are required" }, { status: 400 });
     }
-    const candidateOk = await assertCandidateInCompany(candidateId, context.companyId);
-    if (!candidateOk) return NextResponse.json({ error: "Candidate is not valid for this company" }, { status: 400 });
+    const candidateOk = await assertCandidateTiedToJob(params.jobId, candidateId);
+    if (!candidateOk) {
+      return NextResponse.json({ error: "Candidate is not associated with this job" }, { status: 403 });
+    }
     const interviewCheck = await assertInterviewBelongsToJob(interviewEventId, params.jobId, candidateId);
     if (!interviewCheck.ok) return NextResponse.json({ error: "Interview does not belong to this job/candidate" }, { status: 400 });
 

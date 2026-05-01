@@ -2,6 +2,7 @@ import { google } from "googleapis";
 import { adminDb } from "@/lib/firebase-admin";
 import admin from "firebase-admin";
 import {
+  assertCalendarEncryptionKeyForTokenWrites,
   decryptCalendarToken,
   maybeEncryptTokenField,
 } from "@/lib/integrations/calendar-token-crypto";
@@ -67,6 +68,9 @@ export async function upsertGoogleCalendarIntegration(
   userId: string,
   fields: Partial<GoogleCalendarIntegrationDoc>
 ) {
+  if (fields.accessToken || fields.refreshToken) {
+    assertCalendarEncryptionKeyForTokenWrites();
+  }
   // Migration behavior:
   // - legacy plaintext tokens are still readable
   // - all new writes persist encrypted token values when CALENDAR_TOKEN_ENCRYPTION_KEY is configured

@@ -1,23 +1,15 @@
 rules_version = '2';
 
-// HireMe — production-oriented Firestore rules (closed beta).
-// Deny-by-default. Deploy manually: firebase deploy --only firestore:rules
+// HireMe — production Firestore rules (deny-by-default).
+// Deploy manually: firebase deploy --only firestore:rules
 //
-// REMAINING RISKS / INTENDED MIGRATIONS (do not weaken rules to “fix” these):
-// 1) users: employers/recruiters may read JOB_SEEKER profiles (cannot field-mask in rules).
-//    Prefer server APIs or a publicCandidateProfiles collection for sourcing.
-// 2) companyInvitations: invitee lookup before Firebase Auth (getInvitationByEmail) requires
-//    a secure HTTPS API — client Firestore query cannot be both unauthenticated and safe.
-// 3) companies: recruiter signup calls getCompany(companyId) before auth — set publicProfile=true
-//    on company docs used in invitations, or serve company preview via API.
-// 4) jobs: public read for ACTIVE/PUBLIC exposes full job documents — split internal vs public later.
+// Projections:
+// - publicCandidateProfiles: discovery + unauth single-doc preview (endorse links). Sync via Admin API.
+// - publicJobs: optional public posting slice. Sync via Admin API after job create/edit.
+// - Employer rich candidate view: GET /api/employer/candidate-profile/:id (server field-masking), not full users/* client reads.
 
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // ---------------------------------------------------------------------------
-    // Helpers
-    // ---------------------------------------------------------------------------
 
     function signedIn() {
       return request.auth != null;
@@ -82,7 +74,6 @@ service cloud.firestore {
       return exists(/databases/$(database)/documents/jobs/$(jobId));
     }
 
-    // Employer owns job OR same companyId as job (recruiters).
     function canAccessJob(jobId) {
       return signedIn()
         && jobExists(jobId)
@@ -97,7 +88,7 @@ service cloud.firestore {
         );
     }
 
-    function isJobPubliclyReadable() {
+    function jobIsPublicCandidateReadable() {
       return (resource.data.keys().hasAny(['status']) && resource.data.status == 'ACTIVE')
         || (resource.data.keys().hasAny(['visibility']) && resource.data.visibility == 'PUBLIC');
     }
@@ -135,18 +126,47 @@ service cloud.firestore {
         );
     }
 
+    function threadParticipantIdsUnchanged() {
+      return request.resource.data.participantIds == resource.data.participantIds;
+    }
+
+    function threadImmutableCompanyJobCandidateUnchanged() {
+      return (!resource.data.keys().hasAny(['companyId']) && !request.resource.data.keys().hasAny(['companyId']))
+        || request.resource.data.companyId == resource.data.companyId;
+    }
+
+    function threadJobCandidateEmployerRecruiterUnchanged() {
+      return (!resource.data.keys().hasAny(['jobId']) || request.resource.data.jobId == resource.data.jobId)
+        && (!resource.data.keys().hasAny(['candidateId']) || request.resource.data.candidateId == resource.data.candidateId)
+        && (!resource.data.keys().hasAny(['employerId']) || request.resource.data.employerId == resource.data.employerId)
+        && (!resource.data.keys().hasAny(['recruiterId']) || request.resource.data.recruiterId == resource.data.recruiterId)
+        && (!resource.data.keys().hasAny(['createdBy']) || request.resource.data.createdBy == resource.data.createdBy)
+        && (!resource.data.keys().hasAny(['createdAt']) || request.resource.data.createdAt == resource.data.createdAt);
+    }
+
+    function threadAllowedParticipantUpdateKeys() {
+      return resource.data.diff(request.resource.data).affectedKeys()
+        .hasOnly([
+          'acceptedBy',
+          'archivedBy',
+          'mutedBy',
+          'updatedAt',
+          'lastMessageAt',
+          'lastMessagePreview',
+          'lastMessageSenderId',
+          'jobId',
+          'jobContext'
+        ]);
+    }
+
     // ---------------------------------------------------------------------------
-    // users
+    // users — no broad employer reads of JOB_SEEKER; use publicCandidateProfiles + employer API.
+    // JOB_SEEKER may read employer/recruiter user docs for messaging / company UX.
     // ---------------------------------------------------------------------------
     match /users/{userId} {
       allow read: if signedIn() && (
         request.auth.uid == userId
         || isAdmin()
-        || (
-          isEmployerOrRecruiter()
-          && resource.data.keys().hasAny(['role'])
-          && resource.data.role == 'JOB_SEEKER'
-        )
         || (
           isEmployerOrRecruiter()
           && resource.data.keys().hasAny(['companyId'])
@@ -156,6 +176,11 @@ service cloud.firestore {
           && (resource.data.role == 'EMPLOYER'
               || resource.data.role == 'RECRUITER'
               || resource.data.role == 'ADMIN')
+        )
+        || (
+          currentUserRole() == 'JOB_SEEKER'
+          && resource.data.keys().hasAny(['role'])
+          && (resource.data.role == 'EMPLOYER' || resource.data.role == 'RECRUITER')
         )
       );
 
@@ -174,7 +199,29 @@ service cloud.firestore {
     }
 
     // ---------------------------------------------------------------------------
-    // Token / verification collections — server / Admin SDK only
+    // publicCandidateProfiles — search-safe / endorse preview (synced server-side).
+    // ---------------------------------------------------------------------------
+    match /publicCandidateProfiles/{candidateId} {
+      allow get: if true;
+      allow list: if signedIn() && (isEmployerOrRecruiter() || isAdmin());
+      allow create, update, delete: if false;
+    }
+
+    // ---------------------------------------------------------------------------
+    // publicJobs — public posting slice (optional; synced server-side).
+    // ---------------------------------------------------------------------------
+    match /publicJobs/{jobId} {
+      function publicJobReadable() {
+        return (resource.data.keys().hasAny(['status']) && resource.data.status == 'ACTIVE')
+          || (resource.data.keys().hasAny(['visibility']) && resource.data.visibility == 'PUBLIC');
+      }
+      allow get: if publicJobReadable();
+      allow list: if signedIn();
+      allow create, update, delete: if false;
+    }
+
+    // ---------------------------------------------------------------------------
+    // Token / verification — Admin SDK only
     // ---------------------------------------------------------------------------
     match /emailVerificationTokens/{tokenId} {
       allow read, write: if false;
@@ -242,11 +289,17 @@ service cloud.firestore {
     }
 
     // ---------------------------------------------------------------------------
-    // jobs
+    // jobs — authenticated read for ACTIVE/PUBLIC (not world-readable). Internal fields still present; prefer publicJobs for public pages when migrated.
     // ---------------------------------------------------------------------------
     match /jobs/{jobId} {
-      allow read: if isJobPubliclyReadable()
-        || (signedIn() && canAccessJob(jobId));
+      allow read: if signedIn() && (
+        isAdmin()
+        || canAccessJob(jobId)
+        || (
+          jobIsPublicCandidateReadable()
+          && (currentUserRole() == 'JOB_SEEKER' || isEmployerOrRecruiter())
+        )
+      );
 
       allow create: if signedIn()
         && isEmployerOrRecruiter()
@@ -292,14 +345,19 @@ service cloud.firestore {
           || belongsToCompany(string(request.resource.data.companyId))
         );
 
-      allow update: if signedIn() && (
-        (resource.data.keys().hasAny(['participantIds']) && resource.data.participantIds.hasAny([request.auth.uid]))
-        || (
-          resource.data.keys().hasAny(['companyId'])
-          && resource.data.companyId != null
-          && belongsToCompany(string(resource.data.companyId))
+      allow update: if signedIn()
+        && (
+          (resource.data.keys().hasAny(['participantIds']) && resource.data.participantIds.hasAny([request.auth.uid]))
+          || (
+            resource.data.keys().hasAny(['companyId'])
+            && resource.data.companyId != null
+            && belongsToCompany(string(resource.data.companyId))
+          )
         )
-      );
+        && threadParticipantIdsUnchanged()
+        && threadImmutableCompanyJobCandidateUnchanged()
+        && threadJobCandidateEmployerRecruiterUnchanged()
+        && threadAllowedParticipantUpdateKeys();
 
       allow delete: if false;
     }
@@ -316,7 +374,10 @@ service cloud.firestore {
 
       allow update: if signedIn()
         && resource.data.keys().hasAny(['threadId'])
-        && canReadThread(string(resource.data.threadId));
+        && canReadThread(string(resource.data.threadId))
+        && request.resource.data.senderId == resource.data.senderId
+        && request.resource.data.threadId == resource.data.threadId
+        && resource.data.diff(request.resource.data).affectedKeys().hasOnly(['read', 'updatedAt']);
 
       allow delete: if false;
     }
@@ -350,10 +411,10 @@ service cloud.firestore {
     }
 
     // ---------------------------------------------------------------------------
-    // companyRatings
+    // companyRatings — authenticated read (reduces scraping vs world-readable).
     // ---------------------------------------------------------------------------
     match /companyRatings/{ratingId} {
-      allow read: if true;
+      allow read: if signedIn();
 
       allow create: if signedIn()
         && request.resource.data.userId == request.auth.uid;
@@ -363,19 +424,33 @@ service cloud.firestore {
     }
 
     // ---------------------------------------------------------------------------
-    // endorsements
+    // endorsements — endorserUserId required on create; no self-endorsement (userId is candidate).
     // ---------------------------------------------------------------------------
     match /endorsements/{endorsementId} {
       allow read: if true;
 
-      allow create: if signedIn();
+      allow create: if signedIn()
+        && request.resource.data.keys().hasAny(['endorserUserId', 'userId'])
+        && request.resource.data.endorserUserId == request.auth.uid
+        && request.resource.data.userId is string
+        && request.resource.data.userId != request.auth.uid;
 
-      allow update, delete: if signedIn()
-        && resource.data.userId == request.auth.uid;
+      allow update, delete: if signedIn() && (
+        isAdmin()
+        || (
+          resource.data.keys().hasAny(['endorserUserId'])
+          && resource.data.endorserUserId == request.auth.uid
+        )
+        || (
+          !resource.data.keys().hasAny(['endorserUserId'])
+          && resource.data.keys().hasAny(['userId'])
+          && resource.data.userId == request.auth.uid
+        )
+      );
     }
 
     // ---------------------------------------------------------------------------
-    // jobMatches (client reads on dashboard / job list)
+    // jobMatches
     // ---------------------------------------------------------------------------
     match /jobMatches/{matchId} {
       allow read: if signedIn()
@@ -386,7 +461,7 @@ service cloud.firestore {
     }
 
     // ---------------------------------------------------------------------------
-    // candidatePipelineEntries (client reads; writes via REST API + Admin SDK)
+    // candidatePipelineEntries
     // ---------------------------------------------------------------------------
     match /candidatePipelineEntries/{entryId} {
       allow read: if signedIn() && (
@@ -401,7 +476,7 @@ service cloud.firestore {
     }
 
     // ---------------------------------------------------------------------------
-    // recruiterNotes (client reads in matches/compare/pipeline; writes via API)
+    // recruiterNotes
     // ---------------------------------------------------------------------------
     match /recruiterNotes/{noteId} {
       allow read: if signedIn()
@@ -412,7 +487,7 @@ service cloud.firestore {
     }
 
     // ---------------------------------------------------------------------------
-    // outreachSequences (client merge when candidate replies to stop sequence)
+    // outreachSequences
     // ---------------------------------------------------------------------------
     match /outreachSequences/{seqId} {
       allow read: if signedIn() && (
@@ -423,7 +498,6 @@ service cloud.firestore {
         )
       );
 
-      // Writes: mostly Admin SDK; client may merge-stop sequence when candidate replies.
       allow create: if signedIn() && (
         (
           request.resource.data.keys().hasAny(['jobId'])
@@ -450,7 +524,7 @@ service cloud.firestore {
     }
 
     // ---------------------------------------------------------------------------
-    // Sensitive hiring collections — REST + Admin SDK only (deny client)
+    // Sensitive hiring — REST + Admin SDK only
     // ---------------------------------------------------------------------------
     match /candidateOffers/{id} {
       allow read, write: if false;

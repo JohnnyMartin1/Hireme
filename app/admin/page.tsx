@@ -4,6 +4,7 @@ import { useFirebaseAuth } from "@/components/FirebaseAuthProvider";
 import { useRouter } from "next/navigation";
 import { Building2, Users, Trash2, Shield, UserCheck, Clock, TrendingUp } from "lucide-react";
 import Link from "next/link";
+import { isClientAdminUser } from "@/lib/admin-access";
 
 export default function AdminDashboardPage() {
   const { user, profile, loading } = useFirebaseAuth();
@@ -23,8 +24,7 @@ export default function AdminDashboardPage() {
       return;
     }
 
-    // Only allow admin users (check email)
-    if (user && user.email !== 'officialhiremeapp@gmail.com') {
+    if (user && !isClientAdminUser(profile?.role as string | undefined, user.email)) {
       router.push("/home");
       return;
     }
@@ -33,7 +33,7 @@ export default function AdminDashboardPage() {
   // Fetch admin statistics (use Firebase Auth counts so dashboard matches User Management)
   useEffect(() => {
     const fetchStats = async () => {
-      if (!user || user.email !== 'officialhiremeapp@gmail.com') return;
+      if (!user || !isClientAdminUser(profile?.role as string | undefined, user.email)) return;
       
       setIsLoadingStats(true);
       try {
@@ -63,7 +63,7 @@ export default function AdminDashboardPage() {
       }
     };
 
-    if (user?.email === 'officialhiremeapp@gmail.com') {
+    if (user && isClientAdminUser(profile?.role as string | undefined, user.email)) {
       fetchStats();
     }
   }, [user, profile]);
@@ -79,8 +79,8 @@ export default function AdminDashboardPage() {
     );
   }
 
-  if (!user || user.email !== 'officialhiremeapp@gmail.com') {
-    return null; // Will redirect
+  if (!user || !isClientAdminUser(profile?.role as string | undefined, user.email)) {
+    return null;
   }
 
   return (

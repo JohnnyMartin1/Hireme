@@ -2,11 +2,12 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useFirebaseAuth } from '@/components/FirebaseAuthProvider';
-import { 
+import {
   getDocument,
   getUserMessageThreads,
-  getEmployerJobs
-} from '@/lib/firebase-firestore';
+  getEmployerJobs,
+  getParticipantProfileForMessaging,
+} from "@/lib/firebase-firestore";
 import { db } from '@/lib/firebase';
 import { collection, query, where, getDocs, limit } from 'firebase/firestore';
 import { ArrowLeft, User, Briefcase, ChevronDown, ChevronUp, MessageSquare, Calendar } from 'lucide-react';
@@ -126,7 +127,7 @@ export default function RecruiterDetailPage() {
             try {
               // Fetch candidate profile and messages in parallel
               const [candidateResult, messagesSnapshot] = await Promise.all([
-                getDocument('users', otherParticipantId),
+                getParticipantProfileForMessaging(otherParticipantId, profile?.role || "EMPLOYER"),
                 getDocs(query(
                   collection(db, 'messages'),
                   where('threadId', '==', thread.id),

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
 import { adminAuth } from '@/lib/firebase-admin';
+import { getServerAdminEmailsLowercase } from '@/lib/admin-access';
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -31,11 +32,11 @@ export async function POST(request: NextRequest) {
     const companyProfileUrl = `${baseUrl}/company/${request.headers.get('x-user-id') || 'unknown'}`;
 
     const fromEmail = process.env.EMAIL_FROM || 'HireMe <onboarding@resend.dev>';
-    const adminEmail = process.env.ADMIN_EMAIL || 'admin@hireme.com';
+    const adminInbox = getServerAdminEmailsLowercase()[0] || 'admin@hireme.com';
 
     const { data, error } = await resend.emails.send({
       from: fromEmail,
-      to: [adminEmail],
+      to: [adminInbox],
       subject: `New Company Registration: ${companyName}`,
       html: `
         <!DOCTYPE html>
@@ -165,9 +166,6 @@ This company cannot access employer features until you approve their registratio
     return NextResponse.json({ success: true, messageId: data?.id });
   } catch (error: any) {
     console.error('Error sending admin notification:', error);
-    return NextResponse.json({ 
-      error: 'Failed to send admin notification',
-      details: error.message 
-    }, { status: 500 });
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

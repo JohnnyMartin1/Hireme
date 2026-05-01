@@ -3,7 +3,7 @@ import { useFirebaseAuth } from "@/components/FirebaseAuthProvider";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, useRef, Suspense } from "react";
 import { User, MessageSquare, ArrowRight, Loader2, Bell, CheckCircle, ArrowLeft, Send, Search, MoreHorizontal, Eye, Star, Archive, Trash2, BellOff } from "lucide-react";
-import { getUserMessageThreads, getDocument, getMessageThread, getThreadMessages, sendMessage, acceptMessageThread, updateDocument } from '@/lib/firebase-firestore';
+import { getUserMessageThreads, getDocument, getMessageThread, getThreadMessages, sendMessage, acceptMessageThread, updateDocument, getParticipantProfileForMessaging } from '@/lib/firebase-firestore';
 import Link from 'next/link';
 
 interface MessageThread {
@@ -98,7 +98,10 @@ function CandidateMessagesPageContent() {
             let otherParticipant = null;
             
             if (otherId) {
-              const { data: otherProfile, error: otherProfileError } = await getDocument('users', otherId);
+              const { data: otherProfile, error: otherProfileError } = await getParticipantProfileForMessaging(
+                otherId,
+                profile?.role
+              );
               otherParticipant = otherProfileError ? null : otherProfile;
             }
             
@@ -239,7 +242,7 @@ function CandidateMessagesPageContent() {
               const otherId = thread.participantIds.find(id => id !== user.uid);
               let otherParticipant = null;
               if (otherId) {
-                const { data: otherProfile } = await getDocument('users', otherId);
+                const { data: otherProfile } = await getParticipantProfileForMessaging(otherId, profile?.role);
                 otherParticipant = otherProfile;
               }
               return { thread, otherParticipant };

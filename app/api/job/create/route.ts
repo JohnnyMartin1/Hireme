@@ -3,6 +3,7 @@ import { adminAuth, adminDb } from '@/lib/firebase-admin';
 import { createJobBodySchema } from '@/lib/validation/job';
 import { parseJobPostingDetailed } from '@/lib/ai/parse-job';
 import { runJobMatching } from '@/lib/matching/job-matching';
+import { syncPublicJobProjection } from '@/lib/server/public-projections';
 
 export const dynamic = 'force-dynamic';
 
@@ -163,6 +164,12 @@ export async function POST(request: NextRequest) {
     };
 
     const docRef = await adminDb.collection('jobs').add(stripUndefinedDeep(jobData));
+
+    try {
+      await syncPublicJobProjection(adminDb, docRef.id);
+    } catch (syncErr) {
+      console.error('[job/create] syncPublicJobProjection failed:', docRef.id, syncErr);
+    }
 
     // Non-blocking: matching can take a while with many candidates
     void runJobMatching(adminDb, docRef.id).catch((err) => {

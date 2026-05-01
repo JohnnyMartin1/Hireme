@@ -328,7 +328,7 @@ export async function buildRecruiterWorkQueue({ user, profile }: BuildArgs): Pro
 
   const resolveCandidateName = async (candidateId: string) => {
     if (candidateCache.has(candidateId)) return candidateCache.get(candidateId) as string;
-    const { data: candidate } = await getDocument("users", candidateId);
+    const { data: candidate } = await getDocument("publicCandidateProfiles", candidateId);
     const candidateProfile = (candidate || {}) as any;
     const candidateName = `${candidateProfile.firstName || ""} ${candidateProfile.lastName || ""}`.trim() || "Candidate";
     candidateCache.set(candidateId, candidateName);

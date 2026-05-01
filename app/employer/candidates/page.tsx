@@ -3,7 +3,7 @@ import { useFirebaseAuth } from "@/components/FirebaseAuthProvider";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { User, MessageSquare, ArrowRight, Loader2, Calendar, ArrowLeft } from "lucide-react";
-import { getUserMessageThreads, getDocument } from '@/lib/firebase-firestore';
+import { getUserMessageThreads, getDocument, getParticipantProfileForMessaging } from '@/lib/firebase-firestore';
 import Link from 'next/link';
 
 interface ContactedCandidate {
@@ -73,9 +73,12 @@ export default function ContactedCandidatesPage() {
           
           if (otherParticipantId && !seenCandidateIds.has(otherParticipantId)) {
             try {
-              const { data: candidateProfile } = await getDocument('users', otherParticipantId);
-              
-              if (candidateProfile && (candidateProfile as any).role === 'JOB_SEEKER') {
+              const { data: candidateProfile } = await getParticipantProfileForMessaging(
+                otherParticipantId,
+                profile.role
+              );
+
+              if (candidateProfile && (candidateProfile as any).role === "JOB_SEEKER") {
                 candidateData.push({
                   id: otherParticipantId,
                   firstName: (candidateProfile as any).firstName || '',

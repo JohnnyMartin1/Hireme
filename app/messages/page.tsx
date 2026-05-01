@@ -6,6 +6,7 @@ import { User, MessageSquare, ArrowRight, Loader2, Filter, Briefcase, X } from "
 import {
   getUserMessageThreads,
   getDocument,
+  getParticipantProfileForMessaging,
   getEmployerJobs,
   getCompanyJobs,
   getPipelineEntryForJobCandidate,
@@ -168,7 +169,10 @@ export default function MessagesPage() {
         ) as string[];
         const profileEntries = await Promise.all(
           otherIds.map(async (id) => {
-            const { data: otherProfile, error: otherProfileError } = await getDocument("users", id);
+            const { data: otherProfile, error: otherProfileError } = await getParticipantProfileForMessaging(
+              id,
+              profile?.role
+            );
             if (otherProfileError) {
               // Keep inbox usable even if one participant profile is restricted or missing.
               return [id, null] as const;

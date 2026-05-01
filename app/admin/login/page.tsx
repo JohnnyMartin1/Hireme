@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "@/lib/firebase";
+import { getPublicAdminEmailsLowercase } from "@/lib/admin-access";
 import { Shield, Lock, Mail, ArrowRight, AlertCircle } from "lucide-react";
 import { Suspense } from "react";
 
@@ -20,8 +21,7 @@ function AdminLoginContent() {
     setError("");
     setLoading(true);
 
-    // Check if email is the admin email
-    if (email !== "officialhiremeapp@gmail.com") {
+    if (!getPublicAdminEmailsLowercase().includes(email.trim().toLowerCase())) {
       setError("Access denied. This portal is for administrators only.");
       setLoading(false);
       return;

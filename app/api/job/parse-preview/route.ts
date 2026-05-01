@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { adminAuth } from '@/lib/firebase-admin';
 import { parseJobPostingDetailed } from '@/lib/ai/parse-job';
+import { rateLimitHit } from '@/lib/api-rate-limit';
 
 export const dynamic = 'force-dynamic';
 
@@ -42,6 +43,15 @@ export async function POST(request: NextRequest) {
     const decoded = await adminAuth.verifyIdToken(data.idToken);
     if (!decoded) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const rl = rateLimitHit('job-parse-preview', request, {
+      windowMs: 60_000,
+      max: 20,
+      uid: decoded.uid,
+    });
+    if (rl != null) {
+      return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
     }
 
     const result = await parseJobPostingDetailed({

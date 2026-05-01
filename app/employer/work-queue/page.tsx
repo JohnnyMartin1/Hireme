@@ -98,7 +98,7 @@ function EmployerWorkQueueContent() {
   if (!user || !profile) return null;
 
   return (
-    <main className="min-h-screen bg-slate-50 px-4 py-6 sm:px-6 md:px-8">
+    <main className="min-h-screen bg-slate-50 px-4 pb-6 pt-14 sm:px-6 sm:pb-6 sm:pt-16 md:px-8 md:pt-20">
       <div className="mx-auto max-w-6xl space-y-4">
         <section className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
           <h1 className="text-2xl font-bold text-navy-900">Work queue</h1>
@@ -175,7 +175,7 @@ export default function EmployerWorkQueuePage() {
   return (
     <Suspense
       fallback={
-        <main className="min-h-screen bg-slate-50 px-4 py-6 sm:px-6 md:px-8">
+        <main className="min-h-screen bg-slate-50 px-4 pb-6 pt-14 sm:px-6 sm:pb-6 sm:pt-16 md:px-8 md:pt-20">
           <div className="mx-auto max-w-6xl">
             <p className="text-sm text-slate-500">Loading work queue...</p>
           </div>

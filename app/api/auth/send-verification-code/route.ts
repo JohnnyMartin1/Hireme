@@ -252,13 +252,7 @@ export async function POST(request: NextRequest) {
         return await tryFallbackEmail(resend, email, code);
       }
       
-      return NextResponse.json(
-        { 
-          error: 'Failed to send verification email',
-          details: error.message || 'Unknown error'
-        },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: 'Failed to send verification email' }, { status: 500 });
     }
 
     if (!data) {
@@ -274,9 +268,6 @@ export async function POST(request: NextRequest) {
 
   } catch (error: any) {
     console.error('Error in send-verification-code API:', error);
-    return NextResponse.json(
-      { error: error.message || 'Failed to send verification code' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

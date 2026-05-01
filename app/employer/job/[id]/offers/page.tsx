@@ -9,7 +9,7 @@ import { fetchJobOffers, offerStatusLabel } from "@/lib/offers/client";
 import type { CandidateOfferRecord } from "@/lib/offers/types";
 import { getCandidateUrl, getJobPipelineUrl } from "@/lib/navigation";
 import { recruiterBadge } from "@/lib/recruiter-ui";
-import { getDocument } from "@/lib/firebase-firestore";
+import { getParticipantProfileForMessaging } from "@/lib/firebase-firestore";
 
 export default function JobOffersPage() {
   const params = useParams();
@@ -58,7 +58,7 @@ export default function JobOffersPage() {
           const cid = String((o as any).candidateId || "");
           if (!cid || seen.has(cid)) continue;
           seen.add(cid);
-          const { data: u } = await getDocument("users", cid);
+          const { data: u } = await getParticipantProfileForMessaging(cid, profile?.role);
           const row = (u || {}) as Record<string, unknown>;
           const nm = `${String(row.firstName || "").trim()} ${String(row.lastName || "").trim()}`.trim();
           nameMap[cid] = nm || "Candidate";
@@ -71,7 +71,7 @@ export default function JobOffersPage() {
     } finally {
       setLoading(false);
     }
-  }, [jobId, user]);
+  }, [jobId, user, profile?.role]);
 
   useEffect(() => {
     void load();

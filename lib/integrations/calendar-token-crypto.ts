@@ -9,6 +9,26 @@ function getKeyMaterial() {
   return crypto.createHash("sha256").update(raw).digest();
 }
 
+/** Vercel (all envs) and local production builds must encrypt OAuth tokens at rest. */
+function isProductionLikeCalendarDeploy() {
+  return process.env.NODE_ENV === "production" || process.env.VERCEL === "1";
+}
+
+/**
+ * Call before persisting access/refresh tokens. In production-like deploys, missing
+ * CALENDAR_TOKEN_ENCRYPTION_KEY throws so tokens are never stored as plaintext by mistake.
+ * After enabling the key, users may need to reconnect Google/Microsoft calendar once.
+ */
+export function assertCalendarEncryptionKeyForTokenWrites() {
+  if (!isProductionLikeCalendarDeploy()) return;
+  const raw = (process.env.CALENDAR_TOKEN_ENCRYPTION_KEY || "").trim();
+  if (!raw) {
+    throw new Error(
+      "CALENDAR_TOKEN_ENCRYPTION_KEY is required in production to store calendar OAuth tokens. Set it in Vercel env, then redeploy."
+    );
+  }
+}
+
 export function isEncryptedToken(value: unknown) {
   return typeof value === "string" && value.startsWith(PREFIX);
 }

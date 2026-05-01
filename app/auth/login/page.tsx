@@ -8,6 +8,7 @@ import { getDocument } from "@/lib/firebase-firestore";
 import { useFirebaseAuth } from "@/components/FirebaseAuthProvider";
 import type { UserProfile } from "@/types/user";
 import { isCapacitor } from "@/lib/capacitor";
+import { isClientAdminUser } from "@/lib/admin-access";
 
 
 export default function LoginPage() {
@@ -30,7 +31,7 @@ export default function LoginPage() {
   useEffect(() => {
     if (!authLoading && user && profile) {
       const redirect = () => {
-        if (user.email === 'officialhiremeapp@gmail.com' || profile.role === 'ADMIN') {
+        if (isClientAdminUser(profile.role, user.email)) {
           router.replace("/admin");
         } else if (profile.role === 'EMPLOYER' || profile.role === 'RECRUITER') {
           router.replace("/home/employer");
@@ -70,7 +71,7 @@ export default function LoginPage() {
           const userRole = p.role ?? "JOB_SEEKER";
 
           // Check for admin email first
-          if (user?.email === 'officialhiremeapp@gmail.com' || userRole === "ADMIN") {
+          if (isClientAdminUser(userRole, user?.email)) {
             router.push("/admin");
           } else if (userRole === "EMPLOYER" || userRole === "RECRUITER") {
             router.push("/home/employer");
@@ -82,7 +83,7 @@ export default function LoginPage() {
         } catch (profileError) {
           // If profile fetch fails entirely, fall back to a basic JOB_SEEKER routing so login still succeeds.
           console.error('Error fetching user profile on login:', profileError);
-          if (user?.email === 'officialhiremeapp@gmail.com') {
+          if (isClientAdminUser(undefined, user?.email)) {
             router.push("/admin");
           } else {
             router.push("/home/seeker");

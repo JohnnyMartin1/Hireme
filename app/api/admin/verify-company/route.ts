@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminAuth, adminDb } from '@/lib/firebase-admin';
+import { isServerAdminUser } from '@/lib/admin-access';
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,11 +15,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }
     const adminUid = decodedToken.uid;
-    const adminEmail = process.env.ADMIN_EMAIL || 'officialhiremeapp@gmail.com';
     const userDoc = await adminDb.collection('users').doc(adminUid).get();
     const userData = userDoc.data();
-    const isAdmin = userData?.role === 'ADMIN' || decodedToken.email === adminEmail;
-    if (!isAdmin) {
+    if (!isServerAdminUser(userData?.role as string | undefined, decodedToken.email)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -48,8 +47,6 @@ export async function POST(request: NextRequest) {
 
   } catch (error: any) {
     console.error('Error in verify-company API:', error);
-    return NextResponse.json({ 
-      error: error.message || 'Failed to update company status' 
-    }, { status: 500 });
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

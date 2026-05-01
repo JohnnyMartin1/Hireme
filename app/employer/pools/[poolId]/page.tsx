@@ -18,7 +18,12 @@ import {
   getEmployerPoolsUrl,
   getJobPipelineUrl,
 } from "@/lib/navigation";
-import { getDocument, getEmployerJobs, getCompanyJobs } from "@/lib/firebase-firestore";
+import {
+  getDocument,
+  getEmployerJobs,
+  getCompanyJobs,
+  getParticipantProfileForMessaging,
+} from "@/lib/firebase-firestore";
 import { postJobPipeline } from "@/lib/pipeline-client";
 type MemberRow = TalentPoolMember & { displayName?: string };
 
@@ -55,7 +60,7 @@ export default function EmployerPoolDetailPage() {
       const raw = (res.data.members || []) as TalentPoolMember[];
       const withNames: MemberRow[] = await Promise.all(
         raw.map(async (m) => {
-          const { data } = await getDocument("users", m.candidateId);
+          const { data } = await getParticipantProfileForMessaging(m.candidateId, profile?.role);
           const u = (data || {}) as Record<string, unknown>;
           const displayName =
             `${String(u.firstName || "").trim()} ${String(u.lastName || "").trim()}`.trim() || "Candidate";
@@ -71,7 +76,7 @@ export default function EmployerPoolDetailPage() {
     } finally {
       setLoadingData(false);
     }
-  }, [user, poolId]);
+  }, [user, poolId, profile?.role]);
 
   useEffect(() => {
     if (!loading && !user) router.push("/auth/login");

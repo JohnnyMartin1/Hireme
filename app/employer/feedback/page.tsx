@@ -174,7 +174,7 @@ export default function EmployerFeedbackQueuePage() {
     );
 
   return (
-    <main className="mx-auto max-w-6xl px-4 pb-10 pt-6">
+    <main className="mx-auto max-w-6xl px-4 pb-10 pt-14 sm:pt-16 md:pt-20">
       <h1 className="text-2xl font-bold text-navy-900">My feedback queue</h1>
       <p className="mt-1 text-sm text-slate-600">Track scorecards assigned to you across jobs.</p>
       <div className="mt-3 flex flex-wrap gap-2">

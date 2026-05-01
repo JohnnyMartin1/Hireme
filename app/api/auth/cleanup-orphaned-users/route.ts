@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminAuth, adminDb } from '@/lib/firebase-admin';
+import { isServerAdminUser } from '@/lib/admin-access';
 
 export const maxDuration = 60;
 
@@ -54,10 +55,7 @@ export async function POST(request: NextRequest) {
         const decodedToken = await adminAuth.verifyIdToken(token);
         const userDoc = await adminDb.collection('users').doc(decodedToken.uid).get();
         const userData = userDoc.data();
-        const adminEmail = process.env.ADMIN_EMAIL || 'officialhiremeapp@gmail.com';
-        const isAdminByRole = userData?.role === 'ADMIN';
-        const isAdminByEmail = decodedToken.email === adminEmail;
-        if (!isAdminByRole && !isAdminByEmail) {
+        if (!isServerAdminUser(userData?.role as string | undefined, decodedToken.email)) {
           return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
         }
       } catch {

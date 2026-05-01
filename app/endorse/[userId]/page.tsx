@@ -28,7 +28,7 @@ export default function EndorseFormPage() {
     const fetchCandidate = async () => {
       if (!userId) return;
       try {
-        const { data, error } = await getDocument('users', userId);
+        const { data, error } = await getDocument("publicCandidateProfiles", userId);
         if (error) {
           console.error('Error fetching candidate:', error);
           setError('Candidate not found');

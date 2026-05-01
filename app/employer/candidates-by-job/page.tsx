@@ -10,6 +10,7 @@ import {
   getPipelineByJob,
   getRecruiterNotes,
   getUserMessageThreads,
+  getParticipantProfileForMessaging,
   normalizePipelineStage,
 } from "@/lib/firebase-firestore";
 import { db } from '@/lib/firebase';
@@ -131,7 +132,10 @@ export default function CandidatesByJobPage() {
             
             if (otherParticipantId) {
               try {
-                const { data: candidateProfile } = await getDocument('users', otherParticipantId);
+                const { data: candidateProfile } = await getParticipantProfileForMessaging(
+                  otherParticipantId,
+                  profile.role
+                );
                 
                 // Only process if this is a candidate
                 if (candidateProfile && (candidateProfile as any).role === 'JOB_SEEKER') {

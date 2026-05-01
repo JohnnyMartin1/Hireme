@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from 'react';
 import { useFirebaseAuth } from "@/components/FirebaseAuthProvider";
+import { isClientAdminUser } from "@/lib/admin-access";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Check, X, Building2, Mail, Phone, MapPin, Globe, Clock, User, ExternalLink, Eye } from "lucide-react";
 import Link from "next/link";
@@ -42,14 +43,14 @@ export default function VerifyCompaniesPage() {
     }
 
     // Only allow admin users (check email)
-    if (user && user.email !== 'officialhiremeapp@gmail.com') {
+    if (user && !isClientAdminUser(profile?.role as string | undefined, user.email)) {
       router.push("/home");
       return;
     }
   }, [user, profile, loading, router]);
 
   useEffect(() => {
-    if (user?.email === 'officialhiremeapp@gmail.com') {
+    if (user && isClientAdminUser(profile?.role as string | undefined, user.email)) {
       loadPendingCompanies();
     }
   }, [user]);
@@ -124,7 +125,7 @@ export default function VerifyCompaniesPage() {
     );
   }
 
-  if (!user || user.email !== 'officialhiremeapp@gmail.com') {
+  if (!user || !isClientAdminUser(profile?.role as string | undefined, user.email)) {
     return null; // Will redirect
   }
 

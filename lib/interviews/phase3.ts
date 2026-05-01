@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import admin from "firebase-admin";
 import { adminAuth, adminDb } from "@/lib/firebase-admin";
 import { canUserAccessJob } from "@/lib/matching/job-access";
+import { canonicalPipelineEntryId } from "@/lib/pipeline-canonical";
 
 export const INTERVIEW_PLAN_STATUSES = ["ACTIVE", "DRAFT", "ARCHIVED"] as const;
 export const INTERVIEW_ROUND_TYPES = [
@@ -84,12 +85,28 @@ export async function authorizeJobRequest(
   return { context: { userId: decoded.uid, role, companyId: jobCompanyId || companyId, jobId, jobData } };
 }
 
-export async function assertCandidateInCompany(candidateId: string, companyId: string): Promise<boolean> {
-  if (!candidateId || !companyId) return false;
-  const snap = await adminDb.collection("users").doc(candidateId).get();
-  if (!snap.exists) return false;
-  const data = (snap.data() || {}) as Record<string, unknown>;
-  return String(data.companyId || "") === companyId || String(data.role || "").toUpperCase() === "JOB_SEEKER";
+/**
+ * True if the candidate is tied to this job via pipeline or jobMatches (deterministic doc id).
+ * Any JOB_SEEKER without these links is rejected — prevents cross-job/cross-company misuse.
+ *
+ * Manual QA: (1) employer creates offer only for shortlisted/matched candidate → 200.
+ * (2) employer swaps candidateId to another seeker never on job → 403.
+ */
+export async function assertCandidateTiedToJob(jobId: string, candidateId: string): Promise<boolean> {
+  if (!jobId || !candidateId) return false;
+
+  const pipelineId = canonicalPipelineEntryId(jobId, candidateId);
+  const pipelineSnap = await adminDb.collection("candidatePipelineEntries").doc(pipelineId).get();
+  if (pipelineSnap.exists) return true;
+
+  const matchId = `${jobId}_${candidateId}`;
+  const matchSnap = await adminDb.collection("jobMatches").doc(matchId).get();
+  if (matchSnap.exists) {
+    const md = matchSnap.data() as Record<string, unknown> | undefined;
+    if (String(md?.jobId || "") === jobId && String(md?.candidateId || "") === candidateId) return true;
+  }
+
+  return false;
 }
 
 export async function assertInterviewBelongsToJob(

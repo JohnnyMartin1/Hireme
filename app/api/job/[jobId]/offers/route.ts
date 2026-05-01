@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { adminAuth, adminDb } from "@/lib/firebase-admin";
 import { canUserAccessJob } from "@/lib/matching/job-access";
 import { canonicalPipelineEntryId } from "@/lib/pipeline-canonical";
-import { assertCandidateInCompany } from "@/lib/interviews/phase3";
+import { assertCandidateTiedToJob } from "@/lib/interviews/phase3";
 import admin from "firebase-admin";
 import {
   COMPENSATION_TYPES,
@@ -145,9 +145,9 @@ export async function POST(request: NextRequest, { params }: { params: { jobId: 
     if (!companyId) {
       return NextResponse.json({ error: "Job missing companyId" }, { status: 400 });
     }
-    const inCompany = await assertCandidateInCompany(candidateId, companyId);
-    if (!inCompany) {
-      return NextResponse.json({ error: "Candidate not valid for this company" }, { status: 400 });
+    const tiedToJob = await assertCandidateTiedToJob(jobId, candidateId);
+    if (!tiedToJob) {
+      return NextResponse.json({ error: "Candidate is not associated with this job" }, { status: 403 });
     }
 
     const approvalRequired = Boolean(body?.approvalRequired);

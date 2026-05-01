@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminAuth } from '@/lib/firebase-admin';
+import { isServerAdminUser } from '@/lib/admin-access';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,11 +22,7 @@ export async function GET(request: NextRequest) {
       const { adminDb } = await import('@/lib/firebase-admin');
       const userDoc = await adminDb.collection('users').doc(decodedToken.uid).get();
       const userData = userDoc.data();
-      const adminEmail = process.env.ADMIN_EMAIL || 'officialhiremeapp@gmail.com';
-      const isAdminByRole = userData?.role === 'ADMIN';
-      const isAdminByEmail = decodedToken.email === adminEmail;
-      
-      if (!isAdminByRole && !isAdminByEmail) {
+      if (!isServerAdminUser(userData?.role as string | undefined, decodedToken.email)) {
         return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 });
       }
     } catch (error) {
@@ -92,8 +89,6 @@ export async function GET(request: NextRequest) {
 
   } catch (error: any) {
     console.error('Error getting Firebase user count:', error);
-    return NextResponse.json({ 
-      error: error.message || 'Failed to get user count' 
-    }, { status: 500 });
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

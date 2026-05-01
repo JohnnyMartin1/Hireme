@@ -7,6 +7,7 @@ import Link from "next/link";
 import { queryDocuments, getDocument } from '@/lib/firebase-firestore';
 import { where } from 'firebase/firestore';
 import { useToast } from '@/components/NotificationSystem';
+import { isClientAdminUser } from "@/lib/admin-access";
 
 const AUTH_SETTLE_MS = 1200;
 
@@ -66,14 +67,14 @@ export default function UsersManagementPage() {
       router.push("/auth/login");
       return;
     }
-    if (user.email !== 'officialhiremeapp@gmail.com') {
+    if (!isClientAdminUser(profile?.role as string | undefined, user.email)) {
       router.push("/home");
       return;
     }
-  }, [user, authSettled, router]);
+  }, [user, profile, authSettled, router]);
 
   useEffect(() => {
-    if (user?.email === 'officialhiremeapp@gmail.com') {
+    if (user && isClientAdminUser(profile?.role as string | undefined, user.email)) {
       loadUsers();
       
       // Check for URL parameters to set initial filters
@@ -87,7 +88,7 @@ export default function UsersManagementPage() {
         setRoleFilter('JOB_SEEKER');
       }
     }
-  }, [user]);
+  }, [user, profile]);
 
   useEffect(() => {
     filterUsers();
@@ -215,7 +216,7 @@ export default function UsersManagementPage() {
     return user.emailVerified ? 'verified' : 'unverified';
   };
 
-  if (loading || !authSettled || !user || user.email !== 'officialhiremeapp@gmail.com') {
+  if (loading || !authSettled || !user || !isClientAdminUser(profile?.role as string | undefined, user.email)) {
     if (!authSettled || !user) {
       return (
         <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-blue-50 flex items-center justify-center">

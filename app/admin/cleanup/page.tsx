@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { ArrowLeft, Trash2, AlertTriangle } from "lucide-react";
 import Link from "next/link";
+import { isClientAdminUser } from "@/lib/admin-access";
 
 export default function CleanupPage() {
   const { user, profile, loading } = useFirebaseAuth();
@@ -18,12 +19,11 @@ export default function CleanupPage() {
       router.push("/auth/login");
       return;
     }
-    // Only allow admin (same check as dashboard - by email, not profile.role)
-    if (!loading && user && user.email !== 'officialhiremeapp@gmail.com') {
+    if (!loading && user && !isClientAdminUser(profile?.role as string | undefined, user.email)) {
       router.push("/home");
       return;
     }
-  }, [user, loading, router]);
+  }, [user, profile, loading, router]);
 
   const handleCleanup = async () => {
     if (!user) return;
@@ -82,8 +82,8 @@ export default function CleanupPage() {
     );
   }
 
-  if (!user || user.email !== 'officialhiremeapp@gmail.com') {
-    return null; // Will redirect
+  if (!user || !isClientAdminUser(profile?.role as string | undefined, user.email)) {
+    return null;
   }
 
   return (

@@ -5,7 +5,12 @@ import Link from "next/link";
 import { CheckCircle2, Clock3, ClipboardList, Users } from "lucide-react";
 import { useFirebaseAuth } from "@/components/FirebaseAuthProvider";
 import { fetchReviewAssignments } from "@/lib/collaboration-client";
-import { getCompanyJobs, getDocument, getEmployerJobs } from "@/lib/firebase-firestore";
+import {
+  getCompanyJobs,
+  getDocument,
+  getEmployerJobs,
+  getParticipantProfileForMessaging,
+} from "@/lib/firebase-firestore";
 import ReviewAssignmentStatusBadge from "@/components/recruiter/ReviewAssignmentStatusBadge";
 
 type QueueRow = any;
@@ -59,8 +64,13 @@ export default function EmployerReviewsPage() {
         ),
         Promise.all(
           candidateIds.map(async (id) => {
-            const { data } = await getDocument("users", id);
-            return [id, data ? `${(data as any).firstName || ""} ${(data as any).lastName || ""}`.trim() || "Candidate" : "Candidate"] as const;
+            const { data } = await getParticipantProfileForMessaging(id, profile?.role);
+            return [
+              id,
+              data
+                ? `${(data as any).firstName || ""} ${(data as any).lastName || ""}`.trim() || "Candidate"
+                : "Candidate",
+            ] as const;
           })
         ),
       ]);
@@ -68,7 +78,7 @@ export default function EmployerReviewsPage() {
       setCandidateNameById(Object.fromEntries(candidatePairs));
     };
     if (rows.length > 0) hydrate();
-  }, [rows]);
+  }, [rows, profile?.role]);
 
   const assignedToMe = useMemo(() => rows.filter((r) => String(r.assignedToUserId || "") === String(user?.uid || "")), [rows, user?.uid]);
   const requestedByMe = useMemo(() => rows.filter((r) => String(r.requestedByUserId || "") === String(user?.uid || "")), [rows, user?.uid]);

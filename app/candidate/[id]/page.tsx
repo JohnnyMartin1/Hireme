@@ -17,6 +17,8 @@ import {
   type MessageJobDetailsShape,
 } from '@/lib/firebase-firestore';
 import Link from 'next/link';
+import { isClientAdminUser } from "@/lib/admin-access";
+import { fetchEmployerCandidateProfile } from "@/lib/employer-candidate-profile-client";
 import { trackProfileView } from '@/lib/firebase-firestore';
 import { getEmployerJobs, getCompanyJobs } from '@/lib/firebase-firestore';
 import {
@@ -229,35 +231,55 @@ export default function CandidateProfilePage() {
         if (user && user.uid === params.id && profile) {
           setCandidate(profile as any);
         } else {
-          const { data, error } = await getDocument('users', params.id as string);
+          const isAdmin = isClientAdminUser(profile?.role as string | undefined, user.email);
+          const useEmployerApiView =
+            profile?.role === "EMPLOYER" ||
+            profile?.role === "RECRUITER" ||
+            profile?.role === "ADMIN" ||
+            isAdmin;
 
-          if (error) {
-            setError(error);
+          let data: any = null;
+          let loadError: string | null = null;
+
+          if (useEmployerApiView) {
+            const token = await user.getIdToken();
+            const res = await fetchEmployerCandidateProfile(params.id as string, token);
+            if (res.error || !res.data) {
+              loadError = res.error || "Candidate not found";
+            } else {
+              data = { ...res.data, id: params.id, role: "JOB_SEEKER" };
+            }
+          } else {
+            const doc = await getDocument("users", params.id as string);
+            loadError = doc.error;
+            data = doc.data as any;
+          }
+
+          if (loadError) {
+            setError(loadError);
             return;
           }
 
           if (!data) {
-            setError('Candidate not found');
+            setError("Candidate not found");
             return;
           }
 
-          // Check if this is actually a job seeker
-          if ((data as any).role !== 'JOB_SEEKER') {
-            setError('Profile not found');
+          if (data.role !== "JOB_SEEKER") {
+            setError("Profile not found");
             return;
           }
 
-          // If user is an employer/recruiter viewing someone else's profile, check completion
-          // Admins can view any profile regardless of completion
           if (user && user.uid !== params.id) {
-            // Check if user is admin (by email or role)
-            const isAdmin = user.email === 'officialhiremeapp@gmail.com' || profile?.role === 'ADMIN';
-            
-            // Only check completion for employers/recruiters (not admins)
-            if (!isAdmin && (profile?.role === 'EMPLOYER' || profile?.role === 'RECRUITER')) {
-              const completion = calculateCompletion(data);
+            if (!isAdmin && (profile?.role === "EMPLOYER" || profile?.role === "RECRUITER")) {
+              const completion =
+                typeof data.profileCompletionPercent === "number"
+                  ? data.profileCompletionPercent
+                  : calculateCompletion(data);
               if (completion < 70) {
-                setError('This candidate profile is not yet complete. Profiles must be at least 70% complete to be visible to employers.');
+                setError(
+                  "This candidate profile is not yet complete. Profiles must be at least 70% complete to be visible to employers."
+                );
                 return;
               }
             }
@@ -922,7 +944,7 @@ export default function CandidateProfilePage() {
     ? new Date(followUpRaw?.toDate ? followUpRaw.toDate() : followUpRaw)
     : null;
   const followUpDue = !!nextFollowUpDate && nextFollowUpDate.getTime() < Date.now();
-  const isAdminViewer = user?.email === 'officialhiremeapp@gmail.com' || profile?.role === 'ADMIN';
+  const isAdminViewer = isClientAdminUser(profile?.role as string | undefined, user?.email);
   const isEmployerOrRecruiter = profile?.role === 'EMPLOYER' || profile?.role === 'RECRUITER';
   const viewingAsRecruiter = user?.uid !== candidate.id && isEmployerOrRecruiter && !isAdminViewer;
   const selectedJobTitle =
