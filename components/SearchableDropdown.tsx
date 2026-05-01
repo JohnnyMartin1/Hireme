@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef, useEffect, memo, useMemo } from 'react';
+import { useState, useRef, useEffect, memo, useLayoutEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { ChevronDown, Search, X } from 'lucide-react';
 
@@ -28,7 +28,7 @@ const SearchableDropdown = memo(function SearchableDropdown({
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredOptions, setFilteredOptions] = useState(options);
   const [position, setPosition] = useState({ top: 0, left: 0, width: 0 });
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  const dropdownPanelRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLDivElement>(null);
 
   const updatePosition = () => {
@@ -130,10 +130,19 @@ const SearchableDropdown = memo(function SearchableDropdown({
     };
   }, [isOpen]);
 
+  useLayoutEffect(() => {
+    if (isOpen) updatePosition();
+  }, [isOpen]);
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node) &&
-          triggerRef.current && !triggerRef.current.contains(event.target as Node)) {
+      const t = event.target as Node;
+      if (
+        dropdownPanelRef.current &&
+        !dropdownPanelRef.current.contains(t) &&
+        triggerRef.current &&
+        !triggerRef.current.contains(t)
+      ) {
         setIsOpen(false);
         setSearchTerm('');
       }
@@ -224,60 +233,69 @@ const SearchableDropdown = memo(function SearchableDropdown({
           </div>
         </div>
 
-        {isOpen && (
-          <div 
-            ref={dropdownRef}
-            className="absolute left-0 right-0 mt-2 z-50 bg-white border border-light-gray rounded-xl shadow-lg max-h-60 overflow-hidden"
-          >
-            <div className="p-2 border-b border-light-gray">
-              <div className="relative">
-                <i className="fa-solid fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                <input
-                  type="text"
-                  placeholder="Search..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  className="w-full pl-10 pr-4 py-2 border border-light-gray rounded-lg focus:ring-2 focus:ring-navy focus:border-navy text-base"
-                  autoFocus
-                />
-              </div>
-            </div>
-            
-            <div className="max-h-48 overflow-y-auto pb-2">
-              {filteredOptions.length > 0 ? (
-                filteredOptions.map((option, index) => (
-                  <div
-                    key={index}
-                    className="px-4 py-2 hover:bg-light-blue hover:bg-opacity-20 cursor-pointer text-navy hover:text-navy"
-                    onClick={() => handleSelect(option)}
-                  >
-                    {option}
-                  </div>
-                ))
-              ) : (
-                <div className="px-4 py-2 text-gray-500 text-center">
-                  {allowCustom ? (
-                    <div>
-                      <p>No matches found</p>
-                      {searchTerm.trim() && (
-                        <button
-                          type="button"
-                          onClick={handleCustomInput}
-                          className="mt-2 text-navy hover:text-light-blue font-medium"
-                        >
-                          Add "{searchTerm.trim()}"
-                        </button>
-                      )}
-                    </div>
-                  ) : (
-                    <p>No matches found</p>
-                  )}
+        {isOpen &&
+          typeof document !== "undefined" &&
+          createPortal(
+            <div
+              ref={dropdownPanelRef}
+              className="z-[10000] max-h-60 overflow-hidden rounded-xl border border-light-gray bg-white shadow-lg"
+              style={{
+                position: "fixed",
+                top: position.top,
+                left: position.left,
+                width: position.width,
+              }}
+            >
+              <div className="border-b border-light-gray p-2">
+                <div className="relative">
+                  <i className="fa-solid fa-search pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 transform text-gray-400"></i>
+                  <input
+                    type="text"
+                    placeholder="Search..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    className="w-full rounded-lg border border-light-gray py-2 pl-10 pr-4 text-base focus:border-navy focus:ring-2 focus:ring-navy"
+                    autoFocus
+                  />
                 </div>
-              )}
-            </div>
-          </div>
-        )}
+              </div>
+
+              <div className="max-h-48 overflow-y-auto pb-2">
+                {filteredOptions.length > 0 ? (
+                  filteredOptions.map((option, index) => (
+                    <div
+                      key={index}
+                      className="cursor-pointer px-4 py-2 text-navy hover:bg-light-blue hover:bg-opacity-20 hover:text-navy"
+                      onClick={() => handleSelect(option)}
+                    >
+                      {option}
+                    </div>
+                  ))
+                ) : (
+                  <div className="px-4 py-2 text-center text-gray-500">
+                    {allowCustom ? (
+                      <div>
+                        <p>No matches found</p>
+                        {searchTerm.trim() && (
+                          <button
+                            type="button"
+                            onClick={handleCustomInput}
+                            className="mt-2 font-medium text-navy hover:text-light-blue"
+                          >
+                            Add "{searchTerm.trim()}"
+                          </button>
+                        )}
+                      </div>
+                    ) : (
+                      <p>No matches found</p>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>,
+            document.body
+          )}
       </div>
     </div>
   );

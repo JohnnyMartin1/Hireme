@@ -113,7 +113,7 @@ service cloud.firestore {
     function isThreadParticipant(threadId) {
       return signedIn()
         && threadExists(threadId)
-        && threadDoc(threadId).participantIds is list
+        && threadDoc(threadId).keys().hasAny(['participantIds'])
         && threadDoc(threadId).participantIds.hasAny([request.auth.uid]);
     }
 
@@ -273,7 +273,7 @@ service cloud.firestore {
     // ---------------------------------------------------------------------------
     match /messageThreads/{threadId} {
       allow read: if signedIn() && (
-        (resource.data.participantIds is list && resource.data.participantIds.hasAny([request.auth.uid]))
+        (resource.data.keys().hasAny(['participantIds']) && resource.data.participantIds.hasAny([request.auth.uid]))
         || (
           resource.data.keys().hasAny(['companyId'])
           && resource.data.companyId != null
@@ -293,7 +293,7 @@ service cloud.firestore {
         );
 
       allow update: if signedIn() && (
-        (resource.data.participantIds is list && resource.data.participantIds.hasAny([request.auth.uid]))
+        (resource.data.keys().hasAny(['participantIds']) && resource.data.participantIds.hasAny([request.auth.uid]))
         || (
           resource.data.keys().hasAny(['companyId'])
           && resource.data.companyId != null

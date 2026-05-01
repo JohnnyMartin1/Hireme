@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useFirebaseAuth } from "@/components/FirebaseAuthProvider";
 import { useToast } from "@/components/NotificationSystem";
 import { fetchCompanyTeamMembers } from "@/lib/collaboration-client";
-import { patchJobInterviewById, upsertJobInterview } from "@/lib/communication-client";
-import type { InterviewEvent } from "@/lib/communication-workflow";
+import { fetchJobInterviewPlan, patchJobInterviewById, upsertJobInterview } from "@/lib/communication-client";
+import type { InterviewEvent, InterviewPlanRound, ScorecardTemplate } from "@/lib/communication-workflow";
 
 const TYPE_OPTIONS = [
   { value: "PHONE_SCREEN", label: "Phone screen" },
@@ -74,6 +74,17 @@ export default function ScheduleInterviewModal({
     microsoft: { connected: false, email: null, syncReady: false },
   });
   const [calendarProvider, setCalendarProvider] = useState<"google" | "microsoft" | null>(null);
+  const [planLoading, setPlanLoading] = useState(false);
+  const [planRounds, setPlanRounds] = useState<InterviewPlanRound[]>([]);
+  const [scorecardTemplates, setScorecardTemplates] = useState<ScorecardTemplate[]>([]);
+  const [selectedRoundId, setSelectedRoundId] = useState<string>("");
+  const [selectedScorecardTemplateId, setSelectedScorecardTemplateId] = useState<string>("");
+  const [selectedPlanId, setSelectedPlanId] = useState<string>("");
+  const [titleTouched, setTitleTouched] = useState(false);
+  const [durationTouched, setDurationTouched] = useState(false);
+  const [interviewersTouched, setInterviewersTouched] = useState(false);
+  const [scorecardTouched, setScorecardTouched] = useState(false);
+  const lastAutofilledRoundRef = useRef<string>("");
 
   useEffect(() => {
     if (!isOpen || !user) return;
@@ -106,9 +117,23 @@ export default function ScheduleInterviewModal({
       if (next.google.syncReady) setCalendarProvider("google");
       else if (next.microsoft.syncReady) setCalendarProvider("microsoft");
       else setCalendarProvider(null);
+
+      setPlanLoading(true);
+      const planRes = await fetchJobInterviewPlan(jobId, token);
+      if (planRes.ok) {
+        const rounds = (planRes.data.rounds || []).filter((r: any) => r?.active !== false) as InterviewPlanRound[];
+        const templates = planRes.data.scorecardTemplates || [];
+        setPlanRounds(rounds);
+        setScorecardTemplates(templates);
+        setSelectedPlanId(String(planRes.data.plan?.id || ""));
+      } else {
+        setPlanRounds([]);
+        setScorecardTemplates([]);
+      }
+      setPlanLoading(false);
     };
     load();
-  }, [isOpen, user]);
+  }, [isOpen, user, jobId]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -124,6 +149,13 @@ export default function ScheduleInterviewModal({
       setDescription("");
       setNotes("");
       setStatus(defaultStatus || "SCHEDULED");
+      setSelectedRoundId("");
+      setSelectedScorecardTemplateId("");
+      setTitleTouched(false);
+      setDurationTouched(false);
+      setInterviewersTouched(false);
+      setScorecardTouched(false);
+      lastAutofilledRoundRef.current = "";
       return;
     }
     const iv: any = existingInterview;
@@ -144,7 +176,37 @@ export default function ScheduleInterviewModal({
     const provider = String(iv?.calendarProvider || "").toLowerCase();
     if (provider === "google" || provider === "microsoft") setCalendarProvider(provider);
     setTimezone(String(iv?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC"));
+    setSelectedRoundId(String(iv?.roundId || ""));
+    setSelectedScorecardTemplateId(String(iv?.scorecardTemplateId || ""));
+    setSelectedPlanId(String(iv?.planId || ""));
+    setTitleTouched(true);
+    setDurationTouched(true);
+    setInterviewersTouched(true);
+    setScorecardTouched(true);
+    lastAutofilledRoundRef.current = String(iv?.roundId || "");
   }, [isOpen, existingInterview, defaultStatus]);
+
+  useEffect(() => {
+    if (!selectedRoundId) return;
+    const chosenRound = planRounds.find((r) => r.id === selectedRoundId);
+    if (!chosenRound) return;
+    const roundChanged = lastAutofilledRoundRef.current && lastAutofilledRoundRef.current !== selectedRoundId;
+    const allowOverwriteTouched = roundChanged
+      ? window.confirm("Apply this round's defaults to fields you already edited?")
+      : false;
+    if (!titleTouched || allowOverwriteTouched) {
+      setTitle(String(chosenRound.roundName || TITLE_BY_TYPE[type] || "Interview"));
+    }
+    if (!durationTouched || allowOverwriteTouched) {
+      setDurationMinutes(String(chosenRound.defaultDurationMinutes || 30));
+    }
+    if ((!interviewersTouched || allowOverwriteTouched) && Array.isArray(chosenRound.defaultInterviewerIds)) {
+      setInterviewerIds(chosenRound.defaultInterviewerIds.map((id) => String(id)));
+    }
+    const firstTemplate = scorecardTemplates.find((tpl) => String(tpl.roundId || "") === selectedRoundId);
+    if (firstTemplate && (!scorecardTouched || allowOverwriteTouched)) setSelectedScorecardTemplateId(firstTemplate.id);
+    lastAutofilledRoundRef.current = selectedRoundId;
+  }, [selectedRoundId, planRounds, scorecardTemplates, titleTouched, durationTouched, interviewersTouched, scorecardTouched, type]);
 
   const scheduledAtIso = useMemo(() => {
     if (!scheduledDate || !scheduledTime) return null;
@@ -170,6 +232,9 @@ export default function ScheduleInterviewModal({
         location: { type: locationType, value: locationValue.trim() },
         notes: notes.trim(),
         calendarProvider,
+        planId: selectedPlanId || null,
+        roundId: selectedRoundId || null,
+        scorecardTemplateId: selectedScorecardTemplateId || null,
       };
       const res = existingInterview?.id
         ? await patchJobInterviewById(jobId, existingInterview.id, token, payload)
@@ -181,10 +246,21 @@ export default function ScheduleInterviewModal({
       const saved = res.data.interview as any;
       const syncStatus = String(saved?.calendarSyncStatus || "NOT_SYNCED");
       if (syncStatus === "FAILED") {
-        toast.warning("Interview scheduled", "Calendar sync failed. Internal interview was saved.");
+        toast.warning(
+          existingInterview?.id ? "Interview updated" : "Interview scheduled",
+          "Calendar sync failed. The interview was saved in HireMe."
+        );
       } else if (syncStatus === "SYNCED") {
         const label = String(saved?.calendarProvider || "").toLowerCase() === "microsoft" ? "Outlook Calendar" : "Google Calendar";
-        toast.success("Interview saved", `Interview synced to ${label}.`);
+        toast.success(
+          existingInterview?.id ? "Interview updated" : "Interview scheduled",
+          `Synced to ${label}.`
+        );
+      } else {
+        toast.success(
+          existingInterview?.id ? "Interview updated" : "Interview scheduled",
+          existingInterview?.id ? "Changes saved in HireMe." : "Saved in HireMe."
+        );
       }
       const pipelineRes = await fetch(`/api/job/${jobId}/pipeline`, {
         method: "POST",
@@ -232,10 +308,36 @@ export default function ScheduleInterviewModal({
     <div className="fixed inset-0 z-50 bg-black/40 p-4">
       <div className="mx-auto mt-4 max-h-[92vh] w-full max-w-4xl overflow-y-auto rounded-2xl border border-slate-200 bg-white shadow-2xl">
         <div className="sticky top-0 z-10 border-b border-slate-100 bg-white px-6 py-4">
-          <h3 className="text-xl font-bold text-navy-900">{existingInterview ? "Edit interview" : "Schedule interview"}</h3>
+          <h3 className="text-xl font-bold text-navy-900">
+            {existingInterview?.id ? "Reschedule interview" : "Schedule interview"}
+          </h3>
           <p className="mt-1 text-sm text-slate-600">
-            {candidateName || "Candidate"} {jobTitle ? `• ${jobTitle}` : ""}
+            <span className="font-semibold text-navy-900">{candidateName || "Candidate"}</span>
+            {jobTitle ? (
+              <>
+                {" "}
+                <span className="text-slate-400">·</span> {jobTitle}
+              </>
+            ) : null}
           </p>
+          {!calendarStatus.loading ? (
+            <p className="mt-2 text-xs text-slate-600">
+              {calendarStatus.google.connected ? (
+                <span className="mr-2 inline-block rounded-md bg-emerald-50 px-2 py-0.5 font-medium text-emerald-900">
+                  Google connected{calendarStatus.google.email ? ` (${calendarStatus.google.email})` : ""}
+                </span>
+              ) : (
+                <span className="mr-2 text-slate-500">Google not connected</span>
+              )}
+              {calendarStatus.microsoft.connected ? (
+                <span className="inline-block rounded-md bg-emerald-50 px-2 py-0.5 font-medium text-emerald-900">
+                  Outlook connected{calendarStatus.microsoft.email ? ` (${calendarStatus.microsoft.email})` : ""}
+                </span>
+              ) : (
+                <span className="text-slate-500">Outlook not connected</span>
+              )}
+            </p>
+          ) : null}
         </div>
 
         <div className="space-y-5 px-6 py-5">
@@ -243,18 +345,40 @@ export default function ScheduleInterviewModal({
             <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Interview details</p>
             <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
           <div>
+            <label className="text-xs font-semibold text-slate-600">Interview round</label>
+            <select
+              value={selectedRoundId}
+              onChange={(e) => setSelectedRoundId(e.target.value)}
+              className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+            >
+              <option value="">Manual interview (no round)</option>
+              {planRounds.map((round) => (
+                <option key={round.id} value={round.id}>
+                  {round.roundName}
+                </option>
+              ))}
+            </select>
+            {planLoading ? (
+              <p className="mt-1 text-[11px] text-slate-500">Loading interview plan...</p>
+            ) : planRounds.length === 0 ? (
+              <p className="mt-1 text-[11px] text-amber-700">
+                No interview plan yet. You can still schedule manually, or create a plan from job interviews.
+              </p>
+            ) : null}
+          </div>
+          <div>
             <label className="text-xs font-semibold text-slate-600">Interview type</label>
-            <select value={type} onChange={(e) => { setType(e.target.value); if (!title.trim()) setTitle(TITLE_BY_TYPE[e.target.value]); }} className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm">
+            <select value={type} onChange={(e) => { setType(e.target.value); if (!title.trim() || !titleTouched) setTitle(TITLE_BY_TYPE[e.target.value]); }} className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm">
               {TYPE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
             </select>
           </div>
           <div>
             <label className="text-xs font-semibold text-slate-600">Title</label>
-            <input value={title} onChange={(e) => setTitle(e.target.value)} className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" />
+            <input value={title} onChange={(e) => { setTitle(e.target.value); setTitleTouched(true); }} className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" />
           </div>
           <div>
             <label className="text-xs font-semibold text-slate-600">Duration</label>
-            <select value={durationMinutes} onChange={(e) => setDurationMinutes(e.target.value)} className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm">
+            <select value={durationMinutes} onChange={(e) => { setDurationMinutes(e.target.value); setDurationTouched(true); }} className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm">
               <option value="15">15 min</option><option value="30">30 min</option><option value="45">45 min</option><option value="60">60 min</option>
             </select>
           </div>
@@ -272,9 +396,10 @@ export default function ScheduleInterviewModal({
                   <input
                     type="checkbox"
                     checked={interviewerIds.includes(m.id)}
-                    onChange={() =>
-                      setInterviewerIds((prev) => (prev.includes(m.id) ? prev.filter((x) => x !== m.id) : [...prev, m.id]))
-                    }
+                    onChange={() => {
+                      setInterviewersTouched(true);
+                      setInterviewerIds((prev) => (prev.includes(m.id) ? prev.filter((x) => x !== m.id) : [...prev, m.id]));
+                    }}
                   />
                   <span className="text-slate-700">{m.name}</span>
                 </label>
@@ -284,7 +409,7 @@ export default function ScheduleInterviewModal({
               <div className="mt-1 flex flex-wrap gap-1">
                 {interviewerIds.map((id) => {
                   const m = teamMembers.find((x) => x.id === id);
-                  return <button key={id} type="button" onClick={() => setInterviewerIds((prev) => prev.filter((x) => x !== id))} className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px]">{m?.name || id} ×</button>;
+                  return <button key={id} type="button" onClick={() => { setInterviewersTouched(true); setInterviewerIds((prev) => prev.filter((x) => x !== id)); }} className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px]">{m?.name || id} ×</button>;
                 })}
               </div>
             )}
@@ -304,6 +429,23 @@ export default function ScheduleInterviewModal({
           <div>
             <label className="text-xs font-semibold text-slate-600">Description</label>
             <input value={description} onChange={(e) => setDescription(e.target.value)} className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" />
+          </div>
+          <div>
+            <label className="text-xs font-semibold text-slate-600">Scorecard template</label>
+            <select
+              value={selectedScorecardTemplateId}
+              onChange={(e) => { setSelectedScorecardTemplateId(e.target.value); setScorecardTouched(true); }}
+              className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+            >
+              <option value="">No scorecard template</option>
+              {scorecardTemplates
+                .filter((tpl) => !selectedRoundId || String(tpl.roundId || "") === selectedRoundId)
+                .map((tpl) => (
+                  <option key={tpl.id} value={tpl.id}>
+                    {tpl.title}
+                  </option>
+                ))}
+            </select>
           </div>
               <div>
                 <label className="text-xs font-semibold text-slate-600">Interview status</label>
@@ -408,7 +550,9 @@ export default function ScheduleInterviewModal({
               </div>
             )}
             <div className="mt-3 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700">
-              {scheduledAtIso ? `Interview for ${new Date(scheduledAtIso).toLocaleString()} (${timezone}) • Provider: ${selectedProviderLabel}` : "Select date and time to continue."}
+              {scheduledDate && scheduledTime
+                ? `${scheduledDate} at ${scheduledTime} (${timezone}) · Calendar: ${selectedProviderLabel}`
+                : "Select date and time to continue."}
             </div>
           </section>
         </div>

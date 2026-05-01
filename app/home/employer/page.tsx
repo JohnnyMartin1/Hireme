@@ -2,73 +2,45 @@
 import Link from "next/link";
 import { useFirebaseAuth } from "@/components/FirebaseAuthProvider";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Building, Search, Users, MessageSquare, Star, FileText, Lock } from "lucide-react";
 import EmployerJobsList from "@/components/EmployerJobsList";
 import {
-  getCandidateUrl,
-  getCandidatesSearchUrl,
   getEmployerPoolsUrl,
   getEmployerTemplatesUrl,
-  getJobCompareUrl,
-  getJobMatchesUrl,
-  getJobPipelineUrl,
+  getEmployerFeedbackUrl,
 } from "@/lib/navigation";
 import {
-  getDocument,
   getEmployerJobs,
   getCompanyJobs,
-  getUserMessageThreads,
-  getThreadMessages,
-  getPipelineByJob,
-  queryDocuments,
-  where,
-  normalizePipelineStage,
-  threadDataToJobDetails,
 } from '@/lib/firebase-firestore';
-import {
-  fetchJobEvaluationCriteria,
-  fetchJobEvaluations,
-  fetchJobReviews,
-} from '@/lib/decision-client';
-import { fetchJobInterviews, fetchJobSequences } from '@/lib/communication-client';
 import { fetchReviewAssignments } from "@/lib/collaboration-client";
-import {
-  summarizeCandidateEvaluations,
-  type CandidateEvaluation,
-  type CandidateReviewRequest,
-  type JobEvaluationCriterion,
-} from '@/lib/hiring-decision';
-import { isSequenceStepDue } from "@/lib/communication-status";
 import CompanyRatingDisplay from '@/components/CompanyRatingDisplay';
 import UpcomingInterviewsPanel from "@/components/recruiter/UpcomingInterviewsPanel";
-
-function toSafeDate(value: unknown): Date | null {
-  const v: any = value;
-  if (!v) return null;
-  if (typeof v.toDate === "function") {
-    const d = v.toDate();
-    return Number.isNaN(d.getTime()) ? null : d;
-  }
-  if (typeof v._seconds === "number") {
-    const d = new Date(v._seconds * 1000);
-    return Number.isNaN(d.getTime()) ? null : d;
-  }
-  if (typeof v.seconds === "number") {
-    const d = new Date(v.seconds * 1000);
-    return Number.isNaN(d.getTime()) ? null : d;
-  }
-  const d = new Date(String(v));
-  return Number.isNaN(d.getTime()) ? null : d;
-}
+import {
+  buildRecruiterWorkQueue,
+  selectDashboardTasks,
+  workQueueCategoryLabel,
+  type WorkQueueTask,
+} from "@/lib/recruiter-work-queue";
 
 export default function EmployerHomePage() {
   const { user, profile, loading } = useFirebaseAuth();
   const router = useRouter();
   const [attentionLoading, setAttentionLoading] = useState(true);
-  const [workQueueItems, setWorkQueueItems] = useState<any[]>([]);
+  const activeDevTimersRef = useRef<Set<string>>(new Set());
+  const [workQueueItems, setWorkQueueItems] = useState<WorkQueueTask[]>([]);
   const [upcomingInterviews, setUpcomingInterviews] = useState<any[]>([]);
   const [workQueueCounts, setWorkQueueCounts] = useState({
+    total: 0,
+    urgent: 0,
+    interviews: 0,
+    offers: 0,
+    messages: 0,
+    reviews: 0,
+    followups: 0,
+    sourcing: 0,
+    other: 0,
     followUpDueToday: 0,
     followUpDue: 0,
     awaitingResponse: 0,
@@ -81,6 +53,14 @@ export default function EmployerHomePage() {
     activeSequences: 0,
     sequenceStepsDue: 0,
     interviewNeedsEval: 0,
+    offersPendingApproval: 0,
+    offersReadyToSend: 0,
+    offersAwaitingResponse: 0,
+    offersAcceptedNeedClose: 0,
+    scorecardsDue: 0,
+    debriefsBlocked: 0,
+    debriefsReady: 0,
+    interviewsNeedingFollowUp: 0,
   });
   const [teamReviewCounts, setTeamReviewCounts] = useState({
     assignedToMe: 0,
@@ -143,365 +123,43 @@ export default function EmployerHomePage() {
   }, [user, profile, loading, router]);
 
   useEffect(() => {
+    const startDevTimer = (label: string) => {
+      if (process.env.NODE_ENV !== "development") return;
+      const active = activeDevTimersRef.current;
+      if (!active.has(label)) {
+        console.time(label);
+        active.add(label);
+      }
+    };
+
+    const endDevTimer = (label: string) => {
+      if (process.env.NODE_ENV !== "development") return;
+      const active = activeDevTimersRef.current;
+      if (active.has(label)) {
+        console.timeEnd(label);
+        active.delete(label);
+      }
+    };
+
     const loadNeedsAttention = async () => {
       if (!user || !profile || (profile.role !== 'EMPLOYER' && profile.role !== 'RECRUITER')) return;
 
       setAttentionLoading(true);
       try {
-        const { data: jobs, error: jobsError } = profile.companyId
-          ? await getCompanyJobs(profile.companyId, user.uid, profile.isCompanyOwner || false)
-          : await getEmployerJobs(user.uid);
-        if (jobsError || !jobs || jobs.length === 0) {
-          setWorkQueueItems([]);
-          setWorkQueueCounts({
-            followUpDueToday: 0,
-            followUpDue: 0,
-            awaitingResponse: 0,
-            awaitingRecruiterReply: 0,
-            newMatches: 0,
-            awaitingReview: 0,
-            evaluationIncomplete: 0,
-            finalistsPending: 0,
-            interviewsSoon: 0,
-            activeSequences: 0,
-            sequenceStepsDue: 0,
-            interviewNeedsEval: 0,
-          });
-          return;
-        }
-
-        const now = Date.now();
-        const nowDate = new Date();
-        const endOfToday = new Date(nowDate);
-        endOfToday.setHours(23, 59, 59, 999);
-        const threeDaysFromNow = new Date(nowDate);
-        threeDaysFromNow.setDate(threeDaysFromNow.getDate() + 3);
-        const queueItems: any[] = [];
-        const upcomingRows: any[] = [];
-        const seenJobCandidate = new Set<string>();
-        const candidateCache = new Map<string, string>();
-        let followUpDueCount = 0;
-        let followUpDueTodayCount = 0;
-        let awaitingResponseCount = 0;
-        let newMatchesCount = 0;
-        let awaitingReviewCount = 0;
-        let evaluationIncompleteCount = 0;
-        let finalistsPendingCount = 0;
-        let interviewsSoonCount = 0;
-        let activeSequencesCount = 0;
-        let awaitingRecruiterReplyCount = 0;
-        let sequenceStepsDueCount = 0;
-        let interviewNeedsEvalCount = 0;
-        const token = await user.getIdToken();
-
-        const resolveCandidateName = async (candidateId: string) => {
-          if (candidateCache.has(candidateId)) return candidateCache.get(candidateId) as string;
-          const { data: candidate } = await getDocument('users', candidateId);
-          const candidateProfile = (candidate || {}) as any;
-          const candidateName = `${candidateProfile.firstName || ''} ${candidateProfile.lastName || ''}`.trim() || 'Candidate';
-          candidateCache.set(candidateId, candidateName);
-          return candidateName;
-        };
-
-        // "Awaiting response" matches the Messages inbox: last message in the thread is yours (waiting on the candidate).
-        const { data: threadsData, error: threadsError } = await getUserMessageThreads(user.uid);
-        const jobsWithRecruiterOutreach = new Set<string>();
-        if (!threadsError && threadsData && threadsData.length > 0) {
-          for (const thread of threadsData as any[]) {
-            const otherId = Array.isArray(thread.participantIds)
-              ? (thread.participantIds as string[]).find((id: string) => id !== user.uid)
-              : undefined;
-            if (!otherId) continue;
-            try {
-              const { data: threadMessages } = await getThreadMessages(thread.id);
-              if (!threadMessages || threadMessages.length === 0) continue;
-
-              const lastMessage = threadMessages[threadMessages.length - 1];
-              const storedJob = threadDataToJobDetails(thread as Record<string, unknown>);
-              const mostRecentWithJob = [...threadMessages]
-                .reverse()
-                .find((msg: any) => msg?.jobDetails?.jobId);
-              const threadJobId =
-                storedJob?.jobId ||
-                (mostRecentWithJob?.jobDetails?.jobId ? String(mostRecentWithJob.jobDetails.jobId) : "");
-              const threadJobTitle = threadJobId
-                ? String((jobs as any[]).find((j) => j.id === threadJobId)?.title || "Job")
-                : "Messages";
-              const recruiterSentInThread = threadMessages.some((msg: any) => String(msg?.senderId || "") === user.uid);
-              if (threadJobId && recruiterSentInThread) {
-                jobsWithRecruiterOutreach.add(threadJobId);
-              }
-              const msgHref = threadJobId
-                ? `/messages/${thread.id}?jobId=${encodeURIComponent(threadJobId)}`
-                : `/messages/${thread.id}`;
-              const candidateName = await resolveCandidateName(otherId);
-              if (lastMessage?.senderId === user.uid) {
-                awaitingResponseCount += 1;
-                queueItems.push({
-                  id: `await-msg-${thread.id}`,
-                  candidateName,
-                  candidateId: otherId,
-                  jobId: threadJobId,
-                  jobTitle: threadJobTitle,
-                  reason: "Awaiting candidate reply (you sent the last message)",
-                  href: msgHref,
-                  tone: "amber",
-                  priority: 2,
-                });
-              } else if (lastMessage?.senderId === otherId) {
-                awaitingRecruiterReplyCount += 1;
-                queueItems.push({
-                  id: `await-recruiter-${thread.id}`,
-                  candidateName,
-                  candidateId: otherId,
-                  jobId: threadJobId,
-                  jobTitle: threadJobTitle,
-                  reason: "Candidate replied — follow up in thread",
-                  href: msgHref,
-                  tone: "sky",
-                  priority: 1.5,
-                });
-              }
-            } catch {
-              /* skip thread */
-            }
-          }
-        }
-
-        for (const job of jobs as any[]) {
-          const { data: entries } = await getPipelineByJob(job.id);
-          const pipelineCandidates = new Set<string>();
-          const normalizedEntries = (entries || []).map((entry: any) => ({
-            ...entry,
-            stage: normalizePipelineStage(entry.stage),
-          }));
-          const [criteriaRes, evalRes, reviewsRes, sequencesRes, interviewsRes] = await Promise.all([
-            fetchJobEvaluationCriteria(job.id, token),
-            fetchJobEvaluations(job.id, token),
-            fetchJobReviews(job.id, token),
-            fetchJobSequences(job.id, token),
-            fetchJobInterviews(job.id, token),
-          ]);
-          const activeCriteria = (criteriaRes.ok ? (criteriaRes.data.criteria || []) : [])
-            .filter((c: JobEvaluationCriterion) => c.active !== false);
-          const evalByCandidate = new Map<string, CandidateEvaluation[]>();
-          for (const ev of (evalRes.ok ? ((evalRes.data.evaluations || []) as CandidateEvaluation[]) : [])) {
-            const cid = String(ev.candidateId || '');
-            if (!cid) continue;
-            const list = evalByCandidate.get(cid) || [];
-            list.push(ev);
-            evalByCandidate.set(cid, list);
-          }
-          const reviewByCandidate = new Map<string, CandidateReviewRequest>();
-          for (const rv of (reviewsRes.ok ? ((reviewsRes.data.reviews || []) as CandidateReviewRequest[]) : [])) {
-            const cid = String(rv.candidateId || '');
-            if (!cid) continue;
-            if (!reviewByCandidate.has(cid)) reviewByCandidate.set(cid, rv);
-          }
-          const sequenceByCandidate = new Map<string, any>();
-          for (const seq of (sequencesRes.ok ? (sequencesRes.data.sequences || []) : []) as any[]) {
-            const cid = String(seq?.candidateId || '');
-            if (!cid) continue;
-            if (!sequenceByCandidate.has(cid)) sequenceByCandidate.set(cid, seq);
-            if (String(seq?.status || '') === 'ACTIVE') activeSequencesCount += 1;
-          }
-          const interviewByCandidate = new Map<string, any>();
-          for (const interview of (interviewsRes.ok ? (interviewsRes.data.interviews || []) : []) as any[]) {
-            const cid = String(interview?.candidateId || '');
-            if (!cid) continue;
-            if (String(interview?.status || '') === 'CANCELLED') continue;
-            if (!interviewByCandidate.has(cid)) interviewByCandidate.set(cid, interview);
-            upcomingRows.push({
-              ...interview,
-              candidateName: await resolveCandidateName(cid),
-              jobTitle: (job as any).title || "Job",
-            });
-            const atRaw = interview?.scheduledAt;
-            const at = toSafeDate(atRaw);
-            if (at && at.getTime() >= now && at.getTime() <= threeDaysFromNow.getTime()) {
-              interviewsSoonCount += 1;
-              queueItems.push({
-                id: `interview-${job.id}-${cid}`,
-                candidateName: await resolveCandidateName(cid),
-                candidateId: cid,
-                jobId: job.id,
-                jobTitle: (job as any).title || 'Job',
-                reason: `Interview ${String(interview?.status || 'scheduled').toLowerCase()} soon`,
-                href: getCandidateUrl(cid, job.id),
-                tone: 'sky',
-                priority: 1.4,
-              });
-            }
-          }
-
-          const shortlistCount = normalizedEntries.filter((entry: any) => entry.stage === 'SHORTLIST').length;
-          if (shortlistCount >= 2) {
-            queueItems.push({
-              id: `shortlist-compare-${job.id}`,
-              candidateName: 'Compare shortlist',
-              candidateId: '',
-              jobId: job.id,
-              jobTitle: (job as any).title || 'Job',
-              reason: `${shortlistCount} shortlisted contenders — side-by-side decision`,
-              href: getJobCompareUrl(job.id),
-              tone: 'violet',
-              priority: 1.8,
-            });
-          }
-
-          for (const entry of normalizedEntries) {
-            pipelineCandidates.add(entry.candidateId);
-            const candidateName = await resolveCandidateName(entry.candidateId);
-            const dedupeKey = `${entry.jobId}:${entry.candidateId}`;
-            seenJobCandidate.add(dedupeKey);
-            const evaluationSummary = summarizeCandidateEvaluations(
-              evalByCandidate.get(String(entry.candidateId)) || [],
-              activeCriteria
-            );
-            const reviewStatus = reviewByCandidate.get(String(entry.candidateId))?.status;
-            const stage = normalizePipelineStage(entry.stage);
-            const sequenceStatus = sequenceByCandidate.get(String(entry.candidateId))?.status;
-            if (reviewStatus === 'REQUESTED') {
-              awaitingReviewCount += 1;
-              queueItems.push({
-                id: `await-review-${entry.jobId}-${entry.candidateId}`,
-                candidateName,
-                candidateId: entry.candidateId,
-                jobId: entry.jobId,
-                jobTitle: (job as any).title || 'Job',
-                reason: 'Waiting on hiring manager review',
-                href: getCandidateUrl(entry.candidateId, entry.jobId),
-                tone: 'violet',
-                priority: 1.6,
-              });
-            }
-            if ((stage === 'SHORTLIST' || stage === 'INTERVIEW' || stage === 'FINALIST') && !evaluationSummary.isComplete) {
-              evaluationIncompleteCount += 1;
-            }
-            if (stage === 'FINALIST' && reviewStatus !== 'APPROVED') {
-              finalistsPendingCount += 1;
-            }
-
-            const followUpRaw = (entry as any).nextFollowUpAt as any;
-            const nextFollowUpDate = followUpRaw?.toDate
-              ? followUpRaw.toDate()
-              : followUpRaw
-                ? new Date(followUpRaw)
-                : null;
-
-            if (nextFollowUpDate && nextFollowUpDate.getTime() < now) {
-              followUpDueCount += 1;
-              queueItems.push({
-                id: entry.id,
-                candidateName,
-                candidateId: entry.candidateId,
-                jobId: entry.jobId,
-                jobTitle: (job as any).title || 'Job',
-                reason: 'Follow-up overdue',
-                href: getCandidateUrl(entry.candidateId, entry.jobId),
-                tone: 'rose',
-                priority: 1,
-              });
-            }
-            if (nextFollowUpDate && nextFollowUpDate.getTime() >= now && nextFollowUpDate.getTime() <= endOfToday.getTime()) {
-              followUpDueTodayCount += 1;
-            }
-            if (sequenceStatus === 'ACTIVE') {
-              queueItems.push({
-                id: `sequence-${entry.jobId}-${entry.candidateId}`,
-                candidateName,
-                candidateId: entry.candidateId,
-                jobId: entry.jobId,
-                jobTitle: (job as any).title || 'Job',
-                reason: 'Active outreach sequence',
-                href: getCandidateUrl(entry.candidateId, entry.jobId),
-                tone: 'violet',
-                priority: 2.3,
-              });
-            }
-            const seqRow = sequenceByCandidate.get(String(entry.candidateId));
-            if (seqRow && String(seqRow.status || "") === "ACTIVE" && isSequenceStepDue(seqRow, new Date())) {
-              sequenceStepsDueCount += 1;
-              queueItems.push({
-                id: `seq-due-${entry.jobId}-${entry.candidateId}`,
-                candidateName,
-                candidateId: entry.candidateId,
-                jobId: entry.jobId,
-                jobTitle: (job as any).title || "Job",
-                reason: "Sequence reminder due — send the next message yourself",
-                href: getCandidateUrl(entry.candidateId, entry.jobId),
-                tone: "violet",
-                priority: 1.2,
-              });
-            }
-            const interviewRow = interviewByCandidate.get(String(entry.candidateId));
-            const interviewAtRaw = interviewRow?.scheduledAt;
-            if (
-              interviewAtRaw &&
-              (stage === "INTERVIEW" || stage === "FINALIST") &&
-              !evaluationSummary.isComplete
-            ) {
-              interviewNeedsEvalCount += 1;
-              queueItems.push({
-                id: `interview-eval-${entry.jobId}-${entry.candidateId}`,
-                candidateName,
-                candidateId: entry.candidateId,
-                jobId: entry.jobId,
-                jobTitle: (job as any).title || "Job",
-                reason: "Interview scheduled — structured evaluation still incomplete",
-                href: getCandidateUrl(entry.candidateId, entry.jobId),
-                tone: "indigo",
-                priority: 1.25,
-              });
-            }
-
-          }
-
-          const { data: matches } = await queryDocuments('jobMatches', [where('jobId', '==', job.id)]);
-          const strongUnactedMatches = ((matches || []) as any[])
-            .filter((m: any) => typeof m.overallScore === 'number' && m.overallScore >= 80)
-            .sort((a: any, b: any) => Number(b.overallScore || 0) - Number(a.overallScore || 0))
-            .slice(0, 4);
-
-          for (const match of strongUnactedMatches as any[]) {
-            if (!match.candidateId || pipelineCandidates.has(match.candidateId)) continue;
-            const dedupeKey = `${job.id}:${match.candidateId}`;
-            if (seenJobCandidate.has(dedupeKey)) continue;
-            seenJobCandidate.add(dedupeKey);
-            const candidateName = await resolveCandidateName(match.candidateId);
-            newMatchesCount += 1;
-            queueItems.push({
-              id: `new-${job.id}-${match.candidateId}`,
-              candidateName,
-              candidateId: match.candidateId,
-              jobId: job.id,
-              jobTitle: (job as any).title || 'Job',
-              reason: 'New match to review',
-              href: getJobMatchesUrl(job.id),
-              tone: 'sky',
-              priority: 3,
-            });
-          }
-        }
-
-        queueItems.sort((a, b) => a.priority - b.priority);
-        setWorkQueueItems(queueItems.slice(0, 12));
-        setUpcomingInterviews(upcomingRows);
-        setWorkQueueCounts({
-          followUpDueToday: followUpDueTodayCount,
-          followUpDue: followUpDueCount,
-          awaitingResponse: awaitingResponseCount,
-          awaitingRecruiterReply: awaitingRecruiterReplyCount,
-          newMatches: newMatchesCount,
-          awaitingReview: awaitingReviewCount,
-          evaluationIncomplete: evaluationIncompleteCount,
-          finalistsPending: finalistsPendingCount,
-          interviewsSoon: interviewsSoonCount,
-          activeSequences: activeSequencesCount,
-          sequenceStepsDue: sequenceStepsDueCount,
-          interviewNeedsEval: interviewNeedsEvalCount,
+        startDevTimer("dashboard:load-needs-attention");
+        const result = await buildRecruiterWorkQueue({
+          user: { uid: user.uid, getIdToken: () => user.getIdToken() },
+          profile: {
+            role: profile.role,
+            companyId: profile.companyId || undefined,
+            isCompanyOwner: profile.isCompanyOwner || false,
+          },
         });
+        setWorkQueueItems(selectDashboardTasks(result.tasks, 5));
+        setUpcomingInterviews(result.upcomingInterviews);
+        setWorkQueueCounts(result.counts);
       } finally {
+        endDevTimer("dashboard:load-needs-attention");
         setAttentionLoading(false);
       }
     };
@@ -589,7 +247,7 @@ export default function EmployerHomePage() {
               </p>
             </div>
             <span className="text-xs sm:text-sm text-slate-500 font-medium">
-              {attentionLoading ? 'Loading...' : `${workQueueItems.length} items ready`}
+              {attentionLoading ? 'Loading...' : `${workQueueCounts.total} items ready`}
             </span>
           </div>
 
@@ -617,52 +275,99 @@ export default function EmployerHomePage() {
                 {workQueueCounts.interviewNeedsEval > 0 && (
                   <span>Interviews need evaluation {workQueueCounts.interviewNeedsEval}. </span>
                 )}
+                {workQueueCounts.offersPendingApproval > 0 && (
+                  <span>Offers pending approval {workQueueCounts.offersPendingApproval}. </span>
+                )}
+                {workQueueCounts.offersReadyToSend > 0 && (
+                  <span>Offers ready to send {workQueueCounts.offersReadyToSend}. </span>
+                )}
+                {workQueueCounts.offersAwaitingResponse > 0 && (
+                  <span>Offers awaiting candidate {workQueueCounts.offersAwaitingResponse}. </span>
+                )}
+                {workQueueCounts.offersAcceptedNeedClose > 0 && (
+                  <span>Accepted offers — confirm job close {workQueueCounts.offersAcceptedNeedClose}. </span>
+                )}
                 {workQueueCounts.followUpDue === 0 &&
                   workQueueCounts.awaitingRecruiterReply === 0 &&
                   workQueueCounts.awaitingResponse === 0 &&
                   workQueueCounts.newMatches === 0 &&
                   workQueueCounts.awaitingReview === 0 &&
-                  workQueueCounts.interviewNeedsEval === 0 && (
+                  workQueueCounts.interviewNeedsEval === 0 &&
+                  workQueueCounts.offersPendingApproval === 0 &&
+                  workQueueCounts.offersReadyToSend === 0 &&
+                  workQueueCounts.offersAwaitingResponse === 0 &&
+                  workQueueCounts.offersAcceptedNeedClose === 0 && (
                   <span>Nothing urgent in these categories.</span>
                 )}
               </p>
               {workQueueItems.length === 0 ? (
                 <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-6 text-center">
-                  <p className="text-sm font-medium text-navy-900">Queue is clear</p>
-                  <p className="text-xs text-slate-500 mt-1">No urgent follow-ups or pending match actions right now.</p>
+                  <p className="text-sm font-medium text-navy-900">Nothing in your work queue</p>
+                  <p className="text-xs text-slate-500 mt-1">No urgent follow-ups, reviews, interviews, offers, or messages right now.</p>
                 </div>
               ) : (
                 <div className="space-y-2">
+                  {workQueueCounts.total > workQueueItems.length ? (
+                    <p className="text-xs text-slate-500">
+                      Showing {workQueueItems.length} of {workQueueCounts.total} highest-priority tasks.
+                    </p>
+                  ) : null}
                   {workQueueItems.map((item) => (
                     <div
                       key={item.id}
-                      className={`rounded-lg border px-3 py-2.5 text-sm transition-colors ${
-                        item.tone === "rose"
-                          ? "border-navy-200 bg-navy-50 text-navy-900"
-                          : item.tone === "amber"
-                            ? "border-sky-200 bg-sky-50 text-sky-950"
-                            : item.tone === "violet"
-                              ? "border-sky-200 bg-sky-50 text-navy-900"
-                              : item.tone === "indigo"
-                                ? "border-slate-200 bg-slate-50 text-navy-900"
-                                : "border-sky-200 bg-sky-50 text-sky-900"
-                      }`}
+                      className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm transition-colors hover:bg-white"
                     >
                       <Link href={item.href} className="flex items-center justify-between gap-3">
                         <div className="min-w-0">
-                          <p className="font-semibold truncate">{item.candidateName} · {item.jobTitle}</p>
-                          <p className="text-xs opacity-80">{item.reason}</p>
+                          <p className="font-semibold truncate">{item.title}</p>
+                          <p className="text-xs opacity-80">{item.subtitle}</p>
+                          <span className="mt-1 inline-flex rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-600">
+                            {workQueueCategoryLabel(item.category)}
+                          </span>
                         </div>
                         <span className="inline-flex shrink-0 items-center rounded-lg bg-navy-800 px-3 py-1.5 text-xs font-semibold text-white">
-                          Open
+                          {item.actionLabel}
                         </span>
                       </Link>
                     </div>
                   ))}
+                  <div className="pt-1">
+                    <Link href="/employer/work-queue" className="inline-flex rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-navy-900 hover:bg-slate-100">
+                      View all tasks
+                    </Link>
+                  </div>
                 </div>
               )}
             </>
           )}
+        </section>
+        <section className="w-full min-w-0 bg-white p-4 sm:p-6 rounded-none sm:rounded-xl md:rounded-2xl shadow-md border-x-0 sm:border border-slate-200 mb-3 sm:mb-6">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h3 className="text-base font-bold text-navy-900">Interview follow-up</h3>
+              <p className="text-xs text-slate-600">
+                Complete scorecards, track missing feedback, and finalize debrief decisions.
+              </p>
+              {workQueueCounts.interviewsNeedingFollowUp > 0 ? (
+                <div className="mt-2 flex flex-wrap gap-2 text-[11px] text-slate-600">
+                  <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 font-semibold">Scorecards due {workQueueCounts.scorecardsDue}</span>
+                  <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 font-semibold">Evaluations incomplete {workQueueCounts.interviewNeedsEval}</span>
+                  <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 font-semibold">Debriefs blocked {workQueueCounts.debriefsBlocked}</span>
+                  <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 font-semibold">Debriefs ready {workQueueCounts.debriefsReady}</span>
+                </div>
+              ) : (
+                <p className="mt-2 text-xs text-slate-500">No interview follow-up pending.</p>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <Link href="/employer/work-queue?category=interviews" className="rounded-lg bg-navy-800 px-3 py-2 text-xs font-semibold text-white">
+                Open interview tasks
+              </Link>
+              <Link href={getEmployerFeedbackUrl()} className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-navy-900">
+                Open feedback queue
+              </Link>
+            </div>
+          </div>
         </section>
 
         {/* Main Content Grid */}
@@ -740,6 +445,22 @@ export default function EmployerHomePage() {
                     <MessageSquare className="h-4 w-4 sm:h-5 sm:w-5 text-navy-800" />
                   </div>
                   <span className="font-semibold text-slate-700 text-sm sm:text-base">Open Messages</span>
+                  <div className="ml-auto">
+                    <div className="text-slate-400">›</div>
+                  </div>
+                </Link>
+
+                <Link
+                  href="/employer/work-queue"
+                  className="flex items-center p-3 sm:p-4 rounded-lg hover:bg-sky-50 min-h-[56px] active:bg-sky-100 transition-colors"
+                >
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 bg-sky-100 rounded-lg flex items-center justify-center mr-3 sm:mr-4 flex-shrink-0">
+                    <FileText className="h-4 w-4 sm:h-5 sm:w-5 text-navy-800" />
+                  </div>
+                  <div className="min-w-0">
+                    <span className="font-semibold text-slate-700 text-sm sm:text-base">Work queue</span>
+                    <p className="text-[11px] text-slate-500">{workQueueCounts.total} total tasks</p>
+                  </div>
                   <div className="ml-auto">
                     <div className="text-slate-400">›</div>
                   </div>

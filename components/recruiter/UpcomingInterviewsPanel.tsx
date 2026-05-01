@@ -1,7 +1,10 @@
 "use client";
 
+import Link from "next/link";
 import type { InterviewEvent } from "@/lib/communication-workflow";
 import InterviewStatusBadge from "@/components/recruiter/InterviewStatusBadge";
+import { getCandidateUrl, getJobOverviewUrl } from "@/lib/navigation";
+import { formatRecruiterDateTime } from "@/lib/recruiter-datetime";
 
 function toDate(value: unknown): Date | null {
   const v: any = value;
@@ -22,10 +25,17 @@ function toDate(value: unknown): Date | null {
   return Number.isNaN(d.getTime()) ? null : d;
 }
 
+export type UpcomingInterviewRow = InterviewEvent & {
+  candidateName?: string;
+  jobTitle?: string;
+  candidateId?: string;
+  jobId?: string;
+};
+
 export default function UpcomingInterviewsPanel({
   interviews,
 }: {
-  interviews: Array<InterviewEvent & { candidateName?: string; jobTitle?: string }>;
+  interviews: UpcomingInterviewRow[];
 }) {
   const rows = interviews
     .filter((x) => x.status !== "CANCELLED" && x.status !== "COMPLETED")
@@ -48,32 +58,94 @@ export default function UpcomingInterviewsPanel({
     <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
       <div className="mb-3 flex items-center justify-between">
         <h3 className="text-sm font-semibold text-slate-900">Upcoming interviews</h3>
-        <p className="text-xs text-slate-600">Today {today} · Tomorrow {tomorrow}</p>
+        <p className="text-xs text-slate-600">
+          Today {today} · Tomorrow {tomorrow}
+        </p>
       </div>
       <div className="space-y-2">
         {rows.length === 0 ? (
           <p className="text-sm text-slate-500">No upcoming interviews.</p>
         ) : (
-          rows.map((iv) => (
-            <div key={iv.id} className="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2">
-              <div className="flex items-center justify-between gap-2">
-                <p className="text-sm font-medium text-slate-800">{iv.candidateName || "Candidate"} · {iv.jobTitle || "Job"}</p>
-                <InterviewStatusBadge status={iv.status} />
+          rows.map((iv) => {
+            const cid = String(iv.candidateId || "").trim();
+            const jid = String(iv.jobId || "").trim();
+            const profileHref = cid && jid ? getCandidateUrl(cid, jid) : null;
+            const rescheduleHref =
+              cid && jid && iv.id
+                ? `${getCandidateUrl(cid, jid)}&action=reschedule&interviewId=${encodeURIComponent(iv.id)}`
+                : null;
+            const whenLabel = formatRecruiterDateTime(iv.scheduledAt, {
+              placeholder: "Interview date not set",
+            });
+
+            return (
+              <div
+                key={iv.id}
+                className="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 transition-colors hover:border-slate-200 hover:bg-white"
+              >
+                {profileHref ? (
+                  <Link
+                    href={profileHref}
+                    className="block rounded-md outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="text-sm font-medium text-slate-800">
+                        {iv.candidateName || "Candidate"} · {iv.jobTitle || "Job"}
+                      </p>
+                      <InterviewStatusBadge status={iv.status} />
+                    </div>
+                    <p className="mt-0.5 text-xs text-slate-600">
+                      {whenLabel}
+                      {iv.timezone ? ` (${iv.timezone})` : ""}
+                    </p>
+                  </Link>
+                ) : (
+                  <>
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="text-sm font-medium text-slate-800">
+                        {iv.candidateName || "Candidate"} · {iv.jobTitle || "Job"}
+                      </p>
+                      <InterviewStatusBadge status={iv.status} />
+                    </div>
+                    <p className="mt-0.5 text-xs text-slate-600">
+                      {whenLabel}
+                      {iv.timezone ? ` (${iv.timezone})` : ""}
+                    </p>
+                  </>
+                )}
+                <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] font-semibold">
+                  <span className="text-slate-500">
+                    {iv.calendarProvider === "microsoft" ? "Outlook" : "Google"}:{" "}
+                    {iv.calendarSyncStatus === "SYNCED"
+                      ? "Synced"
+                      : iv.calendarSyncStatus === "FAILED"
+                        ? "Sync failed"
+                        : "Not synced"}
+                  </span>
+                  {iv.calendarHtmlLink ? (
+                    <a href={iv.calendarHtmlLink} target="_blank" rel="noreferrer" className="text-sky-700 underline">
+                      Open calendar
+                    </a>
+                  ) : null}
+                  {profileHref ? (
+                    <Link href={profileHref} className="text-navy-800 underline">
+                      View candidate
+                    </Link>
+                  ) : null}
+                  {jid ? (
+                    <Link href={getJobOverviewUrl(jid)} className="text-navy-800 underline">
+                      View job
+                    </Link>
+                  ) : null}
+                  {rescheduleHref ? (
+                    <Link href={rescheduleHref} className="text-navy-800 underline">
+                      Reschedule
+                    </Link>
+                  ) : null}
+                </div>
               </div>
-              <p className="text-xs text-slate-600 mt-0.5">{toDate(iv.scheduledAt)?.toLocaleString() || "Unscheduled"} {iv.timezone ? `(${iv.timezone})` : ""}</p>
-              <div className="mt-1 flex items-center gap-2 text-[11px]">
-                <span className="text-slate-500">
-                  {iv.calendarProvider === "microsoft" ? "Outlook" : "Google"}:{" "}
-                  {iv.calendarSyncStatus === "SYNCED" ? "Synced" : iv.calendarSyncStatus === "FAILED" ? "Sync failed" : "Not synced"}
-                </span>
-                {iv.calendarHtmlLink ? (
-                  <a href={iv.calendarHtmlLink} target="_blank" rel="noreferrer" className="text-sky-700 underline">
-                    Open
-                  </a>
-                ) : null}
-              </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
     </section>

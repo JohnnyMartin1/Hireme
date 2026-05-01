@@ -115,7 +115,7 @@ function SiteHeaderInner() {
   const backButtonHref = shouldShowBackButton ? getBackButtonHref(pathname, profile, jobIdFromQuery) : "/";
 
   return (
-    <header className="fixed top-0 left-0 right-0 bg-white/95 backdrop-blur-md shadow-sm z-50 border-b border-slate-100 mobile-safe-top">
+    <header className="fixed top-2 left-0 right-0 bg-white/95 backdrop-blur-md shadow-sm z-50 border-b border-slate-100 mobile-safe-top">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between w-full relative">
         {/* Left side: Back button (mobile) or Logo */}
         <div className="flex items-center flex-shrink-0">

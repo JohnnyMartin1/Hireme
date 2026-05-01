@@ -10,6 +10,7 @@ import {
   type CalendarProvider,
 } from "@/lib/integrations/calendar-service";
 import { selectActiveInterview } from "@/lib/interviews/active-interview";
+import { feedbackDocId, normalizeOptionalString, nowTs, planDocId } from "@/lib/interviews/phase3";
 
 export const dynamic = "force-dynamic";
 
@@ -65,6 +66,49 @@ async function resolveAttendees(input: {
     .map((snap) => String((snap.data() as any)?.email || "").trim())
     .filter(Boolean)
     .map((email) => ({ email }));
+}
+
+async function createFeedbackRequestsForInterview(input: {
+  jobId: string;
+  companyId: string;
+  candidateId: string;
+  interviewEventId: string;
+  interviewerIds: string[];
+  planId?: string | null;
+  roundId?: string | null;
+  scorecardTemplateId?: string | null;
+}) {
+  if (!input.scorecardTemplateId || input.interviewerIds.length === 0) return;
+  const batch = adminDb.batch();
+  for (const interviewerUserId of input.interviewerIds) {
+    const docId = feedbackDocId(input.interviewEventId, interviewerUserId);
+    const ref = adminDb.collection("interviewFeedback").doc(docId);
+    const existing = await ref.get();
+    batch.set(
+      ref,
+      {
+        jobId: input.jobId,
+        candidateId: input.candidateId,
+        companyId: input.companyId,
+        interviewEventId: input.interviewEventId,
+        planId: input.planId || null,
+        roundId: input.roundId || null,
+        scorecardTemplateId: input.scorecardTemplateId || null,
+        interviewerUserId,
+        status: "REQUESTED",
+        ratings: [],
+        overallRecommendation: null,
+        strengths: null,
+        concerns: null,
+        summary: null,
+        submittedAt: null,
+        createdAt: existing.exists ? (existing.data() as any)?.createdAt || nowTs() : nowTs(),
+        updatedAt: nowTs(),
+      },
+      { merge: true }
+    );
+  }
+  await batch.commit();
 }
 
 async function authorizeJobAccess(request: NextRequest, jobId: string) {
@@ -145,6 +189,9 @@ export async function POST(
     const locationType = (LOCATION_TYPES as readonly string[]).includes(locationTypeRaw) ? locationTypeRaw : "VIDEO";
     const locationValue = String((body as any)?.location?.value || body?.location || "").trim();
     const notes = String(body?.notes || "").trim();
+    const planId = normalizeOptionalString(body?.planId) || planDocId(jobId);
+    const roundId = normalizeOptionalString(body?.roundId);
+    const scorecardTemplateId = normalizeOptionalString(body?.scorecardTemplateId);
     const status = normalizeStatus(body?.status);
     const candidateResponseRaw = String(body?.candidateResponse || "PENDING").toUpperCase().trim();
     const candidateResponse = (CANDIDATE_RESPONSES as readonly string[]).includes(candidateResponseRaw)
@@ -185,6 +232,9 @@ export async function POST(
       location: { type: locationType, value: locationValue },
       candidateResponse,
       notes,
+      planId,
+      roundId,
+      scorecardTemplateId,
       calendarSyncStatus: "NOT_SYNCED",
       calendarSyncError: null,
       createdBy: auth.decoded!.uid,
@@ -235,6 +285,16 @@ export async function POST(
         { merge: true }
       );
     }
+    await createFeedbackRequestsForInterview({
+      jobId,
+      companyId,
+      candidateId,
+      interviewEventId: ref.id,
+      interviewerIds,
+      planId,
+      roundId,
+      scorecardTemplateId,
+    });
     const fresh = await ref.get();
     return NextResponse.json({ interview: { id: fresh.id, ...fresh.data() } });
   } catch (error) {
@@ -250,6 +310,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { jobId:
     const auth = await authorizeJobAccess(request, jobId);
     if (auth.error) return auth.error;
     const body = await request.json().catch(() => ({}));
+    const retrySyncRequested = Boolean(body?.retrySync);
     const interviewId = String(body?.interviewId || "");
     const candidateId = String(body?.candidateId || "");
     let ref;
@@ -314,6 +375,9 @@ export async function PATCH(request: NextRequest, { params }: { params: { jobId:
     }
     if (body?.timezone !== undefined) updates.timezone = String(body.timezone || "UTC");
     if (body?.notes !== undefined) updates.notes = String(body.notes || "").trim();
+    if (body?.planId !== undefined) updates.planId = normalizeOptionalString(body.planId);
+    if (body?.roundId !== undefined) updates.roundId = normalizeOptionalString(body.roundId);
+    if (body?.scorecardTemplateId !== undefined) updates.scorecardTemplateId = normalizeOptionalString(body.scorecardTemplateId);
     if (body?.status !== undefined) updates.status = normalizeStatus(body.status);
     if (body?.candidateResponse !== undefined) {
       const raw = String(body.candidateResponse || "").toUpperCase().trim();
@@ -327,15 +391,19 @@ export async function PATCH(request: NextRequest, { params }: { params: { jobId:
       const organizerUserId = String(existing?.organizerUserId || existing?.createdBy || "");
       const calendarEventId = String(existing?.calendarEventId || "");
       const status = String((updates.status ?? existing?.status) || "").toUpperCase();
-      const requestedProvider = normalizeCalendarProvider(body?.calendarProvider);
       const existingProvider = normalizeCalendarProvider(existing?.calendarProvider);
-      const chosenProvider = requestedProvider || existingProvider || null;
+      const requestedProvider = normalizeCalendarProvider(body?.calendarProvider);
+      const preferredProvider = requestedProvider || existingProvider;
       const activeProvider =
-        organizerUserId && chosenProvider
-          ? await getConnectedCalendarProvider(organizerUserId, chosenProvider)
+        organizerUserId && preferredProvider
+          ? await getConnectedCalendarProvider(organizerUserId, preferredProvider)
           : organizerUserId
             ? await getConnectedCalendarProvider(organizerUserId)
             : null;
+
+      if (retrySyncRequested && !activeProvider) {
+        throw new Error("No connected calendar provider available for retry.");
+      }
 
       if (activeProvider) {
         if (status === "CANCELLED") {
@@ -375,9 +443,10 @@ export async function PATCH(request: NextRequest, { params }: { params: { jobId:
               interviewId: ref.id,
               provider: activeProvider,
               hasCalendarEventId: Boolean(calendarEventId),
+              retrySyncRequested,
             });
             const attendees = await resolveAttendees({ candidateId, interviewerIds });
-            const shouldUpdateExisting = Boolean(calendarEventId && (!existingProvider || existingProvider === activeProvider));
+            const shouldUpdateExisting = Boolean(calendarEventId);
             const event = shouldUpdateExisting
               ? await updateCalendarInterviewEvent(activeProvider, {
                   organizerUserId,
@@ -413,6 +482,8 @@ export async function PATCH(request: NextRequest, { params }: { params: { jobId:
               },
               { merge: true }
             );
+          } else if (retrySyncRequested) {
+            throw new Error("Interview is missing a valid scheduled time for calendar retry.");
           }
         }
       }
@@ -426,6 +497,26 @@ export async function PATCH(request: NextRequest, { params }: { params: { jobId:
         { merge: true }
       );
     }
+    const finalInterviewerIds = Array.isArray(updates.interviewerIds)
+      ? (updates.interviewerIds as string[])
+      : Array.isArray(existing?.interviewerIds)
+        ? (existing.interviewerIds as string[])
+        : [];
+    const finalCandidateId = String(existing?.candidateId || "");
+    const finalCompanyId = String((auth.jobData as any)?.companyId || existing?.companyId || "");
+    const finalPlanId = normalizeOptionalString(updates.planId ?? existing?.planId) || planDocId(jobId);
+    const finalRoundId = normalizeOptionalString(updates.roundId ?? existing?.roundId);
+    const finalScorecardTemplateId = normalizeOptionalString(updates.scorecardTemplateId ?? existing?.scorecardTemplateId);
+    await createFeedbackRequestsForInterview({
+      jobId,
+      companyId: finalCompanyId,
+      candidateId: finalCandidateId,
+      interviewEventId: ref.id,
+      interviewerIds: finalInterviewerIds,
+      planId: finalPlanId,
+      roundId: finalRoundId,
+      scorecardTemplateId: finalScorecardTemplateId,
+    });
     const fresh = await ref.get();
     return NextResponse.json({ interview: { id: fresh.id, ...fresh.data() } });
   } catch (error) {

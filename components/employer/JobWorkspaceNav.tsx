@@ -9,13 +9,17 @@ import {
   Columns3,
   GitCompare,
   Inbox,
+  CalendarCheck2,
+  FileText,
 } from "lucide-react";
 import { useFirebaseAuth } from "@/components/FirebaseAuthProvider";
 import {
   getJobCompareUrl,
+  getJobInterviewPlanUrl,
   getJobMatchesUrl,
   getJobOverviewUrl,
   getJobPipelineUrl,
+  getJobOffersUrl,
   getMessagesUrl,
 } from "@/lib/navigation";
 
@@ -63,12 +67,16 @@ export default function JobWorkspaceNav() {
   const matches = getJobMatchesUrl(jobId);
   const pipeline = getJobPipelineUrl(jobId);
   const compare = getJobCompareUrl(jobId);
+  const interviews = getJobInterviewPlanUrl(jobId);
+  const offers = getJobOffersUrl(jobId);
   const messages = getMessagesUrl(jobId);
 
   const onOverview = pathname === overview;
   const onMatches = pathname === matches;
   const onPipeline = pathname === pipeline;
   const onCompare = pathname === compare;
+  const onInterviews = pathname === interviews;
+  const onOffers = pathname === offers;
   const messagesJobId = searchParams.get("jobId");
   const onMessages = pathname === "/messages" && messagesJobId === jobId;
 
@@ -107,6 +115,14 @@ export default function JobWorkspaceNav() {
             <Link href={compare} className={tabClass(onCompare)}>
               <GitCompare className="h-4 w-4 shrink-0" aria-hidden />
               Compare
+            </Link>
+            <Link href={interviews} className={tabClass(onInterviews)}>
+              <CalendarCheck2 className="h-4 w-4 shrink-0" aria-hidden />
+              Interviews
+            </Link>
+            <Link href={offers} className={tabClass(onOffers)}>
+              <FileText className="h-4 w-4 shrink-0" aria-hidden />
+              Offers
             </Link>
             <Link href={messages} className={tabClass(onMessages)}>
               <Inbox className="h-4 w-4 shrink-0" aria-hidden />

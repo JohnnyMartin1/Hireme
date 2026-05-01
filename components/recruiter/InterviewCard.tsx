@@ -2,6 +2,8 @@
 
 import type { InterviewEvent } from "@/lib/communication-workflow";
 import InterviewStatusBadge from "@/components/recruiter/InterviewStatusBadge";
+import InterviewRoundBadge from "@/components/recruiter/InterviewRoundBadge";
+import { formatRecruiterDateTime } from "@/lib/recruiter-datetime";
 
 type Props = {
   interview: InterviewEvent;
@@ -12,25 +14,6 @@ type Props = {
   onCandidateResponse?: (interview: InterviewEvent, response: "ACCEPTED" | "DECLINED" | "REQUEST_RESCHEDULE") => void;
 };
 
-function toDate(value: unknown): Date | null {
-  const v: any = value;
-  if (!v) return null;
-  if (typeof v.toDate === "function") {
-    const d = v.toDate();
-    return Number.isNaN(d.getTime()) ? null : d;
-  }
-  if (typeof v._seconds === "number") {
-    const d = new Date(v._seconds * 1000);
-    return Number.isNaN(d.getTime()) ? null : d;
-  }
-  if (typeof v.seconds === "number") {
-    const d = new Date(v.seconds * 1000);
-    return Number.isNaN(d.getTime()) ? null : d;
-  }
-  const d = new Date(String(v));
-  return Number.isNaN(d.getTime()) ? null : d;
-}
-
 export default function InterviewCard({
   interview,
   onReschedule,
@@ -39,7 +22,6 @@ export default function InterviewCard({
   onRetrySync,
   onCandidateResponse,
 }: Props) {
-  const when = toDate(interview.scheduledAt);
   const location =
     typeof interview.location === "string"
       ? interview.location
@@ -55,8 +37,17 @@ export default function InterviewCard({
         </div>
         <InterviewStatusBadge status={interview.status} />
       </div>
-      <p className="mt-2 text-xs text-slate-700">{when ? when.toLocaleString() : "Time not set"} {interview.timezone ? `(${interview.timezone})` : ""}</p>
+      <p className="mt-2 text-xs text-slate-700">
+        {formatRecruiterDateTime(interview.scheduledAt, { placeholder: "Interview date not set" })}
+        {interview.timezone ? ` (${interview.timezone})` : ""}
+      </p>
       <p className="mt-1 text-xs text-slate-600">{location}</p>
+      <div className="mt-1">
+        <InterviewRoundBadge
+          roundName={String((interview as any).roundName || "").trim() || (interview.roundId ? "Interview round" : "Saved in HireMe only")}
+          roundType={interview.type || "CUSTOM"}
+        />
+      </div>
       <p className="mt-1 text-xs text-slate-600">Candidate response: {String(interview.candidateResponse || "PENDING").replace("_", " ").toLowerCase()}</p>
       <div className="mt-2 rounded-lg border border-slate-100 bg-slate-50 px-2 py-1.5 text-xs">
         {interview.calendarSyncStatus === "SYNCED" ? (
@@ -75,7 +66,7 @@ export default function InterviewCard({
             ) : null}
           </div>
         ) : (
-          <p className="text-slate-500">Not synced to external calendar</p>
+          <p className="text-slate-500">Saved in HireMe only (not synced to Google or Outlook)</p>
         )}
         {interview.calendarHtmlLink && (
           <a href={interview.calendarHtmlLink} target="_blank" rel="noreferrer" className="text-sky-700 underline">

@@ -164,16 +164,18 @@ export function waitingOnLabel(input: {
 
   if (input.awaitingCandidateReply) return "Waiting on candidate reply";
   if (reviewStatus === "REQUESTED") return "Waiting on hiring manager review";
-  if (!input.hasEvaluation && (stage === "SHORTLIST" || stage === "INTERVIEW" || stage === "FINALIST")) {
+  if (!input.hasEvaluation && (stage === "SHORTLIST" || stage === "INTERVIEW" || stage === "FINALIST" || stage === "OFFER")) {
     return "Waiting on evaluation";
   }
-  if (!input.isEvaluationComplete && (stage === "INTERVIEW" || stage === "FINALIST")) {
+  if (!input.isEvaluationComplete && (stage === "INTERVIEW" || stage === "FINALIST" || stage === "OFFER")) {
     return "Waiting on evaluation completion";
   }
   if (stage === "SHORTLIST" && input.hasEvaluation) return "Ready for compare";
   if (stage === "FINALIST" && (reviewStatus === "SUBMITTED" || reviewStatus === "APPROVED")) {
     return "Ready for interview decision";
   }
+  if (stage === "OFFER") return "Offer in progress";
+  if (stage === "HIRED") return "Hired";
   if (stage === "NEW") return "Waiting on recruiter outreach";
   return "In progress";
 }

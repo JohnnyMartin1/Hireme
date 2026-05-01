@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { Loader2, ExternalLink, MessageSquare, Trash2, Filter, Briefcase } from "lucide-react";
+import { Loader2, ExternalLink, MessageSquare, Trash2, Filter, Briefcase, ChevronRight } from "lucide-react";
 import { useFirebaseAuth } from "@/components/FirebaseAuthProvider";
 import { useToast } from "@/components/NotificationSystem";
 import {
@@ -155,9 +155,13 @@ export default function EmployerPoolDetailPage() {
   return (
     <main className="min-h-screen bg-slate-50 pb-16">
       <div className="max-w-5xl mx-auto px-4 pt-10 sm:pt-14">
-        <Link href={getEmployerPoolsUrl()} className="text-sm font-semibold text-sky-800 hover:underline mb-4 inline-block">
-          ← All pools
-        </Link>
+        <nav className="mb-4 flex flex-wrap items-center gap-1 text-sm text-slate-600" aria-label="Breadcrumb">
+          <Link href={getEmployerPoolsUrl()} className="font-medium text-sky-800 hover:underline">
+            Talent pools
+          </Link>
+          <ChevronRight className="h-4 w-4 shrink-0 text-slate-400" aria-hidden />
+          <span className="font-semibold text-navy-900 truncate max-w-[min(100%,28rem)]">{poolName}</span>
+        </nav>
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold text-navy-900">{poolName}</h1>

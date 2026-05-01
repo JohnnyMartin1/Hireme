@@ -78,7 +78,120 @@ export type InterviewEvent = {
   calendarSyncStatus?: "NOT_SYNCED" | "SYNCED" | "FAILED";
   calendarSyncError?: string | null;
   calendarSyncedAt?: unknown;
+  planId?: string | null;
+  roundId?: string | null;
+  scorecardTemplateId?: string | null;
   createdBy: string;
+  completedAt?: unknown;
+  createdAt?: unknown;
+  updatedAt?: unknown;
+};
+
+export type InterviewPlanStatus = "ACTIVE" | "DRAFT" | "ARCHIVED";
+export type InterviewRoundType =
+  | "PHONE_SCREEN"
+  | "TECHNICAL"
+  | "BEHAVIORAL"
+  | "PORTFOLIO_REVIEW"
+  | "CASE_STUDY"
+  | "HIRING_MANAGER"
+  | "FINAL_ROUND"
+  | "CUSTOM";
+export type RatingScale = "YES_NO" | "ONE_TO_FIVE" | "ONE_TO_FOUR" | "TEXT";
+export type FeedbackStatus = "REQUESTED" | "IN_PROGRESS" | "SUBMITTED" | "WAIVED";
+export type FeedbackRecommendation = "STRONG_YES" | "YES" | "MIXED" | "NO" | "HOLD";
+export type DebriefStatus = "NOT_STARTED" | "READY" | "IN_PROGRESS" | "COMPLETED";
+export type DebriefDecision = "ADVANCE" | "REJECT" | "FINALIST" | "HOLD" | "NEEDS_MORE_SIGNAL";
+
+export type InterviewPlan = {
+  id: string;
+  jobId: string;
+  companyId: string;
+  createdByUserId: string;
+  title: string;
+  description?: string | null;
+  status: InterviewPlanStatus;
+  createdAt?: unknown;
+  updatedAt?: unknown;
+};
+
+export type InterviewPlanRound = {
+  id: string;
+  planId: string;
+  jobId: string;
+  companyId: string;
+  roundName: string;
+  roundType: InterviewRoundType;
+  description?: string | null;
+  defaultDurationMinutes: number;
+  order: number;
+  required: boolean;
+  defaultInterviewerIds: string[];
+  active: boolean;
+  createdAt?: unknown;
+  updatedAt?: unknown;
+};
+
+export type ScorecardCriterion = {
+  id: string;
+  label: string;
+  description?: string | null;
+  ratingScale: RatingScale;
+  required: boolean;
+  order: number;
+};
+
+export type ScorecardTemplate = {
+  id: string;
+  jobId: string;
+  planId: string;
+  roundId: string;
+  companyId: string;
+  title: string;
+  description?: string | null;
+  criteria: ScorecardCriterion[];
+  recommendationOptions: FeedbackRecommendation[];
+  createdAt?: unknown;
+  updatedAt?: unknown;
+};
+
+export type InterviewFeedbackRating = {
+  criterionId: string;
+  rating: string;
+  comment?: string | null;
+};
+
+export type InterviewFeedback = {
+  id: string;
+  jobId: string;
+  candidateId: string;
+  companyId: string;
+  interviewEventId: string;
+  planId?: string | null;
+  roundId?: string | null;
+  scorecardTemplateId?: string | null;
+  interviewerUserId: string;
+  status: FeedbackStatus;
+  ratings: InterviewFeedbackRating[];
+  overallRecommendation?: FeedbackRecommendation | null;
+  strengths?: string | null;
+  concerns?: string | null;
+  summary?: string | null;
+  submittedAt?: unknown;
+  createdAt?: unknown;
+  updatedAt?: unknown;
+};
+
+export type CandidateDebrief = {
+  id: string;
+  jobId: string;
+  candidateId: string;
+  companyId: string;
+  createdByUserId: string;
+  status: DebriefStatus;
+  feedbackSummary?: string | null;
+  decision?: DebriefDecision | null;
+  decisionReason?: string | null;
   completedAt?: unknown;
   createdAt?: unknown;
   updatedAt?: unknown;

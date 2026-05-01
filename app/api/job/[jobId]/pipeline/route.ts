@@ -6,9 +6,28 @@ import admin from 'firebase-admin';
 
 export const dynamic = 'force-dynamic';
 
-type PipelineStage = 'NEW' | 'SHORTLIST' | 'CONTACTED' | 'RESPONDED' | 'INTERVIEW' | 'FINALIST' | 'REJECTED';
+type PipelineStage =
+  | 'NEW'
+  | 'SHORTLIST'
+  | 'CONTACTED'
+  | 'RESPONDED'
+  | 'INTERVIEW'
+  | 'FINALIST'
+  | 'OFFER'
+  | 'HIRED'
+  | 'REJECTED';
 
-const ALLOWED_STAGES: PipelineStage[] = ['NEW', 'SHORTLIST', 'CONTACTED', 'RESPONDED', 'INTERVIEW', 'FINALIST', 'REJECTED'];
+const ALLOWED_STAGES: PipelineStage[] = [
+  'NEW',
+  'SHORTLIST',
+  'CONTACTED',
+  'RESPONDED',
+  'INTERVIEW',
+  'FINALIST',
+  'OFFER',
+  'HIRED',
+  'REJECTED',
+];
 
 function normalizeStage(value: unknown): PipelineStage {
   const raw = String(value || '').toUpperCase().trim();

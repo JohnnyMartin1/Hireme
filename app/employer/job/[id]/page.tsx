@@ -9,7 +9,9 @@ import {
   getCandidatesSearchUrl,
   getEmployerJobsListUrl,
   getJobCompareUrl,
+  getJobInterviewPlanUrl,
   getJobMatchesUrl,
+  getJobOffersUrl,
   getJobPipelineUrl,
 } from '@/lib/navigation';
 import {
@@ -18,7 +20,7 @@ import {
   fetchJobReviews,
   saveJobEvaluationCriteria,
 } from '@/lib/decision-client';
-import { fetchJobInterviews } from "@/lib/communication-client";
+import { fetchJobInterviewPlan, fetchJobInterviews } from "@/lib/communication-client";
 import {
   summarizeCandidateEvaluations,
   type CandidateEvaluation,
@@ -51,6 +53,15 @@ export default function ViewJobPage({ params }: { params: { id: string } }) {
     scheduled: 0,
     today: 0,
     awaitingConfirmation: 0,
+  });
+  const [planSummary, setPlanSummary] = useState({ hasPlan: false, rounds: 0, missingScorecards: 0 });
+  const [offerSummary, setOfferSummary] = useState({
+    draft: 0,
+    pendingApproval: 0,
+    approved: 0,
+    sent: 0,
+    accepted: 0,
+    total: 0,
   });
 
   useEffect(() => {
@@ -117,11 +128,12 @@ export default function ViewJobPage({ params }: { params: { id: string } }) {
       setActivePipelineCount(rows.filter((e: any) => normalizePipelineStage(e.stage) !== 'REJECTED').length);
 
       const token = await user.getIdToken();
-      const [criteriaRes, evaluationsRes, reviewsRes, interviewsRes] = await Promise.all([
+      const [criteriaRes, evaluationsRes, reviewsRes, interviewsRes, planRes] = await Promise.all([
         fetchJobEvaluationCriteria(params.id, token),
         fetchJobEvaluations(params.id, token),
         fetchJobReviews(params.id, token),
         fetchJobInterviews(params.id, token),
+        fetchJobInterviewPlan(params.id, token),
       ]);
 
       const criteriaRows = criteriaRes.ok ? (criteriaRes.data.criteria || []) : [];
@@ -191,6 +203,33 @@ export default function ViewJobPage({ params }: { params: { id: string } }) {
           (iv: any) => String(iv?.candidateResponse || "PENDING") === "PENDING" && String(iv?.status || "") !== "CANCELLED"
         ).length,
       });
+      if (planRes.ok) {
+        const rounds = planRes.data.rounds || [];
+        const templates = planRes.data.scorecardTemplates || [];
+        setPlanSummary({
+          hasPlan: Boolean(planRes.data.plan),
+          rounds: rounds.length,
+          missingScorecards: rounds.filter((r: any) => !templates.some((t: any) => String(t.roundId || "") === String(r.id || ""))).length,
+        });
+      }
+
+      const offersRes = await fetch(`/api/job/${params.id}/offers`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const offersPayload = await offersRes.json().catch(() => ({}));
+      const counts = (offersPayload as { counts?: Record<string, number> }).counts || {};
+      if (offersRes.ok) {
+        setOfferSummary({
+          draft: Number(counts.DRAFT || 0),
+          pendingApproval: Number(counts.PENDING_APPROVAL || 0),
+          approved: Number(counts.APPROVED || 0),
+          sent: Number(counts.SENT || 0),
+          accepted: Number(counts.ACCEPTED || 0),
+          total: Object.values(counts).reduce((a, b) => a + Number(b || 0), 0),
+        });
+      } else {
+        setOfferSummary({ draft: 0, pendingApproval: 0, approved: 0, sent: 0, accepted: 0, total: 0 });
+      }
     })();
   }, [loading, user, profile, params.id]);
 
@@ -378,6 +417,49 @@ export default function ViewJobPage({ params }: { params: { id: string } }) {
             <span>{interviewSummary.scheduled} scheduled</span>
             <span className="text-slate-600"> · {interviewSummary.today} upcoming today</span>
             <span className="text-slate-600"> · {interviewSummary.awaitingConfirmation} awaiting confirmation</span>
+          </div>
+          <div className="mb-6 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+            <span className="font-semibold text-navy-900">Interview plan: </span>
+            {planSummary.hasPlan ? (
+              <>
+                <span>{planSummary.rounds} rounds configured</span>
+                <span className="text-slate-600"> · {planSummary.missingScorecards} rounds missing scorecards</span>
+              </>
+            ) : (
+              <span>No plan yet. Schedule manually or create a starter plan.</span>
+            )}
+            <Link href={getJobInterviewPlanUrl(params.id)} className="ml-2 font-semibold text-sky-700 underline">
+              {planSummary.hasPlan ? "Edit interview plan" : "Build interview plan"}
+            </Link>
+          </div>
+
+          <div className="mb-6 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
+            <span className="font-semibold text-navy-900">Offers: </span>
+            {offerSummary.total === 0 ? (
+              <>
+                <span>No offers yet.</span>
+                <span className="block text-xs text-slate-500 mt-1">
+                  Offers will appear here once finalists move forward.
+                </span>
+              </>
+            ) : (
+              <>
+                <span>{offerSummary.draft} draft</span>
+                <span className="text-slate-600"> · {offerSummary.pendingApproval} pending approval</span>
+                <span className="text-slate-600"> · {offerSummary.approved} approved</span>
+                <span className="text-slate-600"> · {offerSummary.sent} sent</span>
+                <span className="text-slate-600"> · {offerSummary.accepted} accepted</span>
+              </>
+            )}
+            <span className="block sm:inline sm:ml-2 mt-2 sm:mt-0">
+              <Link href={getJobOffersUrl(params.id)} className="font-semibold text-sky-700 underline">
+                View all offers
+              </Link>
+              <span className="text-slate-400 mx-1">·</span>
+              <Link href={getJobPipelineUrl(params.id)} className="font-semibold text-sky-700 underline">
+                Pipeline
+              </Link>
+            </span>
           </div>
 
           <div className="mb-6 rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-2">

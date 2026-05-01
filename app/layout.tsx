@@ -18,13 +18,15 @@ export const metadata = {
   // Favicon only (Google search + browser tab). On-site logos use logo.svg and are unchanged.
   icons: {
     icon: [
-      { url: '/favicon.svg?v=5', type: 'image/svg+xml', sizes: 'any' },
-      { url: '/favicon.ico?v=5', sizes: 'any' }
+      { url: "/favicon.ico" },
+      { url: "/favicon-16x16.png", type: "image/png", sizes: "16x16" },
+      { url: "/favicon-32x32.png", type: "image/png", sizes: "32x32" }
     ],
     apple: [
-      { url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }
+      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }
     ]
   },
+  manifest: "/site.webmanifest",
   openGraph: {
     type: 'website',
     locale: 'en_US',
@@ -82,10 +84,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, shrink-to-fit=no" />
         <meta name="format-detection" content="telephone=no" />
-        <link rel="icon" href="/favicon.svg?v=5" type="image/svg+xml" />
-        <link rel="icon" href="/favicon.ico?v=5" sizes="any" />
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180" />
-        <link rel="manifest" href="/site.webmanifest" />
         <link 
           rel="stylesheet" 
           href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" 

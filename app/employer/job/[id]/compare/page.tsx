@@ -5,12 +5,19 @@ import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { Loader2, MessageSquare } from "lucide-react";
 import { useFirebaseAuth } from "@/components/FirebaseAuthProvider";
+import { useToast } from "@/components/NotificationSystem";
+import ScheduleInterviewModal from "@/components/recruiter/ScheduleInterviewModal";
+import OfferModal from "@/components/recruiter/OfferModal";
 import {
   getRecruiterNotes,
   normalizePipelineStage,
   type CandidatePipelineEntry,
   type PipelineStage,
+  getOrCreateThread,
+  acceptMessageThread,
+  type MessageJobDetailsShape,
 } from "@/lib/firebase-firestore";
+import { formatInterviewWhenLabel } from "@/lib/recruiter-datetime";
 import { postJobPipeline } from "@/lib/pipeline-client";
 import {
   fetchJobEvaluationCriteria,
@@ -18,7 +25,8 @@ import {
   fetchJobReviews,
   upsertCandidateReview,
 } from "@/lib/decision-client";
-import { fetchJobInterviews, fetchJobSequences } from "@/lib/communication-client";
+import { fetchCandidateDebriefs, fetchInterviewFeedback, fetchJobInterviewPlan, fetchJobInterviews, fetchJobSequences } from "@/lib/communication-client";
+import type { InterviewEvent } from "@/lib/communication-workflow";
 import { fetchReviewAssignments } from "@/lib/collaboration-client";
 import {
   recommendationLabel,
@@ -36,7 +44,9 @@ import {
   getJobPipelineUrl,
   getJobCompareUrl,
 } from "@/lib/navigation";
-import { pipelineStageLabel, recruiterBadge } from "@/lib/recruiter-ui";
+import { pickLatestOfferForCandidate, offerStatusLabel } from "@/lib/offers/client";
+import type { CandidateOfferRecord } from "@/lib/offers/types";
+import { pipelineStageLabel, recruiterBadge, recruiterChip } from "@/lib/recruiter-ui";
 import AddToTalentPoolButton from "@/components/employer/AddToTalentPoolButton";
 import SendCandidateForReviewButton from "@/components/recruiter/SendCandidateForReviewButton";
 import InterviewStatusBadge from "@/components/recruiter/InterviewStatusBadge";
@@ -63,11 +73,21 @@ type CompareCandidate = {
   sequenceStatus: string | null;
   interviewAt: any;
   interviewStatus?: string | null;
+  interviewRoundName?: string | null;
   interviewSyncStatus?: string | null;
   interviewCalendarLink?: string | null;
   interviewCalendarProvider?: string | null;
+  interviewRecord?: InterviewEvent | null;
   reviewPendingCount?: number;
   reviewCompletedCount?: number;
+  feedbackSubmittedCount?: number;
+  feedbackRequestedCount?: number;
+  recommendationCounts?: Record<string, number>;
+  missingFeedbackCount?: number;
+  debriefStatus?: string | null;
+  offerStatus?: string | null;
+  latestOffer?: CandidateOfferRecord | null;
+  offerNextAction?: string;
 };
 
 function parseCandidateIds(raw: string | null): string[] {
@@ -97,15 +117,29 @@ export default function JobComparePage() {
   const searchParams = useSearchParams();
   const jobId = params.id as string;
   const { user, profile } = useFirebaseAuth();
+  const toast = useToast();
 
   const [loading, setLoading] = useState(true);
   const [jobTitle, setJobTitle] = useState("");
+  const [jobThreadDetails, setJobThreadDetails] = useState<MessageJobDetailsShape | null>(null);
   const [rows, setRows] = useState<CompareCandidate[]>([]);
   const [busyCandidateId, setBusyCandidateId] = useState<string | null>(null);
   const [activeCandidateIds, setActiveCandidateIds] = useState<string[]>([]);
   const [compareSource, setCompareSource] = useState<"manual" | "shortlist" | "pipeline">("manual");
   const [compareError, setCompareError] = useState<string | null>(null);
   const [reviewBusyCandidateId, setReviewBusyCandidateId] = useState<string | null>(null);
+  const [messageBusyCandidateId, setMessageBusyCandidateId] = useState<string | null>(null);
+  const [scheduleFor, setScheduleFor] = useState<{
+    candidateId: string;
+    name: string;
+    existingInterview: InterviewEvent | null;
+  } | null>(null);
+  const [compareReloadNonce, setCompareReloadNonce] = useState(0);
+  const [offerModal, setOfferModal] = useState<{
+    candidateId: string;
+    name: string;
+    existing: CandidateOfferRecord | null;
+  } | null>(null);
 
   const selectedIds = useMemo(
     () => parseCandidateIds(searchParams.get("candidateIds")),
@@ -130,7 +164,7 @@ export default function JobComparePage() {
       try {
         const token = await user.getIdToken();
         const auth = { Authorization: `Bearer ${token}` };
-        const [jobRes, matchesRes, pipelineRes, criteriaRes, evaluationsRes, reviewsRes, sequencesRes, interviewsRes] = await Promise.all([
+        const [jobRes, matchesRes, pipelineRes, criteriaRes, evaluationsRes, reviewsRes, sequencesRes, interviewsRes, feedbackRes, debriefRes, planRes] = await Promise.all([
           fetch(`/api/job/${jobId}`, { headers: auth }),
           fetch(`/api/job/${jobId}/matches`, { headers: auth }),
           fetch(`/api/job/${jobId}/pipeline`, { headers: auth }),
@@ -139,10 +173,27 @@ export default function JobComparePage() {
           fetchJobReviews(jobId, token),
           fetchJobSequences(jobId, token),
           fetchJobInterviews(jobId, token),
+          fetchInterviewFeedback(jobId, token),
+          fetchCandidateDebriefs(jobId, token),
+          fetchJobInterviewPlan(jobId, token),
         ]);
 
         const jobPayload = await jobRes.json().catch(() => ({}));
-        setJobTitle(String(jobPayload?.job?.title || ""));
+        const jb = jobPayload?.job as Record<string, unknown> | undefined;
+        setJobTitle(String(jb?.title || ""));
+        if (jb) {
+          setJobThreadDetails({
+            jobId,
+            jobTitle: String(jb.title || ""),
+            employmentType: String(jb.employment || ""),
+            location: String(
+              jb.location || [jb.locationCity, jb.locationState].filter(Boolean).join(", ") || ""
+            ),
+            jobDescription: String(jb.description || ""),
+          });
+        } else {
+          setJobThreadDetails(null);
+        }
 
         const matchesPayload = await matchesRes.json().catch(() => ({}));
         const pipelinePayload = await pipelineRes.json().catch(() => ({}));
@@ -153,8 +204,16 @@ export default function JobComparePage() {
         const reviews = reviewsRes.ok ? ((reviewsRes.data.reviews || []) as CandidateReviewRequest[]) : [];
         const reviewAssignmentsRes = await fetchReviewAssignments(jobId, token);
         const reviewAssignments = reviewAssignmentsRes.ok ? reviewAssignmentsRes.data.assignments || [] : [];
+        const offersRes = await fetch(`/api/job/${jobId}/offers`, { headers: auth });
+        const offersPayload = await offersRes.json().catch(() => ({}));
+        const offersList: CandidateOfferRecord[] =
+          offersRes.ok && Array.isArray((offersPayload as { offers?: unknown }).offers)
+            ? ((offersPayload as { offers: CandidateOfferRecord[] }).offers || [])
+            : [];
         const sequences = sequencesRes.ok ? (sequencesRes.data.sequences || []) : [];
         const interviews = interviewsRes.ok ? (interviewsRes.data.interviews || []) : [];
+        const feedback = feedbackRes.ok ? (feedbackRes.data.feedback || []) : [];
+        const debriefs = debriefRes.ok ? (debriefRes.data.debriefs || []) : [];
 
         const pipelineByCandidate = new Map<string, any>();
         for (const entry of pipelineEntries) {
@@ -216,6 +275,14 @@ export default function JobComparePage() {
           if (!cid) continue;
           if (!sequenceByCandidate.has(cid)) sequenceByCandidate.set(cid, seq);
         }
+        const roundNamesById: Record<string, string> = {};
+        if (planRes.ok) {
+          for (const round of planRes.data.rounds || []) {
+            const id = String((round as any)?.id || "").trim();
+            const name = String((round as any)?.roundName || "").trim();
+            if (id && name) roundNamesById[id] = name;
+          }
+        }
         const interviewByCandidate = new Map<string, any>();
         for (const interview of interviews as any[]) {
           const cid = String(interview?.candidateId || "");
@@ -223,6 +290,32 @@ export default function JobComparePage() {
           if (String(interview?.status || "") === "CANCELLED") continue;
           if (!interviewByCandidate.has(cid)) interviewByCandidate.set(cid, interview);
         }
+        const feedbackByCandidate = new Map<string, any[]>();
+        for (const row of feedback as any[]) {
+          const cid = String(row?.candidateId || "");
+          if (!cid) continue;
+          const list = feedbackByCandidate.get(cid) || [];
+          list.push(row);
+          feedbackByCandidate.set(cid, list);
+        }
+        const debriefByCandidate = new Map<string, any>();
+        for (const row of debriefs as any[]) {
+          const cid = String(row?.candidateId || "");
+          if (!cid || debriefByCandidate.has(cid)) continue;
+          debriefByCandidate.set(cid, row);
+        }
+
+        const offerNextAction = (off: CandidateOfferRecord | null): string => {
+          if (!off) return "Create an offer to move forward.";
+          const st = String(off.status || "").toUpperCase();
+          if (st === "DRAFT") return "Finish draft and submit or send.";
+          if (st === "PENDING_APPROVAL") return "Waiting on approver.";
+          if (st === "APPROVED") return "Ready to send to candidate.";
+          if (st === "SENT") return "Awaiting candidate response.";
+          if (st === "ACCEPTED") return "Accepted — confirm hire / job close on profile.";
+          if (st === "DECLINED" || st === "WITHDRAWN") return "Closed — create a revised offer if needed.";
+          return offerStatusLabel(st);
+        };
 
         const candidates: CompareCandidate[] = [];
         for (const candidateId of resolvedIds) {
@@ -237,6 +330,7 @@ export default function JobComparePage() {
           );
           const review = reviewByCandidate.get(candidateId);
           const stage = normalizePipelineStage(pipeline?.stage);
+          const latestOffer = pickLatestOfferForCandidate(offersList, candidateId);
           candidates.push({
             candidateId,
             name: `${preview.firstName || ""} ${preview.lastName || ""}`.trim() || "Candidate",
@@ -271,11 +365,33 @@ export default function JobComparePage() {
             sequenceStatus: sequenceByCandidate.get(candidateId)?.status || null,
             interviewAt: interviewByCandidate.get(candidateId)?.scheduledAt || null,
             interviewStatus: interviewByCandidate.get(candidateId)?.status || null,
+            interviewRoundName: String(
+              roundNamesById[String(interviewByCandidate.get(candidateId)?.roundId || "")] || ""
+            ).trim() || (interviewByCandidate.get(candidateId)?.roundId ? "Interview round" : "Saved in HireMe only"),
             interviewSyncStatus: interviewByCandidate.get(candidateId)?.calendarSyncStatus || null,
             interviewCalendarLink: interviewByCandidate.get(candidateId)?.calendarHtmlLink || null,
             interviewCalendarProvider: interviewByCandidate.get(candidateId)?.calendarProvider || null,
+            interviewRecord: (interviewByCandidate.get(candidateId) as InterviewEvent) || null,
             reviewPendingCount: reviewAssignments.filter((a: any) => String(a.candidateId || "") === candidateId && String(a.status || "") === "REQUESTED").length,
             reviewCompletedCount: reviewAssignments.filter((a: any) => String(a.candidateId || "") === candidateId && String(a.status || "") === "COMPLETED").length,
+            feedbackSubmittedCount: (feedbackByCandidate.get(candidateId) || []).filter((f: any) => String(f.status || "") === "SUBMITTED").length,
+            feedbackRequestedCount: (feedbackByCandidate.get(candidateId) || []).filter((f: any) => String(f.status || "") !== "WAIVED").length,
+            recommendationCounts: (feedbackByCandidate.get(candidateId) || [])
+              .filter((f: any) => String(f.status || "") === "SUBMITTED")
+              .reduce((acc: Record<string, number>, row: any) => {
+                const key = String(row?.overallRecommendation || "").toUpperCase();
+                if (!key) return acc;
+                acc[key] = (acc[key] || 0) + 1;
+                return acc;
+              }, {}),
+            missingFeedbackCount: (feedbackByCandidate.get(candidateId) || []).filter((f: any) => {
+              const st = String(f?.status || "");
+              return st !== "SUBMITTED" && st !== "WAIVED";
+            }).length,
+            debriefStatus: String((debriefByCandidate.get(candidateId) || {})?.status || ""),
+            offerStatus: latestOffer ? String(latestOffer.status || "") : null,
+            latestOffer: latestOffer || null,
+            offerNextAction: offerNextAction(latestOffer),
           });
         }
         setRows(candidates);
@@ -284,7 +400,7 @@ export default function JobComparePage() {
       }
     };
     load();
-  }, [user, jobId, selectedIds]);
+  }, [user, jobId, selectedIds, compareReloadNonce]);
 
   const handleMoveStage = async (candidateId: string, stage: PipelineStage) => {
     if (!user) return;
@@ -308,6 +424,26 @@ export default function JobComparePage() {
   const handleRemove = (candidateId: string) => {
     const next = activeCandidateIds.filter((id) => id !== candidateId);
     router.push(getJobCompareUrl(jobId, next));
+  };
+
+  const handleOpenMessageThread = async (row: CompareCandidate) => {
+    if (!user) return;
+    setMessageBusyCandidateId(row.candidateId);
+    try {
+      const participantIds = [user.uid, row.candidateId].sort();
+      const opts = jobThreadDetails ? { jobDetails: jobThreadDetails } : undefined;
+      const { id: threadId, error } = await getOrCreateThread(participantIds, opts);
+      if (error || !threadId) {
+        toast.error("Messages", error || "Could not open message thread.");
+        return;
+      }
+      await acceptMessageThread(threadId, user.uid);
+      router.push(`/messages/${threadId}?jobId=${encodeURIComponent(jobId)}`);
+    } catch (e: any) {
+      toast.error("Messages", e?.message || "Could not open message thread.");
+    } finally {
+      setMessageBusyCandidateId(null);
+    }
   };
 
   const handleRequestReview = async (candidateId: string) => {
@@ -465,6 +601,80 @@ export default function JobComparePage() {
                       Feedback received {row.reviewCompletedCount}
                     </span>
                   )}
+                  <span className={recruiterChip.requested}>
+                    Feedback requested {row.feedbackRequestedCount || 0}
+                  </span>
+                  <span className={recruiterChip.submitted}>
+                    {row.feedbackSubmittedCount || 0} feedback submitted
+                  </span>
+                  {row.debriefStatus ? (
+                    <span className={String(row.debriefStatus).toUpperCase() === "COMPLETED" ? recruiterChip.submitted : recruiterChip.ready}>
+                      {String(row.debriefStatus).toUpperCase() === "COMPLETED" ? "Debrief completed" : "Ready for debrief"}
+                    </span>
+                  ) : null}
+                  {row.offerStatus ? (
+                    <span className={recruiterChip.draft}>Offer: {offerStatusLabel(row.offerStatus)}</span>
+                  ) : null}
+                </div>
+                {["FINALIST", "OFFER", "HIRED", "SHORTLIST", "INTERVIEW"].includes(row.stage) && (
+                  <div className="mt-2 rounded-md border border-indigo-100 bg-indigo-50/80 px-3 py-2 text-xs text-indigo-950">
+                    <p className="font-semibold text-indigo-900">Offer readiness</p>
+                    <p className="mt-0.5 text-indigo-900/90">{row.offerNextAction}</p>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {row.latestOffer ? (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setOfferModal({
+                              candidateId: row.candidateId,
+                              name: row.name,
+                              existing: row.latestOffer || null,
+                            })
+                          }
+                          className="rounded-lg border border-indigo-200 bg-white px-3 py-1.5 text-xs font-semibold text-indigo-900 hover:bg-indigo-50"
+                        >
+                          View offer
+                        </button>
+                      ) : row.stage === "FINALIST" || row.stage === "INTERVIEW" || row.stage === "SHORTLIST" ? (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setOfferModal({
+                              candidateId: row.candidateId,
+                              name: row.name,
+                              existing: null,
+                            })
+                          }
+                          className="rounded-lg bg-navy-800 px-3 py-1.5 text-xs font-semibold text-white hover:bg-navy-700"
+                        >
+                          Create offer
+                        </button>
+                      ) : null}
+                      <Link
+                        href={getCandidateUrl(row.candidateId, jobId)}
+                        className="inline-flex items-center rounded-lg border border-indigo-200 px-3 py-1.5 text-xs font-semibold text-indigo-900 hover:bg-white"
+                      >
+                        Profile (offer section)
+                      </Link>
+                    </div>
+                  </div>
+                )}
+                <div className="mt-2 rounded-md border border-slate-200 bg-slate-50 px-2 py-2">
+                  <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Recommendation distribution</p>
+                  {Object.keys(row.recommendationCounts || {}).length > 0 ? (
+                    <p className="mt-1 text-xs text-slate-700">
+                      {Object.entries(row.recommendationCounts || {})
+                        .map(([k, v]) => `${k.replaceAll("_", " ")}: ${v}`)
+                        .join(" • ")}
+                    </p>
+                  ) : (
+                    <p className="mt-1 text-xs text-slate-500">No submitted recommendations yet.</p>
+                  )}
+                  {(row.missingFeedbackCount || 0) > 0 ? (
+                    <div className="mt-1">
+                      <span className={recruiterChip.missing}>Missing feedback {row.missingFeedbackCount}</span>
+                    </div>
+                  ) : null}
                 </div>
                 <p className="mt-1 text-[11px] text-slate-600 line-clamp-2">
                   <span className="font-semibold text-slate-700">Notes:</span> {row.notesSummary}
@@ -478,10 +688,11 @@ export default function JobComparePage() {
                   <p className="mt-1 text-slate-600">
                     Interview:{" "}
                     <span className="font-medium text-slate-800">
-                      {row.interviewAt
-                        ? new Date(row.interviewAt?.toDate ? row.interviewAt.toDate() : row.interviewAt).toLocaleString()
-                        : "Not scheduled"}
+                      {row.interviewAt ? formatInterviewWhenLabel(row.interviewAt) : "Not scheduled"}
                     </span>
+                  </p>
+                  <p className="mt-1 text-slate-600">
+                    Round: <span className="font-medium text-slate-800">{row.interviewRoundName || "Interview round"}</span>
                   </p>
                   {row.interviewAt && (
                     <div className="mt-1 flex items-center gap-2">
@@ -511,19 +722,33 @@ export default function JobComparePage() {
                   >
                     View profile
                   </Link>
-                  <Link
-                    href={`${getCandidateUrl(row.candidateId, jobId)}&action=message`}
-                    className="inline-flex items-center gap-1 px-3 py-2 rounded-lg border border-slate-200 text-xs font-semibold text-navy-800 hover:bg-slate-50"
+                  <button
+                    type="button"
+                    onClick={() => void handleOpenMessageThread(row)}
+                    disabled={messageBusyCandidateId === row.candidateId}
+                    className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-navy-800 hover:bg-slate-50 disabled:opacity-50"
                   >
                     <MessageSquare className="h-3.5 w-3.5" />
-                    Message
-                  </Link>
-                  <Link
-                    href={`${getCandidateUrl(row.candidateId, jobId)}&action=interview`}
-                    className="inline-flex items-center gap-1 px-3 py-2 rounded-lg border border-slate-200 text-xs font-semibold text-navy-800 hover:bg-slate-50"
+                    {messageBusyCandidateId === row.candidateId ? "Opening…" : "Message"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setScheduleFor({
+                        candidateId: row.candidateId,
+                        name: row.name,
+                        existingInterview:
+                          ["SHORTLIST", "INTERVIEW", "FINALIST"].includes(row.stage) && row.interviewRecord
+                            ? row.interviewRecord
+                            : null,
+                      })
+                    }
+                    className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-navy-800 hover:bg-slate-50"
                   >
-                    Schedule interview
-                  </Link>
+                    {row.interviewRecord && ["SHORTLIST", "INTERVIEW", "FINALIST"].includes(row.stage)
+                      ? "Schedule follow-up interview"
+                      : "Schedule interview"}
+                  </button>
                   {row.stage !== "FINALIST" && (
                     <button
                       type="button"
@@ -577,6 +802,33 @@ export default function JobComparePage() {
           </>
         )}
       </div>
+
+      <ScheduleInterviewModal
+        jobId={jobId}
+        candidateId={scheduleFor?.candidateId || ""}
+        jobTitle={jobTitle}
+        candidateName={scheduleFor?.name}
+        isOpen={Boolean(scheduleFor)}
+        existingInterview={scheduleFor?.existingInterview || undefined}
+        onClose={() => setScheduleFor(null)}
+        onSaved={() => {
+          setScheduleFor(null);
+          setCompareReloadNonce((n) => n + 1);
+        }}
+      />
+      <OfferModal
+        jobId={jobId}
+        candidateId={offerModal?.candidateId || ""}
+        candidateName={offerModal?.name}
+        jobTitle={jobTitle}
+        isOpen={Boolean(offerModal)}
+        onClose={() => setOfferModal(null)}
+        existingOffer={offerModal?.existing ?? null}
+        onSaved={() => {
+          setOfferModal(null);
+          setCompareReloadNonce((n) => n + 1);
+        }}
+      />
     </main>
   );
 }

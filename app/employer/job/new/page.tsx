@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useToast } from '@/components/NotificationSystem';
 import { useRouter } from 'next/navigation';
 import { useFirebaseAuth } from '@/components/FirebaseAuthProvider';
@@ -45,6 +45,15 @@ export default function NewJobPage() {
   const [aiSuggestions, setAiSuggestions] = useState<any | null>(null);
   const [loading, setLoading] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+
+  const salaryRangeError = useMemo(() => {
+    if (!salaryMin.trim() || !salaryMax.trim()) return null;
+    const min = Number(salaryMin);
+    const max = Number(salaryMax);
+    if (!Number.isFinite(min) || !Number.isFinite(max)) return null;
+    if (max < min) return 'Salary max must be greater than or equal to salary min.';
+    return null;
+  }, [salaryMin, salaryMax]);
 
   useEffect(() => {
     setIsMounted(true);
@@ -122,6 +131,10 @@ export default function NewJobPage() {
       }
       if (jobData.description.length < 20) {
         toast.error('Validation', 'Description should be at least 20 characters.');
+        return;
+      }
+      if (salaryRangeError) {
+        toast.error('Validation', salaryRangeError);
         return;
       }
 
@@ -259,24 +272,15 @@ export default function NewJobPage() {
   return (
     <main className="min-h-screen bg-slate-50 mobile-safe-top mobile-safe-bottom overflow-x-hidden w-full">
       {/* Header */}
-      <header className="sticky top-0 bg-white shadow-sm z-50 border-b border-slate-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
+      <header className="sticky top-0 z-50 border-b border-slate-100 bg-white shadow-sm">
+        <div className="mx-auto flex max-w-7xl items-center px-4 py-3 sm:px-6 lg:px-8">
           <Link
             href="/home/employer"
-            className="flex items-center gap-2 text-navy-800 hover:text-navy-600 transition-all duration-200 group px-3 py-2 rounded-lg hover:bg-sky-50 hover:shadow-md min-h-[44px]"
+            className="group flex min-h-[44px] items-center gap-2 rounded-lg px-3 py-2 text-navy-800 transition-all duration-200 hover:bg-sky-50 hover:text-navy-600 hover:shadow-md"
           >
-            <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5 group-hover:-translate-x-1 transition-transform duration-200" />
-            <span className="font-medium text-sm sm:text-base hidden sm:inline">Back to Dashboard</span>
-            <span className="font-medium text-sm sm:text-base sm:hidden">Back</span>
-          </Link>
-          <Link href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-navy-800 rounded-lg flex items-center justify-center">
-              <svg width="20" height="20" viewBox="0 0 269 274" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M111.028 0C172.347 0.000238791 222.055 51.647 222.055 115.356C222.055 140.617 214.238 163.98 200.983 182.981L258.517 242.758L238.036 264.036L181.077 204.857C161.97 221.02 137.589 230.713 111.028 230.713C49.7092 230.713 2.76862e-05 179.066 0 115.356C0 51.6468 49.7092 0 111.028 0Z" fill="white"/>
-                <path d="M205.69 115.392C205.69 170.42 163.308 215.029 111.028 215.029C58.748 215.029 16.3666 170.42 16.3666 115.392C16.3666 60.3646 58.748 15.7559 111.028 15.7559C163.308 15.7559 205.69 60.3646 205.69 115.392Z" fill="#4F86F7"/>
-              </svg>
-            </div>
-            <span className="text-xl font-bold text-navy-900">HireMe</span>
+            <ArrowLeft className="h-4 w-4 transition-transform duration-200 group-hover:-translate-x-1 sm:h-5 sm:w-5" />
+            <span className="hidden text-sm font-medium sm:inline sm:text-base">Back to Dashboard</span>
+            <span className="text-sm font-medium sm:hidden sm:text-base">Back</span>
           </Link>
         </div>
       </header>
@@ -290,7 +294,7 @@ export default function NewJobPage() {
 
         <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4 md:space-y-6 lg:space-y-8">
           {/* Job Details Card */}
-          <section className="w-full min-w-0 bg-white/90 backdrop-blur-sm p-4 sm:p-6 md:p-8 rounded-none sm:rounded-xl md:rounded-2xl shadow-sm border-x-0 sm:border border-slate-200 mb-3 sm:mb-0">
+          <section className="mb-3 w-full min-w-0 overflow-visible rounded-none border-x-0 border-slate-200 bg-white/90 p-4 shadow-sm backdrop-blur-sm sm:mb-0 sm:rounded-xl sm:border md:rounded-2xl md:p-8 sm:p-6">
             <div className="space-y-6">
               {/* Job Title */}
               <div className="relative">
@@ -411,35 +415,44 @@ export default function NewJobPage() {
               </div>
 
               {/* Salary Range */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                 <div className="relative">
-                  <input 
-                    id="salaryMin" 
-                    type="number" 
-                    value={salaryMin} 
-                    onChange={(e) => setSalaryMin(e.target.value)} 
-                    className="form-input w-full pl-12 pr-4 py-3 border border-slate-300 rounded-lg bg-white focus:outline-none focus:border-navy-800 focus:ring-2 focus:ring-navy/10 transition-all duration-200" 
-                    placeholder="50000" 
-                    min="0" 
-                  />
-                  <span className="absolute left-4 top-3 text-slate-500 pointer-events-none">$</span>
-                  <label htmlFor="salaryMin" className="absolute left-12 -top-2 text-sm text-slate-600 bg-white px-1">Salary Min (optional)</label>
+                  <label htmlFor="salaryMin" className="absolute -top-2 left-3 z-[1] bg-white px-1 text-sm text-slate-600">
+                    Salary Min (optional)
+                  </label>
+                  <div className="mt-1 flex min-h-[48px] items-stretch overflow-hidden rounded-lg border border-slate-300 bg-white focus-within:border-navy-800 focus-within:ring-2 focus-within:ring-navy/10">
+                    <span className="flex shrink-0 items-center border-r border-slate-200 bg-slate-50 px-3 text-slate-600">$</span>
+                    <input
+                      id="salaryMin"
+                      type="number"
+                      value={salaryMin}
+                      onChange={(e) => setSalaryMin(e.target.value)}
+                      className="form-input min-w-0 flex-1 border-0 py-3 pr-4 pl-3 text-base focus:outline-none focus:ring-0"
+                      placeholder="50000"
+                      min="0"
+                    />
+                  </div>
                 </div>
 
                 <div className="relative">
-                  <input 
-                    id="salaryMax" 
-                    type="number" 
-                    value={salaryMax} 
-                    onChange={(e) => setSalaryMax(e.target.value)} 
-                    className="form-input w-full pl-12 pr-4 py-3 border border-slate-300 rounded-lg bg-white focus:outline-none focus:border-navy-800 focus:ring-2 focus:ring-navy/10 transition-all duration-200" 
-                    placeholder="80000" 
-                    min="0" 
-                  />
-                  <span className="absolute left-4 top-3 text-slate-500 pointer-events-none">$</span>
-                  <label htmlFor="salaryMax" className="absolute left-12 -top-2 text-sm text-slate-600 bg-white px-1">Salary Max (optional)</label>
+                  <label htmlFor="salaryMax" className="absolute -top-2 left-3 z-[1] bg-white px-1 text-sm text-slate-600">
+                    Salary Max (optional)
+                  </label>
+                  <div className="mt-1 flex min-h-[48px] items-stretch overflow-hidden rounded-lg border border-slate-300 bg-white focus-within:border-navy-800 focus-within:ring-2 focus-within:ring-navy/10">
+                    <span className="flex shrink-0 items-center border-r border-slate-200 bg-slate-50 px-3 text-slate-600">$</span>
+                    <input
+                      id="salaryMax"
+                      type="number"
+                      value={salaryMax}
+                      onChange={(e) => setSalaryMax(e.target.value)}
+                      className="form-input min-w-0 flex-1 border-0 py-3 pr-4 pl-3 text-base focus:outline-none focus:ring-0"
+                      placeholder="80000"
+                      min="0"
+                    />
+                  </div>
                 </div>
               </div>
+              {salaryRangeError ? <p className="text-sm text-rose-600">{salaryRangeError}</p> : null}
 
               {/* Tags */}
               <div className="relative">
@@ -633,7 +646,7 @@ export default function NewJobPage() {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex justify-end">
               <button
                 type="submit"
-                disabled={loading}
+                disabled={loading || Boolean(salaryRangeError)}
                 className={`${recruiterBtnPrimary} min-h-[44px] px-6 sm:px-8 py-2.5 sm:py-3`}
               >
                 <span>{loading ? "Posting…" : "Post job"}</span>

@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef, useEffect, memo } from 'react';
+import { useState, useRef, useEffect, useLayoutEffect, memo } from 'react';
 import { createPortal } from 'react-dom';
 import { ChevronDown, Search, X, Plus } from 'lucide-react';
 
@@ -30,7 +30,7 @@ const MultiSelectDropdown = memo(function MultiSelectDropdown({
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredOptions, setFilteredOptions] = useState(options || []);
   const [position, setPosition] = useState({ top: 0, left: 0, width: 0 });
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  const dropdownPanelRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLDivElement>(null);
 
   const updatePosition = () => {
@@ -49,10 +49,8 @@ const MultiSelectDropdown = memo(function MultiSelectDropdown({
     }
   };
 
-  useEffect(() => {
-    if (isOpen) {
-      updatePosition();
-    }
+  useLayoutEffect(() => {
+    if (isOpen) updatePosition();
   }, [isOpen]);
 
   useEffect(() => {
@@ -77,8 +75,13 @@ const MultiSelectDropdown = memo(function MultiSelectDropdown({
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node) &&
-          triggerRef.current && !triggerRef.current.contains(event.target as Node)) {
+      const t = event.target as Node;
+      if (
+        dropdownPanelRef.current &&
+        !dropdownPanelRef.current.contains(t) &&
+        triggerRef.current &&
+        !triggerRef.current.contains(t)
+      ) {
         setIsOpen(false);
         setSearchTerm('');
       }
@@ -192,61 +195,71 @@ const MultiSelectDropdown = memo(function MultiSelectDropdown({
           </div>
         </div>
 
-        {isOpen && !isMaxReached && (
-          <div 
-            ref={dropdownRef}
-            className="absolute left-0 right-0 mt-2 z-50 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-hidden"
-          >
-            <div className="p-2 border-b border-gray-200">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Search..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  autoFocus
-                />
-              </div>
-            </div>
-            
-            <div className="max-h-48 overflow-y-auto pb-2">
-              {filteredOptions.length > 0 ? (
-                filteredOptions.map((option, index) => (
-                  <div
-                    key={index}
-                    className="px-4 py-2 hover:bg-blue-50 cursor-pointer text-gray-700 hover:text-blue-900 flex items-center justify-between"
-                    onClick={() => handleSelect(option)}
-                  >
-                    <span>{option}</span>
-                    <Plus className="h-4 w-4 text-blue-500" />
-                  </div>
-                ))
-              ) : (
-                <div className="px-4 py-2 text-gray-500 text-center">
-                  {allowCustom ? (
-                    <div>
-                      <p>No matches found</p>
-                      {searchTerm.trim() && !values.includes(searchTerm.trim()) && (
-                        <button
-                          type="button"
-                          onClick={handleCustomInput}
-                          className="mt-2 text-blue-600 hover:text-blue-800 font-medium"
-                        >
-                          Add "{searchTerm.trim()}"
-                        </button>
-                      )}
-                    </div>
-                  ) : (
-                    <p>No matches found</p>
-                  )}
+        {isOpen &&
+          !isMaxReached &&
+          typeof document !== "undefined" &&
+          createPortal(
+            <div
+              ref={dropdownPanelRef}
+              className="z-[10000] max-h-60 overflow-hidden rounded-lg border border-gray-300 bg-white shadow-lg"
+              style={{
+                position: "fixed",
+                top: position.top,
+                left: position.left,
+                width: position.width,
+              }}
+            >
+              <div className="border-b border-gray-200 p-2">
+                <div className="relative">
+                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transform text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Search..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    className="w-full rounded-md border border-gray-300 py-2 pl-10 pr-4 focus:border-transparent focus:ring-2 focus:ring-blue-500"
+                    autoFocus
+                  />
                 </div>
-              )}
-            </div>
-          </div>
-        )}
+              </div>
+
+              <div className="max-h-48 overflow-y-auto pb-2">
+                {filteredOptions.length > 0 ? (
+                  filteredOptions.map((option, index) => (
+                    <div
+                      key={index}
+                      className="flex cursor-pointer items-center justify-between px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-900"
+                      onClick={() => handleSelect(option)}
+                    >
+                      <span>{option}</span>
+                      <Plus className="h-4 w-4 text-blue-500" />
+                    </div>
+                  ))
+                ) : (
+                  <div className="px-4 py-2 text-center text-gray-500">
+                    {allowCustom ? (
+                      <div>
+                        <p>No matches found</p>
+                        {searchTerm.trim() && !values.includes(searchTerm.trim()) && (
+                          <button
+                            type="button"
+                            onClick={handleCustomInput}
+                            className="mt-2 font-medium text-blue-600 hover:text-blue-800"
+                          >
+                            Add "{searchTerm.trim()}"
+                          </button>
+                        )}
+                      </div>
+                    ) : (
+                      <p>No matches found</p>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>,
+            document.body
+          )}
       </div>
     </div>
   );

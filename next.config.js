@@ -1,7 +1,7 @@
-const { PHASE_DEVELOPMENT_SERVER } = require("next/constants");
-
 /** @type {import('next').NextConfig} */
-const baseConfig = {
+const nextConfig = {
+  // Default `.next` can be cleared by sync/AV tooling on some machines; `build` is stable.
+  distDir: "build",
   reactStrictMode: true,
   images: {
     remotePatterns: [
@@ -25,36 +25,4 @@ const baseConfig = {
     return config;
   },
 };
-
-module.exports = (phase) => {
-  if (phase !== PHASE_DEVELOPMENT_SERVER) {
-    return baseConfig;
-  }
-
-  return {
-    ...baseConfig,
-    // Reduce stale-document + stale-buildId mismatches (chunk 404s) during local dev.
-    async headers() {
-      return [
-        {
-          source: "/",
-          headers: [
-            {
-              key: "Cache-Control",
-              value: "no-store, no-cache, must-revalidate, max-age=0",
-            },
-          ],
-        },
-        {
-          source: "/:path((?!_next/static|_next/image|_next/data|api/).*)",
-          headers: [
-            {
-              key: "Cache-Control",
-              value: "no-store, no-cache, must-revalidate, max-age=0",
-            },
-          ],
-        },
-      ];
-    },
-  };
-};
+module.exports = nextConfig;

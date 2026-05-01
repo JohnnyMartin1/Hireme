@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
@@ -157,6 +157,7 @@ export default function JobPipelinePage() {
     name: string;
     existing: CandidateOfferRecord | null;
   } | null>(null);
+  const activeDevTimersRef = useRef<Set<string>>(new Set());
 
   const offerStageHint = useCallback((stage: PipelineStage) => {
     return ["SHORTLIST", "CONTACTED", "RESPONDED", "INTERVIEW", "FINALIST", "OFFER"].includes(stage);
@@ -169,10 +170,28 @@ export default function JobPipelinePage() {
   }, [user, profile, router]);
 
   const load = useCallback(async () => {
+    const startDevTimer = (label: string) => {
+      if (process.env.NODE_ENV !== "development") return;
+      const active = activeDevTimersRef.current;
+      if (!active.has(label)) {
+        console.time(label);
+        active.add(label);
+      }
+    };
+
+    const endDevTimer = (label: string) => {
+      if (process.env.NODE_ENV !== "development") return;
+      const active = activeDevTimersRef.current;
+      if (active.has(label)) {
+        console.timeEnd(label);
+        active.delete(label);
+      }
+    };
+
     if (!jobId || !user) return;
     setLoading(true);
     try {
-      if (process.env.NODE_ENV === "development") console.time("pipeline:load");
+      startDevTimer("pipeline:load");
       const token = await user.getIdToken();
       const auth = { Authorization: `Bearer ${token}` };
 
@@ -413,7 +432,7 @@ export default function JobPipelinePage() {
       console.error("Pipeline page load failed:", e);
       setCards([]);
     } finally {
-      if (process.env.NODE_ENV === "development") console.timeEnd("pipeline:load");
+      endDevTimer("pipeline:load");
       setLoading(false);
     }
   }, [jobId, user]);

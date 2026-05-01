@@ -107,7 +107,9 @@ export function getCommunicationOperationalChips(input: CommunicationStatusInput
 
   const stage = String(input.pipelineStage || "").toUpperCase();
   const evalIncompletePartial =
-    !input.isEvaluationComplete && (stage === "INTERVIEW" || stage === "FINALIST") && !!input.hasEvaluation;
+    !input.isEvaluationComplete &&
+    (stage === "INTERVIEW" || stage === "FINALIST" || stage === "OFFER") &&
+    !!input.hasEvaluation;
 
   if (evalIncompletePartial && !workflow.includes("evaluation")) {
     chips.push("Evaluation incomplete");
@@ -160,6 +162,8 @@ export function getRecruiterNextStep(input: CommunicationStatusInput): string {
     return "Next step: Request manager review";
   }
   if (stage === "FINALIST") return "Next step: Final decision";
+  if (stage === "OFFER") return "Next step: Close offer with candidate";
+  if (stage === "HIRED") return "Next step: Onboarding / close job if done";
   if (String(input.reviewStatus || "") === "REQUESTED") return "Next step: Wait for manager review";
   return "Next step: Review candidate";
 }

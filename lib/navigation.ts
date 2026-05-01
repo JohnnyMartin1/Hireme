@@ -27,6 +27,14 @@ export function getJobCompareUrl(jobId: string, candidateIds?: string[] | null):
   return `${base}?candidateIds=${encodeURIComponent(ids)}`;
 }
 
+export function getJobInterviewPlanUrl(jobId: string): string {
+  return `/employer/job/${jobId}/interview-plan`;
+}
+
+export function getJobOffersUrl(jobId: string): string {
+  return `/employer/job/${jobId}/offers`;
+}
+
 export function getJobEditUrl(jobId: string): string {
   return `/employer/job/${jobId}/edit`;
 }
@@ -55,6 +63,10 @@ export function getCandidatesSearchUrl(jobId?: string | null): string {
 
 export function getEmployerPoolsUrl(): string {
   return "/employer/pools";
+}
+
+export function getEmployerFeedbackUrl(): string {
+  return "/employer/feedback";
 }
 
 export function getEmployerPoolDetailUrl(poolId: string): string {

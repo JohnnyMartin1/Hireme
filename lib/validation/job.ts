@@ -37,6 +37,18 @@ export const createJobBodySchema = z.object({
   companyWebsite: z.string().nullable().optional(),
   status: z.enum(['ACTIVE', 'DRAFT', 'CLOSED', 'INACTIVE']).optional().default('ACTIVE'),
   idToken: z.string().min(10, 'Authentication required'),
-});
+})
+  .refine(
+    (d) => {
+      const min = d.salaryMin;
+      const max = d.salaryMax;
+      if (min == null || max == null) return true;
+      return max >= min;
+    },
+    {
+      message: 'Salary max must be greater than or equal to salary min.',
+      path: ['salaryMax'],
+    }
+  );
 
 export type CreateJobBody = z.infer<typeof createJobBodySchema>;
