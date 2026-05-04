@@ -169,11 +169,13 @@ export default function CandidateProfilePage() {
   // Function to force download of resume
   const handleDownloadResume = async (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault();
-    if (!candidate.resumeUrl) return;
+    if (!candidate?.id) return;
 
     try {
+      const signed = await requestCandidateFileUrl("resume");
+      if (!signed) return;
       // Fetch the file
-      const response = await fetch(candidate.resumeUrl);
+      const response = await fetch(signed);
       const blob = await response.blob();
       
       // Create a blob URL
@@ -192,7 +194,32 @@ export default function CandidateProfilePage() {
     } catch (error) {
       console.error('Error downloading resume:', error);
       // Fallback to regular download if fetch fails
-      window.open(candidate.resumeUrl, '_blank');
+      const fallback = await requestCandidateFileUrl("resume");
+      if (fallback) window.open(fallback, '_blank');
+    }
+  };
+  const requestCandidateFileUrl = async (type: "resume" | "transcript" | "video") => {
+    if (!user || !candidate?.id) return null;
+    try {
+      const token = await user.getIdToken();
+      const qs = new URLSearchParams({ type });
+      const jobId = searchParams.get("jobId");
+      if (jobId) qs.set("jobId", jobId);
+      const threadId = searchParams.get("threadId");
+      if (threadId) qs.set("threadId", threadId);
+      const poolId = searchParams.get("poolId");
+      if (poolId) qs.set("poolId", poolId);
+      const res = await fetch(`/api/employer/candidate-file/${candidate.id}?${qs.toString()}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const payload = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(payload?.error || "Unable to access file");
+      return String(payload?.file?.url || "");
+    } catch (e) {
+      toast.error("File access", e instanceof Error ? e.message : "Unable to open file");
+      return null;
+    } finally {
+      // no-op
     }
   };
   const [endorsements, setEndorsements] = useState<any[]>([]);
@@ -243,7 +270,11 @@ export default function CandidateProfilePage() {
 
           if (useEmployerApiView) {
             const token = await user.getIdToken();
-            const res = await fetchEmployerCandidateProfile(params.id as string, token);
+            const res = await fetchEmployerCandidateProfile(params.id as string, token, {
+              jobId: searchParams.get("jobId"),
+              threadId: searchParams.get("threadId"),
+              poolId: searchParams.get("poolId"),
+            });
             if (res.error || !res.data) {
               loadError = res.error || "Candidate not found";
             } else {
@@ -318,6 +349,29 @@ export default function CandidateProfilePage() {
 
     fetchCandidateProfile();
   }, [params.id, user, profile, loading]);
+
+  useEffect(() => {
+    const hydrateSignedLinks = async () => {
+      if (!candidate?.id || !user) return;
+      if (!(profile?.role === "EMPLOYER" || profile?.role === "RECRUITER" || profile?.role === "ADMIN")) return;
+      const nextCandidate = { ...candidate };
+      let changed = false;
+      if (!nextCandidate.resumeUrl && (nextCandidate.hasResume || nextCandidate.resumeStoragePath)) {
+        const u = await requestCandidateFileUrl("resume");
+        if (u) { nextCandidate.resumeUrl = u; changed = true; }
+      }
+      if (!nextCandidate.transcriptUrl && (nextCandidate.hasTranscript || nextCandidate.transcriptStoragePath)) {
+        const u = await requestCandidateFileUrl("transcript");
+        if (u) { nextCandidate.transcriptUrl = u; changed = true; }
+      }
+      if (!nextCandidate.videoUrl && (nextCandidate.hasIntroVideo || nextCandidate.introVideoStoragePath)) {
+        const u = await requestCandidateFileUrl("video");
+        if (u) { nextCandidate.videoUrl = u; changed = true; }
+      }
+      if (changed) setCandidate(nextCandidate);
+    };
+    hydrateSignedLinks();
+  }, [candidate?.id, candidate?.hasResume, candidate?.hasTranscript, candidate?.hasIntroVideo, user, profile?.role]);
 
   useEffect(() => {
     const fetchMatchContext = async () => {

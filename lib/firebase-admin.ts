@@ -4,6 +4,7 @@ import admin from 'firebase-admin';
 if (!admin.apps.length) {
   const projectId = process.env.FIREBASE_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || '';
   const clientEmail = process.env.FIREBASE_CLIENT_EMAIL || '';
+  const storageBucket = process.env.FIREBASE_STORAGE_BUCKET || process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || undefined;
   
   // More robust private key parsing
   let privateKey = process.env.FIREBASE_PRIVATE_KEY || '';
@@ -32,19 +33,20 @@ if (!admin.apps.length) {
           clientEmail,
           privateKey,
         }),
+        ...(storageBucket ? { storageBucket } : {}),
       });
       if (process.env.NODE_ENV === 'development') {
         console.log('Firebase Admin SDK initialized successfully');
       }
     } catch (error) {
       console.error('Firebase Admin SDK initialization error:', error);
-      admin.initializeApp();
+      admin.initializeApp(storageBucket ? { storageBucket } : undefined);
     }
   } else {
     if (process.env.NODE_ENV === 'development') {
       console.log('Missing Firebase credentials, using default');
     }
-    admin.initializeApp();
+    admin.initializeApp(storageBucket ? { storageBucket } : undefined);
   }
 }
 

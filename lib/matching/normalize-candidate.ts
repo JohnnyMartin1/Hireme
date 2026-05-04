@@ -5,6 +5,11 @@ import {
   normalizeWhitespaceLower,
 } from '@/lib/matching/normalize-terms';
 import { expandTitleMatchSignals } from '@/lib/matching/title-roles';
+import {
+  hasIntroVideoForCompletion,
+  hasResumeForCompletion,
+  hasTranscriptForCompletion,
+} from '@/lib/profile-completion';
 
 function parseGpa(raw: unknown): number | null {
   if (raw == null) return null;
@@ -168,6 +173,10 @@ export function normalizeCandidateForMatching(
   const resumeUrl = String(doc.resumeUrl || '').trim();
   const videoUrl = String(doc.videoUrl || '').trim();
   const transcriptUrl = String((doc as { transcriptUrl?: string }).transcriptUrl || '').trim();
+  const docRecord = doc as Record<string, unknown>;
+  const hasResumeAsset = hasResumeForCompletion(docRecord);
+  const hasIntroVideoAsset = hasIntroVideoForCompletion(docRecord);
+  const hasTranscriptAsset = hasTranscriptForCompletion(docRecord);
   const endorsementsCount = Number((doc as { endorsementsCount?: number }).endorsementsCount || 0);
   const resumeText = String((doc as { resumeText?: string }).resumeText || '').trim();
   const structuredExperience = Array.isArray((doc as { experienceProjectsV2?: unknown }).experienceProjectsV2)
@@ -296,10 +305,10 @@ export function normalizeCandidateForMatching(
     extracurriculars.length ? 'has_projects_or_clubs' : '',
     certifications.length ? 'has_certifications' : '',
     careerInterests.length ? 'has_industry_interests' : '',
-    resumeUrl ? 'has_resume' : '',
+    hasResumeAsset ? 'has_resume' : '',
     resumeText ? 'has_resume_text' : '',
-    videoUrl ? 'has_video' : '',
-    transcriptUrl ? 'has_transcript' : '',
+    hasIntroVideoAsset ? 'has_video' : '',
+    hasTranscriptAsset ? 'has_transcript' : '',
     certifications.length ? 'has_certifications' : '',
     endorsementsCount > 0 ? 'has_endorsements' : '',
   ].filter(Boolean);
@@ -367,13 +376,13 @@ export function normalizeCandidateForMatching(
     educationSummary: [school, major, minor, educationComposite].filter(Boolean).join(' ').toLowerCase(),
     experienceSummary: [experience, resumeText].filter(Boolean).join(' ').toLowerCase(),
     extracurricularsSummary: [extracurriculars.join(' '), certifications.join(' '), languages.join(' ')].join(' ').toLowerCase(),
-    hasResume: resumeUrl.length > 0,
-    hasVideo: videoUrl.length > 0,
-    hasTranscript: transcriptUrl.length > 0,
+    hasResume: hasResumeAsset,
+    hasVideo: hasIntroVideoAsset,
+    hasTranscript: hasTranscriptAsset,
     recruiterConfidenceSignals: {
-      hasResume: resumeUrl.length > 0,
-      hasVideo: videoUrl.length > 0,
-      hasTranscript: transcriptUrl.length > 0,
+      hasResume: hasResumeAsset,
+      hasVideo: hasIntroVideoAsset,
+      hasTranscript: hasTranscriptAsset,
       endorsementsCount: Number.isFinite(endorsementsCount) ? endorsementsCount : 0,
       certificationsCount: certifications.length,
     },

@@ -2,6 +2,17 @@ import { NextRequest, NextResponse } from 'next/server';
 import { adminAuth, adminDb } from '@/lib/firebase-admin';
 import { isServerAdminUser } from '@/lib/admin-access';
 
+async function listAllAuthUserIds(): Promise<string[]> {
+  const ids: string[] = [];
+  let nextPageToken: string | undefined = undefined;
+  do {
+    const page = await adminAuth.listUsers(1000, nextPageToken);
+    ids.push(...page.users.map((u) => u.uid));
+    nextPageToken = page.pageToken;
+  } while (nextPageToken);
+  return ids;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const authHeader = request.headers.get('authorization');
@@ -27,8 +38,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (userIds.length === 0) {
-      const listUsersResult = await adminAuth.listUsers();
-      const allUserIds = listUsersResult.users.map(user => user.uid);
+      const allUserIds = await listAllAuthUserIds();
       return NextResponse.json({
         validUserIds: allUserIds,
         totalChecked: allUserIds.length,

@@ -8,6 +8,12 @@ const SENSITIVE_KEYS = new Set([
   "calendarIntegration",
   "googleCalendarTokens",
   "microsoftCalendarTokens",
+  "resumeUrl",
+  "transcriptUrl",
+  "videoUrl",
+  "resumeStoragePath",
+  "transcriptStoragePath",
+  "introVideoStoragePath",
 ]);
 
 /** Remove fields employers must not receive via API (server-side field mask). */

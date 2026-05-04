@@ -64,7 +64,7 @@ export async function DELETE(request: NextRequest) {
     // Delete profile views of user
     const userProfileViewsQuery = await adminDb
       .collection('profileViews')
-      .where('viewedUserId', '==', userId)
+      .where('candidateId', '==', userId)
       .get();
     
     userProfileViewsQuery.docs.forEach(doc => {
@@ -74,7 +74,7 @@ export async function DELETE(request: NextRequest) {
     // Delete saved candidates by user
     const savedCandidatesQuery = await adminDb
       .collection('savedCandidates')
-      .where('userId', '==', userId)
+      .where('employerId', '==', userId)
       .get();
     
     savedCandidatesQuery.docs.forEach(doc => {
@@ -82,22 +82,34 @@ export async function DELETE(request: NextRequest) {
     });
 
     // Delete endorsements for user
-    const endorsementsQuery = await adminDb
+    const endorsementsForCandidateQuery = await adminDb
       .collection('endorsements')
       .where('userId', '==', userId)
       .get();
-    
-    endorsementsQuery.docs.forEach(doc => {
+    endorsementsForCandidateQuery.docs.forEach(doc => {
+      batch.delete(doc.ref);
+    });
+    const endorsementsByUserQuery = await adminDb
+      .collection('endorsements')
+      .where('endorserUserId', '==', userId)
+      .get();
+    endorsementsByUserQuery.docs.forEach(doc => {
       batch.delete(doc.ref);
     });
 
     // Delete company ratings by user
-    const companyRatingsQuery = await adminDb
+    const companyRatingsByEmployerQuery = await adminDb
       .collection('companyRatings')
-      .where('userId', '==', userId)
+      .where('employerId', '==', userId)
       .get();
-    
-    companyRatingsQuery.docs.forEach(doc => {
+    companyRatingsByEmployerQuery.docs.forEach(doc => {
+      batch.delete(doc.ref);
+    });
+    const companyRatingsByCandidateQuery = await adminDb
+      .collection('companyRatings')
+      .where('candidateId', '==', userId)
+      .get();
+    companyRatingsByCandidateQuery.docs.forEach(doc => {
       batch.delete(doc.ref);
     });
 

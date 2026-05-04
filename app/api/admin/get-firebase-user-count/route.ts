@@ -4,6 +4,17 @@ import { isServerAdminUser } from '@/lib/admin-access';
 
 export const dynamic = 'force-dynamic';
 
+async function listAllAuthUsers() {
+  const users: Awaited<ReturnType<typeof adminAuth.listUsers>>["users"] = [];
+  let nextPageToken: string | undefined = undefined;
+  do {
+    const page = await adminAuth.listUsers(1000, nextPageToken);
+    users.push(...page.users);
+    nextPageToken = page.pageToken;
+  } while (nextPageToken);
+  return users;
+}
+
 export async function GET(request: NextRequest) {
   try {
     // Verify authentication
@@ -31,7 +42,7 @@ export async function GET(request: NextRequest) {
     }
 
     // List all users from Firebase Authentication
-    const listUsersResult = await adminAuth.listUsers();
+    const users = await listAllAuthUsers();
     
     // Count users by role by checking their Firestore profiles
     const { adminDb } = await import('@/lib/firebase-admin');
@@ -44,7 +55,7 @@ export async function GET(request: NextRequest) {
 
     // Optimize: Process Firestore queries in parallel batches instead of sequentially
     const batchSize = 10;
-    const userIds = listUsersResult.users.map(user => user.uid);
+    const userIds = users.map(user => user.uid);
     
     for (let i = 0; i < userIds.length; i += batchSize) {
       const batch = userIds.slice(i, i + batchSize);
@@ -79,7 +90,7 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json({
-      totalUsers: listUsersResult.users.length,
+      totalUsers: users.length,
       jobSeekers,
       employers,
       recruiters,

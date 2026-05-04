@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminAuth, adminDb } from '@/lib/firebase-admin';
 import { sendNewEndorsementNotification } from '@/lib/notifications';
+import { rateLimitHitAsync } from '@/lib/api-rate-limit';
 
 export async function POST(request: NextRequest) {
   try {
@@ -15,6 +16,13 @@ export async function POST(request: NextRequest) {
     }
 
     const { userId, endorserName, skill } = await request.json();
+    const rl = await rateLimitHitAsync("notifications-endorsement-received", request, {
+      windowMs: 60_000,
+      max: 20,
+    });
+    if (rl != null) {
+      return NextResponse.json({ error: "Too many requests" }, { status: 429, headers: { "Retry-After": String(rl) } });
+    }
     
     if (!userId || !endorserName || !skill) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });

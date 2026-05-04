@@ -3,6 +3,7 @@ import { canManageCalendarIntegration, getServerAuthedUser } from "@/lib/server-
 import { buildGoogleAuthUrl } from "@/lib/integrations/google-calendar";
 import { adminDb } from "@/lib/firebase-admin";
 import admin from "firebase-admin";
+import { rateLimitHitAsync } from "@/lib/api-rate-limit";
 
 export const dynamic = "force-dynamic";
 
@@ -18,6 +19,14 @@ async function startOAuth(request: NextRequest, redirectRaw: string | null) {
   if (!user) return { error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }) };
   if (!canManageCalendarIntegration(user.role)) {
     return { error: NextResponse.json({ error: "Forbidden" }, { status: 403 }) };
+  }
+  const rl = await rateLimitHitAsync("oauth-google-connect", request, {
+    windowMs: 60_000,
+    max: 10,
+    uid: user.uid,
+  });
+  if (rl != null) {
+    return { error: NextResponse.json({ error: "Too many requests" }, { status: 429, headers: { "Retry-After": String(rl) } }) };
   }
   const redirectPath = safeRedirectPath(redirectRaw, user.uid);
   const nonce = crypto.randomUUID();

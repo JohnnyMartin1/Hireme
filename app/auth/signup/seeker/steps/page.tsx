@@ -140,8 +140,10 @@ export default function NextStepsOnboarding() {
         linkedinUrl: profileData.linkedin ? normalizeLinkedInUrl(profileData.linkedin) : '',
         portfolioUrl: profileData.portfolio,
         profileImageUrl: profileData.avatar,
-        resumeUrl: profileData.resume,
-        videoUrl: profileData.video,
+        resumeStoragePath: profileData.resume,
+        resumeUrl: "",
+        introVideoStoragePath: profileData.video,
+        videoUrl: "",
       };
       
       await updateDocument('users', user.uid, currentData);
@@ -215,8 +217,10 @@ export default function NextStepsOnboarding() {
         linkedinUrl: profileData.linkedin ? normalizeLinkedInUrl(profileData.linkedin) : '',
         portfolioUrl: profileData.portfolio,
         profileImageUrl: profileData.avatar,
-        resumeUrl: profileData.resume,
-        videoUrl: profileData.video,
+        resumeStoragePath: profileData.resume,
+        resumeUrl: "",
+        introVideoStoragePath: profileData.video,
+        videoUrl: "",
         onboardingComplete: true,
         profileComplete: true
       };

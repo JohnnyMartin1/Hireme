@@ -61,7 +61,20 @@ Run after deploying Firestore rules (`firebase deploy --only firestore:rules`) a
 
 ## Storage (Firebase Storage)
 
-- [ ] If using Storage for resumes/videos: deploy explicit `storage.rules` scoped by `uid` (not yet in repo — document before broad launch).
+- [ ] Deploy storage rules: `firebase deploy --only storage`.
+- [ ] Candidate can upload own resume (`POST /api/upload/resume`) and metadata is saved on `users/{uid}` (`resumeStoragePath`, `resumeMimeType`, `resumeSizeBytes`, `resumeUploadedAt`).
+- [ ] Candidate can upload own transcript (`POST /api/upload/transcript`) and metadata is saved (`transcriptStoragePath`, `transcriptMimeType`, `transcriptSizeBytes`, `transcriptUploadedAt`).
+- [ ] Candidate can upload own intro video via signed upload flow (`POST /api/upload/video` prepare + complete) and metadata is saved (`introVideoStoragePath`, `introVideoMimeType`, `introVideoSizeBytes`, `introVideoUploadedAt`).
+- [ ] Candidate can upload own profile image (`POST /api/upload/profile-image`) and `profileImageUrl` remains the only public media URL.
+- [ ] Candidate cannot upload unsupported file MIME types (resume non-PDF, transcript non-PDF/image, video non-mp4/webm/quicktime, image non-jpeg/png/webp).
+- [ ] Candidate cannot upload oversized files (resume >5MB, transcript >10MB, video >100MB, profile image >5MB).
+- [ ] Candidate cannot upload for another uid (server derives uid from verified Firebase ID token).
+- [ ] Direct Storage read for private files (`resumes/*`, `transcripts/*`, `videos/*`) is denied for non-owner.
+- [ ] Profile images under `profile-images/*` are readable as intended; writes remain owner-only.
+- [ ] Recruiter/employer can access candidate private file only via `GET /api/employer/candidate-file/{candidateId}?type=...` with valid relationship context.
+- [ ] Recruiter/employer cannot access unrelated candidate files (403).
+- [ ] Signed recruiter URLs expire and stop working after TTL.
+- [ ] No private file storage path appears in public search/message surfaces.
 
 ## Legal / privacy (product, not legal advice)
 

@@ -4,6 +4,7 @@ import {
   sendNewRecruiterMessageNotification, 
   sendRecruiterFollowUpNotification 
 } from '@/lib/notifications';
+import { rateLimitHitAsync } from '@/lib/api-rate-limit';
 
 export async function POST(request: NextRequest) {
   try {
@@ -26,6 +27,14 @@ export async function POST(request: NextRequest) {
 
     if (decodedToken.uid !== senderId) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+    const rl = await rateLimitHitAsync("notifications-message-sent", request, {
+      windowMs: 60_000,
+      max: 30,
+      uid: decodedToken.uid,
+    });
+    if (rl != null) {
+      return NextResponse.json({ error: "Too many requests" }, { status: 429, headers: { "Retry-After": String(rl) } });
     }
 
     const threadDoc = await adminDb.collection('messageThreads').doc(threadId).get();

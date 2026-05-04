@@ -3,6 +3,9 @@ import { useState } from 'react';
 import { useToast } from '@/components/NotificationSystem';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
+import FileUpload from '@/components/FileUpload';
+import VideoUpload from '@/components/VideoUpload';
+import { useFirebaseAuth } from '@/components/FirebaseAuthProvider';
 
 /**
  * Uploads page. Provides simple forms for uploading a resume (PDF) and
@@ -10,28 +13,13 @@ import Link from 'next/link';
  * which must handle file storage and return a success status.
  */
 export default function UploadsPage() {
+  const { user } = useFirebaseAuth();
   const toast = useToast();
-  const [resumeFile, setResumeFile] = useState<File | null>(null);
-  const [videoFile, setVideoFile] = useState<File | null>(null);
-  const [loading, setLoading] = useState(false);
-  const handleResumeUpload = async () => {
-    if (!resumeFile) return;
-    const formData = new FormData();
-    formData.append('file', resumeFile);
-    setLoading(true);
-    const res = await fetch('/api/upload/resume', { method: 'POST', body: formData });
-    setLoading(false);
-    if (res.ok) toast.info('Info', 'Resume uploaded'); else toast.error('Error', 'Failed to upload resume');
-  };
-  const handleVideoUpload = async () => {
-    if (!videoFile) return;
-    const formData = new FormData();
-    formData.append('file', videoFile);
-    setLoading(true);
-    const res = await fetch('/api/upload/video', { method: 'POST', body: formData });
-    setLoading(false);
-    if (res.ok) toast.info('Info', 'Video uploaded'); else toast.error('Error', 'Failed to upload video');
-  };
+  const [resumePath, setResumePath] = useState('');
+  const [transcriptPath, setTranscriptPath] = useState('');
+  const [videoPath, setVideoPath] = useState('');
+  const [profileImageUrl, setProfileImageUrl] = useState('');
+
   return (
     <div className="min-h-screen bg-slate-50 mobile-safe-top mobile-safe-bottom">
       {/* Header */}
@@ -60,16 +48,10 @@ export default function UploadsPage() {
       <div className="max-w-xl mx-auto px-4 sm:px-6 py-8">
         <h2 className="text-2xl font-bold mb-4">Uploads</h2>
         <div className="space-y-8">
-          <div>
-            <h3 className="text-lg font-semibold mb-2">Resume (PDF)</h3>
-            <input type="file" accept="application/pdf" onChange={(e) => setResumeFile(e.target.files?.[0] || null)} />
-            <button onClick={handleResumeUpload} disabled={!resumeFile || loading} className="ml-2 px-4 py-2 bg-blue-600 text-white rounded disabled:opacity-50">Upload</button>
-          </div>
-          <div>
-            <h3 className="text-lg font-semibold mb-2">Introduction Video (MP4)</h3>
-            <input type="file" accept="video/mp4" onChange={(e) => setVideoFile(e.target.files?.[0] || null)} />
-            <button onClick={handleVideoUpload} disabled={!videoFile || loading} className="ml-2 px-4 py-2 bg-blue-600 text-white rounded disabled:opacity-50">Upload</button>
-          </div>
+          <div><h3 className="text-lg font-semibold mb-2">Resume (PDF, max 5MB)</h3><FileUpload type="resume" currentFile={resumePath} onUploadComplete={setResumePath} onDelete={() => setResumePath('')} userId={user?.uid || ''} /></div>
+          <div><h3 className="text-lg font-semibold mb-2">Transcript (PDF/image, max 10MB)</h3><FileUpload type="transcript" currentFile={transcriptPath} onUploadComplete={setTranscriptPath} onDelete={() => setTranscriptPath('')} userId={user?.uid || ''} /></div>
+          <div><h3 className="text-lg font-semibold mb-2">Profile image (JPEG/PNG/WEBP, max 5MB)</h3><FileUpload type="profile-image" currentFile={profileImageUrl} onUploadComplete={setProfileImageUrl} onDelete={() => setProfileImageUrl('')} userId={user?.uid || ''} /></div>
+          <div><h3 className="text-lg font-semibold mb-2">Intro video (MP4/WEBM/MOV, max 100MB)</h3><VideoUpload currentVideo={videoPath} onUploadComplete={setVideoPath} onDelete={() => setVideoPath('')} userId={user?.uid || ''} /></div>
         </div>
       </div>
     </div>

@@ -1,0 +1,87 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    function isAllowedImageType() {
+      return request.resource != null
+        && request.resource.contentType.matches('image/.*');
+    }
+
+    function isAllowedResumeType() {
+      return request.resource != null
+        && request.resource.contentType == 'application/pdf';
+    }
+
+    function isAllowedVideoType() {
+      return request.resource != null
+        && (
+          request.resource.contentType == 'video/mp4'
+          || request.resource.contentType == 'video/webm'
+          || request.resource.contentType == 'video/quicktime'
+        );
+    }
+
+    function isAllowedTranscriptType() {
+      return request.resource != null
+        && (
+          request.resource.contentType == 'application/pdf'
+          || request.resource.contentType == 'image/jpeg'
+          || request.resource.contentType == 'image/png'
+          || request.resource.contentType == 'image/webp'
+        );
+    }
+
+    // Profile images may be publicly readable by design.
+    match /profile-images/{uid}/{allPaths=**} {
+      allow read: if true;
+      allow write: if isOwner(uid) && isAllowedImageType() && request.resource.size < 5 * 1024 * 1024;
+    }
+
+    // Private candidate resumes.
+    match /resumes/{uid}/{allPaths=**} {
+      allow read: if isOwner(uid);
+      allow write: if isOwner(uid) && isAllowedResumeType() && request.resource.size < 5 * 1024 * 1024;
+    }
+
+    // Private candidate transcripts.
+    match /transcripts/{uid}/{allPaths=**} {
+      allow read: if isOwner(uid);
+      allow write: if isOwner(uid) && isAllowedTranscriptType() && request.resource.size < 10 * 1024 * 1024;
+    }
+
+    // Private candidate introduction videos.
+    match /videos/{uid}/{allPaths=**} {
+      allow read: if isOwner(uid);
+      allow write: if isOwner(uid) && isAllowedVideoType() && request.resource.size < 100 * 1024 * 1024;
+    }
+
+    // Company logo uploads (if used) are scoped to uploader account.
+    match /company-logos/{uid}/{allPaths=**} {
+      allow read: if true;
+      allow write: if isOwner(uid) && isAllowedImageType() && request.resource.size < 5 * 1024 * 1024;
+    }
+
+    // Offer letters / attachments remain private by default.
+    match /offer-letters/{uid}/{allPaths=**} {
+      allow read: if isOwner(uid);
+      allow write: if isOwner(uid);
+    }
+
+    match /attachments/{uid}/{allPaths=**} {
+      allow read: if isOwner(uid);
+      allow write: if isOwner(uid);
+    }
+
+    // Deny everything else.
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

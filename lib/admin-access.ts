@@ -19,7 +19,10 @@ export function getServerAdminEmailsLowercase(): string[] {
   if (multi.length) return [...new Set(multi)];
   const single = (process.env.ADMIN_EMAIL || "").trim().toLowerCase();
   if (single) return [single];
-  return [LEGACY_ADMIN_FALLBACK_EMAIL.toLowerCase()];
+  if (process.env.NODE_ENV !== "production") {
+    return [LEGACY_ADMIN_FALLBACK_EMAIL.toLowerCase()];
+  }
+  return [];
 }
 
 /**

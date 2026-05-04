@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
 import { adminDb } from '@/lib/firebase-admin';
+import { rateLimitHitAsync } from '@/lib/api-rate-limit';
 
 // Initialize Resend instance once (singleton pattern for better performance)
 let resendInstance: Resend | null = null;
@@ -28,33 +29,6 @@ const getEmailFrom = () => {
 // Generate a 6-digit verification code
 function generateVerificationCode(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
-}
-
-// Simple in-memory rate limiting (prevents excessive email sends)
-const emailRateLimit = new Map<string, { count: number; resetTime: number }>();
-
-function checkRateLimit(email: string): { allowed: boolean; message?: string } {
-  const now = Date.now();
-  const key = email.toLowerCase();
-  const limit = emailRateLimit.get(key);
-
-  // Reset if past the time window (1 minute)
-  if (!limit || now > limit.resetTime) {
-    emailRateLimit.set(key, { count: 1, resetTime: now + 60000 }); // 1 minute window
-    return { allowed: true };
-  }
-
-  // Allow max 3 emails per minute per email address
-  if (limit.count >= 3) {
-    const secondsLeft = Math.ceil((limit.resetTime - now) / 1000);
-    return { 
-      allowed: false, 
-      message: `Please wait ${secondsLeft} seconds before requesting another code. Too many requests.` 
-    };
-  }
-
-  limit.count++;
-  return { allowed: true };
 }
 
 // Email template (cached year to avoid Date() calls in template)
@@ -192,13 +166,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check rate limit to prevent excessive email sends
-    const rateLimitCheck = checkRateLimit(email);
-    if (!rateLimitCheck.allowed) {
-      console.warn('Rate limit exceeded for:', email);
+    const rl = await rateLimitHitAsync("auth-send-verification-code", request, {
+      windowMs: 60_000,
+      max: 3,
+      uid: email.toLowerCase().trim(),
+    });
+    if (rl != null) {
       return NextResponse.json(
-        { error: rateLimitCheck.message || 'Too many requests. Please wait before requesting another code.' },
-        { status: 429 }
+        { error: `Please wait ${rl} seconds before requesting another code. Too many requests.` },
+        { status: 429, headers: { "Retry-After": String(rl) } }
       );
     }
 

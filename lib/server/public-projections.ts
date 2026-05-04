@@ -1,6 +1,12 @@
 import type { Firestore } from "firebase-admin/firestore";
 import { FieldValue } from "firebase-admin/firestore";
-import { calculateCompletion } from "@/lib/profile-completion";
+import {
+  calculateCompletion,
+  hasIntroVideoForCompletion,
+  hasProfileImageForCompletion,
+  hasResumeForCompletion,
+  hasTranscriptForCompletion,
+} from "@/lib/profile-completion";
 
 /** Fields safe for employer discovery / endorse preview (no private email/phone/tokens). */
 export function buildPublicCandidateProfilePayload(
@@ -29,9 +35,12 @@ export function buildPublicCandidateProfilePayload(
     locationCity: userData.locationCity ?? "",
     locationState: userData.locationState ?? "",
     openToOpportunities: userData.openToOpportunities ?? null,
-    hasResume: Boolean(userData.resumeUrl || userData.resume),
-    hasVideo: Boolean(userData.videoUrl || userData.introVideoUrl),
-    hasProfileImage: Boolean(userData.profileImageUrl),
+    hasResume: hasResumeForCompletion(userData),
+    hasTranscript: hasTranscriptForCompletion(userData),
+    hasIntroVideo: hasIntroVideoForCompletion(userData),
+    hasVideo: hasIntroVideoForCompletion(userData),
+    hasProfileImage: hasProfileImageForCompletion(userData),
+    profileImageUrl: userData.profileImageUrl ?? "",
     profileCompletionPercent: completion,
     // Used by employer search filters + completion fallback (no email/phone here).
     education: userData.education ?? [],

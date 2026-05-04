@@ -27,6 +27,12 @@ import {
   LANGUAGES
 } from '@/lib/profile-data';
 import { buildNormalizedCandidateProfile } from '@/lib/matching/candidate-profile';
+import {
+  hasIntroVideoForCompletion,
+  hasProfileImageForCompletion,
+  hasResumeForCompletion,
+  hasTranscriptForCompletion,
+} from '@/lib/profile-completion';
 
 type SkillV2 = {
   name: string;
@@ -133,9 +139,13 @@ interface ProfileFormData {
   portfolioUrl: string;
   // Files
   resumeUrl: string;
+  resumeStoragePath: string;
   profileImageUrl: string;
+  profileImageStoragePath: string;
   videoUrl: string;
+  introVideoStoragePath: string;
   transcriptUrl: string;
+  transcriptStoragePath: string;
 }
 
 export default function EditProfilePage() {
@@ -184,9 +194,13 @@ export default function EditProfilePage() {
     linkedinUrl: '',
     portfolioUrl: '',
     resumeUrl: '',
+    resumeStoragePath: '',
     profileImageUrl: '',
+    profileImageStoragePath: '',
     videoUrl: '',
-    transcriptUrl: ''
+    introVideoStoragePath: '',
+    transcriptUrl: '',
+    transcriptStoragePath: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const adjacentRoleSuggestions = (() => {
@@ -253,12 +267,14 @@ export default function EditProfilePage() {
   };
 
   const isFilesComplete = () => {
-    return formData.profileImageUrl.trim() !== '' && 
-           formData.resumeUrl.trim() !== '';
+    return (
+      hasProfileImageForCompletion(formData as unknown as Record<string, unknown>) &&
+      hasResumeForCompletion(formData as unknown as Record<string, unknown>)
+    );
   };
 
   const isVideoComplete = () => {
-    return formData.videoUrl.trim() !== '';
+    return hasIntroVideoForCompletion(formData as unknown as Record<string, unknown>);
   };
 
   const isEndorsementsComplete = () => {
@@ -349,9 +365,13 @@ export default function EditProfilePage() {
               linkedinUrl: profile.linkedinUrl || '',
               portfolioUrl: profile.portfolioUrl || '',
               resumeUrl: profile.resumeUrl || '',
+              resumeStoragePath: profile.resumeStoragePath || '',
               profileImageUrl: profile.profileImageUrl || '',
+              profileImageStoragePath: profile.profileImageStoragePath || '',
               videoUrl: profile.videoUrl || '',
-              transcriptUrl: profile.transcriptUrl || ''
+              introVideoStoragePath: profile.introVideoStoragePath || '',
+              transcriptUrl: profile.transcriptUrl || '',
+              transcriptStoragePath: profile.transcriptStoragePath || ''
             });
           }
         } catch (err) {
@@ -862,9 +882,15 @@ export default function EditProfilePage() {
               <label className="block text-sm font-medium text-gray-700 mb-4">Academic Transcript</label>
               <FileUpload
                 type="transcript"
-                currentFile={formData.transcriptUrl}
-                onUploadComplete={(url) => handleInputChange('transcriptUrl', url)}
-                onDelete={() => handleInputChange('transcriptUrl', '')}
+                currentFile={formData.transcriptStoragePath || formData.transcriptUrl}
+                onUploadComplete={(storagePath) => {
+                  handleInputChange('transcriptStoragePath', storagePath);
+                  handleInputChange('transcriptUrl', '');
+                }}
+                onDelete={() => {
+                  handleInputChange('transcriptStoragePath', '');
+                  handleInputChange('transcriptUrl', '');
+                }}
                 userId={user.uid}
               />
               <p className="text-xs text-gray-500 mt-2">
@@ -1404,7 +1430,7 @@ export default function EditProfilePage() {
               <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
                 <p className="text-xs uppercase tracking-wide text-slate-500 mb-1">Readiness Signals</p>
                 <p className="text-navy-900">
-                  {formData.resumeUrl ? 'Resume' : 'No resume'} • {formData.videoUrl ? 'Video' : 'No video'} • {formData.transcriptUrl ? 'Transcript' : 'No transcript'} • {formData.workAuthorization.authorizedToWork == null ? 'Auth unknown' : formData.workAuthorization.authorizedToWork ? 'Authorized' : 'Needs authorization'}
+                  {hasResumeForCompletion(formData as unknown as Record<string, unknown>) ? 'Resume' : 'No resume'} • {hasIntroVideoForCompletion(formData as unknown as Record<string, unknown>) ? 'Video' : 'No video'} • {hasTranscriptForCompletion(formData as unknown as Record<string, unknown>) ? 'Transcript' : 'No transcript'} • {hasProfileImageForCompletion(formData as unknown as Record<string, unknown>) ? 'Photo' : 'No photo'} • {formData.workAuthorization.authorizedToWork == null ? 'Auth unknown' : formData.workAuthorization.authorizedToWork ? 'Authorized' : 'Needs authorization'}
                 </p>
               </div>
             </div>
@@ -1567,8 +1593,11 @@ export default function EditProfilePage() {
                 <FileUpload
                   type="profile-image"
                   currentFile={formData.profileImageUrl}
-                  onUploadComplete={(url) => handleInputChange('profileImageUrl', url)}
-                  onDelete={() => handleInputChange('profileImageUrl', '')}
+                onUploadComplete={(url) => handleInputChange('profileImageUrl', url)}
+                onDelete={() => {
+                  handleInputChange('profileImageUrl', '');
+                  handleInputChange('profileImageStoragePath', '');
+                }}
                   userId={user.uid}
                 />
               </div>
@@ -1578,9 +1607,15 @@ export default function EditProfilePage() {
                 <label className="block text-sm font-medium text-navy-900 mb-4">Resume</label>
                 <FileUpload
                   type="resume"
-                  currentFile={formData.resumeUrl}
-                  onUploadComplete={(url) => handleInputChange('resumeUrl', url)}
-                  onDelete={() => handleInputChange('resumeUrl', '')}
+                currentFile={formData.resumeStoragePath || formData.resumeUrl}
+                onUploadComplete={(storagePath) => {
+                  handleInputChange('resumeStoragePath', storagePath);
+                  handleInputChange('resumeUrl', '');
+                }}
+                onDelete={() => {
+                  handleInputChange('resumeStoragePath', '');
+                  handleInputChange('resumeUrl', '');
+                }}
                   userId={user.uid}
                 />
               </div>
@@ -1650,9 +1685,15 @@ export default function EditProfilePage() {
                 </p>
               )}
               <VideoUpload
-                currentVideo={formData.videoUrl}
-                onUploadComplete={(url) => handleInputChange('videoUrl', url)}
-                onDelete={() => handleInputChange('videoUrl', '')}
+                currentVideo={formData.videoUrl || formData.introVideoStoragePath}
+                onUploadComplete={(storagePath) => {
+                  handleInputChange('introVideoStoragePath', storagePath);
+                  handleInputChange('videoUrl', '');
+                }}
+                onDelete={() => {
+                  handleInputChange('introVideoStoragePath', '');
+                  handleInputChange('videoUrl', '');
+                }}
                 userId={user.uid}
               />
             </div>

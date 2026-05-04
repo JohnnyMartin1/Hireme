@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
+import { rateLimitHitAsync } from '@/lib/api-rate-limit';
 
 const MAX_ATTEMPTS = 10;
 const WINDOW_MS = 15 * 60 * 1000; // 15 minutes
@@ -16,6 +17,18 @@ export async function POST(request: NextRequest) {
     }
 
     const emailKey = email.toLowerCase().trim();
+    const rl = await rateLimitHitAsync("auth-verify-code", request, {
+      windowMs: 15 * 60 * 1000,
+      max: 20,
+      uid: emailKey,
+    });
+    if (rl != null) {
+      return NextResponse.json(
+        { success: false, error: 'Too many attempts. Please try again later.' },
+        { status: 429, headers: { 'Retry-After': String(rl) } }
+      );
+    }
+
     const rateLimitRef = adminDb.collection('verifyCodeAttempts').doc(emailKey);
     const rateLimitSnap = await rateLimitRef.get();
     const now = Date.now();

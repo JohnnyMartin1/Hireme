@@ -1,50 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
+import { calculateCompletion } from '@/lib/profile-completion';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 export const maxDuration = 60;
 
 const COMPLETION_THRESHOLD = 70;
-
-/** Server-side profile completion calculation (same logic as ProfileCompletionProvider). */
-function calculateCompletion(p: Record<string, unknown> | null): number {
-  if (!p) return 0;
-  const completedSections = [
-    !!(p.firstName && p.lastName && p.headline),
-    !!(
-      Array.isArray(p.education) &&
-      p.education.length > 0 &&
-      (p.education as any[]).every(
-        (edu: any) =>
-          edu.school && edu.degree && edu.majors?.length > 0 && edu.graduationYear
-      )
-    ),
-    !!(
-      (p.locations as any[])?.length > 0 &&
-      (p.workPreferences as any[])?.length > 0 &&
-      (p.jobTypes as any[])?.length > 0
-    ),
-    !!(p.skills as any[])?.length,
-    !!(
-      p.experience ||
-      (p.extracurriculars as any[])?.length ||
-      (p.certifications as any[])?.length ||
-      (p.languages as any[])?.length
-    ),
-    !!(p.careerInterests as any[])?.length,
-    !!(
-      p.workAuthorization &&
-      ((p.workAuthorization as any).authorizedToWork != null ||
-        (p.workAuthorization as any).requiresVisaSponsorship != null)
-    ),
-    !!(p.bio || p.linkedinUrl || p.portfolioUrl),
-    !!(p.profileImageUrl && p.resumeUrl),
-    !!p.videoUrl,
-  ];
-  const completedCount = completedSections.filter(Boolean).length;
-  return Math.floor((completedCount / 10) * 100);
-}
 
 function isCronAuthorized(request: NextRequest): boolean {
   const cronHeader = request.headers.get('x-vercel-cron');

@@ -1,7 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Custom distDir (see `outputDirectory` in vercel.json). Default `.next` can be unstable on some local disks.
-  distDir: "build",
   reactStrictMode: true,
   async headers() {
     const base = [

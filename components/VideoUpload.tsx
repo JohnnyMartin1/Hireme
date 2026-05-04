@@ -1,8 +1,8 @@
 "use client";
 import { useState, useRef, useEffect } from 'react';
 import { useToast } from '@/components/NotificationSystem';
+import { useFirebaseAuth } from '@/components/FirebaseAuthProvider';
 import { Upload, X, Video, Loader2 } from 'lucide-react';
-import { uploadVideo, deleteFile } from '@/lib/firebase-storage';
 
 interface VideoUploadProps {
   currentVideo?: string;
@@ -15,9 +15,10 @@ export default function VideoUpload({
   currentVideo, 
   onUploadComplete, 
   onDelete, 
-  userId 
+  userId: _userId 
 }: VideoUploadProps) {
   const toast = useToast();
+  const { user } = useFirebaseAuth();
   const [isUploading, setIsUploading] = useState(false);
   const [isCompressing, setIsCompressing] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -33,135 +34,7 @@ export default function VideoUpload({
     // no-op cleanup since recording is removed
   }, []);
 
-  // Compress video using MediaRecorder API with canvas
-  const compressVideo = async (file: File): Promise<File> => {
-    return new Promise((resolve, reject) => {
-      const video = document.createElement('video');
-      const objectUrl = URL.createObjectURL(file);
-      video.src = objectUrl;
-      video.muted = true;
-      video.playsInline = true;
-      video.crossOrigin = 'anonymous';
-
-      video.onloadedmetadata = () => {
-        video.currentTime = 0;
-      };
-
-      video.oncanplaythrough = () => {
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d', { willReadFrequently: false });
-        
-        if (!ctx) {
-          window.URL.revokeObjectURL(objectUrl);
-          reject(new Error('Canvas context not available'));
-          return;
-        }
-
-        // Set canvas dimensions (max 1280x720 for intro videos)
-        const maxWidth = 1280;
-        const maxHeight = 720;
-        let width = video.videoWidth;
-        let height = video.videoHeight;
-
-        if (width > maxWidth || height > maxHeight) {
-          const ratio = Math.min(maxWidth / width, maxHeight / height);
-          width = Math.floor(width * ratio);
-          height = Math.floor(height * ratio);
-        }
-
-        canvas.width = width;
-        canvas.height = height;
-
-        // Try different codecs based on browser support
-        const codecs = [
-          'video/webm;codecs=vp9',
-          'video/webm;codecs=vp8',
-          'video/webm',
-          'video/mp4'
-        ];
-
-        let selectedMimeType = 'video/webm';
-        for (const codec of codecs) {
-          if (MediaRecorder.isTypeSupported(codec)) {
-            selectedMimeType = codec;
-            break;
-          }
-        }
-
-        const stream = canvas.captureStream(30); // 30 fps
-        const mediaRecorder = new MediaRecorder(stream, {
-          mimeType: selectedMimeType,
-          videoBitsPerSecond: 2000000 // 2 Mbps for good quality/size balance
-        });
-
-        const chunks: Blob[] = [];
-        mediaRecorder.ondataavailable = (e) => {
-          if (e.data && e.data.size > 0) {
-            chunks.push(e.data);
-          }
-        };
-
-        mediaRecorder.onstop = () => {
-          const blob = new Blob(chunks, { type: selectedMimeType });
-          const extension = selectedMimeType.includes('mp4') ? '.mp4' : '.webm';
-          const compressedFile = new File([blob], file.name.replace(/\.[^/.]+$/, extension), {
-            type: blob.type,
-            lastModified: Date.now()
-          });
-          window.URL.revokeObjectURL(objectUrl);
-          resolve(compressedFile);
-        };
-
-        mediaRecorder.onerror = (event: any) => {
-          window.URL.revokeObjectURL(objectUrl);
-          reject(new Error('Compression failed: ' + (event.error?.message || 'Unknown error')));
-        };
-
-        let animationFrameId: number;
-        const drawFrame = () => {
-          if (video.ended || video.paused) {
-            if (mediaRecorder.state !== 'inactive') {
-              mediaRecorder.stop();
-            }
-            if (animationFrameId) {
-              cancelAnimationFrame(animationFrameId);
-            }
-            return;
-          }
-          
-          ctx.drawImage(video, 0, 0, width, height);
-          animationFrameId = requestAnimationFrame(drawFrame);
-        };
-
-        video.onplay = () => {
-          mediaRecorder.start();
-          drawFrame();
-        };
-
-        video.onended = () => {
-          if (mediaRecorder.state === 'recording') {
-            mediaRecorder.stop();
-          }
-          if (animationFrameId) {
-            cancelAnimationFrame(animationFrameId);
-          }
-        };
-
-        // Start playback
-        video.play().catch((err) => {
-          window.URL.revokeObjectURL(objectUrl);
-          reject(new Error('Could not play video: ' + err.message));
-        });
-      };
-
-      video.onerror = (e) => {
-        window.URL.revokeObjectURL(objectUrl);
-        reject(new Error('Could not load video'));
-      };
-
-      video.load();
-    });
-  };
+  // Compression is intentionally disabled; uploads now use signed URLs.
 
   const handleFileSelect = async (file: File) => {
     if (!file) return;
@@ -219,46 +92,50 @@ export default function VideoUpload({
     setUploadProgress(0);
     
     try {
-      // Upload original file immediately (user can save profile right away)
-      const { url, error } = await uploadVideo(file, userId, (progress) => {
-        setUploadProgress(progress);
+      const authToken = user ? await user.getIdToken() : '';
+      const prepRes = await fetch('/api/upload/video', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+        },
+        body: JSON.stringify({
+          mode: 'prepare',
+          fileName: file.name,
+          mimeType: file.type,
+          sizeBytes: file.size,
+        }),
       });
-      
-      if (error) throw new Error(error);
-      if (!url) throw new Error('Upload failed - no URL returned');
-      
-      // Notify parent component immediately so user can save
-      onUploadComplete(url);
-      toast.info('Success', 'Video uploaded! You can save your profile now.');
-      
-      // Compress in background if file is larger than 10MB
-      if (file.size > 10 * 1024 * 1024) {
-        setIsCompressingInBackground(true);
-        
-        // Compress in background (non-blocking)
-        compressVideo(file)
-          .then(async (compressedFile) => {
-            // Upload compressed version
-            const { url: compressedUrl, error: compressError } = await uploadVideo(
-              compressedFile, 
-              userId
-            );
-            
-            if (!compressError && compressedUrl) {
-              // Replace with compressed version
-              onUploadComplete(compressedUrl);
-              const sizeReduction = ((1 - compressedFile.size / file.size) * 100).toFixed(0);
-              toast.info('Info', `Video optimized: ${sizeReduction}% smaller`);
-            }
-          })
-          .catch((error) => {
-            console.error('Background compression error:', error);
-            // Silently fail - original video is already uploaded
-          })
-          .finally(() => {
-            setIsCompressingInBackground(false);
-          });
-      }
+      const prep = await prepRes.json().catch(() => ({}));
+      if (!prepRes.ok) throw new Error(prep?.error || 'Failed to prepare upload');
+
+      const putRes = await fetch(prep.uploadUrl, {
+        method: 'PUT',
+        headers: { 'Content-Type': file.type },
+        body: file,
+      });
+      if (!putRes.ok) throw new Error('Failed to upload video to storage');
+      setUploadProgress(80);
+
+      const finalizeRes = await fetch('/api/upload/video', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+        },
+        body: JSON.stringify({
+          mode: 'complete',
+          storagePath: prep.storagePath,
+          fileName: file.name,
+          mimeType: file.type,
+          sizeBytes: file.size,
+        }),
+      });
+      const finalize = await finalizeRes.json().catch(() => ({}));
+      if (!finalizeRes.ok) throw new Error(finalize?.error || 'Failed to finalize upload');
+      setUploadProgress(100);
+      onUploadComplete(String(finalize?.file?.storagePath || prep.storagePath));
+      toast.info('Success', 'Video uploaded successfully.');
     } catch (error) {
         console.error('Upload error:', error);
         toast.error('Error', 'Failed to upload video. Please try again.');
@@ -295,7 +172,12 @@ export default function VideoUpload({
     if (!currentVideo) return;
     
     try {
-      await deleteFile(currentVideo);
+      const authToken = user ? await user.getIdToken() : '';
+      const res = await fetch('/api/upload/video', {
+        method: 'DELETE',
+        headers: authToken ? { Authorization: `Bearer ${authToken}` } : undefined,
+      });
+      if (!res.ok) throw new Error('Delete failed');
       onDelete();
     } catch (error) {
       console.error('Delete error:', error);
@@ -338,12 +220,11 @@ export default function VideoUpload({
                 <X className="h-5 w-5" />
               </button>
             </div>
-            <video 
-              src={currentVideo} 
-              controls 
-              className="w-full rounded-lg max-h-48"
-              preload="metadata"
-            />
+            {currentVideo?.startsWith('http') ? (
+              <video src={currentVideo} controls className="w-full rounded-lg max-h-48" preload="metadata" />
+            ) : (
+              <p className="text-sm text-slate-600">Private video uploaded. Recruiters will access it via secure signed links.</p>
+            )}
           </div>
         </div>
       ) : (

@@ -10,7 +10,7 @@ import {
   type CalendarProvider,
 } from "@/lib/integrations/calendar-service";
 import { selectActiveInterview } from "@/lib/interviews/active-interview";
-import { feedbackDocId, normalizeOptionalString, nowTs, planDocId } from "@/lib/interviews/phase3";
+import { assertCandidateTiedToJob, feedbackDocId, normalizeOptionalString, nowTs, planDocId } from "@/lib/interviews/phase3";
 
 export const dynamic = "force-dynamic";
 
@@ -198,6 +198,9 @@ export async function POST(
       ? candidateResponseRaw
       : "PENDING";
     if (!candidateId) return NextResponse.json({ error: "Missing candidateId" }, { status: 400 });
+    if (!(await assertCandidateTiedToJob(jobId, candidateId))) {
+      return NextResponse.json({ error: "Candidate is not tied to this job" }, { status: 403 });
+    }
     if (!scheduledAt || Number.isNaN(scheduledAt.getTime())) {
       return NextResponse.json({ error: "Valid scheduledAt is required" }, { status: 400 });
     }
@@ -341,6 +344,10 @@ export async function PATCH(request: NextRequest, { params }: { params: { jobId:
     const snap = await ref.get();
     if (!snap.exists) return NextResponse.json({ error: "Interview not found" }, { status: 404 });
     const existing = snap.data() as Record<string, unknown>;
+    const targetCandidateId = String(existing?.candidateId || candidateId || "");
+    if (!targetCandidateId || !(await assertCandidateTiedToJob(jobId, targetCandidateId))) {
+      return NextResponse.json({ error: "Candidate is not tied to this job" }, { status: 403 });
+    }
     const updates: Record<string, unknown> = {
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     };

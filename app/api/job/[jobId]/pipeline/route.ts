@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { adminAuth, adminDb } from '@/lib/firebase-admin';
 import { canUserAccessJob } from '@/lib/matching/job-access';
 import { canonicalPipelineEntryId, dedupePipelineEntriesByCandidate } from '@/lib/pipeline-canonical';
+import { assertCandidateTiedToJob } from '@/lib/interviews/phase3';
 import admin from 'firebase-admin';
 
 export const dynamic = 'force-dynamic';
@@ -119,13 +120,20 @@ export async function POST(
     if (!candidateId) {
       return NextResponse.json({ error: 'Missing candidateId' }, { status: 400 });
     }
-
-    const decoded = auth.decoded!;
-    const jobData = auth.jobData!;
-
     const entryId = canonicalPipelineEntryId(jobId, candidateId);
     const entryRef = adminDb.collection('candidatePipelineEntries').doc(entryId);
     const entrySnap = await entryRef.get();
+    // Pipeline can create the first tie only when a deterministic jobMatch exists.
+    const tied = await assertCandidateTiedToJob(jobId, candidateId);
+    if (!tied && !entrySnap.exists) {
+      return NextResponse.json(
+        { error: 'Candidate is not tied to this job. Add matches first before pipeline actions.' },
+        { status: 403 }
+      );
+    }
+
+    const decoded = auth.decoded!;
+    const jobData = auth.jobData!;
     const existingData = entrySnap.exists ? (entrySnap.data() as Record<string, unknown>) : null;
 
     const hasExplicitStage = Object.prototype.hasOwnProperty.call(body, 'stage');

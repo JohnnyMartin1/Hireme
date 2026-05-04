@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminAuth, adminDb } from "@/lib/firebase-admin";
 import { canUserAccessJob } from "@/lib/matching/job-access";
+import { assertCandidateTiedToJob } from "@/lib/interviews/phase3";
 import admin from "firebase-admin";
 
 export const dynamic = "force-dynamic";
@@ -90,6 +91,9 @@ export async function POST(
     const candidateId = String(body?.candidateId || "");
     const steps = normalizeSteps(body?.steps);
     if (!candidateId) return NextResponse.json({ error: "Missing candidateId" }, { status: 400 });
+    if (!(await assertCandidateTiedToJob(jobId, candidateId))) {
+      return NextResponse.json({ error: "Candidate is not tied to this job" }, { status: 403 });
+    }
     if (steps.length === 0) {
       return NextResponse.json({ error: "At least one sequence step is required" }, { status: 400 });
     }
@@ -130,6 +134,9 @@ export async function PATCH(
     const body = await request.json().catch(() => ({}));
     const candidateId = String(body?.candidateId || "");
     if (!candidateId) return NextResponse.json({ error: "Missing candidateId" }, { status: 400 });
+    if (!(await assertCandidateTiedToJob(jobId, candidateId))) {
+      return NextResponse.json({ error: "Candidate is not tied to this job" }, { status: 403 });
+    }
     const id = sequenceDocId(jobId, candidateId);
     const ref = adminDb.collection("outreachSequences").doc(id);
     const snap = await ref.get();

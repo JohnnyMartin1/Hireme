@@ -1,8 +1,8 @@
 "use client";
 import { useState, useRef } from 'react';
 import { useToast } from '@/components/NotificationSystem';
+import { useFirebaseAuth } from '@/components/FirebaseAuthProvider';
 import { Upload, X, FileText, Loader2 } from 'lucide-react';
-import { uploadResume, uploadProfileImage, uploadTranscript, deleteFile } from '@/lib/firebase-storage';
 
 interface FileUploadProps {
   type: 'resume' | 'profile-image' | 'transcript';
@@ -17,9 +17,10 @@ export default function FileUpload({
   currentFile, 
   onUploadComplete, 
   onDelete, 
-  userId 
+  userId: _userId 
 }: FileUploadProps) {
   const toast = useToast();
+  const { user } = useFirebaseAuth();
   const [isUploading, setIsUploading] = useState(false);
   const [dragActive, setDragActive] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -28,13 +29,23 @@ export default function FileUpload({
     if (!file) return;
 
     // Validate file type
-    if (type === 'resume' || type === 'transcript') {
+    if (type === 'resume') {
       if (!file.type.includes('pdf')) {
-        toast.info('Info', `Please upload a PDF file for your ${type === 'resume' ? 'resume' : 'transcript'}.`);
+        toast.info('Info', 'Please upload a PDF file for your resume.');
         return;
       }
       if (file.size > 5 * 1024 * 1024) { // 5MB limit
-        toast.info('Info', `${type === 'resume' ? 'Resume' : 'Transcript'} file size must be less than 5MB.`);
+        toast.info('Info', 'Resume file size must be less than 5MB.');
+        return;
+      }
+    } else if (type === 'transcript') {
+      const transcriptTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'];
+      if (!transcriptTypes.includes(file.type)) {
+        toast.info('Info', 'Transcript must be PDF, JPEG, PNG, or WEBP.');
+        return;
+      }
+      if (file.size > 10 * 1024 * 1024) {
+        toast.info('Info', 'Transcript file size must be less than 10MB.');
         return;
       }
     } else if (type === 'profile-image') {
@@ -50,26 +61,20 @@ export default function FileUpload({
 
     setIsUploading(true);
     try {
-      let fileUrl: string;
-      
-      if (type === 'resume') {
-        const { url, error } = await uploadResume(file, userId);
-        if (error) throw new Error(error);
-        if (!url) throw new Error('Upload failed - no URL returned');
-        fileUrl = url;
-      } else if (type === 'transcript') {
-        const { url, error } = await uploadTranscript(file, userId);
-        if (error) throw new Error(error);
-        if (!url) throw new Error('Upload failed - no URL returned');
-        fileUrl = url;
-      } else {
-        const { url, error } = await uploadProfileImage(file, userId);
-        if (error) throw new Error(error);
-        if (!url) throw new Error('Upload failed - no URL returned');
-        fileUrl = url;
-      }
-
-      onUploadComplete(fileUrl);
+      const authToken = user ? await user.getIdToken() : '';
+      const route = type === 'resume' ? 'resume' : type === 'transcript' ? 'transcript' : 'profile-image';
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch(`/api/upload/${route}`, {
+        method: 'POST',
+        headers: authToken ? { Authorization: `Bearer ${authToken}` } : undefined,
+        body: formData,
+      });
+      const payload = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(payload?.error || 'Upload failed');
+      const value = type === 'profile-image' ? String(payload?.file?.url || '') : String(payload?.file?.storagePath || '');
+      if (!value) throw new Error('Upload failed');
+      onUploadComplete(value);
     } catch (error) {
       console.error('Upload error:', error);
       const fileTypeName = type === 'resume' ? 'resume' : type === 'transcript' ? 'transcript' : 'profile image';
@@ -106,7 +111,13 @@ export default function FileUpload({
     if (!currentFile) return;
     
     try {
-      await deleteFile(currentFile);
+      const authToken = user ? await user.getIdToken() : '';
+      const route = type === 'resume' ? 'resume' : type === 'transcript' ? 'transcript' : 'profile-image';
+      const res = await fetch(`/api/upload/${route}`, {
+        method: 'DELETE',
+        headers: authToken ? { Authorization: `Bearer ${authToken}` } : undefined,
+      });
+      if (!res.ok) throw new Error('Delete failed');
       onDelete();
     } catch (error) {
       console.error('Delete error:', error);
@@ -122,11 +133,11 @@ export default function FileUpload({
             {type === 'resume' || type === 'transcript' ? (
               <FileText className="h-5 w-5 text-green-600 mr-3" />
             ) : (
-              <img 
-                src={currentFile} 
-                alt="Profile" 
-                className="h-10 w-10 rounded-full object-cover mr-3"
-              />
+              currentFile?.startsWith('http') ? (
+                <img src={currentFile} alt="Profile" className="h-10 w-10 rounded-full object-cover mr-3" />
+              ) : (
+                <div className="h-10 w-10 rounded-full bg-green-100 mr-3" />
+              )
             )}
             <div>
               <p className="font-medium text-green-800">
@@ -166,7 +177,8 @@ export default function FileUpload({
           <input
             ref={fileInputRef}
             type="file"
-            accept={type === 'resume' || type === 'transcript' ? '.pdf' : 'image/*'}
+            accept={type === 'resume' ? '.pdf' : type === 'transcript' ? '.pdf,image/jpeg,image/png,image/webp' : 'image/*'}
+            
             onChange={(e) => e.target.files?.[0] && handleFileSelect(e.target.files[0])}
             className="hidden"
           />
@@ -183,8 +195,10 @@ export default function FileUpload({
                 {type === 'resume' ? 'Upload Resume' : type === 'transcript' ? 'Upload Transcript' : 'Upload Profile Picture'}
               </p>
               <p className="text-xs text-gray-500 mb-3">
-                {type === 'resume' || type === 'transcript'
-                  ? 'Drag and drop a PDF file here, or click to browse' 
+                {type === 'resume'
+                  ? 'Drag and drop a PDF file here, or click to browse'
+                  : type === 'transcript'
+                  ? 'Drag and drop a PDF/image file here, or click to browse'
                   : 'Drag and drop an image file here, or click to browse'
                 }
               </p>

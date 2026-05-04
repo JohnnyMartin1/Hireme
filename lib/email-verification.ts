@@ -1,11 +1,13 @@
 import { Resend } from 'resend';
 import { adminDb } from './firebase-admin';
+import { randomBytes } from 'node:crypto';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 // Generate a random verification token
 function generateVerificationToken(): string {
-  return Math.random().toString(36).substring(2) + Date.now().toString(36);
+  // 32 bytes => 256-bit entropy, URL-safe base64 without padding.
+  return randomBytes(32).toString("base64url");
 }
 
 // Create verification token in database
@@ -16,8 +18,6 @@ export async function createVerificationToken(userId: string, email: string) {
     const token = generateVerificationToken();
     const expiresAt = new Date();
     expiresAt.setHours(expiresAt.getHours() + 24); // 24 hour expiration
-
-    console.log('Generated token:', token.substring(0, 10) + '...');
 
     // Use Admin SDK to bypass security rules
     const docRef = await adminDb.collection('emailVerificationTokens').add({

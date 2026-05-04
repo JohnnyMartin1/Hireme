@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminAuth, adminDb } from '@/lib/firebase-admin';
 import { isServerAdminUser } from '@/lib/admin-access';
+import { rateLimitHitAsync } from '@/lib/api-rate-limit';
 
 export const maxDuration = 60;
 
@@ -19,10 +20,12 @@ async function deleteAllUserData(userId: string, userData?: { role?: string; ema
   addRefs(await adminDb.collection('messageThreads').where('participantIds', 'array-contains', userId).get());
   addRefs(await adminDb.collection('messages').where('senderId', '==', userId).get());
   addRefs(await adminDb.collection('profileViews').where('viewerId', '==', userId).get());
-  addRefs(await adminDb.collection('profileViews').where('viewedUserId', '==', userId).get());
-  addRefs(await adminDb.collection('savedCandidates').where('userId', '==', userId).get());
+  addRefs(await adminDb.collection('profileViews').where('candidateId', '==', userId).get());
+  addRefs(await adminDb.collection('savedCandidates').where('employerId', '==', userId).get());
   addRefs(await adminDb.collection('endorsements').where('userId', '==', userId).get());
-  addRefs(await adminDb.collection('companyRatings').where('userId', '==', userId).get());
+  addRefs(await adminDb.collection('endorsements').where('endorserUserId', '==', userId).get());
+  addRefs(await adminDb.collection('companyRatings').where('employerId', '==', userId).get());
+  addRefs(await adminDb.collection('companyRatings').where('candidateId', '==', userId).get());
   addRefs(await adminDb.collection('emailVerificationTokens').where('userId', '==', userId).get());
   if (userData?.role === 'EMPLOYER') {
     addRefs(await adminDb.collection('jobs').where('employerId', '==', userId).get());
@@ -60,6 +63,13 @@ export async function POST(request: NextRequest) {
         }
       } catch {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      }
+      const rl = await rateLimitHitAsync("admin-cleanup-orphaned-users", request, {
+        windowMs: 60_000,
+        max: 2,
+      });
+      if (rl != null) {
+        return NextResponse.json({ error: "Too many requests" }, { status: 429, headers: { "Retry-After": String(rl) } });
       }
     }
 
