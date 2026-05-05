@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { rateLimitResponseIfExceeded } from "@/lib/api-rate-limit";
 import { adminAuth, adminDb } from "@/lib/firebase-admin";
+import { writeAuditLog } from "@/lib/server/audit-log";
 import { canUserAccessJob } from "@/lib/matching/job-access";
 import { canonicalPipelineEntryId } from "@/lib/pipeline-canonical";
 import admin from "firebase-admin";
@@ -210,6 +212,13 @@ export async function PATCH(
     }
     const candidateId = String(existing.candidateId || "");
     if (!candidateId) return NextResponse.json({ error: "Invalid offer" }, { status: 400 });
+
+    const rl = await rateLimitResponseIfExceeded(`offer-patch:${jobId}`, request, {
+      windowMs: 60 * 1000,
+      max: 45,
+      uid: auth.decoded!.uid,
+    });
+    if (rl) return rl;
 
     const body = await request.json().catch(() => ({}));
     const uid = auth.decoded!.uid;
@@ -518,7 +527,24 @@ export async function PATCH(
     }
 
     const out = await ref.get();
-    return NextResponse.json({ offer: { id: out.id, ...out.data() } });
+    const offerPayload = { offer: { id: out.id, ...out.data() } };
+    await writeAuditLog({
+      eventType: "offer.patch",
+      outcome: "success",
+      actorUserId: uid,
+      actorRole: role,
+      actorCompanyId: companyId || null,
+      jobId,
+      candidateId,
+      resourceType: "candidateOffer",
+      resourceId: offerId,
+      metadata: {
+        transition: String(body?.transition || "").trim() || "field_update",
+        status: String((out.data() as Record<string, unknown>)?.status || ""),
+      },
+      request,
+    });
+    return NextResponse.json(offerPayload);
   } catch (e) {
     console.error("PATCH offer", e);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

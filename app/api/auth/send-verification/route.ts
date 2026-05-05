@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { rateLimitResponseIfExceeded } from '@/lib/api-rate-limit';
 import { adminAuth } from '@/lib/firebase-admin';
 import { createVerificationToken, sendVerificationEmailViaResend } from '@/lib/email-verification';
 
@@ -27,6 +28,13 @@ export async function POST(request: NextRequest) {
     if (decodedToken.uid !== userId || decodedToken.email !== email) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
+
+    const rl = await rateLimitResponseIfExceeded('auth-send-verification-email', request, {
+      windowMs: 60 * 60 * 1000,
+      max: 8,
+      uid: userId,
+    });
+    if (rl) return rl;
 
     const token = await createVerificationToken(userId, email);
 

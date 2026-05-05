@@ -1,10 +1,11 @@
 import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 
 type Bucket = { count: number; resetAt: number };
 
 const buckets = new Map<string, Bucket>();
 
-type RateLimitOptions = { windowMs: number; max: number; uid?: string | null };
+export type RateLimitOptions = { windowMs: number; max: number; uid?: string | null };
 
 function keyForRequest(routeKey: string, request: NextRequest, uid?: string | null) {
   const forwarded = request.headers.get("x-forwarded-for");
@@ -47,7 +48,6 @@ async function hitDistributedLimiter(
       await fetch(`${cfg.url}/expire/${encodeURIComponent(key)}/${ttlSeconds}`, {
         method: "POST",
         headers: { Authorization: `Bearer ${cfg.token}` },
-        cache: "no-store",
       }).catch(() => null);
     }
 
@@ -68,6 +68,24 @@ async function hitDistributedLimiter(
   }
 }
 
+export function isDistributedRateLimiterConfigured(): boolean {
+  return getKvConfig() !== null;
+}
+
+function isProductionScaleDeploy(): boolean {
+  return process.env.NODE_ENV === "production" || process.env.VERCEL === "1";
+}
+
+function effectiveMaxForRoute(routeKey: string, requestedMax: number): number {
+  if (!isProductionScaleDeploy()) return requestedMax;
+  if (getKvConfig()) return requestedMax;
+  const reduced = Math.max(1, Math.floor(requestedMax / 4));
+  console.error(
+    `[hireme][rate-limit] Production without KV/Upstash (KV_REST_API_URL + KV_REST_API_TOKEN or UPSTASH_*). Route "${routeKey}" using reduced per-instance cap (${reduced}/${requestedMax}). Configure distributed Redis for public scale.`
+  );
+  return reduced;
+}
+
 /**
  * Best-effort in-memory rate limit for serverless (per-instance). Prefer Upstash/Vercel KV in production at scale.
  * @returns null if allowed, or seconds until retry if blocked.
@@ -77,6 +95,7 @@ export function rateLimitHit(
   request: NextRequest,
   options: RateLimitOptions
 ): number | null {
+  const max = effectiveMaxForRoute(routeKey, options.max);
   const k = keyForRequest(routeKey, request, options.uid);
   const now = Date.now();
   const b = buckets.get(k);
@@ -84,7 +103,7 @@ export function rateLimitHit(
     buckets.set(k, { count: 1, resetAt: now + options.windowMs });
     return null;
   }
-  if (b.count >= options.max) {
+  if (b.count >= max) {
     return Math.ceil((b.resetAt - now) / 1000);
   }
   b.count += 1;
@@ -95,13 +114,27 @@ export function rateLimitHit(
  * Distributed-capable limiter.
  * - Uses KV/Upstash REST when env vars are configured.
  * - Falls back to in-memory limiter for local/dev.
+ * - In production without KV, caps are reduced and a console error is emitted once per process pattern.
  */
 export async function rateLimitHitAsync(
   routeKey: string,
   request: NextRequest,
   options: RateLimitOptions
 ): Promise<number | null> {
-  const remote = await hitDistributedLimiter(routeKey, request, options);
+  const max = effectiveMaxForRoute(routeKey, options.max);
+  const opts = { ...options, max };
+  const remote = await hitDistributedLimiter(routeKey, request, opts);
   if (remote != null) return remote;
-  return rateLimitHit(routeKey, request, options);
+  return rateLimitHit(routeKey, request, opts);
+}
+
+/** Returns 429 JSON if limited; otherwise null. */
+export async function rateLimitResponseIfExceeded(
+  routeKey: string,
+  request: NextRequest,
+  options: RateLimitOptions
+): Promise<NextResponse | null> {
+  const retry = await rateLimitHitAsync(routeKey, request, options);
+  if (retry == null) return null;
+  return NextResponse.json({ error: "Too many requests" }, { status: 429, headers: { "Retry-After": String(retry) } });
 }

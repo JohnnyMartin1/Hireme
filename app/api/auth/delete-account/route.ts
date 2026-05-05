@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { rateLimitResponseIfExceeded } from '@/lib/api-rate-limit';
 import { adminAuth, adminDb } from '@/lib/firebase-admin';
+import { writeAuditLog } from '@/lib/server/audit-log';
 
 export async function DELETE(request: NextRequest) {
   try {
@@ -21,6 +23,13 @@ export async function DELETE(request: NextRequest) {
     }
 
     const userId = decodedToken.uid;
+
+    const rl = await rateLimitResponseIfExceeded('auth-delete-account', request, {
+      windowMs: 60 * 60 * 1000,
+      max: 5,
+      uid: userId,
+    });
+    if (rl) return rl;
 
     console.log(`Starting account deletion for user: ${userId}`);
 
@@ -152,6 +161,15 @@ export async function DELETE(request: NextRequest) {
     await batch.commit();
 
     console.log(`Firestore data deleted for user: ${userId}`);
+
+    await writeAuditLog({
+      eventType: 'account.delete',
+      outcome: 'success',
+      actorUserId: userId,
+      actorRole: String(userDoc.data()?.role || ''),
+      targetUserId: userId,
+      request,
+    });
 
     // Delete the Firebase Auth user
     try {

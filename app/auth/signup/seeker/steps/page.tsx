@@ -79,6 +79,8 @@ export default function NextStepsOnboarding() {
   const { user, profile, loading } = useFirebaseAuth();
   const [currentSlide, setCurrentSlide] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [acceptedLegal, setAcceptedLegal] = useState(false);
+  const [legalAckError, setLegalAckError] = useState(false);
   const [profileData, setProfileData] = useState<ProfileData>({
     workLocations: [],
     workArrangements: [],
@@ -173,6 +175,11 @@ export default function NextStepsOnboarding() {
         }
       }
     } else {
+      if (!acceptedLegal) {
+        setLegalAckError(true);
+        return;
+      }
+      setLegalAckError(false);
       submitProfile();
     }
   };
@@ -202,6 +209,10 @@ export default function NextStepsOnboarding() {
   };
 
   const submitProfile = async () => {
+    if (!acceptedLegal) {
+      setLegalAckError(true);
+      return;
+    }
     setIsSubmitting(true);
     
     try {
@@ -662,6 +673,34 @@ export default function NextStepsOnboarding() {
                       <p><span className="font-medium">Bio Video:</span> {profileData.video ? 'Uploaded' : 'Not uploaded'}</p>
                     </div>
                   </div>
+                </div>
+
+                <div className="rounded-xl border border-slate-200 bg-white/80 p-4 text-sm text-slate-700">
+                  <label className="flex items-start gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={acceptedLegal}
+                      onChange={(e) => {
+                        setAcceptedLegal(e.target.checked);
+                        if (e.target.checked) setLegalAckError(false);
+                      }}
+                      className="mt-1 h-4 w-4 rounded border-slate-300 text-navy-800"
+                    />
+                    <span>
+                      I agree to the{" "}
+                      <a href="/terms/candidates" className="text-sky-700 underline" target="_blank" rel="noreferrer">
+                        candidate terms
+                      </a>
+                      ,{" "}
+                      <a href="/terms/privacy" className="text-sky-700 underline" target="_blank" rel="noreferrer">
+                        privacy policy
+                      </a>
+                      , and understand employers may view my profile and application materials when I apply or am matched to opportunities on HireMe.
+                    </span>
+                  </label>
+                  {legalAckError && (
+                    <p className="mt-2 text-rose-600 text-xs font-medium">Please confirm the terms above to submit your profile.</p>
+                  )}
                 </div>
               </div>
             )}

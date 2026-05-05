@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { rateLimitResponseIfExceeded } from '@/lib/api-rate-limit';
 import { adminAuth, adminDb } from '@/lib/firebase-admin';
 import { isServerAdminUser } from '@/lib/admin-access';
+import { writeAuditLog } from '@/lib/server/audit-log';
 
 export async function POST(request: NextRequest) {
   try {
@@ -21,6 +23,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
+    const rl = await rateLimitResponseIfExceeded('admin-verify-company', request, {
+      windowMs: 60 * 1000,
+      max: 25,
+      uid: adminUid,
+    });
+    if (rl) return rl;
+
     const { companyId, approved } = await request.json();
 
     if (!companyId || typeof approved !== 'boolean') {
@@ -39,6 +48,16 @@ export async function POST(request: NextRequest) {
     };
 
     await adminDb.collection('users').doc(companyId).update(updateData);
+
+    await writeAuditLog({
+      eventType: 'admin.verify_company',
+      outcome: 'success',
+      actorUserId: adminUid,
+      actorRole: String(userData?.role || ''),
+      targetUserId: companyId,
+      metadata: { approved },
+      request,
+    });
 
     return NextResponse.json({ 
       success: true, 

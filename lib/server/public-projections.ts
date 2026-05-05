@@ -35,6 +35,7 @@ export function buildPublicCandidateProfilePayload(
     locationCity: userData.locationCity ?? "",
     locationState: userData.locationState ?? "",
     openToOpportunities: userData.openToOpportunities ?? null,
+    // Intentionally omit workAuthorization from public discovery (minimization).
     hasResume: hasResumeForCompletion(userData),
     hasTranscript: hasTranscriptForCompletion(userData),
     hasIntroVideo: hasIntroVideoForCompletion(userData),
@@ -53,10 +54,12 @@ export function buildPublicCandidateProfilePayload(
     locations: userData.locations ?? [],
     workPreferences: userData.workPreferences ?? [],
     jobTypes: userData.jobTypes ?? [],
-    experience: userData.experience ?? null,
+    experience:
+      typeof userData.experience === "string"
+        ? String(userData.experience).slice(0, 4000)
+        : userData.experience ?? null,
     experienceProjectsV2: userData.experienceProjectsV2 ?? [],
     extracurriculars: userData.extracurriculars ?? [],
-    workAuthorization: userData.workAuthorization ?? null,
     certifications: userData.certifications ?? [],
     languages: userData.languages ?? [],
     endorsementCount: userData.endorsementCount ?? 0,

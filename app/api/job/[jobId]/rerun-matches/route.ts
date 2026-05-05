@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { rateLimitResponseIfExceeded } from '@/lib/api-rate-limit';
 import { adminAuth, adminDb } from '@/lib/firebase-admin';
 import { canUserAccessJob } from '@/lib/matching/job-access';
 import { runJobMatching } from '@/lib/matching/job-matching';
@@ -32,6 +33,13 @@ export async function POST(
     if (!ok) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
+
+    const rl = await rateLimitResponseIfExceeded(`job-rerun-matches:${jobId}`, request, {
+      windowMs: 60 * 60 * 1000,
+      max: 8,
+      uid: decoded.uid,
+    });
+    if (rl) return rl;
 
     await runJobMatching(adminDb, jobId);
 

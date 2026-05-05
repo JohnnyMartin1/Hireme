@@ -47,6 +47,11 @@ export default function UploadsPage() {
 
       <div className="max-w-xl mx-auto px-4 sm:px-6 py-8">
         <h2 className="text-2xl font-bold mb-4">Uploads</h2>
+        <p className="text-sm text-slate-600 mb-6 rounded-lg border border-slate-200 bg-white p-4">
+          Files you upload are stored securely. <strong>Resume, transcript, and intro video</strong> are private: employers only receive
+          time-limited access when you are tied to a job, in a message thread, or in an approved talent pool. Your <strong>profile image</strong> may
+          appear on your public discovery profile. AI-assisted matching may use text derived from your profile; it does not replace employer judgment.
+        </p>
         <div className="space-y-8">
           <div><h3 className="text-lg font-semibold mb-2">Resume (PDF, max 5MB)</h3><FileUpload type="resume" currentFile={resumePath} onUploadComplete={setResumePath} onDelete={() => setResumePath('')} userId={user?.uid || ''} /></div>
           <div><h3 className="text-lg font-semibold mb-2">Transcript (PDF/image, max 10MB)</h3><FileUpload type="transcript" currentFile={transcriptPath} onUploadComplete={setTranscriptPath} onDelete={() => setTranscriptPath('')} userId={user?.uid || ''} /></div>

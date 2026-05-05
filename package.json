@@ -27,6 +27,7 @@
     "@capacitor/ios": "^8.1.0",
     "@fortawesome/fontawesome-free": "^7.1.0",
     "@prisma/client": "^5.22.0",
+    "@sentry/nextjs": "^8.55.2",
     "bcryptjs": "^2.4.3",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",

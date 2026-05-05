@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { rateLimitResponseIfExceeded } from '@/lib/api-rate-limit';
 import { adminAuth, adminDb } from '@/lib/firebase-admin';
 import { sendProfileViewedNotification } from '@/lib/notifications';
 
@@ -24,6 +25,13 @@ export async function POST(request: NextRequest) {
     if (decodedToken.uid !== viewerId) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
+
+    const rl = await rateLimitResponseIfExceeded('notifications-profile-viewed', request, {
+      windowMs: 60 * 60 * 1000,
+      max: 120,
+      uid: viewerId,
+    });
+    if (rl) return rl;
 
     // Get viewer and candidate profiles
     const [viewerDoc, candidateDoc] = await Promise.all([

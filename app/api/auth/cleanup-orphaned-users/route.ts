@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { adminAuth, adminDb } from '@/lib/firebase-admin';
 import { isServerAdminUser } from '@/lib/admin-access';
 import { rateLimitHitAsync } from '@/lib/api-rate-limit';
+import { writeAuditLog } from '@/lib/server/audit-log';
 
 export const maxDuration = 60;
 
@@ -46,18 +47,22 @@ export async function POST(request: NextRequest) {
     // Allow either admin Bearer (Firebase token) or cron secret
     const authHeader = request.headers.get('authorization');
     const cronSecret = process.env.CRON_SECRET;
-    const isCron = cronSecret && authHeader === `Bearer ${cronSecret}`;
+    const isCron = Boolean(cronSecret && authHeader === `Bearer ${cronSecret}`);
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const token = authHeader.split('Bearer ')[1];
+    let adminActorUid: string | null = null;
+    let adminActorRole = "";
     if (!isCron) {
       try {
         const decodedToken = await adminAuth.verifyIdToken(token);
+        adminActorUid = decodedToken.uid;
         const userDoc = await adminDb.collection('users').doc(decodedToken.uid).get();
         const userData = userDoc.data();
+        adminActorRole = String(userData?.role || "");
         if (!isServerAdminUser(userData?.role as string | undefined, decodedToken.email)) {
           return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
         }
@@ -67,6 +72,7 @@ export async function POST(request: NextRequest) {
       const rl = await rateLimitHitAsync("admin-cleanup-orphaned-users", request, {
         windowMs: 60_000,
         max: 2,
+        uid: adminActorUid,
       });
       if (rl != null) {
         return NextResponse.json({ error: "Too many requests" }, { status: 429, headers: { "Retry-After": String(rl) } });
@@ -115,6 +121,20 @@ export async function POST(request: NextRequest) {
       }
     }
     const remaining = orphanedUsers.length - toProcess.length;
+
+    await writeAuditLog({
+      eventType: "admin.cleanup_orphaned_users",
+      outcome: "success",
+      actorUserId: adminActorUid,
+      actorRole: adminActorRole || (isCron ? "cron" : ""),
+      metadata: {
+        source: isCron ? "cron_secret" : "admin_bearer",
+        deletedCount: deletedUsers.length,
+        sampleIds: deletedUsers.slice(0, 8),
+        remainingOrphans: remaining,
+      },
+      request,
+    });
 
     return NextResponse.json({
       success: true,

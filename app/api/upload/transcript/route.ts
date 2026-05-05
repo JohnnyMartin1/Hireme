@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { rateLimitResponseIfExceeded } from "@/lib/api-rate-limit";
+import { writeAuditLog } from "@/lib/server/audit-log";
 import { UPLOAD_CONFIG, clearUserFileMetadata, deleteFromStorage, getAuthedUser, saveBinaryToStorage, saveUserFileMetadata } from "@/lib/server/candidate-files";
 
 export const runtime = "nodejs";
@@ -8,6 +10,12 @@ export async function POST(request: NextRequest) {
   try {
     const authed = await getAuthedUser(request);
     if (!authed) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const rl = await rateLimitResponseIfExceeded("upload-transcript", request, {
+      windowMs: 60 * 60 * 1000,
+      max: 25,
+      uid: authed.decoded.uid,
+    });
+    if (rl) return rl;
 
     const form = await request.formData();
     const file = form.get("file");
@@ -28,6 +36,16 @@ export async function POST(request: NextRequest) {
       mimeType: file.type,
       sizeBytes: file.size,
     });
+    await writeAuditLog({
+      eventType: "upload.transcript",
+      outcome: "success",
+      actorUserId: authed.decoded.uid,
+      actorRole: String(authed.user.role || ""),
+      resourceType: "storage",
+      resourceId: storagePath,
+      metadata: { sizeBytes: file.size },
+      request,
+    });
     return NextResponse.json({ ok: true, file: { storagePath, name: file.name, mimeType: file.type, sizeBytes: file.size } });
   } catch (error) {
     console.error("POST /api/upload/transcript", error);
@@ -39,13 +57,27 @@ export async function DELETE(request: NextRequest) {
   try {
     const authed = await getAuthedUser(request);
     if (!authed) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const rl = await rateLimitResponseIfExceeded("upload-transcript-delete", request, {
+      windowMs: 60 * 60 * 1000,
+      max: 30,
+      uid: authed.decoded.uid,
+    });
+    if (rl) return rl;
     const currentPath = String(authed.user.transcriptStoragePath || "");
     if (currentPath) await deleteFromStorage(currentPath);
     await clearUserFileMetadata(authed.decoded.uid, "transcript");
+    await writeAuditLog({
+      eventType: "upload.transcript.delete",
+      outcome: "success",
+      actorUserId: authed.decoded.uid,
+      actorRole: String(authed.user.role || ""),
+      resourceType: "storage",
+      resourceId: currentPath || null,
+      request,
+    });
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error("DELETE /api/upload/transcript", error);
     return NextResponse.json({ error: "Delete failed" }, { status: 500 });
   }
 }
-

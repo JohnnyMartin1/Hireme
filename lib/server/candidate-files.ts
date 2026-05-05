@@ -146,3 +146,23 @@ export async function deleteFromStorage(storagePath: string) {
   await storageBucket().file(storagePath).delete({ ignoreNotFound: true });
 }
 
+/** Verify object exists after client-side upload (e.g. signed PUT) before persisting metadata. */
+export async function verifyStorageObjectUploaded(input: {
+  storagePath: string;
+  allowedContentTypePrefixes: string[];
+  minBytes?: number;
+}): Promise<{ ok: true; sizeBytes: number; contentType: string } | { ok: false; reason: string }> {
+  const file = storageBucket().file(input.storagePath);
+  const [exists] = await file.exists();
+  if (!exists) return { ok: false, reason: "missing" };
+  const [metadata] = await file.getMetadata();
+  const sizeBytes = Number(metadata.size ?? 0);
+  if (!Number.isFinite(sizeBytes) || sizeBytes < (input.minBytes ?? 1)) {
+    return { ok: false, reason: "empty_or_invalid_size" };
+  }
+  const ct = String(metadata.contentType || "").toLowerCase();
+  const allowed = input.allowedContentTypePrefixes.some((p) => ct.startsWith(p.toLowerCase()));
+  if (!allowed) return { ok: false, reason: "content_type" };
+  return { ok: true, sizeBytes, contentType: ct };
+}
+

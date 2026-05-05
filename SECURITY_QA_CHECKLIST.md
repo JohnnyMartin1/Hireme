@@ -86,3 +86,11 @@ Run after deploying Firestore rules (`firebase deploy --only firestore:rules`) a
 - [ ] Seeker signup + profile save → search still lists candidate (after sync / bootstrap).
 - [ ] Employer candidate profile page loads (API path).
 - [ ] Messages send/receive; archive/mute still works.
+
+## Public-scale hardening (post-audit)
+
+- [ ] `KV_REST_API_URL` + `KV_REST_API_TOKEN` (or Upstash) set in production; no repeated `[hireme][rate-limit] Production without KV` errors in logs.
+- [ ] `auditLogs` collection: client read/write denied (Firestore rules); admin actions appear after verify-company / cleanup / uploads / employer file access.
+- [ ] Sentry DSN optional: when set, client and server errors appear in Sentry; no Authorization headers in events (spot-check one issue).
+- [ ] CSP Report-Only: no unexpected mass violations on login, messaging, calendar connect, video upload.
+- [ ] `publicCandidateProfiles` documents omit `workAuthorization` (discovery minimization); employer private view still includes work auth via API when relationship allows.

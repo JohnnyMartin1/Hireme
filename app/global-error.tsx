@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect } from "react";
+
 /**
  * Root-level error UI when the root layout fails. Must define html and body
  * (Next.js requirement). Minimal markup so this file stays resilient.
@@ -11,6 +13,16 @@ export default function GlobalError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  useEffect(() => {
+    let cancelled = false;
+    void import("@sentry/nextjs").then((Sentry) => {
+      if (!cancelled) Sentry.captureException(error);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [error]);
+
   return (
     <html lang="en">
       <body style={{ margin: 0, fontFamily: "system-ui, sans-serif", background: "#f8fafc", color: "#0f172a" }}>

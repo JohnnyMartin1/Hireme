@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { rateLimitResponseIfExceeded } from "@/lib/api-rate-limit";
 import { adminAuth, adminDb } from "@/lib/firebase-admin";
 import { stripCandidateUserForEmployerResponse } from "@/lib/server/strip-candidate-for-employer";
 import { isServerAdminUser } from "@/lib/admin-access";
@@ -23,6 +24,13 @@ export async function GET(
     if (!candidateId) {
       return NextResponse.json({ error: "Missing candidate id" }, { status: 400 });
     }
+
+    const rl = await rateLimitResponseIfExceeded(`employer-candidate-profile:${candidateId}`, request, {
+      windowMs: 60 * 1000,
+      max: 120,
+      uid: decoded.uid,
+    });
+    if (rl) return rl;
 
     const viewerSnap = await adminDb.collection("users").doc(decoded.uid).get();
     const viewer = viewerSnap.data() as Record<string, unknown> | undefined;

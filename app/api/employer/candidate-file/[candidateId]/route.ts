@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { adminDb } from "@/lib/firebase-admin";
+import { rateLimitResponseIfExceeded } from "@/lib/api-rate-limit";
+import { adminAuth, adminDb } from "@/lib/firebase-admin";
 import { assertEmployerCandidateAccess, createReadSignedUrl } from "@/lib/server/candidate-files";
+import { writeAuditLog } from "@/lib/server/audit-log";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -24,7 +26,54 @@ export async function GET(request: NextRequest, { params }: { params: { candidat
       threadId: request.nextUrl.searchParams.get("threadId"),
       poolId: request.nextUrl.searchParams.get("poolId"),
     });
-    if ("error" in access) return access.error;
+    if ("error" in access) {
+      const authHeader = request.headers.get("authorization");
+      const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
+      let actorUid: string | null = null;
+      let actorRole = "";
+      if (token) {
+        try {
+          const d = await adminAuth.verifyIdToken(token);
+          actorUid = d.uid;
+          const snap = await adminDb.collection("users").doc(d.uid).get();
+          actorRole = String((snap.data() as Record<string, unknown> | undefined)?.role || "");
+        } catch {
+          /* ignore */
+        }
+      }
+      await writeAuditLog({
+        eventType: "employer.candidate_file.denied",
+        outcome: "denied",
+        actorUserId: actorUid,
+        actorRole,
+        candidateId,
+        metadata: { type },
+        request,
+      });
+      return access.error;
+    }
+
+    const rl = await rateLimitResponseIfExceeded(
+      `employer-candidate-file:${candidateId}:${type}`,
+      request,
+      {
+        windowMs: 10 * 60 * 1000,
+        max: 40,
+        uid: access.authed.decoded.uid,
+      }
+    );
+    if (rl) {
+      await writeAuditLog({
+        eventType: "employer.candidate_file.rate_limited",
+        outcome: "denied",
+        actorUserId: access.authed.decoded.uid,
+        actorRole: String(access.authed.user.role || ""),
+        candidateId,
+        metadata: { type },
+        request,
+      });
+      return rl;
+    }
 
     const candidateSnap = await adminDb.collection("users").doc(candidateId).get();
     if (!candidateSnap.exists) return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -34,6 +83,16 @@ export async function GET(request: NextRequest, { params }: { params: { candidat
     if (!storagePath) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
     const signedUrl = await createReadSignedUrl(storagePath, 10);
+    await writeAuditLog({
+      eventType: "employer.candidate_file.signed_url",
+      outcome: "success",
+      actorUserId: access.authed.decoded.uid,
+      actorRole: String(access.authed.user.role || ""),
+      candidateId,
+      resourceType: type,
+      metadata: { expiresInSeconds: 600 },
+      request,
+    });
     return NextResponse.json({
       ok: true,
       file: {
@@ -50,4 +109,3 @@ export async function GET(request: NextRequest, { params }: { params: { candidat
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
-

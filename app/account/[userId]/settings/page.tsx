@@ -1382,7 +1382,9 @@ function CalendarIntegrationsSection({ toast }: { toast: (msg: string) => void }
           Calendar Integrations
         </h2>
         <p className="text-sm text-slate-600 mb-6">
-          Connect your calendar to automatically create interview events and send invites.
+          Connect your calendar to automatically create interview events and send invites. HireMe stores only what is needed to sync
+          availability and events; OAuth tokens are encrypted at rest. You can disconnect anytime. Calendar access is separate from your
+          HireMe login and does not give HireMe your email password.
         </p>
         {oauthError && (
           <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
