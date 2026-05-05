@@ -10,6 +10,9 @@ const GA_MEASUREMENT_ID = "G-ELC38YVCE3";
 
 const siteUrl = process.env.NEXT_PUBLIC_APP_URL || "https://officialhireme.com";
 
+/** Bust CDN/browser/Google favicon cache when raster/SVG assets are replaced. Bump when icons change. */
+const ICON_CACHE = "?v=2";
+
 export const metadata = {
   metadataBase: new URL(siteUrl),
   title: "HireMe - The Complete Hiring System That Closes The Loop",
@@ -21,15 +24,30 @@ export const metadata = {
   // Favicon only (Google search + browser tab). On-site logos use logo.svg and are unchanged.
   icons: {
     icon: [
-      { url: "/favicon.ico" },
-      { url: "/favicon-16x16.png", type: "image/png", sizes: "16x16" },
-      { url: "/favicon-32x32.png", type: "image/png", sizes: "32x32" }
+      { url: `/favicon.ico${ICON_CACHE}` },
+      { url: `/favicon-16x16.png${ICON_CACHE}`, type: "image/png", sizes: "16x16" },
+      { url: `/favicon-32x32.png${ICON_CACHE}`, type: "image/png", sizes: "32x32" },
+      {
+        url: `/android-chrome-192x192.png${ICON_CACHE}`,
+        type: "image/png",
+        sizes: "192x192",
+      },
+      {
+        url: `/android-chrome-512x512.png${ICON_CACHE}`,
+        type: "image/png",
+        sizes: "512x512",
+      },
+      { url: `/favicon.svg${ICON_CACHE}`, type: "image/svg+xml" },
     ],
     apple: [
-      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }
-    ]
+      {
+        url: `/apple-touch-icon.png${ICON_CACHE}`,
+        sizes: "180x180",
+        type: "image/png",
+      },
+    ],
   },
-  manifest: "/site.webmanifest",
+  manifest: `/site.webmanifest${ICON_CACHE}`,
   openGraph: {
     type: 'website',
     locale: 'en_US',

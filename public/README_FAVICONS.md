@@ -1,44 +1,45 @@
-# Favicons – Google Search Icon Only
+# Favicons – Google Search and browser tab
 
-**`public/favicon.svg` is used only for the favicon** (the small icon in Google search results and browser tabs). It is **not** used anywhere on the website. All on-site logos (header, etc.) use `logo.svg` and are unchanged.
+**What actually drives the icon in Google Search and the browser tab**
 
-**To change only the icon in Google search (and tabs):** replace the files below in the `public` folder with your new versions. Use the **exact filenames** and **sizes** listed. Do **not** change `logo.svg` if you want the main website header/logo to stay the same.
+- **`app/layout.tsx`** `metadata.icons` emits `<link rel="icon" …>` (and Apple touch) on every page. That list is the **primary** signal for crawlers and includes:
+  - `favicon.ico`, `favicon-16x16.png`, `favicon-32x32.png` (legacy / small)
+  - **`android-chrome-192x192.png`** and **`android-chrome-512x512.png`** (square, ≥48px effective for Google; full-bleed artwork)
+  - **`favicon.svg`** (`image/svg+xml`) for modern browsers
+- **`public/site.webmanifest`** lists the same **192** and **512** PNG paths for PWA / “Add to home screen” (must stay in sync with `metadata` for those assets).
+- **`logo.svg`** is **not** used as the favicon. It remains the **on-site header logo** and **Open Graph / Twitter** preview image only.
 
----
-
-## Files that affect Google search and browser tab
-
-| File in `public/`        | Replace with your new file | Size / format   |
-|---------------------------|----------------------------|-----------------|
-| **favicon.ico**           | Same name                  | 32×32 or 16×32 (ICO) |
-| **favicon.svg**           | Same name                  | SVG (any size)  |
-| **favicon-16x16.png**     | Same name                  | 16×16 PNG       |
-| **favicon-32x32.png**     | Same name                  | 32×32 PNG       |
-| **apple-touch-icon.png**  | Same name                  | 180×180 PNG     |
-
-Optional (PWA / “Add to home screen”):
-
-| File in `public/`             | Replace with your new file | Size / format |
-|--------------------------------|----------------------------|----------------|
-| **android-chrome-192x192.png** | Same name                  | 192×192 PNG    |
-| **android-chrome-512x512.png** | Same name                  | 512×512 PNG    |
-
-`site.webmanifest` points to the android-chrome files; keep those filenames if you replace the images.
+**Cache busting:** icon and manifest URLs use a shared query (e.g. `?v=2`) so CDN/Google/browsers fetch new bytes after you replace files. **Bump the version** in `app/layout.tsx` (`ICON_CACHE`) and in **`public/site.webmanifest`** icon `src` values when you ship new icon files.
 
 ---
 
-## Do not change (if you want the site itself unchanged)
+## Files to replace when updating the search/tab icon
 
-- **logo.svg** – used for the main HireMe logo on the website (header, etc.). Leave as-is if you only want to change the Google/search icon.
-- **brand/** – other branding assets used on the site.
+| File in `public/`              | Size / format   |
+|--------------------------------|-----------------|
+| **favicon.ico**                | Multi-size ICO |
+| **favicon.svg**                | SVG (square artboard) |
+| **favicon-16x16.png**         | 16×16 PNG       |
+| **favicon-32x32.png**         | 32×32 PNG       |
+| **apple-touch-icon.png**       | 180×180 PNG     |
+| **android-chrome-192x192.png** | 192×192 PNG     |
+| **android-chrome-512x512.png** | 512×512 PNG     |
+
+Use **full-bleed** artwork in the square PNGs (minimal transparent padding) so Google’s circular crop looks correct.
 
 ---
 
-## How to replace
+## Do not change (if you want the site header unchanged)
 
-1. Export or generate your new favicons (e.g. from RealFaviconGenerator or your design tool).
-2. Rename each file to match the table above **exactly** (e.g. `favicon.ico`, `favicon.svg`, not `favicon-new.ico`).
-3. Put them in the **`public`** folder (same folder that contains `logo.svg`), overwriting the existing files.
-4. Deploy. The site and Google will then use these icons.
+- **logo.svg** – main HireMe logo in the UI (not the favicon).
+- **brand/** – other branding assets.
 
-Google may take time to update search results (hours to a few days). You can request re-indexing in Google Search Console to speed it up.
+---
+
+## After replacing files
+
+1. Match filenames above exactly.
+2. Bump **`ICON_CACHE`** in `app/layout.tsx` and the `?v=` query on manifest icon `src` entries in **`site.webmanifest`**.
+3. Deploy and request re-indexing in Google Search Console if needed.
+
+Google can take hours to days to refresh the SERP favicon.
